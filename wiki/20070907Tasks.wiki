@@ -8,7 +8,7 @@
     * Could others program with you together in your home?
   # Present these
   # Find a third time in the week to meet (with at least 4 hours time)
-  # Get familiar with the XP-programming paradigm
+  # Get familiar with the XP-programming paradigm (use links provided on [XPIntro])
     * Write down headwords, so you can talk about it.
     * Exchange your result with a partner
     * re-pair and exchange again
@@ -19,4 +19,4 @@ Home assignments to Monday:
   * Intense XP-knowledge
   * Register to mailing-list.
   * Send your self evaluation with contact-data to the mailing-list.
-  * Use the list for discussion.
+  * Use the list for discussion
