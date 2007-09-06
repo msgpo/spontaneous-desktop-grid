@@ -1,7 +1,7 @@
 #summary Some starting points for XP
 == Extreme Programming ==
 
-AS we will do our course with this paradigm, here are some starting points for the first lecture:
+As we will do our course with this paradigm, here are some starting points for the first lecture:
   * http://www.extremeprogramming.org
   * http://en.wikipedia.org/wiki/Extreme_programming
   * http://www.agilealliance.org/system/article/file/1376/file.pdf
