@@ -1,13 +1,13 @@
 #summary First tasks
 
   # Write half to one page about the following:
-    # Why you are interested in this course?
-    # What qualifies you for this course?
-    # What are your weaknesses?
+    * Why you are interested in this course?
+    * What qualifies you for this course?
+    * What are your weaknesses?
   # Present this.
   # Find a third time in the week to meet (with at least 4 hours time)
   # Get familiar with the XP-programming paradigm
-    # Write down headwords, so you can talk about it.
-    # Exchange your result with a partner
-    # re-pair and exchange again
+    * Write down headwords, so you can talk about it.
+    * Exchange your result with a partner
+    * re-pair and exchange again
   # Develop a strategy how to start
