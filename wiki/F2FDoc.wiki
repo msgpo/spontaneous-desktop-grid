@@ -3,5 +3,8 @@
 A first small documentation of the Framework:
 http://math.ut.ee/~keio/F2FComputing.pdf
 
-Framework + GUI release:
+Framework package to use for linking:
 http://math.ut.ee/~keio/F2FComputing.jar
+
+SIP Communicator + the Framework:
+http://math.ut.ee/~keio/SIP+F2FComputing.zip
