@@ -1,0 +1,13 @@
+#summary Scenarios to realize
+
+a) Simulation Boost
+
+A chemistry (further planned scenarios apply to fields of mathematics, bio-informatics, physics, or biology) student needs to run a simulation - here of a reaction. The student has to do this multiple times with different input parameters. To accelerate getting the results the student asks colleagues and friends to share their computational power.
+
+b) Dynamic Rendering Grid
+
+Some arts students or a small movie studio want to render a part of an animation movie (compare for example Elephant's dream [http://www.elephantsdream.org/]). To speed up this process they create in their instant messenger a chat group and start the dynamic GRID to carry out the distributed rendering task. Extensions to this scenarios will make use of rendering static scenes with povray [http://www.povray.org/] or support video or sound encoding.
+
+c) Language Analysis
+
+For OCR, automatic analysis of texts, speech recognition, and automatic translation huge trees and databases on language files have to be computed. To create these data files some weights have to be adjusted and the files have to be re-created, resulting in a very time consuming process. This could also sped up with spontaneous GRIDs established in a F2F manner.
