@@ -1,10 +1,10 @@
 #summary Documentation for F2F alias Personal Desktop GRID
 
 A first small documentation of the Framework:
-http://math.ut.ee/~keio/F2FComputing.pdf
+http://math.ut.ee/~keio/F2F/F2FComputing.pdf
 
 Framework package to use for linking:
-http://math.ut.ee/~keio/F2FComputing.jar
+http://math.ut.ee/~keio/F2F/F2FComputing.jar
 
 SIP Communicator + the Framework:
-http://math.ut.ee/~keio/SIP+F2FComputing.zip
+http://math.ut.ee/~keio/F2F/SIP+F2FComputing.zip
