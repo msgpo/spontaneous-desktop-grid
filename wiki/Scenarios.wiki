@@ -10,4 +10,4 @@ Some arts students or a small movie studio want to render a part of an animation
 
 c) Language Analysis
 
-For OCR, automatic analysis of texts, speech recognition, and automatic translation huge trees and databases on language files have to be computed. To create these data files some weights have to be adjusted and the files have to be re-created, resulting in a very time consuming process. This could also sped up with spontaneous GRIDs established in a F2F manner.
+For OCR, automatic analysis of texts, speech recognition, and automatic translation huge trees and databases on language files have to be computed. To create these data files some weights have to be adjusted and the files have to be re-created, resulting in a very time consuming process. This could also be sped up with spontaneous GRIDs established in a F2F manner.
