@@ -10,4 +10,4 @@ Some arts students or a small movie studio want to render a part of an animation
 
 c) Language Analysis
 
-For OCR, automatic analysis of texts, speech recognition, and automatic translation huge trees and databases on language files have to be computed. To create these data files some weights have to be adjusted and the files have to be re-created, resulting in a very time consuming process. This could also be sped up with spontaneous GRIDs established in a F2F manner.
+Any statistical language processing technique requires testing, and in case there's not enough data to define separate training/testing sets, N-fold cross-validation is a common choice. The scenario is the following: all the available data is split into N parts, and the experiment is run N independent times -- each time one of the data parts is used for testing and the rest -- for training. A common value for N can be around 10. Thus each experiment has independent train/test data defined and all of the data gets covered. After the N experiments are ready, the general result is comuted based on all of them. With parallel computation the process can be sped up up to N times.
