@@ -6,7 +6,6 @@ import java.io.InputStreamReader;
  * 
  * @author Andres, Madis
  */
-
 public class BlenderCommunicator {
 
 	/**
@@ -27,15 +26,9 @@ public class BlenderCommunicator {
 		String line, outputFile = null;
 		
 		while ((line = br.readLine()) != null) {
-			
 			if (line.startsWith("'blender' is not recognized"))
 				throw new Exception("Blender not found!");
-			
-			if (line.startsWith("Starting")) {
-				outputFile = line.substring(19);
-				System.out.println("Starting to render into file: " + outputFile);
-			}
-			
+						
 			else if (line.startsWith("Created")) {
 				String[] words = line.split(" ");
 				outputFile = words[words.length - 1];
@@ -51,7 +44,7 @@ public class BlenderCommunicator {
 			}
 			
 			else if (line.startsWith("Blender quit") && outputFile != null) {
-				System.out.println("Done!");
+				System.out.println("Rendering finished");
 			}
 		}
 		
@@ -60,5 +53,4 @@ public class BlenderCommunicator {
 
 		return outputFile;
 	}
-
 }
