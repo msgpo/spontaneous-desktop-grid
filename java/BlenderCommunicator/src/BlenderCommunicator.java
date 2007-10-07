@@ -4,36 +4,40 @@ import java.io.InputStreamReader;
 /**
  * Command line communicator between Java and Blender
  * 
- * @author Andres, Madis
+ * @author Andres, Madis, Jaan
  */
 public class BlenderCommunicator {
 
 	/**
-	 * Calls the Blender command line tool to render an animation from a .blend file.
+	 * Calls the Blender command line tool to render an
+	 * animation in AVIJPEG format from a .blend file.
 	 * Writes info about the process to standard output.
 	 * 
-	 * @param filename 		File to render (should export AVI or Quicktime)
-	 * @param startFrame	First frame to render
-	 * @param endFrame		Last frame to render
-	 * @return 				Output filename
+	 * @param inputFile		  File to render
+	 * @param outputLocation Directory to save output
+	 * @param startFrame	  First frame to render
+	 * @param endFrame		  Last frame to render
 	 */
-	public static String render(String filename, int startFrame, int endFrame) throws Exception {
-		String command = "blender -b " + filename + " -s " + startFrame + " -e " + endFrame + " -a";
+	public static void render(String inputFile, String outputLocation, int startFrame, int endFrame) throws Exception {
+		String command =
+			"blender -b " + inputFile +
+			" -o " + outputLocation +
+			" -F AVIJPEG -s " +startFrame +
+			" -e " + endFrame + " -a -x 1"
+		;
 		
 		Process proc = Runtime.getRuntime().exec(command);
 		BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 		
-		String line, outputFile = null;
+		String line;
+		boolean anythingRendered = false;
 		
 		while ((line = br.readLine()) != null) {
-			if (line.startsWith("'blender' is not recognized"))
+			if (
+				line.startsWith("'blender' is not recognized") ||
+				line.indexOf("blender") != -1 && line.indexOf("not found") != -1
+			)
 				throw new Exception("Blender not found!");
-						
-			else if (line.startsWith("Created")) {
-				String[] words = line.split(" ");
-				outputFile = words[words.length - 1];
-				System.out.println("Starting to render into file: " + outputFile);
-			}	
 			
 			else if (
 				line.startsWith("Append frame") ||
@@ -41,16 +45,15 @@ public class BlenderCommunicator {
 				line.startsWith("Writing frame")
 			) {
 				System.out.println("Rendered frame " + line.split(" +")[2]);
+				anythingRendered = true;
 			}
 			
-			else if (line.startsWith("Blender quit") && outputFile != null) {
+			else if (line.startsWith("Blender quit") && anythingRendered) {
 				System.out.println("Rendering finished");
 			}
 		}
 		
-		if (outputFile == null)
-			throw new Exception("AVI not created!");
-
-		return outputFile;
+		if (!anythingRendered)
+			throw new Exception("Nothing rendered!");
 	}
 }
