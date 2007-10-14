@@ -31,7 +31,7 @@ public class BlenderFileChooser {
     
     int returnVal = fc.showDialog(new JFrame(), "Select output location");
     if (returnVal == JFileChooser.APPROVE_OPTION)
-    	return fc.getSelectedFile().getAbsoluteFile().toString() + "\\";
+    	return fc.getSelectedFile().getAbsoluteFile().toString() + "/";
     
     return null;
   }

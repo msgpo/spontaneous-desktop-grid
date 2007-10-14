@@ -20,11 +20,13 @@ public class BlenderCommunicator {
 	 */
 	public static void render(String inputFile, String outputLocation, int startFrame, int endFrame) throws Exception {
 		String command =
-			"blender -b " + inputFile +
-			" -o " + outputLocation +
-			" -F AVIJPEG -s " +startFrame +
+			"blender -b \"" + inputFile +
+			"\" -o \"" + outputLocation +
+			"\" -F AVIJPEG -s " +startFrame +
 			" -e " + endFrame + " -a -x 1"
 		;
+		
+		System.out.println(command);
 		
 		Process proc = Runtime.getRuntime().exec(command);
 		BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
