@@ -7,24 +7,57 @@ import java.io.InputStreamReader;
  * @author Andres, Madis, Jaan
  */
 public class BlenderCommunicator {
-
+	
+	public static void main(String[] args) {
+		String inputFile, outputLocation, fileFormat;
+		
+		try {
+			// Getting input file
+			inputFile = BlenderFileChooser.openBlendFile();
+			if (inputFile == null) {
+				System.out.println("Input file must be chosen");
+				return;
+			}
+			
+			// Getting output location
+			outputLocation = BlenderFileChooser.saveBlendFile();
+			if (outputLocation == null) {
+				System.out.println("Output location must be chosen");
+				return;
+			}
+			
+			// Getting File format
+			fileFormat = BlenderFileChooser.selectFileFormat();
+			if (fileFormat == null) {
+				System.out.println("Output file format must be chosen");
+				return;
+			}			
+			
+			render(inputFile, outputLocation, fileFormat, 10, 13);
+		} catch (Exception e) {
+			System.out.println(e.getMessage());
+		}
+	}
+	
 	/**
 	 * Calls the Blender command line tool to render an
 	 * animation in AVIJPEG format from a .blend file.
 	 * Writes info about the process to standard output.
 	 * 
 	 * @param inputFile		  File to render
-	 * @param outputLocation Directory to save output
+	 * @param outputLocation  Directory to save output
+	 * @param fileFormat	  File format of the output
 	 * @param startFrame	  First frame to render
 	 * @param endFrame		  Last frame to render
 	 */
-	public static void render(String inputFile, String outputLocation, int startFrame, int endFrame) throws Exception {
+	public static void render(String inputFile, String outputLocation, String fileFormat, int startFrame, int endFrame) throws Exception {
 		String command =
 			"blender -b \"" + inputFile +
 			"\" -o \"" + outputLocation +
-			"\" -F AVIJPEG -s " +startFrame +
-			" -e " + endFrame + " -a -x 1"
-		;
+			"\" -F " + fileFormat + 
+			" -s " + startFrame +
+			" -e " + endFrame + 
+			" -a -x 1";
 		
 		System.out.println(command);
 		

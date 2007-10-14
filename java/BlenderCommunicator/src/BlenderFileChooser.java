@@ -1,5 +1,6 @@
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
+import javax.swing.JOptionPane;
 
 /**
  * File selection dialogs
@@ -35,5 +36,20 @@ public class BlenderFileChooser {
     
     return null;
   }
+  
+  public static String selectFileFormat(){ 
+		Object[] fileFormats = { "AVIJPEG", "TGA", "IRIS", "HAMK", "FTYPE", "JPEG",
+					"MOVIE", "IRIZ", "RAWTGA", "AVIRAW", "PNG", "BMP",
+					"FRAMESERVER" };
+			String fileFormat = (String)JOptionPane.showInputDialog(
+					new JFrame(),
+	                      "Choose an output file format:\n",
+	                      "Choose File Format",
+	                      JOptionPane.QUESTION_MESSAGE,
+	                      null,
+	                      fileFormats,
+	                      null);
+			return fileFormat;
+	  }
   
 }

@@ -29,7 +29,7 @@ public class BlenderCommunicatorTest extends TestCase {
 				return;
 			}			
 			
-			BlenderCommunicator.render(inputFile, outputLocation, 10, 13);
+			BlenderCommunicator.render(inputFile, outputLocation, "AVIJPEG", 10, 13);
 		} catch (Exception e) {
 			System.out.println(e.getMessage());
 		}
