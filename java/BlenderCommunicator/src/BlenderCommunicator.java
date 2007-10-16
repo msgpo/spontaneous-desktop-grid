@@ -51,17 +51,15 @@ public class BlenderCommunicator {
 	 * @param endFrame		  Last frame to render
 	 */
 	public static void render(String inputFile, String outputLocation, String fileFormat, int startFrame, int endFrame) throws Exception {
-		String command =
-			"blender -b \"" + inputFile +
-			"\" -o \"" + outputLocation +
-			"\" -F " + fileFormat + 
-			" -s " + startFrame +
-			" -e " + endFrame + 
-			" -a -x 1";
 		
-		System.out.println(command);
-		
-		Process proc = Runtime.getRuntime().exec(command);
+		String[] cmdarr = {"blender", 
+					"-b", inputFile, 
+					"-o", outputLocation, 
+					"-F", fileFormat, 
+					"-s", String.valueOf(startFrame),
+					"-e", String.valueOf(endFrame), 
+					"-a", "-x", "1"}; 
+		Process proc = Runtime.getRuntime().exec(cmdarr);
 		BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
 		
 		String line;
