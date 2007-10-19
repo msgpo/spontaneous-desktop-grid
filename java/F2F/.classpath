@@ -8,5 +8,5 @@
 	<classpathentry kind="lib" path="lib/p2psockets-core.jar"/>
 	<classpathentry kind="lib" path="/sip-communicator/lib/felix.jar"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
-	<classpathentry kind="output" path="src"/>
+	<classpathentry kind="output" path="bin"/>
 </classpath>

@@ -45,6 +45,7 @@ import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.F2FTests;
 
 public class UIController{
 	private JFrame frame = null;
@@ -344,6 +345,20 @@ public class UIController{
 			public void actionPerformed(ActionEvent e)
 			{
 				F2FDebug.show(true);
+			}
+		});
+
+		// Some room for playing and testing
+		JButton buttonTest = new JButton("Trigger tests");
+		layout.putConstraint(SpringLayout.NORTH, buttonTest, 0, SpringLayout.NORTH, buttonDebug);
+		layout.putConstraint(SpringLayout.WEST, buttonTest, 10, SpringLayout.EAST, buttonDebug);
+		mainPanel.add(buttonTest);
+		
+		buttonTest.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				F2FTests.doTests();
 			}
 		});
 

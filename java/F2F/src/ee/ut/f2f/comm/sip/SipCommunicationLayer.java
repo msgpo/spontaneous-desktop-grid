@@ -20,6 +20,7 @@ import ee.ut.f2f.comm.CommunicationLayer;
 import ee.ut.f2f.comm.CommunicationListener;
 import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.F2FTests;
 
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.OperationSetPersistentPresence;
@@ -83,6 +84,7 @@ public class SipCommunicationLayer
 	{
 		if (siplayer!=null) 
 			throw new CommunicationInitException("SIP layer already initiated, initiateSipCommunicationLayer() was called more than once!");
+		F2FTests.setBundleContext(bc);
 		
 		// Create the F2F layer
 		return (siplayer = new SipCommunicationLayer(bc));

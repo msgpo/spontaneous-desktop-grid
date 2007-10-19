@@ -1,0 +1,7 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="plugin_export" name="build">
+	<target name="plugin_export">
+		<delete dir="../sip-communicator/sip-communicator.bin"/>
+		<pde.exportPlugins destination="../sip-communicator/sc-bundles" exportSource="false" exportType="directory" plugins="f2f_sc_plugin" useJARFormat="true"/>
+	</target>
+</project>
