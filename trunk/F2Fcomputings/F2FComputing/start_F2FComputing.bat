@@ -1,1 +1,0 @@
-java -jar -Dlog4j.configuration=file:log4j.properties F2FComputing.jar
