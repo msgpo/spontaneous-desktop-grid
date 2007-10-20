@@ -1,10 +1,9 @@
 package ee.ut.xpp2p.communicator;
 import java.io.File;
 
-import ee.ut.xpp2p.communicator.BlenderCommunicator;
-import ee.ut.xpp2p.communicator.BlenderFileChooser;
-
 import junit.framework.TestCase;
+import ee.ut.xpp2p.model.Job;
+import ee.ut.xpp2p.model.Task;
 
 /**
  * Test case for BlenderCommunicator
@@ -19,30 +18,99 @@ public class BlenderCommunicatorTest extends TestCase {
 	 * Tests rendering frames 10 to 13 of a Blender file to the specified
 	 * output location.
 	 */
-	public void testRender() {
-		String inputFile = null, outputFile = null;
+	public void testRenderTask() {
+		Task task = new Task();
+		task.setInputFile("etc\\VictorDancing.blend");
+		task.setOutputLocation("etc\\");
+		task.setFileFormat("AVIJPEG");
+		task.setStartFrame(10);
+		task.setEndFrame(13);
 		
-		try {
-			inputFile = BlenderFileChooser.openBlendFile();
-			
-			String outputLocation = BlenderFileChooser.saveBlendFile();
-			outputFile = outputLocation + "0010_0013.avi";
-			
-			if (inputFile == null || outputLocation == null) {
-				System.out.println("Both input file and output location must be chosen");
-				return;
-			}			
-			
-			BlenderCommunicator.render(inputFile, outputLocation, "AVIJPEG", 10, 13);
-		} catch (Exception e) {
-			System.out.println(e.getMessage());
-		}
+		BlenderCommunicator.renderTask(task);
 		
-		File output = new File(outputFile);
+		assertTrue(new File("etc\\0010_0013.avi").exists());
+	}
+	
+	public void testSplit(){
+		// test uneven split
+		long startFrame = 23L;
+		long endFrame = 126L;
+		int parts = 5;
 		
-		System.out.println(outputFile);
+		long[] partLengths = BlenderCommunicator.splitTask(startFrame, endFrame, parts);
 		
-		assertTrue(output.exists());
+		assertEquals(partLengths[0], 21L);
+		assertEquals(partLengths[1], 21L);
+		assertEquals(partLengths[2], 21L);
+		assertEquals(partLengths[3], 21L);
+		assertEquals(partLengths[4], 20L);
+		
+		// test even split
+		startFrame = 23L;
+		endFrame = 122L;
+		parts = 5;
+		
+		partLengths = BlenderCommunicator.splitTask(startFrame, endFrame, parts);
+		
+		assertEquals(partLengths[0], 20L);
+		assertEquals(partLengths[1], 20L);
+		assertEquals(partLengths[2], 20L);
+		assertEquals(partLengths[3], 20L);
+		assertEquals(partLengths[4], 20L);
+		
+		// test splitting single frame
+		startFrame = 23L;
+		endFrame = 23L;
+		parts = 5;
+		
+		partLengths = BlenderCommunicator.splitTask(startFrame, endFrame, parts);
+		
+		assertEquals(partLengths[0], 1L);
+		assertEquals(partLengths[1], 0L);
+		assertEquals(partLengths[2], 0L);
+		assertEquals(partLengths[3], 0L);
+		assertEquals(partLengths[4], 0L);
+		
+		// test splitting with more parts than frames
+		startFrame = 23L;
+		endFrame = 25L;
+		parts = 5;
+		
+		partLengths = BlenderCommunicator.splitTask(startFrame, endFrame, parts);
+		
+		assertEquals(partLengths[0], 1L);
+		assertEquals(partLengths[1], 1L);
+		assertEquals(partLengths[2], 1L);
+		assertEquals(partLengths[3], 0L);
+		assertEquals(partLengths[4], 0L);
+		
+		// test splitting when number of parts equals number of frames
+		startFrame = 23L;
+		endFrame = 27L;
+		parts = 5;
+		
+		partLengths = BlenderCommunicator.splitTask(startFrame, endFrame, parts);
+		
+		assertEquals(partLengths[0], 1L);
+		assertEquals(partLengths[1], 1L);
+		assertEquals(partLengths[2], 1L);
+		assertEquals(partLengths[3], 1L);
+		assertEquals(partLengths[4], 1L);
+	}
+	
+	public void testRenderJob(){
+		Job job = new Job();
+		job.setInputFile("etc\\VictorDancing.blend");
+		job.setOutputLocation("etc\\");
+		job.setOutputFormat("AVIJPEG");
+		job.setStartFrame(10);
+		job.setEndFrame(14);
+		job.setParticipants(2);
+		
+		BlenderCommunicator.renderJob(job);
+		
+		assertTrue(new File(job.getOutputLocation() + "0010_0012.avi").exists());
+		assertTrue(new File(job.getOutputLocation() + "0013_0014.avi").exists());
 	}
 
 }
