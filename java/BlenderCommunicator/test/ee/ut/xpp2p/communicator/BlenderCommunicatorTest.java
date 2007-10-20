@@ -1,4 +1,8 @@
+package ee.ut.xpp2p.communicator;
 import java.io.File;
+
+import ee.ut.xpp2p.communicator.BlenderCommunicator;
+import ee.ut.xpp2p.communicator.BlenderFileChooser;
 
 import junit.framework.TestCase;
 

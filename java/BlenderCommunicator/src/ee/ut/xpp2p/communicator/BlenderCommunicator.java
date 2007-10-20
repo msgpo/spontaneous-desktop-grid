@@ -1,3 +1,5 @@
+package ee.ut.xpp2p.communicator;
+
 import java.io.BufferedReader;
 import java.io.InputStreamReader;
 
