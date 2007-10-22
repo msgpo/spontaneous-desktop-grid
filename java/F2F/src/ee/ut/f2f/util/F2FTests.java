@@ -8,6 +8,7 @@ import net.java.sip.communicator.service.contactlist.MetaContactListService;
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.Message;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
+import net.java.sip.communicator.service.protocol.event.MessageListener;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -60,6 +61,7 @@ public class F2FTests {
 		Message msg = im.createMessage("Hello f2f-world!");
 		im.sendInstantMessage(contact, msg);
 		
+		im.addMessageListener(new F2FTestsMessageListener() );
 	}
 
 
