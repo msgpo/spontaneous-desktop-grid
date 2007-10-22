@@ -5,6 +5,9 @@ import java.util.Iterator;
 import net.java.sip.communicator.service.contactlist.MetaContact;
 import net.java.sip.communicator.service.contactlist.MetaContactGroup;
 import net.java.sip.communicator.service.contactlist.MetaContactListService;
+import net.java.sip.communicator.service.protocol.Contact;
+import net.java.sip.communicator.service.protocol.Message;
+import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
@@ -30,23 +33,32 @@ public class F2FTests {
         MetaContactListService metaCListService = (MetaContactListService) bundleContext
             .getService(clistReference);
         
-        Iterator metaContacts = metaCListService.getRoot().getChildContacts();
-		while (metaContacts.hasNext())
+        Iterator metaContactsInRoot = metaCListService.getRoot().getChildContacts();
+		while (metaContactsInRoot.hasNext())
 		{
-			MetaContact mc = (MetaContact)metaContacts.next();
-			System.out.println(mc.getDisplayName());
+			MetaContact mc = (MetaContact)metaContactsInRoot.next();
+			System.out.print(mc.getDisplayName());
+			System.out.println(" - " + mc.getMetaUID());
 		}
 		Iterator subGroups = metaCListService.getRoot().getSubgroups();
-		/*while (subGroups.hasNext()) {
-			MetaContactGroup mc = (MetaContactGroup)subGroups.next();
-			
-		}*/
+		while (subGroups.hasNext()) {
+			MetaContactGroup mcg = (MetaContactGroup)subGroups.next();
+	        Iterator metaContactsInGroup = mcg.getChildContacts();
+			while (metaContactsInGroup.hasNext())
+			{
+				MetaContact mc = (MetaContact)metaContactsInGroup.next();
+				System.out.print(mc.getDisplayName());
+				System.out.println(" - " + mc.getMetaUID());
+			}
+		}
 		
-		/* OperationSetBasicInstantMessaging im
+		MetaContact mc = metaCListService.findMetaContactByMetaUID("119306544976325845065");
+		Contact contact = mc.getDefaultContact();
+		OperationSetBasicInstantMessaging im
             = (OperationSetBasicInstantMessaging) contact.getProtocolProvider()
                 .getOperationSet(OperationSetBasicInstantMessaging.class);
- Message msg = im.createMessage(text);
- im.sendInstantMessage(contact, msg); */
+		Message msg = im.createMessage("Hello f2f-world!");
+		im.sendInstantMessage(contact, msg);
 		
 	}
 
