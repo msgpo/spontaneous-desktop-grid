@@ -69,6 +69,7 @@ class UDPTestMsgs
 	{
 		if (msg.length > MAX_MESSAGE_SIZE)
 		{
+			//TODO split the message in a better way
 			int half_size1 = (int)Math.floor((double)msg.length / (double)2);
 			byte[] half_msg = new byte[half_size1];
 			for (int i = 0; i < half_size1; i++) half_msg[i] = msg[i];
@@ -163,7 +164,7 @@ class UDPTestMsgs
 		}
 	}
 
-	private static void testBandwidth(byte[] msg, SocketAddress addr, DatagramSocket socket) throws IOException
+	private static long testBandwidth(byte[] msg, SocketAddress addr, DatagramSocket socket) throws IOException
 	{
 		// 10M
 		System.out.println("Sending 10 MB in total by " +msg.length+ " B ... ");
@@ -177,9 +178,10 @@ class UDPTestMsgs
 			if (sent_data >= data_size) break;
 		}
 		long end = System.currentTimeMillis();
-		long duration = (end - start) / 1000;
-		long bandwidth = duration > 0 ? data_size/duration : data_size;
-		System.out.println("\ttook " + duration + "s, " + bandwidth + "B/s");
+		long duration = end - start;
+		long bandwidth = data_size/duration;
+		System.out.println("\ttook " + duration/1000 + " s, " + bandwidth + " B/ms");
+		return duration;
 	}
 	private static void sendMessageWithoutACK(byte[] msg, SocketAddress addr, DatagramSocket socket, boolean more) throws IOException
 	{
@@ -203,7 +205,7 @@ class UDPTestMsgs
 		DatagramPacket packetOut = new DatagramPacket(data, data.length, addr);
 		socket.send(packetOut);
 	}
-	private static void testBandwidth2(byte[] msg, SocketAddress addr, DatagramSocket socket) throws IOException
+	private static long testBandwidth2(byte[] msg, SocketAddress addr, DatagramSocket socket) throws IOException
 	{
 		// 10M
 		System.out.println("Sending 10 MB in total by " +msg.length+ " B ... ");
@@ -217,9 +219,10 @@ class UDPTestMsgs
 			if (sent_data >= data_size) break;
 		}
 		long end = System.currentTimeMillis();
-		long duration = (end - start) / 1000;
-		long bandwidth = duration > 0 ? data_size/duration : data_size;
-		System.out.println("\ttook " + duration + "s, " + bandwidth + "B/s");
+		long duration = end - start;
+		long bandwidth = data_size/duration;
+		System.out.println("\ttook " + duration/1000 + " s, " + bandwidth + " B/ms");
+		return duration;
 	}
 	
 	UDPTestMsgs() throws IOException, NoSuchAlgorithmException 
@@ -236,9 +239,11 @@ class UDPTestMsgs
 			for (int i = msgs.length-1; i >= 0; i--)
 			{
 				System.out.println("\n");
-				//testBandwidth(msgs[i], addr, socket);
+				long t1 = testBandwidth(msgs[i], addr, socket);
 				
-				testBandwidth2(msgs[i], addr, socket);
+				long t2 = testBandwidth2(msgs[i], addr, socket);
+				
+				System.out.println((double)t2/(double)t1);
 				
 				/*
 				// send a message
