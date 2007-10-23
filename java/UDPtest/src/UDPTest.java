@@ -88,7 +88,7 @@ class UDPTestMsgs
 		DatagramPacket packetIn = new DatagramPacket(new byte[1], 1); 
 		while (true)
 		{
-			System.out.println("send " + msg.length + "...");
+	//		System.out.println("send " + msg.length + "...");
 			socket.send(packetOut);
 			// check if message was received correctly
 			socket.setSoTimeout(5000);
@@ -97,7 +97,7 @@ class UDPTestMsgs
 			}
 			catch (SocketTimeoutException ex)
 			{
-				System.out.println("timeout");
+	//			System.out.println("timeout");
 				// if acknoledgment is not received in 5 seconds
 				// send this packet in 2 pieces
 				int half_size1 = (int)Math.floor((double)msg.length / (double)2);
@@ -112,14 +112,14 @@ class UDPTestMsgs
 			}
 			if (packetIn.getData()[0] == ACK)
 			{
-				System.out.println("received ACK");
+	//			System.out.println("received ACK");
 				// all done
 				return;
 			}
-			else if (packetIn.getData()[0] == NAK)
-				System.out.println("received NACK");
-			else
-				System.out.println("received unknown answer of size " + packetIn.getLength());
+	//		else if (packetIn.getData()[0] == NAK)
+	//			System.out.println("received NACK");
+	//		else
+	//			System.out.println("received unknown answer of size " + packetIn.getLength());
 		}
 	}
 	
@@ -131,7 +131,7 @@ class UDPTestMsgs
 		byte[] ret = new byte[0];
 		while (true)
 		{
-			System.out.print("receive... ");
+	//		System.out.print("receive... ");
 			socket.setSoTimeout(0);
 			socket.receive(packetIn);
 			data = packetIn.getData();
@@ -139,11 +139,11 @@ class UDPTestMsgs
 			for (int i = 1; i <= HASH_LENGTH; i++) hash[i-1] = data[i];
 			String str = new String(data, HASH_LENGTH+1, packetIn.getLength()-HASH_LENGTH-1);
 			byte[] msg = str.getBytes();
-			System.out.println(str.length());
+	//		System.out.println(str.length());
 			if (MessageDigest.isEqual(hash, md.digest(msg)))
 			//if (rnd.nextInt() > 0)
 			{
-				System.out.println("Hash OK");
+	//			System.out.println("Hash OK");
 				data = new byte[]{ACK};
 				inAddr = packetIn.getSocketAddress();
 				byte[] new_ret = new byte[ret.length+msg.length];
@@ -153,7 +153,7 @@ class UDPTestMsgs
 			}
 			else
 			{
-				System.out.println("Hash FAIL");
+	//			System.out.println("Hash FAIL");
 				data = new byte[]{NAK};
 			}
 			// responce
@@ -161,6 +161,25 @@ class UDPTestMsgs
 			socket.send(packetOut);
 			if (data[0] == ACK && !more) return ret;
 		}
+	}
+	
+	private static void testBandwidth(byte[] msg, SocketAddress addr, DatagramSocket socket) throws IOException
+	{
+		// 10M
+		System.out.println("Sending 10 MB in total by " +msg.length+ " B ... ");
+		final long data_size = 10*1024*1024;
+		long sent_data = 0;
+		long start = System.currentTimeMillis();
+		while (true)
+		{
+			sendMessage(msg, addr, socket);
+			sent_data += msg.length;
+			if (sent_data >= data_size) break;
+		}
+		long end = System.currentTimeMillis();
+		long duration = (end - start) / 1000;
+		long bandwidth = duration > 0 ? data_size/duration : data_size;
+		System.out.println("\ttook " + duration + "s, " + bandwidth + "B/s");
 	}
 	
 	UDPTestMsgs() throws IOException, NoSuchAlgorithmException 
@@ -174,13 +193,16 @@ class UDPTestMsgs
 		{
 			initializeMsgs(msgs);
 			System.out.println("client");
-			for (byte[] msg: msgs)
+			for (int i = msgs.length-1; i >= 0; i--)
 			{
 				System.out.println("\n");
+				testBandwidth(msgs[i], addr, socket);
+				/*
 				// send a message
 				sendMessage(msg, addr, socket);
 				// receive the same message
 				receiveMessage(socket);
+				*/
 			}
 		}
 		else
@@ -189,11 +211,11 @@ class UDPTestMsgs
 			socket = new DatagramSocket(addr);
 			while (true)
 			{
-				System.out.println("\n");
+				//System.out.println("\n");
 				// receive a message
 				msg = receiveMessage(socket);
 				// send the message back
-				sendMessage(msg, inAddr, socket);
+				//sendMessage(msg, inAddr, socket);
 			}
 		}
 	}
