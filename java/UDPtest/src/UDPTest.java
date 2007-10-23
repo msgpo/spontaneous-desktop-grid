@@ -162,7 +162,7 @@ class UDPTestMsgs
 			if (data[0] == ACK && !more) return ret;
 		}
 	}
-	
+
 	private static void testBandwidth(byte[] msg, SocketAddress addr, DatagramSocket socket) throws IOException
 	{
 		// 10M
@@ -173,6 +173,46 @@ class UDPTestMsgs
 		while (true)
 		{
 			sendMessage(msg, addr, socket);
+			sent_data += msg.length;
+			if (sent_data >= data_size) break;
+		}
+		long end = System.currentTimeMillis();
+		long duration = (end - start) / 1000;
+		long bandwidth = duration > 0 ? data_size/duration : data_size;
+		System.out.println("\ttook " + duration + "s, " + bandwidth + "B/s");
+	}
+	private static void sendMessageWithoutACK(byte[] msg, SocketAddress addr, DatagramSocket socket, boolean more) throws IOException
+	{
+		if (msg.length > MAX_MESSAGE_SIZE)
+		{
+			int half_size1 = (int)Math.floor((double)msg.length / (double)2);
+			byte[] half_msg = new byte[half_size1];
+			for (int i = 0; i < half_size1; i++) half_msg[i] = msg[i];
+			sendMessageWithoutACK(half_msg, addr, socket, true);
+			int half_size2 = (int)Math.ceil((double) msg.length / (double)2);
+			half_msg = new byte[half_size2];
+			for (int i = 0; i < half_size2; i++) half_msg[i] = msg[i + half_size1];
+			sendMessageWithoutACK(half_msg, addr, socket, more);
+			return;
+		}
+		byte [] hash = md.digest(msg);
+		byte [] data = new byte[1 + HASH_LENGTH + msg.length];
+		data[0] = more ? ACK : NAK;
+		for (int i = 1; i <= HASH_LENGTH; i++) data[i] = hash[i-1];
+		for (int i = 1; i <= msg.length; i++) data[i+HASH_LENGTH] = msg[i-1];
+		DatagramPacket packetOut = new DatagramPacket(data, data.length, addr);
+		socket.send(packetOut);
+	}
+	private static void testBandwidth2(byte[] msg, SocketAddress addr, DatagramSocket socket) throws IOException
+	{
+		// 10M
+		System.out.println("Sending 10 MB in total by " +msg.length+ " B ... ");
+		final long data_size = 10*1024*1024;
+		long sent_data = 0;
+		long start = System.currentTimeMillis();
+		while (true)
+		{
+			sendMessageWithoutACK(msg, addr, socket, false);
 			sent_data += msg.length;
 			if (sent_data >= data_size) break;
 		}
@@ -196,7 +236,10 @@ class UDPTestMsgs
 			for (int i = msgs.length-1; i >= 0; i--)
 			{
 				System.out.println("\n");
-				testBandwidth(msgs[i], addr, socket);
+				//testBandwidth(msgs[i], addr, socket);
+				
+				testBandwidth2(msgs[i], addr, socket);
+				
 				/*
 				// send a message
 				sendMessage(msg, addr, socket);
