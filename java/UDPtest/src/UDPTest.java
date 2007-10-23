@@ -33,7 +33,7 @@ class UDPTestMsgs
 	private DatagramSocket socket = new DatagramSocket();
 	byte[] msg = null, hash = new byte[HASH_LENGTH], data = new byte[MAX_PACKET_SIZE];// this is the maximum size
 	DatagramPacket packetOut = null, packetIn = new DatagramPacket(data, MAX_PACKET_SIZE);
-	InetSocketAddress addr = UDPTestThread.getAddrFromString("localhost:4445");
+	InetSocketAddress addr = UDPTestThread.getAddrFromString("hades.at.mt.ut.ee:4445");
 	MessageDigest md = null;
 	byte[][] msgs = 
 		new byte[][]
