@@ -29,6 +29,7 @@ class UDPTestMsgs
 	final static byte NAK = 21;
 	final static int HASH_LENGTH = 16;
 	final static int MAX_PACKET_SIZE = 65507;
+	final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1;//one for MORE byte  
 	final static String HASH_ALGORITHM = "MD5";
 	
 	private DatagramSocket socket = new DatagramSocket();
@@ -66,6 +67,18 @@ class UDPTestMsgs
 	}
 	private static void sendMessage(byte[] msg, SocketAddress addr, DatagramSocket socket, boolean more) throws IOException
 	{
+		if (msg.length > MAX_MESSAGE_SIZE)
+		{
+			int half_size1 = (int)Math.floor((double)msg.length / (double)2);
+			byte[] half_msg = new byte[half_size1];
+			for (int i = 0; i < half_size1; i++) half_msg[i] = msg[i];
+			sendMessage(half_msg, addr, socket, true);
+			int half_size2 = (int)Math.ceil((double) msg.length / (double)2);
+			half_msg = new byte[half_size2];
+			for (int i = 0; i < half_size2; i++) half_msg[i] = msg[i + half_size1];
+			sendMessage(half_msg, addr, socket, more);
+			return;
+		}
 		byte [] hash = md.digest(msg);
 		byte [] data = new byte[1 + HASH_LENGTH + msg.length];
 		data[0] = more ? ACK : NAK;
