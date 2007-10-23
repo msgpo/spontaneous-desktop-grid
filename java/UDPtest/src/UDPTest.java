@@ -55,22 +55,27 @@ class UDPTestMsgs
 			new byte[8192],
 			new byte[16384],
 			new byte[32768],
-			new byte[MAX_PACKET_SIZE-HASH_LENGTH],
+			new byte[MAX_PACKET_SIZE-HASH_LENGTH-1],
 			new byte[MAX_PACKET_SIZE+HASH_LENGTH]
 	    };
 	String str = null;
 	
 	private static void sendMessage(byte[] msg, SocketAddress addr, DatagramSocket socket) throws IOException
 	{
+		sendMessage(msg, addr, socket, false);
+	}
+	private static void sendMessage(byte[] msg, SocketAddress addr, DatagramSocket socket, boolean more) throws IOException
+	{
 		byte [] hash = md.digest(msg);
-		byte [] data = new byte[msg.length + HASH_LENGTH];
-		for (int i = 0; i < HASH_LENGTH; i++) data[i] = hash[i];
-		for (int i = 0; i < msg.length; i++) data[i+HASH_LENGTH] = msg[i];
+		byte [] data = new byte[1 + HASH_LENGTH + msg.length];
+		data[0] = more ? ACK : NAK;
+		for (int i = 1; i <= HASH_LENGTH; i++) data[i] = hash[i-1];
+		for (int i = 1; i <= msg.length; i++) data[i+HASH_LENGTH] = msg[i-1];
 		DatagramPacket packetOut = new DatagramPacket(data, data.length, addr);
 		DatagramPacket packetIn = new DatagramPacket(new byte[1], 1); 
 		while (true)
 		{
-			System.out.println("send");
+			System.out.println("send " + msg.length + "...");
 			socket.send(packetOut);
 			// check if message was received correctly
 			socket.setSoTimeout(5000);
@@ -85,11 +90,11 @@ class UDPTestMsgs
 				int half_size1 = (int)Math.floor((double)msg.length / (double)2);
 				byte[] half_msg = new byte[half_size1];
 				for (int i = 0; i < half_size1; i++) half_msg[i] = msg[i];
-				sendMessage(half_msg, addr, socket);
+				sendMessage(half_msg, addr, socket, true);
 				int half_size2 = (int)Math.ceil((double) msg.length / (double)2);
 				half_msg = new byte[half_size2];
 				for (int i = 0; i < half_size2; i++) half_msg[i] = msg[i + half_size1];
-				sendMessage(half_msg, addr, socket);
+				sendMessage(half_msg, addr, socket, more);
 				return;
 			}
 			if (packetIn.getData()[0] == ACK)
@@ -110,15 +115,16 @@ class UDPTestMsgs
 	{
 		byte[] hash = new byte[HASH_LENGTH], data = new byte[MAX_PACKET_SIZE];// this is the maximum size of incoming package
 		DatagramPacket packetIn = new DatagramPacket(data, MAX_PACKET_SIZE);
-		
+		byte[] ret = new byte[0];
 		while (true)
 		{
-			System.out.println("receive");
+			System.out.print("receive... ");
 			socket.setSoTimeout(0);
 			socket.receive(packetIn);
 			data = packetIn.getData();
-			for (int i = 0; i < HASH_LENGTH; i++) hash[i] = data[i];
-			String str = new String(data, HASH_LENGTH, packetIn.getLength()-HASH_LENGTH);
+			boolean more = data[0] == ACK;
+			for (int i = 1; i <= HASH_LENGTH; i++) hash[i-1] = data[i];
+			String str = new String(data, HASH_LENGTH+1, packetIn.getLength()-HASH_LENGTH-1);
 			byte[] msg = str.getBytes();
 			System.out.println(str.length());
 			if (MessageDigest.isEqual(hash, md.digest(msg)))
@@ -127,6 +133,10 @@ class UDPTestMsgs
 				System.out.println("Hash OK");
 				data = new byte[]{ACK};
 				inAddr = packetIn.getSocketAddress();
+				byte[] new_ret = new byte[ret.length+msg.length];
+				for (int i = 0; i < ret.length; i++) new_ret[i] = ret[i];
+				for (int i = 0; i < msg.length; i++) new_ret[i+ret.length] = msg[i];
+				ret = new_ret;
 			}
 			else
 			{
@@ -136,7 +146,7 @@ class UDPTestMsgs
 			// responce
 			DatagramPacket packetOut = new DatagramPacket(data, data.length, packetIn.getSocketAddress());
 			socket.send(packetOut);
-			if (data[0] == ACK) return msg;
+			if (data[0] == ACK && !more) return ret;
 		}
 	}
 	
@@ -153,7 +163,7 @@ class UDPTestMsgs
 			System.out.println("client");
 			for (byte[] msg: msgs)
 			{
-				System.out.println("\n" + msg.length);
+				System.out.println("\n");
 				// send a message
 				sendMessage(msg, addr, socket);
 				// receive the same message
@@ -166,6 +176,7 @@ class UDPTestMsgs
 			socket = new DatagramSocket(addr);
 			while (true)
 			{
+				System.out.println("\n");
 				// receive a message
 				msg = receiveMessage(socket);
 				// send the message back
