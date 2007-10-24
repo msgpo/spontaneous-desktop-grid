@@ -319,25 +319,12 @@ class UDPTestBandwidthWithoutACK
 	UDPTestBandwidthWithoutACK() throws IOException 
 	{
 		System.out.println("Test bandwidth without ACK answer");
-		String str = TestStuff.askClientOrServer();
-		if (str.equals("C") || str.equals("c"))
+		DatagramSocket socket = new DatagramSocket();
+		System.out.println("client");
+		for (int i = TestStuff.msgs.length-1; i >= 0; i--)
 		{
-			DatagramSocket socket = new DatagramSocket();
-			System.out.println("client");
-			for (int i = TestStuff.msgs.length-1; i >= 0; i--)
-			{
-				System.out.println("\n");
-				TestStuff.testBandwidthWithoutACK(TestStuff.msgs[i], TestStuff.getServerAddress(), socket);
-			}
-		}
-		else
-		{
-			System.out.println("server");
-			DatagramSocket socket = new DatagramSocket(TestStuff.getServerAddress());
-			while (true)
-			{
-				TestStuff.receiveMessage(socket);
-			}
+			System.out.println("\n");
+			TestStuff.testBandwidthWithoutACK(TestStuff.msgs[i], TestStuff.getServerAddress(), socket);
 		}
 	}
 }
