@@ -28,7 +28,9 @@ public class BlenderCommunicatorTest extends TestCase {
 		
 		BlenderCommunicator.renderTask(task);
 		
-		assertTrue(new File("etc\\0010_0013.avi").exists());
+		File output = new File("etc\\0010_0013.avi");
+		assertTrue(output.exists());
+		output.delete();
 	}
 	
 	public void testSplit(){
@@ -109,8 +111,20 @@ public class BlenderCommunicatorTest extends TestCase {
 		
 		BlenderCommunicator.renderJob(job);
 		
-		assertTrue(new File(job.getOutputLocation() + "0010_0012.avi").exists());
-		assertTrue(new File(job.getOutputLocation() + "0013_0014.avi").exists());
+		File output1 = new File(job.getOutputLocation() + "0010_0012.avi");
+		File output2 = new File(job.getOutputLocation() + "0013_0014.avi");
+		
+		assertTrue(output1.exists());
+		assertTrue(output2.exists());
+		
+		output1.delete();
+		output2.delete();		
+	}
+	
+	public void testCountFrames(){
+		int frames = BlenderCommunicator.countFrames("etc\\VictorDancing.blend");
+		
+		assertEquals(frames, 24);
 	}
 
 }

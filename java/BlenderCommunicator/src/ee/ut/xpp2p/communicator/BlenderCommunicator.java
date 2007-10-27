@@ -1,6 +1,7 @@
 package ee.ut.xpp2p.communicator;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -49,7 +50,56 @@ public class BlenderCommunicator {
 		job.setEndFrame(14);
 		job.setParticipants(2);
 		
-		renderJob(job);
+		int numberOfFrames = countFrames(inputFile);
+		//renderJob(job);
+	}
+	
+	/**
+	 * Finds the number of frames in given .blend-file by starting rendering 
+	 * and then reading the number of frames from command line.
+	 * @param inputFile file for which framecount is found
+	 * @return number of frames in given file
+	 */
+	public static int countFrames(String inputFile) {
+		
+		String[] cmdarr = {"blender", 
+					"-b", inputFile, 
+					"-o", "test", 
+					"-a"}; 
+		try {
+			Process proc = Runtime.getRuntime().exec(cmdarr);
+			BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
+		
+			String line;
+			
+			while ((line = br.readLine()) != null) {
+				if (
+ 					line.startsWith("'blender' is not recognized") ||
+					line.indexOf("blender") != -1 && line.indexOf("not found") != -1
+				)
+					throw new NothingRenderedException("Couldn't read framecount in file");
+				
+				else if (line.startsWith("Created") && line.indexOf("test") > -1) {
+					//Finds the framecount
+					String filename = line.substring(line.lastIndexOf("test"));
+					String frameCount = filename.substring(filename.lastIndexOf("_")+1, filename.lastIndexOf("."));
+					
+					//Cleans up
+					proc.destroy();
+					(new File(filename)).delete();
+					
+					return Integer.parseInt(frameCount);
+				}
+			}
+				
+		}
+		catch(IOException e){
+			System.out.println(e.getMessage());
+		}
+		catch(NothingRenderedException e){
+			System.out.println(e.getMessage());
+		}
+		return 0;
 	}
 	
 	/**
