@@ -8,6 +8,7 @@ import java.io.InputStreamReader;
 import ee.ut.xpp2p.exception.NothingRenderedException;
 import ee.ut.xpp2p.model.Job;
 import ee.ut.xpp2p.model.Task;
+import ee.ut.xpp2p.ui.MainWindow;
 
 /**
  * Command line communicator between Java and Blender
@@ -16,42 +17,12 @@ import ee.ut.xpp2p.model.Task;
  */
 public class BlenderCommunicator {
 	
+	/**
+	 * Main method of the program
+	 * @param args
+	 */
 	public static void main(String[] args) {
-		String inputFile, outputLocation, fileFormat;
-		
-		// Getting input file
-		inputFile = BlenderFileChooser.openBlendFile();
-		if (inputFile == null) {
-			System.out.println("Input file must be chosen");
-			return;
-		}
-		
-		
-		// Getting output location
-		outputLocation = BlenderFileChooser.saveBlendFile();
-		if (outputLocation == null) {
-			System.out.println("Output location must be chosen");
-			return;
-		}
-		
-		// Getting File format
-		fileFormat = BlenderFileChooser.selectFileFormat();
-		if (fileFormat == null) {
-			System.out.println("Output file format must be chosen");
-			return;
-		}
-		
-		Job job = new Job();
-		job.setInputFile(inputFile);
-		job.setOutputLocation(outputLocation);
-		job.setOutputFormat(fileFormat);
-		//TODO: Hard-coded parameters
-		job.setStartFrame(10);
-		job.setEndFrame(14);
-		job.setParticipants(2);
-		
-		int numberOfFrames = countFrames(inputFile);
-		//renderJob(job);
+		MainWindow.initMainWindow();
 	}
 	
 	/**
@@ -60,12 +31,13 @@ public class BlenderCommunicator {
 	 * @param inputFile file for which framecount is found
 	 * @return number of frames in given file
 	 */
-	public static int countFrames(String inputFile) {
+	public static long countFrames(String inputFile) {
 		
 		String[] cmdarr = {"blender", 
 					"-b", inputFile, 
-					"-o", "test", 
-					"-a"}; 
+					"-o", "frameCount", 
+					"-F", "AVIJPEG",
+					"-a", "-x", "1"}; 
 		try {
 			Process proc = Runtime.getRuntime().exec(cmdarr);
 			BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
@@ -79,16 +51,20 @@ public class BlenderCommunicator {
 				)
 					throw new NothingRenderedException("Couldn't read framecount in file");
 				
-				else if (line.startsWith("Created") && line.indexOf("test") > -1) {
+				else if (line.startsWith("Created") && line.indexOf("frameCount") > -1) {
 					//Finds the framecount
-					String filename = line.substring(line.lastIndexOf("test"));
+					String filename = line.substring(line.lastIndexOf("frameCount"));
 					String frameCount = filename.substring(filename.lastIndexOf("_")+1, filename.lastIndexOf("."));
 					
 					//Cleans up
 					proc.destroy();
-					(new File(filename)).delete();
+					boolean frameFileDeleted = false;
 					
-					return Integer.parseInt(frameCount);
+					// Creating this file takes some time... so we wait a little
+					while(!frameFileDeleted){
+						frameFileDeleted = (new File(filename)).delete();
+					}
+					return Long.parseLong(frameCount);
 				}
 			}
 				
@@ -191,6 +167,7 @@ public class BlenderCommunicator {
 	 * @param job job to render
 	 */
 	public static void renderJob(Job job) {
+			
 		long[] partLengths = splitTask(job.getStartFrame(), job.getEndFrame(), job.getParticipants());
 		
 		long currentFrame = job.getStartFrame();

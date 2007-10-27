@@ -1,4 +1,4 @@
-package ee.ut.xpp2p.communicator;
+package ee.ut.xpp2p.ui;
 import java.io.File;
 import javax.swing.filechooser.*;
 
