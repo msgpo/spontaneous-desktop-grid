@@ -69,7 +69,9 @@ public class SipCommunicationLayer
 	 * PeerID -> Peer
 	 */
 	private Hashtable<String, Peer> peersHash = null;
-	public Collection<Peer> getPeers() { return peersHash.values(); }
+	public Collection<Peer> getPeers() {
+		return peersHash.values(); 
+	}
 	/**
 	 * PeerAddress -> PeerID
 	 */
@@ -127,17 +129,17 @@ public class SipCommunicationLayer
             return;
         }
         // in case we found any
+        
         if (protocolProviderRefs != null)
         {
         	// compose local peer name ...
         	//NB! this name may not be surrounded with '[' and ']' because JXTA does not allow this!!!
         	localID += "{F2F:";
             for (int i = 0; i < protocolProviderRefs.length; i++)
-            {
+            {            	
                 ProtocolProviderService provider = (ProtocolProviderService) bc
                     .getService(protocolProviderRefs[i]);
                 localID += "<"+provider.getProtocolName()+":"+ provider.getAccountID().getUserID()+">";
-
                 if (displayName == null || displayName.isEmpty())
                 {
                 	displayName = (String)provider.getAccountID().getAccountProperties().get(ProtocolProviderFactory.DISPLAY_NAME);
@@ -149,7 +151,7 @@ public class SipCommunicationLayer
 		
         F2FDebug.println("\t\tlocal peerID is: " + localID);
 
-		this.localPeer = new SipPeer(this, localID, displayName);
+		this.localPeer = new SipPeer(this, localID, displayName, null);
 		new Thread(new SipListener(localID)).start();
 
 		if (protocolProviderRefs != null)
@@ -168,6 +170,7 @@ public class SipCommunicationLayer
 			addF2FPeersFromMetaContactGroup(getMetaContactListService().getRoot());
 		}
 	}
+
 	
 	private MetaContactListService metaCListService = null;
 	private MetaContactListService getMetaContactListService()
@@ -176,7 +179,7 @@ public class SipCommunicationLayer
         {
             ServiceReference clistReference = bundleContext
                 .getServiceReference(MetaContactListService.class.getName());
-    
+            
             metaCListService = (MetaContactListService) bundleContext
                     .getService(clistReference);
         }
@@ -228,7 +231,7 @@ public class SipCommunicationLayer
 						sID = req.getSipID();
 						if (sID == null)
 						{
-							//F2FDebug.println("\t\t " + contact.getDisplayName() + " is not F2F-capable");
+							System.out.println("\t\t " + contact.getDisplayName() + " is not F2F-capable");
 							return;
 						}
 						synchronized (addressHash)
@@ -242,7 +245,8 @@ public class SipCommunicationLayer
 						Peer peer = peersHash.get(sID);
 						if (peer == null)
 						{
-							peer = new SipPeer(SipCommunicationLayer.this, sID, contact.getDisplayName());
+							
+							peer = new SipPeer(SipCommunicationLayer.this, sID, contact.getDisplayName(), contact);
 							peersHash.put(sID, peer);
 						}
 					}
@@ -494,7 +498,7 @@ public class SipCommunicationLayer
 						if (peer == null)
 						{
 							// create peer
-							peer = new SipPeer(SipCommunicationLayer.this, remoteID, remoteDisplayName);
+							peer = new SipPeer(SipCommunicationLayer.this, remoteID, remoteDisplayName, null);
 							peersHash.put(remoteID, peer);
 						}
 						// now peer should be not null, but still lets check it

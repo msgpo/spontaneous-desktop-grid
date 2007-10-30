@@ -6,6 +6,14 @@ package ee.ut.f2f.comm.sip;
 import java.io.IOException;
 import java.net.Socket;
 
+import net.java.sip.communicator.service.contactlist.MetaContact;
+import net.java.sip.communicator.service.contactlist.MetaContactListService;
+import net.java.sip.communicator.service.protocol.Contact;
+import net.java.sip.communicator.service.protocol.Message;
+import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
+import net.java.sip.communicator.impl.gui.*;
+
+import org.osgi.framework.ServiceReference;
 import org.p2psockets.P2PSocket;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
@@ -13,40 +21,61 @@ import ee.ut.f2f.comm.CommunicationLayer;
 import ee.ut.f2f.comm.CommunicationListener;
 import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.F2FTestsMessageListener;
+import ee.ut.f2f.util.SipMsgListener;
 
 class SipPeer implements Peer
 {
 	private SipCommunicationLayer commLayer;
-	public CommunicationLayer getCommunicationLayer()
-	{
-		return this.commLayer;
-	}
-	
 	private String ID;
 	private String displayName;
 	private Socket outSocket;
 	private SipObjectOutput oo;
 	private SipObjectInput oi;
-
-
-	public String getDisplayName() { return displayName; }
-	public SipPeer(SipCommunicationLayer layer, String sID, String displayName)
+	private OperationSetBasicInstantMessaging m_im;
+	private Contact m_sipContact;
+	
+	public SipPeer(SipCommunicationLayer layer, String sID, String displayName, Contact c)
 	{
-		this.commLayer = layer;
+		if (c != null) {
+		  m_sipContact = c;		  
+		  m_im = (OperationSetBasicInstantMessaging) m_sipContact.getProtocolProvider()
+              .getOperationSet(OperationSetBasicInstantMessaging.class);
+		  m_im.addMessageListener(new SipMsgListener());			 
+		  System.out.println("Contact added for peer: " + c.getDisplayName() + " - " + c.getAddress());		 
+		}
+		this.commLayer = layer;	
 		this.ID = sID;
 		this.displayName = displayName;
 	}
 	
+	/*Message msg = m_im.createMessage("Hello f2f-world!");	
+	im.sendInstantMessage(contact, msg);
+	im.addMessageListener(new F2FTestsMessageListener() );*/
+	
+	public CommunicationLayer getCommunicationLayer()
+	{
+		return this.commLayer;
+	}
+	
+	public String getDisplayName() { return displayName; }
+	
+	
 	public String getID()
 	{
 		return ID;
+	}
+	
+	
+	public Contact getContact() {
+		return m_sipContact;
 	}
 
 	public boolean isOnline()
 	{
 		return true;
 	}
-
+/*
 	public synchronized void sendMessage(Object message)
 			throws CommunicationFailedException
 	{
@@ -60,7 +89,18 @@ class SipPeer implements Peer
 			throw new CommunicationFailedException(e);
 		}
 	}
-
+*/		
+	public synchronized void sendMessage(Object message) throws CommunicationFailedException {
+		if (getContact() != null) {			
+			Message msg = m_im.createMessage((String)message);	
+			m_im.sendInstantMessage(getContact(), msg);
+			F2FDebug.println("\t\tSent message '" + (String)message + "' to '" + getContact().getDisplayName() + "'");
+		}
+		else
+			F2FDebug.println("Contact not found for: " + this);
+		
+	}	
+	
 	private SipObjectOutput getOo() throws IOException
 	{
 		if(oo == null)

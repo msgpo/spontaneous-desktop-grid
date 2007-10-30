@@ -19,17 +19,15 @@ public class CommunicationFactory
 {
 	private CommunicationFactory(){};
 	
-	private static final String PROPERTIES_FILE_DEFAULT_NAME = "F2FComputing.properties";
+	private static final String PROPERTIES_FILE_DEFAULT_NAME = "F2FClient.properties";
 
 	public static Collection<CommunicationLayer> getInitializedCommunicationLayers()
 	{
 		Collection<CommunicationLayer> commLayers = new ArrayList<CommunicationLayer>();
-		
-		// initialize layers according to properties file
 		final CommLayerProperties props = readProps();
 		if (props == null)
 		{
-			return commLayers;
+			return commLayers;	
 		}
 		
 		CommunicationLayer commLayer = null;
@@ -45,10 +43,15 @@ public class CommunicationFactory
 				F2FDebug.println("\t\tGetSocketCommununication() throwed CommunicationInitException!" + e);
 			}
 		}
+		
 		if (props.bInitSip)
 		{
 			F2FDebug.println("\t\tINIT SIP");
 			commLayer = GetSipCommununication();
+			try {
+			  System.out.println("COmmlayer getpeers: "+ commLayer.getPeers().size());
+			}
+			catch (Exception e) {}
 			if (commLayer != null) commLayers.add(commLayer);
 			else
 			{

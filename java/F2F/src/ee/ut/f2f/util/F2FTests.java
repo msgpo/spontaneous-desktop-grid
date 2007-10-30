@@ -34,10 +34,11 @@ public class F2FTests {
         MetaContactListService metaCListService = (MetaContactListService) bundleContext
             .getService(clistReference);
         
+        
         Iterator metaContactsInRoot = metaCListService.getRoot().getChildContacts();
 		while (metaContactsInRoot.hasNext())
 		{
-			MetaContact mc = (MetaContact)metaContactsInRoot.next();
+			MetaContact mc = (MetaContact)metaContactsInRoot.next();			
 			System.out.print(mc.getDisplayName());
 			System.out.println(" - " + mc.getMetaUID());
 		}
@@ -53,15 +54,15 @@ public class F2FTests {
 			}
 		}
 		
-		MetaContact mc = metaCListService.findMetaContactByMetaUID("119306544976325845065");
+		MetaContact mc = metaCListService.findMetaContactByMetaUID("119315350401331541880");
 		Contact contact = mc.getDefaultContact();
 		OperationSetBasicInstantMessaging im
             = (OperationSetBasicInstantMessaging) contact.getProtocolProvider()
                 .getOperationSet(OperationSetBasicInstantMessaging.class);
-		Message msg = im.createMessage("Hello f2f-world!");
+		Message msg = im.createMessage("Hello f2f-world!");	
 		im.sendInstantMessage(contact, msg);
-		
 		im.addMessageListener(new F2FTestsMessageListener() );
+		
 	}
 
 

@@ -15,7 +15,7 @@ public class Activator implements BundleActivator {
 	public void start(BundleContext context) throws Exception {
 		System.out.println("f2f-plugin: Start F2F SC-plugin");
 		SipCommunicationLayer.initiateSipCommunicationLayer(context);
-    	F2FComputingGUI.main(new String[]{});
+		F2FComputingGUI.main(new String[]{});
 	}
 	
 	/*

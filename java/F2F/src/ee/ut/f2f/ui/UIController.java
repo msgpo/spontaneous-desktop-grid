@@ -1,6 +1,9 @@
 package ee.ut.f2f.ui;
 
+import java.awt.BorderLayout;
 import java.awt.Dimension;
+import java.awt.GridBagConstraints;
+import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -10,7 +13,9 @@ import java.io.IOException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Hashtable;
 import java.util.Iterator;
+import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -28,6 +33,7 @@ import javax.swing.JMenuBar;
 import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
+import javax.swing.JTabbedPane;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -36,8 +42,13 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
+import net.java.sip.communicator.service.protocol.Contact;
+import net.java.sip.communicator.service.protocol.Message;
+import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
+
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.comm.sip.SipCommunicationLayer;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
@@ -46,6 +57,7 @@ import ee.ut.f2f.core.Job;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FTests;
+import ee.ut.f2f.util.SipMsgListener;
 
 public class UIController{
 	private JFrame frame = null;
@@ -62,6 +74,8 @@ public class UIController{
 	private JPanel friendsPanel = null;
 	private JList friendsList = null;
 	private FriendModel friendModel = null;
+	private Hashtable<String, Collection<Peer>> m_chatPeers;
+	private Hashtable<String, Contact> m_chatHosts;
 	private JTextArea console = null;
 	private JTextField tf1 = null;
 	private JTextField tf2 = null;
@@ -83,14 +97,17 @@ public class UIController{
 	private Collection<Peer> selectFromPeers = new ArrayList<Peer>();
 	
 	public UIController(String title)
-	{
+	{	
+		m_chatPeers = new Hashtable<String, Collection<Peer>>();
+		m_chatHosts = new Hashtable<String, Contact>();
+		
 		frame = new JFrame("F2FComputing - " + title);
 		SpringLayout layout = new SpringLayout();
 		mainPanel = new JPanel(layout);
 		frame.setContentPane(mainPanel);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(800, 700);
-
+		
 		generalMenuBar = new JMenuBar();
 		frame.setJMenuBar(generalMenuBar);
 		mainPanel.setSize(frame.getSize());
@@ -132,22 +149,26 @@ public class UIController{
 		JScrollPane listScroller = new JScrollPane(friendsList);
 		friendsPanel.add(listScroller);
 
+			
 		JPanel consolePanel = new JPanel();
 		consolePanel.setLayout(new GridLayout(1,1));
-		consolePanel.setBorder(BorderFactory.createTitledBorder("Information"));
+		//consolePanel.setBorder(BorderFactory.createEmptyBorder());
 		consolePanel.setPreferredSize(new Dimension(570, 300+200));
 		layout.putConstraint(SpringLayout.WEST, consolePanel, 5, SpringLayout.EAST, friendsPanel);
 		layout.putConstraint(SpringLayout.NORTH, consolePanel, 0, SpringLayout.NORTH, friendsPanel);
 		mainPanel.add(consolePanel);
-
+		
+		JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
 		console = new JTextArea();
 		JScrollPane consoleScroller = new JScrollPane(console);
-		consolePanel.add(consoleScroller);
+
+		tabs.addTab("Information", consoleScroller);
+		consolePanel.add(tabs);
 		
 		// Messaging panel elements.
 		messagingPanel = new JPanel();
-		messagingPanel.setLayout(new GridLayout(3,1));
-		messagingPanel.setBorder(BorderFactory.createTitledBorder("Messaging"));
+		messagingPanel.setLayout(new BorderLayout());
+		//messagingPanel.setBorder(BorderFactory.createTitledBorder("Messaging"));
 		// Currently, will not add the messaging panel, as its usage has become obselete.
 		//messagingPanel.setPreferredSize(new Dimension(770, 200));
 		messagingPanel.setPreferredSize(new Dimension(770, 0));
@@ -167,29 +188,64 @@ public class UIController{
 		sendMessageButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				// Get selected peers and send the message to them.
-				for (Peer peer : getSelectedFriends())
-				{
-					try
-					{
-						peer.sendMessage(sendMessageTextArea.getText());
-					} catch (CommunicationFailedException cfe)
-					{
-						error("Sending message '"
-								+ sendMessageTextArea.getText()
-								+ "' to the peer '" + peer.getDisplayName()
-								+ "' failed with '" + cfe.getMessage() + "'");
-					}					
+				String k = null;
+				
+				if (m_chatPeers.size() == 0 && m_chatHosts.size() == 0) {
+					k = (int)(Math.random() * 1000000000)+"";
+					m_chatPeers.put(k, getSelectedFriends());					
+					System.out.println("Generating chat id " + k);
+				}
+				
+				String myName = SipCommunicationLayer.getInstance().getLocalPeer().getID();
+				if (m_chatPeers.size() > 0) {					
+					k = m_chatPeers.keys().nextElement();
+					for (Peer peer : m_chatPeers.get(k)) {
+						System.out.println("Sending message to peer: " + peer.getDisplayName());
+						try {
+							peer.sendMessage("F2F;"+k+";" + myName + ";"+sendMessageTextArea.getText());
+						} 
+						catch (CommunicationFailedException cfe) {					
+							error("Sending message '"
+									+ sendMessageTextArea.getText()
+									+ "' to the peer '" + peer.getDisplayName()
+									+ "' failed with '" + cfe.getMessage() + "'");
+						}				
+					}
+					writeMessage("me", sendMessageTextArea.getText());
+
+				}
+				else if (m_chatHosts.size() > 0) {
+					k = m_chatHosts.keys().nextElement();
+					Contact c = m_chatHosts.get(k);
+					OperationSetBasicInstantMessaging m_im;
+				    m_im = (OperationSetBasicInstantMessaging) c.getProtocolProvider().getOperationSet(OperationSetBasicInstantMessaging.class);
+					Message msg = m_im.createMessage("F2F;"+k+";" + myName + ";"+sendMessageTextArea.getText());	
+					m_im.sendInstantMessage(c, msg);
+					System.out.println("Sending message to host: " + c.getDisplayName());
 				}
 			}
 		});
 		
-		messagingPanel.add(receievedMessagesTextAreaScrollPane);		
-		messagingPanel.add(messagingPanelScrollPanel);
-		messagingPanel.add(sendMessageButton);
+		messagingPanel.add(receievedMessagesTextAreaScrollPane, BorderLayout.CENTER);		
+		JPanel southPanel = new JPanel(new GridBagLayout());
+		messagingPanel.add(southPanel, BorderLayout.SOUTH);
+		
+		GridBagConstraints c = new GridBagConstraints();
+		
+		//messagingPanelScrollPanel.setMinimumSize(new Dimension(300, 25));
+		c.fill = GridBagConstraints.HORIZONTAL;
+		c.weightx = 0.8;
+		c.weighty = 1.0;
+		southPanel.add(messagingPanelScrollPanel, c);
+		
+		c.weightx = 0.2;
+		southPanel.add(sendMessageButton, c);
+		
+		messagingPanelScrollPanel.setPreferredSize(new Dimension(300, 20));
+		sendMessageButton.setPreferredSize(new Dimension(80, 20));
 		
 		// Currently, will not add the messaging panel, as its usage has become obselete.
-		//mainPanel.add(messagingPanel);
+		tabs.add("Chat", messagingPanel);
 
 		JLabel label1 = new JLabel("Choose file:");
 		layout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.SOUTH, messagingPanel);
@@ -356,10 +412,30 @@ public class UIController{
 		
 		buttonTest.addActionListener(new ActionListener()
 		{
+			/*
 			public void actionPerformed(ActionEvent e)
 			{
 				F2FTests.doTests();
 			}
+			*/
+			public void actionPerformed(ActionEvent e)
+			{
+				// Get selected peers and send the message to them.
+				for (Peer peer : getSelectedFriends())
+				{
+					try
+					{
+						peer.sendMessage(sendMessageTextArea.getText());
+					} catch (CommunicationFailedException cfe)
+					{					
+						error("Sending message '"
+								+ sendMessageTextArea.getText()
+								+ "' to the peer '" + peer.getDisplayName()
+								+ "' failed with '" + cfe.getMessage() + "'");
+					}					
+				}
+			}
+			
 		});
 
 		//frame.pack();
@@ -451,7 +527,7 @@ public class UIController{
 		}
 		return selectedPeers;
 	}
-
+	
 	/**
 	 * Listener for {@link #friendsPanel}.
 	 */
@@ -496,5 +572,30 @@ public class UIController{
 			return "Jar file (.jar)";
 		}
 
+	}
+	
+	public void writeMessage(String from, String msg) {
+		receievedMessagesTextArea.setText(receievedMessagesTextArea.getText()+"\n"+from+": "+msg);
+	}
+	
+	public void processMessage(String key, String from, String msg, Contact sourceContact) {
+		if(m_chatPeers.containsKey(key) == true) {
+			for (Peer peer : m_chatPeers.get(key)) {
+				try {
+					peer.sendMessage("F2F;"+key+";"+from+";"+msg);
+				} 
+				catch (CommunicationFailedException cfe) {					
+					error("Sending message '"
+							+ sendMessageTextArea.getText()
+							+ "' to the peer '" + peer.getDisplayName()
+							+ "' failed with '" + cfe.getMessage() + "'");
+				}				
+			}
+		}
+		else if(m_chatHosts.containsKey(key) == false) {
+			m_chatHosts.put(key, sourceContact);
+		}
+		
+		writeMessage(from, msg);
 	}
 }

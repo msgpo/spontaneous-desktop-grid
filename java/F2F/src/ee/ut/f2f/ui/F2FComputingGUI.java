@@ -12,7 +12,7 @@ import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
 
 public class F2FComputingGUI {
-	static UIController controller;
+	public static UIController controller;
 	/**
 	 * Different Print streams for different log4j appenders. This could be done better (?)
 	 */
@@ -50,7 +50,6 @@ public class F2FComputingGUI {
 						return;
 					}
 					FriendModel friendModel = controller.getFriendModel();
-					
 					while (true)
 					{
 						try {
