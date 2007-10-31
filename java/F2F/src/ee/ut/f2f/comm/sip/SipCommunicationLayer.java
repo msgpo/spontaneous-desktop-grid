@@ -69,9 +69,7 @@ public class SipCommunicationLayer
 	 * PeerID -> Peer
 	 */
 	private Hashtable<String, Peer> peersHash = null;
-	public Collection<Peer> getPeers() {
-		return peersHash.values(); 
-	}
+	public Collection<Peer> getPeers() { return peersHash.values(); }
 	/**
 	 * PeerAddress -> PeerID
 	 */
@@ -116,53 +114,52 @@ public class SipCommunicationLayer
 		String displayName = "";
 		// get the protocols that peer has account in
 		ServiceReference[] protocolProviderRefs = null;
-        try
-        {
-            protocolProviderRefs = bc.getServiceReferences(
-                ProtocolProviderService.class.getName(),null);
-        }
-        catch (InvalidSyntaxException ex)
-        {
-            // this shouldn't happen since we're providing no parameter string
-            // but let's log just in case.
-        	F2FDebug.println("\t\tError while retrieving service refs" + ex);
-            return;
-        }
-        // in case we found any
-        
-        if (protocolProviderRefs != null)
-        {
-        	// compose local peer name ...
-        	//NB! this name may not be surrounded with '[' and ']' because JXTA does not allow this!!!
-        	localID += "{F2F:";
-            for (int i = 0; i < protocolProviderRefs.length; i++)
-            {            	
-                ProtocolProviderService provider = (ProtocolProviderService) bc
-                    .getService(protocolProviderRefs[i]);
-                localID += "<"+provider.getProtocolName()+":"+ provider.getAccountID().getUserID()+">";
-                if (displayName == null || displayName.isEmpty())
-                {
-                	displayName = (String)provider.getAccountID().getAccountProperties().get(ProtocolProviderFactory.DISPLAY_NAME);
-                }
-            }
-            localID += "}";
-        }
-        else localID = "{F2F:" + new Random(System.currentTimeMillis()).nextInt() + "}";
+		try
+		{
+			protocolProviderRefs = bc.getServiceReferences(
+				ProtocolProviderService.class.getName(),null);
+		}
+		catch (InvalidSyntaxException ex)
+		{
+			// this shouldn't happen since we're providing no parameter string
+			// but let's log just in case.
+			F2FDebug.println("\t\tError while retrieving service refs" + ex);
+			return;
+		}
+		// in case we found any
+		if (protocolProviderRefs != null)
+		{
+			// compose local peer name ...
+			//NB! this name may not be surrounded with '[' and ']' because JXTA does not allow this!!!
+			localID += "{F2F:";
+			for (int i = 0; i < protocolProviderRefs.length; i++)
+			{
+				ProtocolProviderService provider = (ProtocolProviderService) bc
+					.getService(protocolProviderRefs[i]);
+				localID += "<"+provider.getProtocolName()+":"+ provider.getAccountID().getUserID()+">";
+				if (displayName == null || displayName.isEmpty())
+				{
+					displayName = (String)provider.getAccountID().getAccountProperties().get(ProtocolProviderFactory.DISPLAY_NAME);
+				}
+			}
+			localID += "}";
+		}
+		else localID = "{F2F:" + new Random(System.currentTimeMillis()).nextInt() + "}";
 		
-        F2FDebug.println("\t\tlocal peerID is: " + localID);
-
+		F2FDebug.println("\t\tlocal peerID is: " + localID);
+		
 		this.localPeer = new SipPeer(this, localID, displayName, null);
 		new Thread(new SipListener(localID)).start();
-
+		
 		if (protocolProviderRefs != null)
-        {
+		{
 			for (int i = 0; i < protocolProviderRefs.length; i++)
-            {
-                ProtocolProviderService provider = (ProtocolProviderService) bc
-                    .getService(protocolProviderRefs[i]);
-                handleProviderAdded(provider);
-            }
-        }
+			{
+				ProtocolProviderService provider = (ProtocolProviderService) bc
+					.getService(protocolProviderRefs[i]);
+				handleProviderAdded(provider);
+			}
+		}
 		bc.addServiceListener(this);
 		if (getMetaContactListService() != null)
 		{
@@ -170,22 +167,21 @@ public class SipCommunicationLayer
 			addF2FPeersFromMetaContactGroup(getMetaContactListService().getRoot());
 		}
 	}
-
 	
 	private MetaContactListService metaCListService = null;
 	private MetaContactListService getMetaContactListService()
 	{
-        if (metaCListService == null)
-        {
-            ServiceReference clistReference = bundleContext
-                .getServiceReference(MetaContactListService.class.getName());
-            
-            metaCListService = (MetaContactListService) bundleContext
-                    .getService(clistReference);
-        }
-
-        return metaCListService;
-    }
+		if (metaCListService == null)
+		{
+			ServiceReference clistReference = bundleContext
+				.getServiceReference(MetaContactListService.class.getName());
+			
+			metaCListService = (MetaContactListService) bundleContext
+				.getService(clistReference);
+		}
+		
+		return metaCListService;
+	}
 
 	public void addListener(CommunicationListener listener)
 	{
@@ -231,7 +227,7 @@ public class SipCommunicationLayer
 						sID = req.getSipID();
 						if (sID == null)
 						{
-							System.out.println("\t\t " + contact.getDisplayName() + " is not F2F-capable");
+							//F2FDebug.println("\t\t " + contact.getDisplayName() + " is not F2F-capable");
 							return;
 						}
 						synchronized (addressHash)
@@ -245,7 +241,6 @@ public class SipCommunicationLayer
 						Peer peer = peersHash.get(sID);
 						if (peer == null)
 						{
-							
 							peer = new SipPeer(SipCommunicationLayer.this, sID, contact.getDisplayName(), contact);
 							peersHash.put(sID, peer);
 						}

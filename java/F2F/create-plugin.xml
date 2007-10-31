@@ -20,6 +20,8 @@
 			destfile="../sip-communicator/sc-bundles/f2f.jar"
 			manifest="META-INF/MANIFEST.MF"
 		/>
+		<copy todir="../sip-communicator" 
+			file="conf/F2FComputing.properties"/>
 		<!-- Does not work reliable, as it is started in the background 
 			<pde.exportPlugins destination="build" 
 			exportSource="false"

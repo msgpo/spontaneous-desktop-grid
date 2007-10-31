@@ -15,7 +15,6 @@ import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationLayer;
 import ee.ut.f2f.comm.CommunicationListener;
 import ee.ut.f2f.comm.Peer;
-import ee.ut.f2f.comm.sip.SipCommunicationLayer;
 import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.F2FDebug;
 
@@ -68,9 +67,6 @@ public class F2FComputing
 		rootDirectory.mkdir();
 		F2FComputing.rootDirectory = rootDirectory;
 		communicationLayers = CommunicationFactory.getInitializedCommunicationLayers();
-		if (!communicationLayers.contains(SipCommunicationLayer.getInstance()))
-			communicationLayers.add(SipCommunicationLayer.getInstance());
-
 		for(CommunicationLayer communicationLayer :communicationLayers)
 		{
 			communicationLayer.addListener(workHandler);
