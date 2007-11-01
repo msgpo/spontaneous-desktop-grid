@@ -22,10 +22,10 @@ public class UDPTest
 		TestStuff.initTestStuff();
 		
 		// launch the needed test
-		//new UDPTestMsg();
+		new UDPTestMsg();
 		//new UDPTestExchangeMsgs();
 		//new UDPTestBandwidthWithACK();
-		new UDPTestBandwidthWithoutACK();
+		//new UDPTestBandwidthWithoutACK();
 	}
 }
 
@@ -120,6 +120,7 @@ class TestStuff
 	//			System.out.println("timeout");
 				// if acknoledgment is not received in 5 seconds
 				// send this packet in 2 pieces
+				if (msg.length == 1) continue;
 				int half_size1 = (int)Math.floor((double)msg.length / (double)2);
 				byte[] half_msg = new byte[half_size1];
 				for (int i = 0; i < half_size1; i++) half_msg[i] = msg[i];
