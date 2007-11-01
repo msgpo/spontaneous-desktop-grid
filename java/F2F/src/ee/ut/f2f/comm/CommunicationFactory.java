@@ -57,6 +57,8 @@ public class CommunicationFactory
 				F2FDebug.println("\t\tGetSipCommununication() returned NULL");
 			}
 		}
+
+		
 		return commLayers;
 	}
 	

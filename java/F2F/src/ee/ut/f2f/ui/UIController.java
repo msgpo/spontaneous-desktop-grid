@@ -56,7 +56,6 @@ import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
-import ee.ut.f2f.util.F2FTests;
 import ee.ut.f2f.util.SipMsgListener;
 
 public class UIController{
@@ -74,8 +73,6 @@ public class UIController{
 	private JPanel friendsPanel = null;
 	private JList friendsList = null;
 	private FriendModel friendModel = null;
-	private Hashtable<String, Collection<Peer>> m_chatPeers;
-	private Hashtable<String, Contact> m_chatHosts;
 	private JTextArea console = null;
 	private JTextField tf1 = null;
 	private JTextField tf2 = null;
@@ -97,10 +94,7 @@ public class UIController{
 	private Collection<Peer> selectFromPeers = new ArrayList<Peer>();
 	
 	public UIController(String title)
-	{	
-		m_chatPeers = new Hashtable<String, Collection<Peer>>();
-		m_chatHosts = new Hashtable<String, Contact>();
-		
+	{		
 		frame = new JFrame("F2FComputing - " + title);
 		SpringLayout layout = new SpringLayout();
 		mainPanel = new JPanel(layout);
@@ -188,41 +182,7 @@ public class UIController{
 		sendMessageButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				String k = null;
-				
-				if (m_chatPeers.size() == 0 && m_chatHosts.size() == 0) {
-					k = (int)(Math.random() * 1000000000)+"";
-					m_chatPeers.put(k, getSelectedFriends());					
-					System.out.println("Generating chat id " + k);
-				}
-				
-				String myName = SipCommunicationLayer.getInstance().getLocalPeer().getID();
-				if (m_chatPeers.size() > 0) {					
-					k = m_chatPeers.keys().nextElement();
-					for (Peer peer : m_chatPeers.get(k)) {
-						System.out.println("Sending message to peer: " + peer.getDisplayName());
-						try {
-							peer.sendMessage("F2F;"+k+";" + myName + ";"+sendMessageTextArea.getText());
-						} 
-						catch (CommunicationFailedException cfe) {					
-							error("Sending message '"
-									+ sendMessageTextArea.getText()
-									+ "' to the peer '" + peer.getDisplayName()
-									+ "' failed with '" + cfe.getMessage() + "'");
-						}				
-					}
-					writeMessage("me", sendMessageTextArea.getText());
-
-				}
-				else if (m_chatHosts.size() > 0) {
-					k = m_chatHosts.keys().nextElement();
-					Contact c = m_chatHosts.get(k);
-					OperationSetBasicInstantMessaging m_im;
-				    m_im = (OperationSetBasicInstantMessaging) c.getProtocolProvider().getOperationSet(OperationSetBasicInstantMessaging.class);
-					Message msg = m_im.createMessage("F2F;"+k+";" + myName + ";"+sendMessageTextArea.getText());	
-					m_im.sendInstantMessage(c, msg);
-					System.out.println("Sending message to host: " + c.getDisplayName());
-				}
+				SipCommunicationLayer.getInstance().onSendMessage(getSelectedFriends(), sendMessageTextArea.getText());
 			}
 		});
 		
@@ -578,24 +538,4 @@ public class UIController{
 		receievedMessagesTextArea.setText(receievedMessagesTextArea.getText()+"\n"+from+": "+msg);
 	}
 	
-	public void processMessage(String key, String from, String msg, Contact sourceContact) {
-		if(m_chatPeers.containsKey(key) == true) {
-			for (Peer peer : m_chatPeers.get(key)) {
-				try {
-					peer.sendMessage("F2F;"+key+";"+from+";"+msg);
-				} 
-				catch (CommunicationFailedException cfe) {					
-					error("Sending message '"
-							+ sendMessageTextArea.getText()
-							+ "' to the peer '" + peer.getDisplayName()
-							+ "' failed with '" + cfe.getMessage() + "'");
-				}				
-			}
-		}
-		else if(m_chatHosts.containsKey(key) == false) {
-			m_chatHosts.put(key, sourceContact);
-		}
-		
-		writeMessage(from, msg);
-	}
 }

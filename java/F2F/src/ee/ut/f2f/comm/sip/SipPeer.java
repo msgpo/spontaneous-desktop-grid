@@ -41,7 +41,7 @@ class SipPeer implements Peer
 		  m_sipContact = c;		  
 		  m_im = (OperationSetBasicInstantMessaging) m_sipContact.getProtocolProvider()
               .getOperationSet(OperationSetBasicInstantMessaging.class);
-		  m_im.addMessageListener(new SipMsgListener());			 
+		  m_im.addMessageListener(SipMsgListener.getInstance());			 
 		  System.out.println("Contact added for peer: " + c.getDisplayName() + " - " + c.getAddress());		 
 		}
 		this.commLayer = layer;	
@@ -91,6 +91,7 @@ class SipPeer implements Peer
 	}
 */		
 	public synchronized void sendMessage(Object message) throws CommunicationFailedException {
+		System.out.println("Trying to send message '" + message + "' to " + getContact().getDisplayName());
 		if (getContact() != null) {			
 			Message msg = m_im.createMessage((String)message);	
 			m_im.sendInstantMessage(getContact(), msg);
