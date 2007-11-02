@@ -5,14 +5,20 @@ package ee.ut.f2f.comm.sip;
 
 import java.io.IOException;
 import java.io.InputStream;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Random;
 
+import de.javawi.jstun.test.DiscoveryInfo;
+import de.javawi.jstun.test.DiscoveryTest;
 import ee.ut.f2f.comm.CommunicationException;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
@@ -68,6 +74,11 @@ public class SipCommunicationLayer
 	 */
 	static final int SIP_LAYER_NETWORK_PORT = 49201;
 	static final String SIP_LAYER_NETWORK_PASSWORD = "1pass2word2";
+	/**
+	 * Address and port of a STUN server to use.
+	 */
+	private static final String SIP_STUN_SERVER_NAME = "iphone-stun.freenet.de";
+	private static final int SIP_STUN_SERVER_PORT = 3478;
 	
 	/**
 	 * PeerID -> Peer
@@ -169,6 +180,38 @@ public class SipCommunicationLayer
 		{
 			getMetaContactListService().addMetaContactListListener(new SipMetaContactListListener());
 			addF2FPeersFromMetaContactGroup(getMetaContactListService().getRoot());
+		}
+		
+		// start for NAT/firewall traversal
+		Enumeration<NetworkInterface> ifaces;
+		try 
+		{
+			ifaces = NetworkInterface.getNetworkInterfaces();
+		}
+		catch (SocketException e)
+		{
+			e.printStackTrace();
+			return;
+		}
+		while (ifaces.hasMoreElements())
+		{
+			NetworkInterface iface = ifaces.nextElement();
+			Enumeration<InetAddress> iaddresses = iface.getInetAddresses();
+			while (iaddresses.hasMoreElements())
+			{
+				InetAddress iaddress = iaddresses.nextElement();
+				if (!iaddress.isLoopbackAddress() && !iaddress.isLinkLocalAddress()) {
+					DiscoveryTest test = new DiscoveryTest(iaddress, SIP_STUN_SERVER_NAME, SIP_STUN_SERVER_PORT);
+					DiscoveryInfo di = null;
+					try {
+						di = test.test();
+					} catch (Exception e) {
+						e.printStackTrace();
+						continue;
+					}
+					if (di != null) F2FDebug.println(di.toString()); 
+				}
+			}
 		}
 	}
 	
