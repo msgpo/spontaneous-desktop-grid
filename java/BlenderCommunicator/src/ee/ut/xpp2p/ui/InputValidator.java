@@ -21,16 +21,16 @@ public class InputValidator {
 
 		// Validates input file
 		String inputFile = MainWindow.inputFileTextField.getText();
-		hasErrors = hasErrors || validateInputFile(inputFile);
+		hasErrors = hasErrors | validateInputFile(inputFile);
 
 		// Validates output location
 		String outputLoc = MainWindow.outputLocTextField.getText();
-		hasErrors = hasErrors || validateOutputLoc(outputLoc);
+		hasErrors = hasErrors | validateOutputLoc(outputLoc);
 
 		// Validates frames
 		String startFrame = MainWindow.startFrameTextField.getText();
 		String endFrame = MainWindow.endFrameTextField.getText();
-		hasErrors = hasErrors || validateFrameNumbers(startFrame, endFrame);
+		hasErrors = hasErrors | validateFrameNumbers(startFrame, endFrame);
 
 		// Renders
 		if (!hasErrors) {
@@ -157,7 +157,11 @@ public class InputValidator {
 			MainWindow.framesErrorLabel
 					.setText("Frames must be specified as integers");
 			hasErrors = true;
-		} else {
+		} else if ( Integer.parseInt(startFrame) > Integer.parseInt(endFrame)){
+			MainWindow.framesErrorLabel.setText("Starting frame number can't be bigger than ending frame number");
+			hasErrors = true;
+		}
+		else {
 			MainWindow.framesErrorLabel.setText("");
 		}
 		return hasErrors;

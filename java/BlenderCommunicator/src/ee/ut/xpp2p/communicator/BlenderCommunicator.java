@@ -41,7 +41,6 @@ public class BlenderCommunicator {
 		try {
 			Process proc = Runtime.getRuntime().exec(cmdarr);
 			BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-		
 			String line;
 			
 			while ((line = br.readLine()) != null) {
@@ -121,6 +120,7 @@ public class BlenderCommunicator {
 					System.out.println("Rendering finished");
 				}
 			}
+			proc.destroy();
 		
 			if (!anythingRendered)
 				throw new NothingRenderedException("Nothing rendered!");

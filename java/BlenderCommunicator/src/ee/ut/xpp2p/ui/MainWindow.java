@@ -5,7 +5,6 @@ import java.awt.Choice;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.Font;
-import java.awt.Point;
 import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -43,8 +42,8 @@ public class MainWindow extends JFrame{
 	public static JTextField startFrameTextField = null;
 	public static JTextField endFrameTextField = null;
 	private static Button exitButton = null;
-	private static Button renderButton = null;
-	private static InputValidator inputChecker = new InputValidator();
+	public static Button renderButton = null;
+	public static InputValidator inputChecker = new InputValidator();
 
 	/**
 	 *  Initializes main window
