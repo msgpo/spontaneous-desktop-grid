@@ -2,9 +2,6 @@ package ee.ut.xpp2p.ui;
 
 import java.io.File;
 
-import ee.ut.xpp2p.blenderer.MasterBlenderer;
-import ee.ut.xpp2p.model.RenderJob;
-
 /**
  * Class that checks input data and reacts to ui-events
  * 
