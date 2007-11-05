@@ -2,8 +2,8 @@ package ee.ut.xpp2p.ui;
 
 import java.io.File;
 
-import ee.ut.xpp2p.communicator.BlenderCommunicator;
-import ee.ut.xpp2p.model.Job;
+import ee.ut.xpp2p.blenderer.MasterBlenderer;
+import ee.ut.xpp2p.model.RenderJob;
 
 /**
  * Class that checks input data and reacts to ui-events
@@ -12,75 +12,37 @@ import ee.ut.xpp2p.model.Job;
  * @created 27.10.2007 
  */
 public class InputValidator {
-
+	MainWindow window;
+	
 	/**
 	 * Method that executes when render button is pressed
+	 * @return <code>true</code> if input was valid
 	 */
-	public void renderButtonPressed() {
+	public boolean validate(MainWindow window) {
+		this.window = window;
+		
 		boolean hasErrors = false;
 
 		// Validates input file
-		String inputFile = MainWindow.inputFileTextField.getText();
+		String inputFile = window.inputFileTextField.getText();
 		hasErrors = hasErrors | validateInputFile(inputFile);
 
 		// Validates output location
-		String outputLoc = MainWindow.outputLocTextField.getText();
+		String outputLoc = window.outputLocTextField.getText();
 		hasErrors = hasErrors | validateOutputLoc(outputLoc);
 
 		// Validates frames
-		String startFrame = MainWindow.startFrameTextField.getText();
-		String endFrame = MainWindow.endFrameTextField.getText();
+		String startFrame = window.startFrameTextField.getText();
+		String endFrame = window.endFrameTextField.getText();
 		hasErrors = hasErrors | validateFrameNumbers(startFrame, endFrame);
 
-		// Renders
 		if (!hasErrors) {
-			String fileType = MainWindow.filetypeChoice.getSelectedItem();
-
-			Job job = new Job();
-			job.setInputFile(inputFile);
-			job.setOutputLocation(outputLoc);
-			job.setOutputFormat(fileType);
-			job.setStartFrame(Long.parseLong(startFrame));
-			job.setEndFrame(Long.parseLong(endFrame));
-			// TODO: Get number of participants
-			job.setParticipants(2);
-
-			MainWindow.disposeMainWindow();
-			BlenderCommunicator.renderJob(job);
-
-			// Exit
-			System.exit(0);
+			return true;			
+		}
+		else{
+			return false;
 		}
 
-	}
-
-	/**
-	 * Method that executes when quit button is pressed
-	 */
-	public void quitButtonPressed() {
-		System.exit(0);
-	}
-
-	/**
-	 * Method that executes when input file browsing button is pressed
-	 */
-	public void inputFileButtonPressed() {
-		String inputFile = BlenderFileChooser.openBlendFile();
-		if (inputFile != null) {
-			MainWindow.inputFileTextField.setText(inputFile);
-			long frameCount = BlenderCommunicator.countFrames(inputFile);
-			MainWindow.endFrameTextField.setText(String.valueOf(frameCount));
-		}
-	}
-
-	/**
-	 * Method that executes when output location browsing button is pressed
-	 */
-	public void outputLocButtonPressed() {
-		String outputLoc = BlenderFileChooser.saveBlendFile();
-		if (outputLoc != null) {
-			MainWindow.outputLocTextField.setText(outputLoc);
-		}
 	}
 
 	/**
@@ -94,14 +56,14 @@ public class InputValidator {
 		boolean hasErrors = false;
 
 		if (inputFile.equals("")) {
-			MainWindow.inputFileErrorLabel
+			window.inputFileErrorLabel
 					.setText("Input file must be specified");
 			hasErrors = true;
 		} else if (!new File(inputFile).exists()) {
-			MainWindow.inputFileErrorLabel.setText("Input file doesn't exist");
+			window.inputFileErrorLabel.setText("Input file doesn't exist");
 			hasErrors = true;
 		} else {
-			MainWindow.inputFileErrorLabel.setText("");
+			window.inputFileErrorLabel.setText("");
 		}
 		return hasErrors;
 	}
@@ -117,19 +79,19 @@ public class InputValidator {
 		boolean hasErrors = false;
 
 		if (outputLoc.equals("")) {
-			MainWindow.outputLocErrorLabel
+			window.outputLocErrorLabel
 					.setText("Output location must be specified");
 			hasErrors = true;
 		} else if (!new File(outputLoc).exists()) {
-			MainWindow.outputLocErrorLabel
+			window.outputLocErrorLabel
 					.setText("Output location doesn't exist");
 			hasErrors = true;
 		} else if (!new File(outputLoc).isDirectory()) {
-			MainWindow.outputLocErrorLabel
+			window.outputLocErrorLabel
 					.setText("Output location must be a directory");
 			hasErrors = true;
 		} else {
-			MainWindow.outputLocErrorLabel.setText("");
+			window.outputLocErrorLabel.setText("");
 		}
 		return hasErrors;
 	}
@@ -147,22 +109,22 @@ public class InputValidator {
 		boolean hasErrors = false;
 
 		if (startFrame.equals("")) {
-			MainWindow.framesErrorLabel
+			window.framesErrorLabel
 					.setText("Start frame must be specified");
 			hasErrors = true;
 		} else if (endFrame.equals("")) {
-			MainWindow.framesErrorLabel.setText("End frame must be specified");
+			window.framesErrorLabel.setText("End frame must be specified");
 			hasErrors = true;
 		} else if (!startFrame.matches("\\d*") || !startFrame.matches("\\d*")) {
-			MainWindow.framesErrorLabel
+			window.framesErrorLabel
 					.setText("Frames must be specified as integers");
 			hasErrors = true;
 		} else if ( Integer.parseInt(startFrame) > Integer.parseInt(endFrame)){
-			MainWindow.framesErrorLabel.setText("Starting frame number can't be bigger than ending frame number");
+			window.framesErrorLabel.setText("Starting frame number can't be bigger than ending frame number");
 			hasErrors = true;
 		}
 		else {
-			MainWindow.framesErrorLabel.setText("");
+			window.framesErrorLabel.setText("");
 		}
 		return hasErrors;
 	}

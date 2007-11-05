@@ -1,28 +1,32 @@
-package ee.ut.xpp2p.communicator;
+package ee.ut.xpp2p.blenderer;
 
 import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.ArrayList;
+import java.util.Collection;
 
+import ee.ut.f2f.core.F2FComputingException;
+import ee.ut.f2f.core.Task;
+import ee.ut.f2f.core.TaskProxy;
 import ee.ut.xpp2p.exception.NothingRenderedException;
-import ee.ut.xpp2p.model.Job;
-import ee.ut.xpp2p.model.Task;
+import ee.ut.xpp2p.model.RenderJob;
+import ee.ut.xpp2p.model.RenderTask;
 import ee.ut.xpp2p.ui.MainWindow;
 
 /**
  * Command line communicator between Java and Blender
  * 
- * @author Andres, Madis, Jaan
+ * @author Andres, Madis, Jaan Neljandik
  */
-public class BlenderCommunicator {
+public class MasterBlenderer extends Task{
 	
-	/**
-	 * Main method of the program
-	 * @param args
+	/* (non-Javadoc)
+	 * @see ee.ut.f2f.core.Task#runTask()
 	 */
-	public static void main(String[] args) {
-		MainWindow.initMainWindow();
+	public void runTask() {
+		new MainWindow(this);		
 	}
 	
 	/**
@@ -31,7 +35,7 @@ public class BlenderCommunicator {
 	 * @param inputFile file for which framecount is found
 	 * @return number of frames in given file
 	 */
-	public static long countFrames(String inputFile) {
+	public long countFrames(String inputFile) {
 		
 		String[] cmdarr = {"blender", 
 					"-b", inputFile, 
@@ -78,62 +82,6 @@ public class BlenderCommunicator {
 	}
 	
 	/**
-	 * Calls the Blender command line tool to render an
-	 * animation in AVIJPEG format from a .blend file.
-	 * Writes info about the process to standard output.
-	 * @param task task to render
-	 * @throws Exception
-	 */
-	public static void renderTask(Task task) {
-		
-		String[] cmdarr = {"blender", 
-					"-b", task.getInputFile(), 
-					"-o", task.getOutputLocation(), 
-					"-F", task.getFileFormat(), 
-					"-s", String.valueOf(task.getStartFrame()),
-					"-e", String.valueOf(task.getEndFrame()), 
-					"-a", "-x", "1"}; 
-		try {
-			Process proc = Runtime.getRuntime().exec(cmdarr);
-			BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-		
-			String line;
-			boolean anythingRendered = false;
-			
-			while ((line = br.readLine()) != null) {
-				if (
-					line.startsWith("'blender' is not recognized") ||
-					line.indexOf("blender") != -1 && line.indexOf("not found") != -1
-				)
-					throw new NothingRenderedException("Blender not found!");
-				
-				else if (
-					line.startsWith("Append frame") ||
-					line.startsWith("added frame") ||
-					line.startsWith("Writing frame")
-				) {
-					System.out.println("Rendered frame " + line.split(" +")[2]);
-					anythingRendered = true;
-				}
-				
-				else if (line.startsWith("Blender quit") && anythingRendered) {
-					System.out.println("Rendering finished");
-				}
-			}
-			proc.destroy();
-		
-			if (!anythingRendered)
-				throw new NothingRenderedException("Nothing rendered!");
-		}
-		catch(IOException e){
-			System.out.println(e.getMessage());
-		}
-		catch(NothingRenderedException e){
-			System.out.println(e.getMessage());
-		}
-	}
-
-	/**
 	 * Splits the number of frames (from startFrame to endFrame) by the number
 	 * of parts. The parameter startFrame has to be a larger number than endFrame 
 	 * @param startFrame	the frame to start from when splitting
@@ -143,7 +91,7 @@ public class BlenderCommunicator {
 	 * length of the array is the number of parts
 	 * 
 	 */
-	public static long[] splitTask(long startFrame, long endFrame, int parts) {
+	public long[] splitTask(long startFrame, long endFrame, int parts) {
 		long numberOfFrames = endFrame - startFrame + 1;
 		long remainder = numberOfFrames % parts;
 		long exact = numberOfFrames - remainder;
@@ -166,23 +114,66 @@ public class BlenderCommunicator {
 	 * Splits given job into tasks and renders it
 	 * @param job job to render
 	 */
-	public static void renderJob(Job job) {
-			
-		long[] partLengths = splitTask(job.getStartFrame(), job.getEndFrame(), job.getParticipants());
+	public void renderJob(RenderJob job) {
+		long start = System.currentTimeMillis();
+		// submit slave tasks
+		try {
+			this.getJob().submitTasks(
+					RenderTask.class.getName(),
+					this.getJob().getPeers().size(),
+					this.getJob().getPeers());
+		} catch (F2FComputingException e) {
+			e.printStackTrace();
+			return;
+		}
 		
+		// get IDs of all the tasks that have been created
+		Collection<String> taskIDs = this.getJob().getTaskIDs();
+		
+		// get proxies of slave tasks
+		Collection<TaskProxy> slaveProxies = new ArrayList<TaskProxy>();
+		for (String taskID: taskIDs)
+		{
+			// do not get proxy of master task 
+			if (taskID == this.getTaskID()) continue;
+			TaskProxy proxy = this.getTaskProxy(taskID);
+			if (proxy != null) slaveProxies.add(proxy);
+		}
+		
+		
+		long[] partLengths = splitTask(job.getStartFrame(), job.getEndFrame(), this.getJob().getPeers().size());
 		long currentFrame = job.getStartFrame();
-		
-		for(int i = 0; i <partLengths.length; i++){
-			Task task = new Task();
+		int i = 0;
+		for(TaskProxy proxy: slaveProxies){
+			RenderTask task = new RenderTask();
 			task.setInputFile(job.getInputFile());
 			task.setOutputLocation(job.getOutputLocation());
 			task.setFileFormat(job.getOutputFormat());
 			task.setStartFrame(currentFrame);
 			task.setEndFrame(currentFrame + partLengths[i] - 1);
 			
-			renderTask(task);
+			//TODO: Send the .blend file also
+			proxy.sendMessage(task);
 						
 			currentFrame += partLengths[i];
+			i++;
 		}
+		
+		long replies = 0;
+		while(replies < partLengths.length) {
+			for (TaskProxy proxy: slaveProxies) {
+				if (proxy.hasMessage()) {
+					replies++;
+					//TODO: Receive the part
+					proxy.sendMessage(new Long(-1L));
+				}
+			}
+		}
+			
+		long end = System.currentTimeMillis();
+		System.out.println("Took " + (end - start) / 1000 + "s");
+		
+		// XXX: Exit
+		// System.exit(0);
 	}
 }

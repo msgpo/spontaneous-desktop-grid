@@ -5,7 +5,7 @@ package ee.ut.xpp2p.model;
  * @author Jaan Neljandik
  * @created 20.10.2007
  */
-public class Job {
+public class RenderJob {
 	
 	private String inputFile;
 	private String outputLocation;

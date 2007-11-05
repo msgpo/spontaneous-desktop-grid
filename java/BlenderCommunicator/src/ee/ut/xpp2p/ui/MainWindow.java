@@ -15,6 +15,9 @@ import javax.swing.JLabel;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 
+import ee.ut.xpp2p.blenderer.MasterBlenderer;
+import ee.ut.xpp2p.model.RenderJob;
+
 /**
  * Main window of the program, made with Eclipse Visual Editor
  * @author Jaan Neljandik
@@ -23,32 +26,34 @@ import javax.swing.JTextField;
 public class MainWindow extends JFrame{
 	private static final long serialVersionUID = 1L;
 
-	private static JFrame mainWindow = null;  
-	private static JPanel mainContentPane = null;  //  @jve:decl-index=0:visual-constraint="10,54"
-	public static JTextField inputFileTextField = null;
-	public static JTextField outputLocTextField = null;
-	public static JLabel inputFileErrorLabel = null;
-	private static JLabel inputFileLabel = null;
-	private static JLabel outputLocLabel = null;
-	public static JLabel outputLocErrorLabel = null;
-	private static Button inputFileButton = null;
-	private static Button outputLocButton = null;
-	private static JLabel filetypeLabel = null;
-	public static Choice filetypeChoice = null;
-	private static JLabel framesLabel = null;
-	private static JLabel startFrameLabel = null;
-	private static JLabel endFrameLabel = null;
-	public static JLabel framesErrorLabel = null;
-	public static JTextField startFrameTextField = null;
-	public static JTextField endFrameTextField = null;
-	private static Button exitButton = null;
-	public static Button renderButton = null;
-	public static InputValidator inputChecker = new InputValidator();
+	private JFrame mainWindow = null;  
+	private JPanel mainContentPane = null;  //  @jve:decl-index=0:visual-constraint="10,54"
+	public JTextField inputFileTextField = null;
+	public JTextField outputLocTextField = null;
+	public JLabel inputFileErrorLabel = null;
+	private JLabel inputFileLabel = null;
+	private JLabel outputLocLabel = null;
+	public JLabel outputLocErrorLabel = null;
+	private Button inputFileButton = null;
+	private Button outputLocButton = null;
+	private JLabel filetypeLabel = null;
+	public Choice filetypeChoice = null;
+	private JLabel framesLabel = null;
+	private JLabel startFrameLabel = null;
+	private JLabel endFrameLabel = null;
+	public JLabel framesErrorLabel = null;
+	public JTextField startFrameTextField = null;
+	public JTextField endFrameTextField = null;
+	private Button exitButton = null;
+	public Button renderButton = null;
+	public InputValidator inputChecker = new InputValidator();
+	private MasterBlenderer master;
 
 	/**
 	 *  Initializes main window
 	 */
-	public static void initMainWindow() {
+	public MainWindow(MasterBlenderer master) {
+		this.master = master;
 		mainWindow = new JFrame("Specify parameters");
 		mainWindow.setSize(new Dimension(430, 267));
 		mainWindow.setContentPane(getMainContentPane());
@@ -57,18 +62,11 @@ public class MainWindow extends JFrame{
 	}
 	
 	/**
-	 *  Disposes main window
-	 */
-	public static void disposeMainWindow() {
-		mainWindow.dispose();
-	}
-
-	/**
 	 * This method initializes mainContentPane	
 	 * 	
 	 * @return javax.swing.JPanel	
 	 */
-	private static JPanel getMainContentPane() {
+	private JPanel getMainContentPane() {
 		if (mainContentPane == null) {
 			framesErrorLabel = new JLabel();
 			framesErrorLabel.setBounds(new Rectangle(26, 178, 259, 15));
@@ -134,7 +132,7 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return javax.swing.JTextField	
 	 */
-	private static JTextField getInputFileTextField() {
+	private JTextField getInputFileTextField() {
 		if (inputFileTextField == null) {
 			inputFileTextField = new JTextField();
 			inputFileTextField.setBounds(new Rectangle(165, 15, 165, 20));
@@ -147,7 +145,7 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return javax.swing.JTextField	
 	 */
-	private static JTextField getOutputLocTextField() {
+	private JTextField getOutputLocTextField() {
 		if (outputLocTextField == null) {
 			outputLocTextField = new JTextField();
 			outputLocTextField.setBounds(new Rectangle(164, 54, 165, 20));
@@ -160,14 +158,14 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return java.awt.Button	
 	 */
-	private static Button getInputFileButton() {
+	private Button getInputFileButton() {
 		if (inputFileButton == null) {
 			inputFileButton = new Button();
 			inputFileButton.setBounds(new Rectangle(337, 15, 80, 20));
 			inputFileButton.setLabel("Browse");
 			inputFileButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
-					inputChecker.inputFileButtonPressed();
+					inputFileButtonPressed();
 				}
 			});
 		}
@@ -179,14 +177,14 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return java.awt.Button	
 	 */
-	private static Button getOutputLocButton() {
+	private Button getOutputLocButton() {
 		if (outputLocButton == null) {
 			outputLocButton = new Button();
 			outputLocButton.setBounds(new Rectangle(336, 54, 79, 21));
 			outputLocButton.setLabel("Browse");
 			outputLocButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
-					inputChecker.outputLocButtonPressed();
+					outputLocButtonPressed();
 				}
 			});
 		}
@@ -198,7 +196,7 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return java.awt.Choice	
 	 */
-	private static Choice getFiletypeChoice() {
+	private Choice getFiletypeChoice() {
 		if (filetypeChoice == null) {
 			filetypeChoice = new Choice();
 			filetypeChoice.setBounds(new Rectangle(164, 91, 138, 20));
@@ -211,7 +209,7 @@ public class MainWindow extends JFrame{
 	/**
 	 * Initializes File type selection
 	 */
-	private static void initFileTypeChoice(){
+	private void initFileTypeChoice(){
 		filetypeChoice.add("AVIJPEG"); 
 		filetypeChoice.add("TGA");
 		filetypeChoice.add("IRIS");
@@ -232,7 +230,7 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return javax.swing.JTextField	
 	 */
-	private static JTextField getStartFrameTextField() {
+	private JTextField getStartFrameTextField() {
 		if (startFrameTextField == null) {
 			startFrameTextField = new JTextField();
 			startFrameTextField.setBounds(new Rectangle(85, 156, 73, 20));
@@ -246,7 +244,7 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return javax.swing.JTextField	
 	 */
-	private static JTextField getEndFrameTextField() {
+	private JTextField getEndFrameTextField() {
 		if (endFrameTextField == null) {
 			endFrameTextField = new JTextField();
 			endFrameTextField.setBounds(new Rectangle(211, 156, 73, 20));
@@ -260,14 +258,14 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return java.awt.Button	
 	 */
-	private static Button getExitButton() {
+	private Button getExitButton() {
 		if (exitButton == null) {
 			exitButton = new Button();
 			exitButton.setBounds(new Rectangle(88, 199, 111, 23));
 			exitButton.setLabel("Quit Program");
 			exitButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
-					inputChecker.quitButtonPressed();
+					quitButtonPressed();
 				}
 			});
 		}
@@ -279,18 +277,60 @@ public class MainWindow extends JFrame{
 	 * 	
 	 * @return java.awt.Button	
 	 */
-	private static Button getRenderButton() {
+	private Button getRenderButton() {
 		if (renderButton == null) {
 			renderButton = new Button();
 			renderButton.setBounds(new Rectangle(223, 199, 111, 23));
 			renderButton.setLabel("Start Rendering");
 			renderButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
-					inputChecker.renderButtonPressed();					
+					renderButtonPressed();				
 				}
 			});
 		}
 		return renderButton;
+	}
+	
+	private void renderButtonPressed(){
+		if(inputChecker.validate(this)){
+			RenderJob job = new RenderJob();
+			job.setInputFile(inputFileTextField.getText());
+			job.setOutputLocation(outputLocTextField.getText());
+			job.setOutputFormat(filetypeChoice.getSelectedItem());
+			job.setStartFrame(Long.parseLong(startFrameTextField.getText()));
+			job.setEndFrame(Long.parseLong(endFrameTextField.getText()));
+			mainWindow.dispose();
+			master.renderJob(job);			
+		}
+	}
+	
+	/**
+	 * Method that executes when quit button is pressed
+	 */
+	private void quitButtonPressed() {
+		System.exit(0);
+	}
+
+	/**
+	 * Method that executes when input file browsing button is pressed
+	 */
+	private void inputFileButtonPressed() {
+		String inputFile = BlenderFileChooser.openBlendFile();
+		if (inputFile != null) {
+			inputFileTextField.setText(inputFile);
+			long frameCount = master.countFrames(inputFile);
+			endFrameTextField.setText(String.valueOf(frameCount));
+		}
+	}
+
+	/**
+	 * Method that executes when output location browsing button is pressed
+	 */
+	private void outputLocButtonPressed() {
+		String outputLoc = BlenderFileChooser.saveBlendFile();
+		if (outputLoc != null) {
+			outputLocTextField.setText(outputLoc);
+		}
 	}
 
 }

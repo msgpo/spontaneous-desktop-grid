@@ -1,50 +1,33 @@
-package ee.ut.xpp2p.communicator;
+package ee.ut.xpp2p.blenderer;
 
 import java.io.File;
 
 import junit.framework.TestCase;
-import ee.ut.xpp2p.model.Job;
-import ee.ut.xpp2p.model.Task;
+import ee.ut.xpp2p.blenderer.MasterBlenderer;
+import ee.ut.xpp2p.model.RenderJob;
 
 /**
- * Test case for BlenderCommunicator
+ * Test case for MasterBlenderer
  * 
  * @author Jürmo, Andres, Jaan
  * 
  */
-public class BlenderCommunicatorTest extends TestCase {
+public class MasterBlendererTest extends TestCase {
 
-	/**
-	 * Test method for
-	 * {@link BlenderCommunicator#render(java.lang.String, int, int)}. Tests
-	 * rendering frames 10 to 13 of a Blender file to the specified output
-	 * location.
-	 */
-	public void testRenderTask() {
-		Task task = new Task();
-		task.setInputFile("etc\\VictorDancing.blend");
-		task.setOutputLocation("etc\\");
-		task.setFileFormat("AVIJPEG");
-		task.setStartFrame(10);
-		task.setEndFrame(13);
-
-		BlenderCommunicator.renderTask(task);
-
-		File output = new File("etc\\0010_0013.avi");
-		assertTrue(output.exists());
-		output.delete();
-	}
+	
 
 	/**
 	 * Tests splitting job into tasks
 	 */
 	public void testSplit() {
+		MasterBlenderer master = new MasterBlenderer();
+		
 		// test uneven split
 		long startFrame = 23L;
 		long endFrame = 126L;
 		int parts = 5;
 
-		long[] partLengths = BlenderCommunicator.splitTask(startFrame,
+		long[] partLengths = master.splitTask(startFrame,
 				endFrame, parts);
 
 		assertEquals(partLengths[0], 21L);
@@ -58,8 +41,7 @@ public class BlenderCommunicatorTest extends TestCase {
 		endFrame = 122L;
 		parts = 5;
 
-		partLengths = BlenderCommunicator
-				.splitTask(startFrame, endFrame, parts);
+		partLengths = master.splitTask(startFrame, endFrame, parts);
 
 		assertEquals(partLengths[0], 20L);
 		assertEquals(partLengths[1], 20L);
@@ -72,8 +54,7 @@ public class BlenderCommunicatorTest extends TestCase {
 		endFrame = 23L;
 		parts = 5;
 
-		partLengths = BlenderCommunicator
-				.splitTask(startFrame, endFrame, parts);
+		partLengths = master.splitTask(startFrame, endFrame, parts);
 
 		assertEquals(partLengths[0], 1L);
 		assertEquals(partLengths[1], 0L);
@@ -86,8 +67,7 @@ public class BlenderCommunicatorTest extends TestCase {
 		endFrame = 25L;
 		parts = 5;
 
-		partLengths = BlenderCommunicator
-				.splitTask(startFrame, endFrame, parts);
+		partLengths = master.splitTask(startFrame, endFrame, parts);
 
 		assertEquals(partLengths[0], 1L);
 		assertEquals(partLengths[1], 1L);
@@ -100,8 +80,7 @@ public class BlenderCommunicatorTest extends TestCase {
 		endFrame = 27L;
 		parts = 5;
 
-		partLengths = BlenderCommunicator
-				.splitTask(startFrame, endFrame, parts);
+		partLengths = master.splitTask(startFrame, endFrame, parts);
 
 		assertEquals(partLengths[0], 1L);
 		assertEquals(partLengths[1], 1L);
@@ -114,7 +93,7 @@ public class BlenderCommunicatorTest extends TestCase {
 	 * Tests job rendering
 	 */
 	public void testRenderJob() {
-		Job job = new Job();
+		RenderJob job = new RenderJob();
 		job.setInputFile("etc\\VictorDancing.blend");
 		job.setOutputLocation("etc\\");
 		job.setOutputFormat("AVIJPEG");
@@ -122,7 +101,7 @@ public class BlenderCommunicatorTest extends TestCase {
 		job.setEndFrame(14);
 		job.setParticipants(2);
 
-		BlenderCommunicator.renderJob(job);
+		new MasterBlenderer().renderJob(job);
 
 		File output1 = new File(job.getOutputLocation() + "0010_0012.avi");
 		File output2 = new File(job.getOutputLocation() + "0013_0014.avi");
@@ -138,7 +117,7 @@ public class BlenderCommunicatorTest extends TestCase {
 	 * Tests Counting the frames of given .blend file
 	 */
 	public void testCountFrames() {
-		long frames = BlenderCommunicator
+		long frames = new MasterBlenderer()
 				.countFrames("etc\\VictorDancing.blend");
 
 		assertEquals(frames, 24L);

@@ -7,7 +7,7 @@ import javax.swing.JFrame;
 /**
  * File selection dialogs
  * 
- * @author Madis, Andres, Jaan
+ * @author Madis, Andres, Jaan Neljandik
  */
 public class BlenderFileChooser {
 
