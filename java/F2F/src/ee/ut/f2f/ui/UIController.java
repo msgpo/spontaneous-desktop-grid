@@ -1,7 +1,9 @@
 package ee.ut.f2f.ui;
 
 import java.awt.BorderLayout;
+import java.awt.Color;
 import java.awt.Dimension;
+import java.awt.FlowLayout;
 import java.awt.GridBagConstraints;
 import java.awt.GridBagLayout;
 import java.awt.GridLayout;
@@ -10,9 +12,13 @@ import java.awt.event.ActionListener;
 
 import java.io.File;
 import java.io.IOException;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Random;
@@ -34,6 +40,7 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
+import javax.swing.JTable;
 import javax.swing.JTextArea;
 import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
@@ -41,6 +48,8 @@ import javax.swing.SpringLayout;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
+
+import de.javawi.jstun.test.DiscoveryTest;
 
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.Message;
@@ -57,6 +66,7 @@ import ee.ut.f2f.core.Job;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.SipMsgListener;
+import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 
 public class UIController{
 	private JFrame frame = null;
@@ -82,6 +92,13 @@ public class UIController{
 	private JPanel messagingPanel = null;
 	private JButton sendMessageButton = null;
 	private File[] selectedFiles = null;
+	
+	
+	//NAT/Traversal panel
+	private JPanel traversalPanel = null;
+	private JTable stunInfoTable = null;
+	private JTextArea natLogArea = null;
+	
 	
 	private boolean showDebug = true;
 	private boolean showInfo = true;
@@ -207,6 +224,83 @@ public class UIController{
 		// Currently, will not add the messaging panel, as its usage has become obselete.
 		tabs.add("Chat", messagingPanel);
 
+		//NAT/Traversal Panel
+		
+		traversalPanel = new JPanel();
+		traversalPanel.setLayout(new GridLayout(3,1));
+		traversalPanel.setPreferredSize(new Dimension(770, 0));
+		
+		//STUN Info table
+		String[] infoTableHeader = new String[] {"Peer","Adapter","Local IP","Pulic IP","Firewall Type"};
+		
+		stunInfoTable = new JTable(new Object[][]{{"You","...","...","...","..."}}, infoTableHeader);
+		stunInfoTable.setAutoscrolls(true);
+		stunInfoTable.setEnabled(false);
+		
+		
+		JScrollPane stunInfoTableScrollPane = new JScrollPane(stunInfoTable);
+		stunInfoTableScrollPane.setAutoscrolls(false);
+		stunInfoTableScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "STUN Info"));
+		
+
+		//NAT Log
+		natLogArea = new JTextArea();
+		natLogArea.setEditable(false);
+		
+		JScrollPane natLogAreaScrollPane = new JScrollPane(natLogArea);
+		natLogAreaScrollPane.setAutoscrolls(true);
+		natLogAreaScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "Traversal Log"));
+		
+		
+		//Control Buttons
+		JButton initButton = new JButton("START");
+		initButton.addActionListener(
+				new ActionListener(){
+					@Override
+					public void actionPerformed(ActionEvent e) {
+						
+						InetAddress ip = null;
+						String temp = null;
+						try{
+							Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();	
+							while(interfaces.hasMoreElements()){
+								NetworkInterface inet = interfaces.nextElement();
+								if(inet.isUp()){
+									Enumeration<InetAddress> ipAdresses = inet.getInetAddresses();
+									while(ipAdresses.hasMoreElements()){
+										ip = ipAdresses.nextElement();
+										if(!ip.isLoopbackAddress() && !ip.isLinkLocalAddress()){
+											temp = "\n" + ip.toString().split("/")[1];
+										}
+									}
+								}
+							}
+						
+							//DiscoveryTest discTest = new DiscoveryTest(iaddress, "stun.xten.net", 3478);
+						} catch (SocketException ex){
+							System.out.println("Exception at loading interfaces : " + ex.toString());
+							ip = null;
+							temp = null;
+						}
+						ip = null;
+						if(temp != null){
+							natLogArea.setText("Your local ip : " + temp + "\n");
+						} else {
+							natLogArea.setText("No ip info");
+						}
+					}
+				}
+		);
+		JPanel natButtonPanel = new JPanel(new FlowLayout());
+		natButtonPanel.add(initButton);
+	
+		traversalPanel.add(stunInfoTableScrollPane);
+		traversalPanel.add(natButtonPanel);
+		traversalPanel.add(natLogAreaScrollPane);
+		tabs.add("NAT Traversal", traversalPanel);
+		
+		//End of traversal panel
+		
 		JLabel label1 = new JLabel("Choose file:");
 		layout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.SOUTH, messagingPanel);
 		layout.putConstraint(SpringLayout.WEST, label1, 0, SpringLayout.WEST, messagingPanel);
