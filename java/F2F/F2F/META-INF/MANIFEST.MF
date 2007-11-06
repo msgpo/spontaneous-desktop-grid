@@ -1,0 +1,29 @@
+Manifest-Version: 1.0
+Bundle-ManifestVersion: 2
+Bundle-Name: F2f_sc_plugin Plug-in
+Bundle-Description: Enables F2FComputing framework to use SIP contacts.
+Bundle-SymbolicName: f2f_sc_plugin
+Bundle-Version: 1.0.0
+Bundle-Activator: f2f_sc_plugin.Activator
+Bundle-Vendor: ulno.net
+Bundle-Localization: plugin
+Import-Package: javax.crypto,
+ javax.crypto.spec,
+ javax.security.auth.x500,
+ javax.swing,
+ javax.swing.border,
+ javax.swing.event,
+ javax.swing.filechooser,
+ net.java.sip.communicator.service.contactlist,
+ net.java.sip.communicator.service.contactlist.event,
+ net.java.sip.communicator.service.protocol,
+ net.java.sip.communicator.service.protocol.event,
+ org.osgi.framework
+Bundle-ClassPath: lib/bcprov-jdk14.jar,
+ lib/commons-codec-1.3.jar,
+ lib/commons-io-1.3.1.jar,
+ lib/jxta.jar,
+ lib/log4j-1.2.14.jar,
+ lib/p2psockets-core.jar,
+ lib/jstun.jar,
+ F2F.jar
