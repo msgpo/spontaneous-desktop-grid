@@ -441,12 +441,12 @@ public class SipCommunicationLayer
 	
 	public void messageDelivered(MessageDeliveredEvent evt)
 	{
-		F2FDebug.println("\t\t MessageDeliveredEvent");
+		//F2FDebug.println("\t\t MessageDeliveredEvent");
 	}
 
 	public void messageDeliveryFailed(MessageDeliveryFailedEvent evt)
 	{
-		F2FDebug.println("\t\t MessageDeliveryFailedEvent");
+		//F2FDebug.println("\t\t MessageDeliveryFailedEvent");
 	}
 
 	private final static byte F2F_TAG = 1;
@@ -490,9 +490,11 @@ public class SipCommunicationLayer
 					raw_obj = new byte[cache.length + last.length];
 					for (int i = 0; i < cache.length; i++) raw_obj[i] = cache[i];
 					for (int i = 0; i < last.length; i++) raw_obj[i + cache.length] = last[i];
+					messageCache.remove(evt.getSourceContact());
 				}
 				try
 				{
+					F2FDebug.println("\t\t deserialize byte[] with length " + raw_obj.length);
 					Object message = Util.deserializeObject(raw_obj);
 					boolean bIsF2Ftest = F2F_TEST_MSG.equals(message);
 					if (peersHash.containsKey(evt.getSourceContact().getAddress()))
@@ -543,6 +545,7 @@ public class SipCommunicationLayer
 		{
 			// serialize message and add F2F tag to it
 			byte[] raw_msg = Util.serializeObject(msg);
+			System.out.println("\t\t deserialized object to byte[] with length " + raw_msg.length);
 			// split message in parts if needed
 			for (int i = 0; i * MAX_MSG_LENGTH < raw_msg.length; i++)
 			{
