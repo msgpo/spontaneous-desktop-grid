@@ -3,12 +3,8 @@
  */
 package ee.ut.f2f.comm.sip;
 
-import java.io.IOException;
-import java.io.InputStream;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.ServerSocket;
-import java.net.Socket;
 import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
@@ -35,6 +31,10 @@ import net.java.sip.communicator.service.protocol.ProtocolProviderFactory;
 import net.java.sip.communicator.service.protocol.ProtocolProviderService;
 import net.java.sip.communicator.service.protocol.event.ContactPresenceStatusChangeEvent;
 import net.java.sip.communicator.service.protocol.event.ContactPresenceStatusListener;
+import net.java.sip.communicator.service.protocol.event.MessageDeliveredEvent;
+import net.java.sip.communicator.service.protocol.event.MessageDeliveryFailedEvent;
+import net.java.sip.communicator.service.protocol.event.MessageListener;
+import net.java.sip.communicator.service.protocol.event.MessageReceivedEvent;
 import net.java.sip.communicator.service.contactlist.MetaContact;
 import net.java.sip.communicator.service.contactlist.MetaContactGroup;
 import net.java.sip.communicator.service.contactlist.MetaContactListService;
@@ -50,13 +50,11 @@ import org.osgi.framework.InvalidSyntaxException;
 import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
-import org.p2psockets.P2PServerSocket;
-import org.p2psockets.P2PNetwork;
 
 public class SipCommunicationLayer 
 	implements 	CommunicationLayer,
 				ServiceListener,
-				ContactPresenceStatusListener
+				ContactPresenceStatusListener, MessageListener
 {
 	private Collection<Peer> m_chatPeers;
 	private Contact m_chatHost;
@@ -115,14 +113,14 @@ public class SipCommunicationLayer
 		this.bundleContext = bc;
 		// init JXTA P2PSocket library
 		//F2FDebug.println("\t\tSIGN INTO NETWORK '" + SIP_LAYER_NETWORK_ID + "' ...");
-		try
-		{
-			P2PNetwork.autoSignin(SIP_LAYER_NETWORK_ID);
-		}
-		catch (Exception e)
-		{
-			throw new CommunicationInitException("Could not initialize JXTA's P2PSockets!", e);
-		}
+//		try
+//		{
+//			P2PNetwork.autoSignin(SIP_LAYER_NETWORK_ID);
+//		}
+//		catch (Exception e)
+//		{
+//			throw new CommunicationInitException("Could not initialize JXTA's P2PSockets!", e);
+//		}
 		
 		// compose local peer name and publish it
 		String localID = "";
@@ -164,7 +162,7 @@ public class SipCommunicationLayer
 		F2FDebug.println("\t\tlocal peerID is: " + localID);
 		
 		this.localPeer = new SipPeer(this, localID, displayName, null);
-		new Thread(new SipListener(localID)).start();
+		//new Thread(new SipListener(localID)).start();
 		
 		if (protocolProviderRefs != null)
 		{
@@ -260,44 +258,8 @@ public class SipCommunicationLayer
 		// check for F2F-capability only for online contacts
 		if (!contact.getPresenceStatus().isOnline()) return;
 		
-		Thread thread = 
-			new Thread(new Runnable()
-			{
-				public void run()
-				{
-					//F2FDebug.println("\t\t checking if " + contact.getDisplayName() + " is F2F-capable ...");
-					String sID = addressHash.get(contact.getAddress());
-					if (sID == null)
-					{
-						// ask from remote peer its SIP comm layer ID
-						SipIDRequester req = new SipIDRequester(contact.getAddress());
-						sID = req.getSipID();
-						if (sID == null)
-						{
-							//F2FDebug.println("\t\t " + contact.getDisplayName() + " is not F2F-capable");
-							System.out.println("\t\t Using ID " + contact.getAddress());
-							sID = contact.getAddress();
-							//return;
-						}
-						synchronized (addressHash)
-						{
-							if (addressHash.get(contact.getAddress()) == null)
-								addressHash.put(contact.getAddress(), sID);
-						}
-					}
-					synchronized (peersHash)
-					{
-						Peer peer = peersHash.get(sID);
-						if (peer == null)
-						{
-							peer = new SipPeer(SipCommunicationLayer.this, sID, contact.getDisplayName(), contact);
-							peersHash.put(sID, peer);
-						}
-					}
-				}
-			});
-		thread.setPriority(Thread.MIN_PRIORITY);
-		thread.start();
+		// send F2F-capability test message
+		//TODO
 	}
 
 	private void removeF2FPeerIfNeeded(final Contact contact)
@@ -354,7 +316,6 @@ public class SipCommunicationLayer
 			removeF2FPeersFromMetaContactGroup((MetaContactGroup)subGroups.next());
 	}
 	
-
 	public void serviceChanged(ServiceEvent event)
 	{
         Object sService = bundleContext.getService(event
@@ -427,47 +388,45 @@ public class SipCommunicationLayer
         }	
 	}
 	
-	
     private void handleProviderAdded(
             ProtocolProviderService provider)
     {
     	//F2FDebug.println("\t\t handleProviderAdded (" + provider.getProtocolName()+" : " + provider.getAccountID().getUserID() + ")");
-    	
+
+    	//add a presence status listener so that we could reorder contacts upon status change.
     	OperationSetPersistentPresence opSetPresence
-        	= (OperationSetPersistentPresence)provider
-        		.getOperationSet(OperationSetPersistentPresence.class);
+    	= (OperationSetPersistentPresence)provider
+    		.getOperationSet(OperationSetPersistentPresence.class);
+    	if(opSetPresence != null) opSetPresence.addContactPresenceStatusListener(this);
+    	
+        // start listening for IM messages
+    	OperationSetBasicInstantMessaging opSetMessaging
+    	= (OperationSetBasicInstantMessaging)provider
+    		.getOperationSet(OperationSetBasicInstantMessaging.class);
+    	if(opSetMessaging != null) opSetMessaging.addMessageListener(this);
+    	// TODO: save IM opSet for message sending
 
-        //add a presence status listener so that we could reorder contacts upon
-        //status change.
-        if(opSetPresence == null) return;
-
-        // ... and start publishing it
-        try 
-        {
-			new Thread(new SipIDPublisher(provider.getAccountID().getUserID(), localPeer.getID(), localPeer.getDisplayName())).start();
-		}
-        catch (CommunicationException e)
-        {
-			F2FDebug.println(""+e);
-			return;
-		}
-        
-        //F2FDebug.println("\t\t Presence ProtocolProvider added");
-        opSetPresence.addContactPresenceStatusListener(this);
+        //F2FDebug.println("\t\t ProtocolProvider added");
     }
     private void handleProviderRemoved(
             ProtocolProviderService provider)
     {
-    	F2FDebug.println("\t\t handleProviderRemoved (" + provider.getProtocolName()+" : " + provider.getAccountID().getUserID() + ")");
+    	//F2FDebug.println("\t\t handleProviderRemoved (" + provider.getProtocolName()+" : " + provider.getAccountID().getUserID() + ")");
+
+    	// remove the presence status listener
     	OperationSetPersistentPresence opSetPresence
             = (OperationSetPersistentPresence)provider
                 .getOperationSet(OperationSetPersistentPresence.class);
+        if(opSetPresence != null) opSetPresence.removeContactPresenceStatusListener(this);
+        
+        // stop listening for IM messages
+    	OperationSetBasicInstantMessaging opSetMessaging
+    	= (OperationSetBasicInstantMessaging)provider
+    		.getOperationSet(OperationSetBasicInstantMessaging.class);
+    	if(opSetMessaging != null) opSetMessaging.removeMessageListener(this);
+    	// TODO: remove IM opSet for message sending
 
-        //ignore if persistent presence is not supported.
-        if(opSetPresence == null) return;
-
-        F2FDebug.println("\t\t Presence ProtocolProvider removed");
-        opSetPresence.removeContactPresenceStatusListener(this);
+        //F2FDebug.println("\t\t ProtocolProvider removed");
     }
 
 	public void contactPresenceStatusChanged(ContactPresenceStatusChangeEvent event)
@@ -491,84 +450,7 @@ public class SipCommunicationLayer
 		}
         //F2FDebug.println("\t\t StatusChanged - new status: " + event.getNewStatus().getStatus() + ", old status: " + event.getOldStatus().getStatus());
 	}
-	
-	private class SipListener implements Runnable
-	{
-		/*
-		 * This socket listenes for incoming connections from other peers.
-		 */
-		private ServerSocket serverSocket;
 		
-		SipListener(String localUID) throws CommunicationException
-		{
-			try
-			{
-				// create a server socket
-				//F2FDebug.println("\t\tCREATE SERVER SOCKET ["+ localUID + "]...");
-				serverSocket = new P2PServerSocket(localUID, SIP_LAYER_NETWORK_PORT);
-				//F2FDebug.println("\t\tSIP LISTENER INITIALIZED.");
-			}
-			catch (IOException e)
-			{
-				throw new CommunicationInitException("Could not create JXTA's P2PServerSocket for "+localUID+"!", e);
-			}
-		}
-		
-		public void run()
-		{
-			while(true)
-			{
-				try
-				{
-					// wait while someone tries to connect
-					Socket socket = serverSocket.accept();
-					//F2FDebug.println("\t\tACCEPTED A CONNECTION. GET INPUTSTREAM ...");
-					InputStream is = socket.getInputStream();
-					//F2FDebug.println("\t\tGOT INPUTSTREAM. CREATE CustomObjectInputStream ...");
-					SipObjectInput oi = new SipObjectInput(is);
-					
-					// handshake
-					//F2FDebug.println("\t\tREAD PASSWORD ...");
-					String password = (String)oi.readObject();
-					//F2FDebug.println("\t\tREAD PASSWORD '" + password + "'.");
-					boolean bHandshake = password.equals(SIP_LAYER_NETWORK_PASSWORD);
-					if (bHandshake)
-					{
-						// read the ID of remote peer
-						String remoteID = (String)oi.readObject();
-						String remoteDisplayName = (String)oi.readObject();
-						// see if peer is already known
-						SipPeer peer = (SipPeer)findPeerByID(remoteID);
-						if (peer == null)
-						{
-							// create peer
-							peer = new SipPeer(SipCommunicationLayer.this, remoteID, remoteDisplayName, null);
-							peersHash.put(remoteID, peer);
-						}
-						// now peer should be not null, but still lets check it
-						if (peer != null)
-						{
-							// start listening for messages from the peer
-							peer.setOi(oi);
-							F2FDebug.println("\t\tAccepted remote connection from '"+remoteID+"'");
-						}
-					}
-					else
-					{
-						socket.close();
-						F2FDebug.println("\t\tUnauthorized connection attempt. Read password was '" + password + 
-								"'. Closed the connection.");
-					}
-				}
-				catch (Exception e)
-				{
-					F2FDebug.println("\t\tProblems creating the p2psocket communication: " + e);
-					e.printStackTrace();
-				}
-			}
-		}
-	}
-	
 	private class SipMetaContactListListener implements MetaContactListListener
 	{
 		public void protoContactAdded(ProtoContactEvent event) {
@@ -687,6 +569,22 @@ public class SipCommunicationLayer
 			m_im.sendInstantMessage(c, msg);
 			System.out.println("Sending message to host: " + c.getDisplayName());
 		}		
+	}
+
+	public void messageDelivered(MessageDeliveredEvent evt)
+	{
+		F2FDebug.println("\t\t MessageDeliveredEvent");
+	}
+
+	public void messageDeliveryFailed(MessageDeliveryFailedEvent evt)
+	{
+		F2FDebug.println("\t\t MessageDeliveryFailedEvent");
+	}
+
+	public void messageReceived(MessageReceivedEvent evt)
+	{
+		F2FDebug.println("\t\t MessageReceivedEvent");
+		//TODO: analyze message and act accordingly
 	}
 
 }

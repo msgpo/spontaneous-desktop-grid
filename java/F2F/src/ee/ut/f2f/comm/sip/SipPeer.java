@@ -14,22 +14,18 @@ import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessag
 import net.java.sip.communicator.impl.gui.*;
 
 import org.osgi.framework.ServiceReference;
-import org.p2psockets.P2PSocket;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationLayer;
 import ee.ut.f2f.comm.CommunicationListener;
 import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.util.F2FDebug;
-import ee.ut.f2f.util.F2FTestsMessageListener;
-import ee.ut.f2f.util.SipMsgListener;
 
 class SipPeer implements Peer
 {
 	private SipCommunicationLayer commLayer;
 	private String ID;
 	private String displayName;
-	private Socket outSocket;
 	private SipObjectOutput oo;
 	private SipObjectInput oi;
 	private OperationSetBasicInstantMessaging m_im;
@@ -41,7 +37,6 @@ class SipPeer implements Peer
 		  m_sipContact = c;		  
 		  m_im = (OperationSetBasicInstantMessaging) m_sipContact.getProtocolProvider()
               .getOperationSet(OperationSetBasicInstantMessaging.class);
-		  m_im.addMessageListener(SipMsgListener.getInstance());			 
 		  System.out.println("Contact added for peer: " + c.getDisplayName() + " - " + c.getAddress());		 
 		}
 		this.commLayer = layer;	
@@ -104,29 +99,29 @@ class SipPeer implements Peer
 	
 	private SipObjectOutput getOo() throws IOException
 	{
-		if(oo == null)
-		{
-			//oo = new ObjectOutputStream(getOutSocket().getOutputStream());
-			oo = new SipObjectOutput(getOutSocket().getOutputStream());
-			// handshake
-			oo.writeObject(SipCommunicationLayer.SIP_LAYER_NETWORK_PASSWORD);
-			//F2FDebug.println("\t\tSent password '" + SipCommunicationLayer.SIP_LAYER_NETWORK_PASSWORD + "'");
-			// Writing peer name into the outpustream for the other side to initialize the connection.
-			String uid = commLayer.getLocalPeer().getID();
-			oo.writeObject(uid);
-			oo.writeObject(commLayer.getLocalPeer().getDisplayName());
-		}
+//		if(oo == null)
+//		{
+//			//oo = new ObjectOutputStream(getOutSocket().getOutputStream());
+//			oo = new SipObjectOutput(getOutSocket().getOutputStream());
+//			// handshake
+//			oo.writeObject(SipCommunicationLayer.SIP_LAYER_NETWORK_PASSWORD);
+//			//F2FDebug.println("\t\tSent password '" + SipCommunicationLayer.SIP_LAYER_NETWORK_PASSWORD + "'");
+//			// Writing peer name into the outpustream for the other side to initialize the connection.
+//			String uid = commLayer.getLocalPeer().getID();
+//			oo.writeObject(uid);
+//			oo.writeObject(commLayer.getLocalPeer().getDisplayName());
+//		}
 		return oo;
 	}
 	
-	private Socket getOutSocket() throws IOException
-	{
-		if(outSocket == null)
-		{
-			outSocket = new P2PSocket(ID, SipCommunicationLayer.SIP_LAYER_NETWORK_PORT);
-		}
-		return outSocket;
-	}
+//	private Socket getOutSocket() throws IOException
+//	{
+//		if(outSocket == null)
+//		{
+//			outSocket = new P2PSocket(ID, SipCommunicationLayer.SIP_LAYER_NETWORK_PORT);
+//		}
+//		return outSocket;
+//	}
 
 	public void setOi(SipObjectInput oi_)
 	{
