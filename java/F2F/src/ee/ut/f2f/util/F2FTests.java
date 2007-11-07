@@ -23,9 +23,9 @@ public class F2FTests {
 
 	public static void doTests() {
 		// This is some space for writing some spikes and tests
-		//sendMessage();
+		sendMessage();
 		
-		testMaxMessageSize();
+		//testMaxMessageSize();
 	}
 
 	public static void setBundleContext(BundleContext bc) {
@@ -70,6 +70,9 @@ public class F2FTests {
 		
 	}
 
+	/**
+	 * This method tests how big messages can be sent in one piece
+	 */
 	static void testMaxMessageSize()
 	{
 		String msg = "1";
