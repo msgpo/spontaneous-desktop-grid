@@ -84,6 +84,7 @@ public class SipCommunicationLayer
 	private SipCommunicationLayer(BundleContext bc) throws CommunicationException
 	{
 		peersHash = new Hashtable<String, Peer>();
+		messageCache = new Hashtable<Contact, byte[]>();
 		// init Sip
 		F2FDebug.println("\t\tInitializing SIP communication layer ...");
 		this.bundleContext = bc;
@@ -448,71 +449,110 @@ public class SipCommunicationLayer
 		F2FDebug.println("\t\t MessageDeliveryFailedEvent");
 	}
 
-	private final static byte F2F_TAG = 2;
+	private final static byte F2F_TAG = 1;
+	private final static byte F2F_MORE = 2;
+	private final static byte F2F_COMPLETE = 3;
 	private final static Byte F2F_TEST_MSG = F2F_TAG;
+	private Hashtable<Contact, byte[]> messageCache = null;
 	public void messageReceived(MessageReceivedEvent evt)
 	{
-		F2FDebug.println("\t\t MessageReceivedEvent");
 		byte[] data = Util.decode(evt.getSourceMessage().getContent());
+		F2FDebug.println("\t\t MessageReceivedEvent - byte[] size " + data.length + ", string size " + evt.getSourceMessage().getContent().length());
 		// process only messages that start with F2F tag
-		if (data.length > 1 && data[0] == F2F_TAG)
+		if (data.length > 2 && data[0] == F2F_TAG)
 		{
 			F2FDebug.println("\t\t received a F2F message");
-			byte[] raw_obj = new byte[data.length-1];
-			for (int i = 1; i < data.length; i++) raw_obj[i-1] = data[i]; 
-			try
+			byte[] raw_obj = new byte[data.length-2];
+			for (int i = 2; i < data.length; i++) raw_obj[i-2] = data[i];
+			// cache the data and wait for more if needed
+			if (data[1] == F2F_MORE)
 			{
-				Object message = Util.deserializeObject(raw_obj);
-				boolean bIsF2Ftest = F2F_TEST_MSG.equals(message);
-				if (peersHash.containsKey(evt.getSourceContact().getAddress()))
+				F2FDebug.println("\t\t cache the message");
+				byte[] cache = raw_obj;
+				if (messageCache.containsKey(evt.getSourceContact()))
 				{
-					// dump F2F capability test messages from known peers
-					if (bIsF2Ftest)
-						F2FDebug.println("\t\t received F2F_TEST message from peer " + evt.getSourceContact().getAddress());
+					byte[] oldCache = messageCache.get(evt.getSourceContact());
+					cache = new byte[raw_obj.length + oldCache.length];
+					for (int i = 0; i < oldCache.length; i++) cache[i] = oldCache[i];
+					for (int i = 0; i < raw_obj.length; i++) cache[i + oldCache.length] = raw_obj[i];
+				}
+				messageCache.put(evt.getSourceContact(), cache);
+			}
+			else if (data[1] == F2F_COMPLETE)
+			{
+				F2FDebug.println("\t\t message has F2F_COMPLETE flag");
+				// read cache if needed
+				if (messageCache.containsKey(evt.getSourceContact()))
+				{
+					F2FDebug.println("\t\t append cached data to the message");
+					byte[] last = raw_obj;
+					byte[] cache = messageCache.get(evt.getSourceContact());
+					raw_obj = new byte[cache.length + last.length];
+					for (int i = 0; i < cache.length; i++) raw_obj[i] = cache[i];
+					for (int i = 0; i < last.length; i++) raw_obj[i + cache.length] = last[i];
+				}
+				try
+				{
+					Object message = Util.deserializeObject(raw_obj);
+					boolean bIsF2Ftest = F2F_TEST_MSG.equals(message);
+					if (peersHash.containsKey(evt.getSourceContact().getAddress()))
+					{
+						// dump F2F capability test messages from known peers
+						if (bIsF2Ftest)
+							F2FDebug.println("\t\t received F2F_TEST message from peer " + evt.getSourceContact().getAddress());
+						else
+						{
+							F2FDebug.println("\t\t received a F2F message from peer " + evt.getSourceContact().getAddress());
+							for(CommunicationListener listener: getListeners())
+							{
+								listener.messageRecieved(message, peersHash.get(evt.getSourceContact().getAddress()));
+							}
+						}
+					}
 					else
 					{
-						F2FDebug.println("\t\t received a F2F message from peer " + evt.getSourceContact().getAddress());
-						for(CommunicationListener listener: getListeners())
+						// process F2F capability test
+						if (bIsF2Ftest)
 						{
-							listener.messageRecieved(message, peersHash.get(evt.getSourceContact().getAddress()));
+							synchronized (peersHash)
+							{
+								// add new peer
+								SipPeer peer = new SipPeer(evt.getSourceContact()); 
+								peersHash.put(evt.getSourceContact().getAddress(), peer);
+								// send F2F capability test message back
+								peer.sendMessage(message);
+							}
 						}
+						else F2FDebug.println("\t\t received a F2F message from unknown peer " + evt.getSourceContact().getAddress());
 					}
 				}
-				else
+				catch (Exception e)
 				{
-					// process F2F capability test
-					if (bIsF2Ftest)
-					{
-						synchronized (peersHash)
-						{
-							// add new peer
-							SipPeer peer = new SipPeer(evt.getSourceContact()); 
-							peersHash.put(evt.getSourceContact().getAddress(), peer);
-							// send F2F capability test message back
-							peer.sendMessage(message);
-						}
-					}
-					else F2FDebug.println("\t\t received a F2F message from unknown peer " + evt.getSourceContact().getAddress());
+					F2FDebug.println("\t\t ERROR while receiving a message!");
+					e.printStackTrace();
 				}
 			}
-			catch (Exception e)
-			{
-				F2FDebug.println("\t\t ERROR while receiving a message!");
-				e.printStackTrace();
-			}
+			else F2FDebug.println("\t\t ERROR received broken F2F message from peer " + evt.getSourceContact().getAddress());
 		}
 	}
 	
-	static void sendIMmessage(OperationSetBasicInstantMessaging im, Contact contact, Object msg) throws CommunicationFailedException
+	private static final int MAX_MSG_LENGTH = 1040;
+	synchronized static void sendIMmessage(OperationSetBasicInstantMessaging im, Contact contact, Object msg) throws CommunicationFailedException
 	{
 		try
 		{
 			// serialize message and add F2F tag to it
 			byte[] raw_msg = Util.serializeObject(msg);
-			byte[] data = new byte[raw_msg.length + 1];
-			data[0] = F2F_TAG;
-			for (int i = 0; i < raw_msg.length; i++) data [i+1] = raw_msg[i];
-			im.sendInstantMessage(contact, im.createMessage(Util.encode(data)));
+			// split message in parts if needed
+			for (int i = 0; i * MAX_MSG_LENGTH < raw_msg.length; i++)
+			{
+				boolean bSplit = raw_msg.length > MAX_MSG_LENGTH * (i + 1);
+				byte[] data = new byte[bSplit ? MAX_MSG_LENGTH + 2 : raw_msg.length + 2];
+				data[0] = F2F_TAG;
+				data[1] = bSplit ? F2F_MORE : F2F_COMPLETE;
+				for (int j = 0; bSplit ? j < MAX_MSG_LENGTH : j < raw_msg.length; j++) data [j+2] = raw_msg[j + i * 1390];
+				im.sendInstantMessage(contact, im.createMessage(Util.encode(data)));
+			}
 		}
 		catch (Exception e)
 		{
