@@ -531,7 +531,7 @@ public class SipCommunicationLayer
 		{
 			F2FDebug.println("\t\t received a F2F message");
 			byte[] raw_obj = new byte[data.length-1];
-			for (int i = 1; i <= data.length; i++) raw_obj[i-1] = data[i]; 
+			for (int i = 1; i < data.length; i++) raw_obj[i-1] = data[i]; 
 			try
 			{
 				Object message = Util.deserializeObject(raw_obj);
