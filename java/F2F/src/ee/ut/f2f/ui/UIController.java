@@ -19,9 +19,7 @@ import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
@@ -49,15 +47,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
-import de.javawi.jstun.test.DiscoveryTest;
-
-import net.java.sip.communicator.service.protocol.Contact;
-import net.java.sip.communicator.service.protocol.Message;
-import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
-
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.Peer;
-import ee.ut.f2f.comm.sip.SipCommunicationLayer;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
@@ -65,8 +56,7 @@ import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
-import ee.ut.f2f.util.SipMsgListener;
-import ee.ut.f2f.util.nat.traversal.ConnectionManager;
+import ee.ut.f2f.util.F2FMessage;
 
 public class UIController{
 	private JFrame frame = null;
@@ -199,7 +189,22 @@ public class UIController{
 		sendMessageButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e)
 			{
-				SipCommunicationLayer.getInstance().onSendMessage(getSelectedFriends(), sendMessageTextArea.getText());
+				F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, sendMessageTextArea.getText());
+				// get selected peers and send the message to them
+				for (Peer peer : getSelectedFriends())
+				{
+					try
+					{
+						peer.sendMessage(msg);
+					}
+					catch (CommunicationFailedException cfe)
+					{
+						error("Sending message '"
+								+ sendMessageTextArea.getText()
+								+ "' to the peer '" + peer.getDisplayName()
+								+ "' failed with '" + cfe.getMessage() + "'");
+					}					
+				}
 			}
 		});
 		

@@ -21,11 +21,9 @@ import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationLayer;
 import ee.ut.f2f.comm.CommunicationListener;
 import ee.ut.f2f.comm.Peer;
-import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
 import net.java.sip.communicator.service.protocol.Contact;
-import net.java.sip.communicator.service.protocol.Message;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
 import net.java.sip.communicator.service.protocol.OperationSetPersistentPresence;
 import net.java.sip.communicator.service.protocol.ProtocolProviderFactory;
@@ -56,10 +54,7 @@ public class SipCommunicationLayer
 	implements 	CommunicationLayer,
 				ServiceListener,
 				ContactPresenceStatusListener, MessageListener
-{
-	private Collection<Peer> m_chatPeers;
-	private Contact m_chatHost;
-	
+{	
 	/**
 	 * Name that identifies Sip communication layer.
 	 */
@@ -88,7 +83,6 @@ public class SipCommunicationLayer
 	private BundleContext bundleContext = null;
 	private SipCommunicationLayer(BundleContext bc) throws CommunicationException
 	{
-		m_chatPeers = new ArrayList<Peer>();
 		peersHash = new Hashtable<String, Peer>();
 		// init Sip
 		F2FDebug.println("\t\tInitializing SIP communication layer ...");
@@ -443,73 +437,7 @@ public class SipCommunicationLayer
 			//F2FDebug.println("\t\t metaContactGroupModified");
 		}
 	}
-
-
-	public void processMessage(String key, String from, String msg, Contact sourceContact) {
-		System.out.println("message received'"
-				+ msg
-				+ "' from host peer '" + sourceContact.getDisplayName()
-				+ "' from contact '" + from);
-		
-		if(m_chatPeers.size() > 0) { 
-					
-			for (Peer peer : m_chatPeers) {
-				try {
-					peer.sendMessage("F2F;"+key+";"+from+";"+msg);
-				} 
-				catch (CommunicationFailedException cfe) {					
-					System.out.println("Sending message '"
-							+ msg
-							+ "' to the peer '" + peer.getDisplayName()
-							+ "' failed with '" + cfe.getMessage() + "'");
-				}				
-			}
-		}
-		
-		if(m_chatHost == null) {
-			m_chatHost = sourceContact;
-		}
-		
-		F2FComputingGUI.controller.writeMessage(from, msg);
-	}
 	
-	
-	public void onSendMessage(Collection<Peer> selectedFriends, String message) {
-		String k = "123";
-		
-		if (m_chatPeers.size() == 0 && m_chatHost == null) {
-			m_chatPeers.addAll(selectedFriends);					
-			System.out.println("Generating chat id " + k);
-		}
-		
-		String myName = getLocalPeer().getID();
-		if (m_chatPeers.size() > 0) {					
-			for (Peer peer : m_chatPeers) {
-				System.out.println("Sending message to peer: " + peer.getDisplayName());
-				try {
-					peer.sendMessage("F2F;"+k+";" + myName + ";"+message);
-				} 
-				catch (CommunicationFailedException cfe) {					
-					System.out.println("Sending message '"
-							+ message
-							+ "' to the peer '" + peer.getDisplayName()
-							+ "' failed with '" + cfe.getMessage() + "'");
-				}				
-			}
-			F2FComputingGUI.controller.writeMessage("me", message);
-
-		}
-		
-		else if (m_chatHost != null) {
-			Contact c = m_chatHost;
-			OperationSetBasicInstantMessaging m_im;
-		    m_im = (OperationSetBasicInstantMessaging) c.getProtocolProvider().getOperationSet(OperationSetBasicInstantMessaging.class);
-			Message msg = m_im.createMessage("F2F;"+k+";" + myName + ";"+message);	
-			m_im.sendInstantMessage(c, msg);
-			System.out.println("Sending message to host: " + c.getDisplayName());
-		}		
-	}
-
 	public void messageDelivered(MessageDeliveredEvent evt)
 	{
 		F2FDebug.println("\t\t MessageDeliveredEvent");

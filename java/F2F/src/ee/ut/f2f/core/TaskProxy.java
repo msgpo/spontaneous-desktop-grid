@@ -6,8 +6,8 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationLayer;
 import ee.ut.f2f.comm.Peer;
-import ee.ut.f2f.core.F2FComputing.F2FMessage;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.F2FMessage;
 
 /**
  * TaskProxy represents link to a remote task.
