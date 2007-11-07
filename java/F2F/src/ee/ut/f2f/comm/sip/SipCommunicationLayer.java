@@ -23,6 +23,7 @@ import ee.ut.f2f.comm.CommunicationListener;
 import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.Util;
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.Message;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
@@ -63,30 +64,12 @@ public class SipCommunicationLayer
 	 * Name that identifies Sip communication layer.
 	 */
 	private static final String SIP_LAYER_ID = "F2FSipCommLayer";
-	/**
-	 * Name that identifies Sip communication network in P2PSockets library.
-	 */
-	private static final String SIP_LAYER_NETWORK_ID = "F2FSipP2PNetwork";
-	/**
-	 * Port name that P2PSockets library uses (is not actual port nr).
-	 */
-	static final int SIP_LAYER_NETWORK_PORT = 49201;
-	static final String SIP_LAYER_NETWORK_PASSWORD = "1pass2word2";
-	/**
-	 * Address and port of a STUN server to use.
-	 */
-	private static final String SIP_STUN_SERVER_NAME = "iphone-stun.freenet.de";
-	private static final int SIP_STUN_SERVER_PORT = 3478;
 	
 	/**
-	 * PeerID -> Peer
+	 * PeerID (account ID) -> Peer
 	 */
 	private Hashtable<String, Peer> peersHash = null;
 	public Collection<Peer> getPeers() { return peersHash.values(); }
-	/**
-	 * PeerAddress -> PeerID
-	 */
-	private Hashtable<String, String> addressHash = null;
 	private SipPeer localPeer = null;
 	private Collection<CommunicationListener> listeners = new ArrayList<CommunicationListener>();
 
@@ -107,22 +90,12 @@ public class SipCommunicationLayer
 	{
 		m_chatPeers = new ArrayList<Peer>();
 		peersHash = new Hashtable<String, Peer>();
-		addressHash = new Hashtable<String, String>();
 		// init Sip
 		F2FDebug.println("\t\tInitializing SIP communication layer ...");
 		this.bundleContext = bc;
-		// init JXTA P2PSocket library
-		//F2FDebug.println("\t\tSIGN INTO NETWORK '" + SIP_LAYER_NETWORK_ID + "' ...");
-//		try
-//		{
-//			P2PNetwork.autoSignin(SIP_LAYER_NETWORK_ID);
-//		}
-//		catch (Exception e)
-//		{
-//			throw new CommunicationInitException("Could not initialize JXTA's P2PSockets!", e);
-//		}
 		
-		// compose local peer name and publish it
+		// compose local SipPeer
+		// all other SipPeers have account ID as PeerID
 		String localID = "";
 		String displayName = "";
 		// get the protocols that peer has account in
@@ -158,12 +131,10 @@ public class SipCommunicationLayer
 			localID += "}";
 		}
 		else localID = "{F2F:" + new Random(System.currentTimeMillis()).nextInt() + "}";
-		
 		F2FDebug.println("\t\tlocal peerID is: " + localID);
+		this.localPeer = new SipPeer(localID, displayName);
 		
-		this.localPeer = new SipPeer(this, localID, displayName, null);
-		//new Thread(new SipListener(localID)).start();
-		
+		// check for other peers
 		if (protocolProviderRefs != null)
 		{
 			for (int i = 0; i < protocolProviderRefs.length; i++)
@@ -178,38 +149,6 @@ public class SipCommunicationLayer
 		{
 			getMetaContactListService().addMetaContactListListener(new SipMetaContactListListener());
 			addF2FPeersFromMetaContactGroup(getMetaContactListService().getRoot());
-		}
-		
-		// start for NAT/firewall traversal
-		Enumeration<NetworkInterface> ifaces;
-		try 
-		{
-			ifaces = NetworkInterface.getNetworkInterfaces();
-		}
-		catch (SocketException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-		while (ifaces.hasMoreElements())
-		{
-			NetworkInterface iface = ifaces.nextElement();
-			Enumeration<InetAddress> iaddresses = iface.getInetAddresses();
-			while (iaddresses.hasMoreElements())
-			{
-				InetAddress iaddress = iaddresses.nextElement();
-				if (!iaddress.isLoopbackAddress() && !iaddress.isLinkLocalAddress()) {
-					DiscoveryTest test = new DiscoveryTest(iaddress, SIP_STUN_SERVER_NAME, SIP_STUN_SERVER_PORT);
-					DiscoveryInfo di = null;
-					try {
-						di = test.test();
-					} catch (Exception e) {
-						e.printStackTrace();
-						continue;
-					}
-					if (di != null) F2FDebug.println(di.toString()); 
-				}
-			}
 		}
 	}
 	
@@ -258,23 +197,25 @@ public class SipCommunicationLayer
 		// check for F2F-capability only for online contacts
 		if (!contact.getPresenceStatus().isOnline()) return;
 		
-		// send F2F-capability test message
-		//TODO
+		// send F2F-capability test message		  
+		OperationSetBasicInstantMessaging im = (OperationSetBasicInstantMessaging) contact.getProtocolProvider()
+		.getOperationSet(OperationSetBasicInstantMessaging.class);
+		try 
+		{
+			sendIMmessage(im, contact, F2F_TEST_MSG);
+		}
+		catch (CommunicationFailedException e)
+		{
+			F2FDebug.println("\t\t ERROR while sending F2F_TEST_MSG to a new contact");
+			e.printStackTrace();
+		}
 	}
 
 	private void removeF2FPeerIfNeeded(final Contact contact)
 	{
-		String sID = addressHash.get(contact.getAddress());
-		if (sID != null)
+		synchronized (peersHash)
 		{
-			synchronized (addressHash)
-			{
-			synchronized (peersHash)
-			{
-				addressHash.remove(contact.getAddress());
-				peersHash.remove(sID);
-			}
-			}
+			peersHash.remove(contact.getAddress());
 		}
 	}
 
@@ -404,7 +345,6 @@ public class SipCommunicationLayer
     	= (OperationSetBasicInstantMessaging)provider
     		.getOperationSet(OperationSetBasicInstantMessaging.class);
     	if(opSetMessaging != null) opSetMessaging.addMessageListener(this);
-    	// TODO: save IM opSet for message sending
 
         //F2FDebug.println("\t\t ProtocolProvider added");
     }
@@ -424,7 +364,6 @@ public class SipCommunicationLayer
     	= (OperationSetBasicInstantMessaging)provider
     		.getOperationSet(OperationSetBasicInstantMessaging.class);
     	if(opSetMessaging != null) opSetMessaging.removeMessageListener(this);
-    	// TODO: remove IM opSet for message sending
 
         //F2FDebug.println("\t\t ProtocolProvider removed");
     }
@@ -581,10 +520,113 @@ public class SipCommunicationLayer
 		F2FDebug.println("\t\t MessageDeliveryFailedEvent");
 	}
 
+	private final static byte F2F_TAG = 2;
+	private final static Byte F2F_TEST_MSG = F2F_TAG;
 	public void messageReceived(MessageReceivedEvent evt)
 	{
 		F2FDebug.println("\t\t MessageReceivedEvent");
-		//TODO: analyze message and act accordingly
+		byte[] data = Util.decode(evt.getSourceMessage().getContent());
+		// process only messages that start with F2F tag
+		if (data.length > 1 && data[0] == F2F_TAG)
+		{
+			F2FDebug.println("\t\t received a F2F message");
+			byte[] raw_obj = new byte[data.length-1];
+			for (int i = 1; i <= data.length; i++) raw_obj[i-1] = data[i]; 
+			try
+			{
+				Object message = Util.deserializeObject(raw_obj);
+				boolean bIsF2Ftest = F2F_TEST_MSG.equals(message);
+				if (peersHash.containsKey(evt.getSourceContact().getAddress()))
+				{
+					// dump F2F capability test messages from known peers
+					if (bIsF2Ftest)
+						F2FDebug.println("\t\t received F2F_TEST message from peer " + evt.getSourceContact().getAddress());
+					else
+					{
+						F2FDebug.println("\t\t received a F2F message from peer " + evt.getSourceContact().getAddress());
+						for(CommunicationListener listener: getListeners())
+						{
+							listener.messageRecieved(message, peersHash.get(evt.getSourceContact().getAddress()));
+						}
+					}
+				}
+				else
+				{
+					// process F2F capability test
+					if (bIsF2Ftest)
+					{
+						synchronized (peersHash)
+						{
+							// add new peer
+							SipPeer peer = new SipPeer(evt.getSourceContact()); 
+							peersHash.put(evt.getSourceContact().getAddress(), peer);
+							// send F2F capability test message back
+							peer.sendMessage(message);
+						}
+					}
+					else F2FDebug.println("\t\t received a F2F message from unknown peer " + evt.getSourceContact().getAddress());
+				}
+			}
+			catch (Exception e)
+			{
+				F2FDebug.println("\t\t ERROR while receiving a message!");
+				e.printStackTrace();
+			}
+		}
 	}
-
+	
+	static void sendIMmessage(OperationSetBasicInstantMessaging im, Contact contact, Object msg) throws CommunicationFailedException
+	{
+		try
+		{
+			// serialize message and add F2F tag to it
+			byte[] raw_msg = Util.serializeObject(msg);
+			byte[] data = new byte[raw_msg.length + 1];
+			data[0] = F2F_TAG;
+			for (int i = 0; i < raw_msg.length; i++) data [i+1] = raw_msg[i];
+			im.sendInstantMessage(contact, im.createMessage(Util.encode(data)));
+		}
+		catch (Exception e)
+		{
+			F2FDebug.println("\t\t ERROR while sending a message to contact " + contact.getDisplayName());
+			throw new CommunicationFailedException(e);
+		}
+	}
+	
+	public static void jstunTest()
+	{
+		final String SIP_STUN_SERVER_NAME = "iphone-stun.freenet.de";
+		final int SIP_STUN_SERVER_PORT = 3478;
+		// start for NAT/firewall traversal
+		Enumeration<NetworkInterface> ifaces;
+		try 
+		{
+			ifaces = NetworkInterface.getNetworkInterfaces();
+		}
+		catch (SocketException e)
+		{
+			e.printStackTrace();
+			return;
+		}
+		while (ifaces.hasMoreElements())
+		{
+			NetworkInterface iface = ifaces.nextElement();
+			Enumeration<InetAddress> iaddresses = iface.getInetAddresses();
+			while (iaddresses.hasMoreElements())
+			{
+				InetAddress iaddress = iaddresses.nextElement();
+				if (!iaddress.isLoopbackAddress() && !iaddress.isLinkLocalAddress()) {
+					DiscoveryTest test = new DiscoveryTest(iaddress, SIP_STUN_SERVER_NAME, SIP_STUN_SERVER_PORT);
+					DiscoveryInfo di = null;
+					try {
+						di = test.test();
+					} catch (Exception e) {
+						e.printStackTrace();
+						continue;
+					}
+					if (di != null) F2FDebug.println(di.toString()); 
+				}
+			}
+		}
+	}
 }
