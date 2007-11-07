@@ -242,7 +242,7 @@ public class UIController{
 		stunInfoTableScrollPane.setAutoscrolls(false);
 		stunInfoTableScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "STUN Info"));
 		
-
+		
 		//NAT Log
 		natLogArea = new JTextArea();
 		natLogArea.setEditable(false);
@@ -256,7 +256,6 @@ public class UIController{
 		JButton initButton = new JButton("START");
 		initButton.addActionListener(
 				new ActionListener(){
-					@Override
 					public void actionPerformed(ActionEvent e) {
 						
 						InetAddress ip = null;
