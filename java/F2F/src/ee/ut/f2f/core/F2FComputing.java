@@ -371,8 +371,7 @@ public class F2FComputing
 				for (TaskDescription taskDesc : job.getTaskDescriptions()) {
 					if (job.getTask(taskDesc.getTaskID()) == null &&
 						taskDesc.mapComm2Peer.containsKey(communicationLayer.getID()) &&
-						taskDesc.mapComm2Peer.get(communicationLayer.getID())
-							.equals(communicationLayer.getLocalPeer().getID()))
+						communicationLayer.isLocalPeerID(taskDesc.mapComm2Peer.get(communicationLayer.getID())))
 					{
 						try
 						{

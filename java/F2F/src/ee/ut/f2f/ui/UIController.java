@@ -57,6 +57,7 @@ import ee.ut.f2f.core.Job;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
+import ee.ut.f2f.util.F2FTests;
 
 public class UIController{
 	private JFrame frame = null;
@@ -470,30 +471,10 @@ public class UIController{
 		
 		buttonTest.addActionListener(new ActionListener()
 		{
-			/*
 			public void actionPerformed(ActionEvent e)
 			{
 				F2FTests.doTests();
 			}
-			*/
-			public void actionPerformed(ActionEvent e)
-			{
-				// Get selected peers and send the message to them.
-				for (Peer peer : getSelectedFriends())
-				{
-					try
-					{
-						peer.sendMessage(sendMessageTextArea.getText());
-					} catch (CommunicationFailedException cfe)
-					{					
-						error("Sending message '"
-								+ sendMessageTextArea.getText()
-								+ "' to the peer '" + peer.getDisplayName()
-								+ "' failed with '" + cfe.getMessage() + "'");
-					}					
-				}
-			}
-			
 		});
 
 		//frame.pack();

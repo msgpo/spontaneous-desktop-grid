@@ -50,4 +50,6 @@ public interface CommunicationLayer {
 	 * @return ID of the communication layer
 	 */
 	String getID();
+	
+	boolean isLocalPeerID(String ID);
 }

@@ -85,6 +85,7 @@ public class SipCommunicationLayer
 	{
 		peersHash = new Hashtable<String, Peer>();
 		messageCache = new Hashtable<Contact, byte[]>();
+		protocols = new ArrayList<ProtocolProviderService>();
 		// init Sip
 		F2FDebug.println("\t\tInitializing SIP communication layer ...");
 		this.bundleContext = bc;
@@ -324,11 +325,13 @@ public class SipCommunicationLayer
         }	
 	}
 	
+	private Collection<ProtocolProviderService> protocols;
     private void handleProviderAdded(
             ProtocolProviderService provider)
     {
     	//F2FDebug.println("\t\t handleProviderAdded (" + provider.getProtocolName()+" : " + provider.getAccountID().getUserID() + ")");
-
+    	protocols.add(provider);
+    	
     	//add a presence status listener so that we could reorder contacts upon status change.
     	OperationSetPersistentPresence opSetPresence
     	= (OperationSetPersistentPresence)provider
@@ -347,7 +350,8 @@ public class SipCommunicationLayer
             ProtocolProviderService provider)
     {
     	//F2FDebug.println("\t\t handleProviderRemoved (" + provider.getProtocolName()+" : " + provider.getAccountID().getUserID() + ")");
-
+    	protocols.remove(provider);
+    	
     	// remove the presence status listener
     	OperationSetPersistentPresence opSetPresence
             = (OperationSetPersistentPresence)provider
@@ -540,15 +544,12 @@ public class SipCommunicationLayer
 		}
 	}
 	
-	private static final int MAX_MSG_LENGTH = 1040;
-	static void sendIMmessage(OperationSetBasicInstantMessaging im, Contact contact, Object msg) throws CommunicationFailedException
+	private static final int MAX_MSG_LENGTH = 1040; // max size of MSN message is 1050 bytes
+	static synchronized void sendIMmessage(OperationSetBasicInstantMessaging im, Contact contact, Object msg) throws CommunicationFailedException
 	{
 		try
 		{
 			// serialize message and add F2F tag to it
-			Byte lock = new Byte(F2F_TEST_MSG);
-			synchronized (lock)
-			{
 			byte[] raw_msg = Util.serializeObject(msg);
 			System.out.println("\t\t serialized object to byte[] with length " + raw_msg.length);
 			// split message in parts if needed
@@ -566,7 +567,6 @@ public class SipCommunicationLayer
 				System.out.println("\t\t\t sent " + sentData + bMore);
 			}
 			while (bMore);
-			}
 		}
 		catch (Exception e)
 		{
@@ -611,5 +611,14 @@ public class SipCommunicationLayer
 				}
 			}
 		}
+	}
+
+	public boolean isLocalPeerID(String ID)
+	{
+		for (ProtocolProviderService protocol: protocols)
+		{
+			if (protocol.getAccountID().getUserID().equals(ID)) return true;
+		}
+		return false;
 	}
 }

@@ -13,14 +13,19 @@ import net.java.sip.communicator.service.protocol.event.MessageListener;
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
+import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.core.F2FComputing;
+
 public class F2FTests {
 	
 	private static BundleContext bundleContext = null;
 
 	public static void doTests() {
 		// This is some space for writing some spikes and tests
-		sendMessage();
+		//sendMessage();
 		
+		testMaxMessageSize();
 	}
 
 	public static void setBundleContext(BundleContext bc) {
@@ -65,5 +70,28 @@ public class F2FTests {
 		
 	}
 
+	static void testMaxMessageSize()
+	{
+		String msg = "1";
+		Peer peer;
+		try {
+			peer = F2FComputing.getPeers().iterator().next();
+			while (true)
+			{
+				F2FMessage fmsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, msg);
+				peer.sendMessage(fmsg);
+				msg += msg;
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+			}
+		} catch (CommunicationFailedException e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+		}
+	}
 
 }
