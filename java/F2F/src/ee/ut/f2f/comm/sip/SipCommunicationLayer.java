@@ -472,10 +472,12 @@ public class SipCommunicationLayer
 				if (messageCache.containsKey(evt.getSourceContact()))
 				{
 					byte[] oldCache = messageCache.get(evt.getSourceContact());
+					F2FDebug.println("\t\t\t old cache " + oldCache.length);
 					cache = new byte[raw_obj.length + oldCache.length];
 					for (int i = 0; i < oldCache.length; i++) cache[i] = oldCache[i];
 					for (int i = 0; i < raw_obj.length; i++) cache[i + oldCache.length] = raw_obj[i];
 				}
+				F2FDebug.println("\t\t\t add " + raw_obj.length);
 				messageCache.put(evt.getSourceContact(), cache);
 			}
 			else if (data[1] == F2F_COMPLETE)
@@ -545,7 +547,7 @@ public class SipCommunicationLayer
 		{
 			// serialize message and add F2F tag to it
 			byte[] raw_msg = Util.serializeObject(msg);
-			System.out.println("\t\t deserialized object to byte[] with length " + raw_msg.length);
+			System.out.println("\t\t serialized object to byte[] with length " + raw_msg.length);
 			// split message in parts if needed
 			for (int i = 0; i * MAX_MSG_LENGTH < raw_msg.length; i++)
 			{
@@ -555,6 +557,7 @@ public class SipCommunicationLayer
 				data[1] = bSplit ? F2F_MORE : F2F_COMPLETE;
 				for (int j = 0; bSplit ? j < MAX_MSG_LENGTH : j < raw_msg.length; j++) data [j+2] = raw_msg[j + i * 1390];
 				im.sendInstantMessage(contact, im.createMessage(Util.encode(data)));
+				System.out.println("\t\t\t sent " + (data.length - 2));
 			}
 		}
 		catch (Exception e)
