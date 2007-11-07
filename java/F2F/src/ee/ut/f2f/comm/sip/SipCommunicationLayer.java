@@ -541,27 +541,36 @@ public class SipCommunicationLayer
 	}
 	
 	private static final int MAX_MSG_LENGTH = 1040;
-	synchronized static void sendIMmessage(OperationSetBasicInstantMessaging im, Contact contact, Object msg) throws CommunicationFailedException
+	static void sendIMmessage(OperationSetBasicInstantMessaging im, Contact contact, Object msg) throws CommunicationFailedException
 	{
 		try
 		{
 			// serialize message and add F2F tag to it
+			Byte lock = new Byte(F2F_TEST_MSG);
+			synchronized (lock)
+			{
 			byte[] raw_msg = Util.serializeObject(msg);
 			System.out.println("\t\t serialized object to byte[] with length " + raw_msg.length);
 			// split message in parts if needed
-			for (int i = 0; i * MAX_MSG_LENGTH < raw_msg.length; i++)
+			int sentData = 0;
+			boolean bMore = false;
+			do
 			{
-				boolean bSplit = raw_msg.length > MAX_MSG_LENGTH * (i + 1);
-				byte[] data = new byte[bSplit ? MAX_MSG_LENGTH + 2 : raw_msg.length + 2];
+				bMore = raw_msg.length > sentData + MAX_MSG_LENGTH;
+				byte[] data = new byte[bMore ? MAX_MSG_LENGTH + 2 : raw_msg.length - sentData + 2];
 				data[0] = F2F_TAG;
-				data[1] = bSplit ? F2F_MORE : F2F_COMPLETE;
-				for (int j = 0; bSplit ? j < MAX_MSG_LENGTH : j < raw_msg.length; j++) data [j+2] = raw_msg[j + i * 1390];
+				data[1] = bMore ? F2F_MORE : F2F_COMPLETE;
+				for (int j = 0; j < data.length - 2; j++) data [j+2] = raw_msg[j + sentData];
 				im.sendInstantMessage(contact, im.createMessage(Util.encode(data)));
-				System.out.println("\t\t\t sent " + (data.length - 2));
+				sentData = sentData + data.length - 2;
+				System.out.println("\t\t\t sent " + sentData + bMore);
+			}
+			while (bMore);
 			}
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			F2FDebug.println("\t\t ERROR while sending a message to contact " + contact.getDisplayName());
 			throw new CommunicationFailedException(e);
 		}
