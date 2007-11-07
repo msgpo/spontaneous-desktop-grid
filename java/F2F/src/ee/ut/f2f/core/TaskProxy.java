@@ -53,8 +53,7 @@ public class TaskProxy
 				try
 				{
 					// if receiver task is in local peer send it directly
-					if (remoteTaskDescription.mapComm2Peer.get(commLayer.getID())
-						.equals(commLayer.getLocalPeer().getID()))
+					if (commLayer.isLocalPeerID(remoteTaskDescription.mapComm2Peer.get(commLayer.getID())))
 					{
 						F2FComputing.workHandler.messageRecieved(f2fMessage, commLayer.getLocalPeer());
 						return;

@@ -52,4 +52,6 @@ public interface CommunicationLayer {
 	String getID();
 	
 	boolean isLocalPeerID(String ID);
+
+	String[] getLocalPeerIDs();
 }

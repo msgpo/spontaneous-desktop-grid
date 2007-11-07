@@ -621,4 +621,13 @@ public class SipCommunicationLayer
 		}
 		return false;
 	}
+
+	public String[] getLocalPeerIDs()
+	{
+		String[] ret = new String[protocols.size()];
+		int i = 0;
+		for (ProtocolProviderService protocol: protocols)
+			ret[i++] = protocol.getAccountID().getUserID();
+		return ret;
+	}
 }

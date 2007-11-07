@@ -143,7 +143,13 @@ public class SocketCommunicationLayer implements CommunicationLayer
 		}
 	}
 
-	public boolean isLocalPeerID(String ID) {
+	public boolean isLocalPeerID(String ID)
+	{
 		return localPeer.getID().equals(ID);
+	}
+
+	public String[] getLocalPeerIDs()
+	{
+		return new String[]{ localPeer.getID() };
 	}
 }

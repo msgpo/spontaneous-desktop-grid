@@ -133,7 +133,8 @@ public class F2FComputing
 		Map<String, String> localPeerIDmap = new HashMap<String, String>();
 		for (CommunicationLayer commLayer: communicationLayers)
 		{
-			localPeerIDmap.put(commLayer.getID(), commLayer.getLocalPeer().getID());
+			for (String localPeerID: commLayer.getLocalPeerIDs())
+				localPeerIDmap.put(commLayer.getID(), localPeerID);
 		}
 		TaskDescription masterTaskDescription = 
 			new TaskDescription( 
