@@ -565,6 +565,9 @@ public class SipCommunicationLayer
 				im.sendInstantMessage(contact, im.createMessage(Util.encode(data)));
 				sentData = sentData + data.length - 2;
 				System.out.println("\t\t\t sent " + sentData + bMore);
+				// give IM channel some time to send the data
+				// MSN connection is closed if too much data is pushed too fast
+				Thread.sleep(100);
 			}
 			while (bMore);
 		}
