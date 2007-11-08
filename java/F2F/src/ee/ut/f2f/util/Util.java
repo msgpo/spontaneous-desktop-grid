@@ -9,7 +9,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
 
-import org.apache.commons.codec.binary.Base64;
+//import org.apache.commons.codec.binary.Base64;
 
 import ee.ut.f2f.util.CustomObjectInputStream;
 
@@ -49,7 +49,7 @@ public abstract class Util
      */
 	public static String encode(byte[] bytes)
     {
-    	return new String(Base64.encodeBase64(bytes));
+    	return Base64.encodeBytes(bytes);
     }
 
     /**
@@ -58,7 +58,7 @@ public abstract class Util
 	public static byte[] decode(String str) 
     //	throws MessageCreateException
     {
-       	return Base64.decodeBase64(str.getBytes());
+       	return Base64.decode(str);
     }
 
 }
