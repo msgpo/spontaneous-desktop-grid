@@ -500,6 +500,8 @@ public class SipCommunicationLayer
 				}
 				try
 				{
+					F2FDebug.println("\t\t unzip byte[] with length " + raw_obj.length);
+					raw_obj = Util.unzip(raw_obj);
 					F2FDebug.println("\t\t deserialize byte[] with length " + raw_obj.length);
 					Object message = Util.deserializeObject(raw_obj);
 					boolean bIsF2Ftest = F2F_TEST_MSG.equals(message);
@@ -551,7 +553,9 @@ public class SipCommunicationLayer
 		{
 			// serialize message and add F2F tag to it
 			byte[] raw_msg = Util.serializeObject(msg);
-			System.out.println("\t\t serialized object to byte[] with length " + raw_msg.length);
+			F2FDebug.println("\t\t serialized object to byte[] with length " + raw_msg.length);
+			raw_msg = Util.zip(raw_msg);
+			F2FDebug.println("\t\t zip data to byte[] with length " + raw_msg.length);
 			// split message in parts if needed
 			int sentData = 0;
 			boolean bMore = false;

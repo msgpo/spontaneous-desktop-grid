@@ -8,6 +8,10 @@ import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.io.StreamCorruptedException;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.zip.GZIPInputStream;
+import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.codec.binary.Base64;
 
@@ -43,7 +47,29 @@ public abstract class Util
 		oi = new CustomObjectInputStream(is);
 		return  oi.readObject();
 	}
-    
+	
+	public static byte[] zip(byte[] data) throws IOException 
+	{
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		GZIPOutputStream gz = new GZIPOutputStream(os);
+		gz.write(data);
+		gz.finish();
+		return os.toByteArray();
+	}
+	
+	public static byte[] unzip(byte[] data) throws IOException 
+	{
+		InputStream is = new ByteArrayInputStream(data);
+		GZIPInputStream gz = new GZIPInputStream(is);
+		List<Byte> l = new ArrayList<Byte>();
+		while (gz.available() != 0)
+			l.add((byte)gz.read());
+		// last byte is unnecessary (it is -1)
+		byte[] uncmp = new byte[l.size() - 1];
+		for (int i = 0; i < l.size() - 1; i++) uncmp[i] = l.get(i);
+		return uncmp;
+	}
+	
     /**
      * Encodes byte array into String.
      */
