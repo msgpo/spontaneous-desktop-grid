@@ -568,7 +568,7 @@ public class SipCommunicationLayer
 				for (int j = 0; j < data.length - 2; j++) data [j+2] = raw_msg[j + sentData];
 				im.sendInstantMessage(contact, im.createMessage(Util.encode(data)));
 				sentData = sentData + data.length - 2;
-				System.out.println("\t\t\t sent " + sentData + bMore);
+				F2FDebug.println("\t\t\t sent " + sentData + bMore);
 				// give IM channel some time to send the data
 				// MSN connection is closed if too much data is pushed too fast
 				Thread.sleep(100);
