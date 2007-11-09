@@ -3,7 +3,7 @@ package ee.ut.xpp2p.blenderer;
 import java.io.File;
 
 import junit.framework.TestCase;
-import ee.ut.xpp2p.blenderer.SlaveBlenderer;
+import ee.ut.xpp2p.exception.NothingRenderedException;
 import ee.ut.xpp2p.model.RenderTask;
 
 /**
@@ -20,14 +20,19 @@ public class SlaveBlendererTest extends TestCase {
 	 */
 	public void testRenderTask() {
 		RenderTask task = new RenderTask();
-		task.setInputFile("etc\\VictorDancing.blend");
+		task.setFileName("etc\\VictorDancing.blend");
 		task.setOutputLocation("etc\\");
 		task.setFileFormat("AVIJPEG");
 		task.setStartFrame(10);
 		task.setEndFrame(13);
 
 		SlaveBlenderer slave = new SlaveBlenderer();
-		slave.renderTask(task);
+		try {
+			slave.renderTask(task);
+		}
+		catch(NothingRenderedException e) {
+			System.out.println(e);
+		}
 
 		File output = new File("etc\\0010_0013.avi");
 		assertTrue(output.exists());

@@ -25,7 +25,7 @@ import ee.ut.xpp2p.model.RenderJob;
  */
 public class MainWindow extends JFrame{
 	private static final long serialVersionUID = 1L;
-
+	//TODO: Add Progress bar for input file selecting
 	private JFrame mainWindow = null;  
 	private JPanel mainContentPane = null;  //  @jve:decl-index=0:visual-constraint="10,54"
 	public JTextField inputFileTextField = null;

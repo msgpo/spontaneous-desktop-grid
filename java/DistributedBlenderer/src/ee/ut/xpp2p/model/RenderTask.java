@@ -7,17 +7,18 @@ package ee.ut.xpp2p.model;
  */
 public class RenderTask {
 	
-	private String inputFile;
+	private String fileName;
+	private byte[] blenderFile;
 	private String outputLocation;
 	private String fileFormat;
 	private long startFrame; 
 	private long endFrame;
 	
-	public String getInputFile() {
-		return inputFile;
+	public byte[] getBlenderFile() {
+		return blenderFile;
 	}
-	public void setInputFile(String inputFile) {
-		this.inputFile = inputFile;
+	public void setBlenderFile(byte[] blenderFile) {
+		this.blenderFile = blenderFile;
 	}
 	public String getOutputLocation() {
 		return outputLocation;
@@ -42,5 +43,11 @@ public class RenderTask {
 	}
 	public void setEndFrame(long endFrame) {
 		this.endFrame = endFrame;
+	}
+	public String getFileName() {
+		return fileName;
+	}
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
 	}
 }

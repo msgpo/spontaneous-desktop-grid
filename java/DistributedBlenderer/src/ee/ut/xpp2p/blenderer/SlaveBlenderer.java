@@ -7,7 +7,9 @@ import java.io.InputStreamReader;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.xpp2p.exception.NothingRenderedException;
+import ee.ut.xpp2p.model.RenderResult;
 import ee.ut.xpp2p.model.RenderTask;
+import ee.ut.xpp2p.util.FileUtil;
 
 /**
  * @author Jaan Neljandik
@@ -28,7 +30,24 @@ public class SlaveBlenderer extends Task{
 			RenderTask receivedRenderTask = (RenderTask)masterProxy.receiveMessage();
 			if (receivedRenderTask != null) {
 				taskReceived = true;
-				renderTask(receivedRenderTask);
+				try {
+					renderTask(receivedRenderTask);
+					
+					RenderResult result = new RenderResult();
+					result.setEndFrame(receivedRenderTask.getEndFrame());
+					result.setStartFrame(receivedRenderTask.getStartFrame());
+					//FIXME Find output file correctly
+					String outputFile = receivedRenderTask.getOutputLocation()
+							+ "000" + receivedRenderTask.getStartFrame()
+							+ "_00" + receivedRenderTask.getEndFrame() + ".avi";
+					result.setRenderedPart(FileUtil.loadFile(outputFile));
+					masterProxy.sendMessage(result);
+					break;
+				}
+				catch (NothingRenderedException e){
+					System.out.println(e.getMessage());
+					//TODO: Handle exception
+				}				
 			}
 		}
 	}
@@ -39,12 +58,13 @@ public class SlaveBlenderer extends Task{
 	 * animation in AVIJPEG format from a .blend file.
 	 * Writes info about the process to standard output.
 	 * @param task task to render
-	 * @throws Exception
+	 * @throws NothingRenderedException
 	 */
-	public void renderTask(RenderTask task) {
+	public void renderTask(RenderTask task) throws NothingRenderedException{
+		FileUtil.saveFile(task.getBlenderFile(), task.getFileName());
 		
 		String[] cmdarr = {"blender", 
-					"-b", task.getInputFile(), 
+					"-b", task.getFileName(), 
 					"-o", task.getOutputLocation(), 
 					"-F", task.getFileFormat(), 
 					"-s", String.valueOf(task.getStartFrame()),
@@ -80,15 +100,9 @@ public class SlaveBlenderer extends Task{
 			proc.destroy();
 		
 			if (!anythingRendered)
-				throw new NothingRenderedException("Nothing rendered!");
-			else {
-				//TODO: Send resulting file
-			}
+				throw new NothingRenderedException("Nothing rendered!");			
 		}
 		catch(IOException e){
-			System.out.println(e.getMessage());
-		}
-		catch(NothingRenderedException e){
 			System.out.println(e.getMessage());
 		}
 	}

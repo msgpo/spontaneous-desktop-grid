@@ -6,14 +6,18 @@ import java.io.IOException;
 import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Collections;
+import java.util.List;
 
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.xpp2p.exception.NothingRenderedException;
 import ee.ut.xpp2p.model.RenderJob;
+import ee.ut.xpp2p.model.RenderResult;
 import ee.ut.xpp2p.model.RenderTask;
-import ee.ut.xpp2p.ui.MainWindow;  
+import ee.ut.xpp2p.ui.MainWindow;
+import ee.ut.xpp2p.util.FileUtil;
 
 /**
  * Command line communicator between Java and Blender
@@ -146,13 +150,14 @@ public class MasterBlenderer extends Task{
 		int i = 0;
 		for(TaskProxy proxy: slaveProxies){
 			RenderTask task = new RenderTask();
-			task.setInputFile(job.getInputFile());
+			
+			task.setFileName(job.getInputFile());
+			task.setBlenderFile(FileUtil.loadFile(job.getInputFile()));
 			task.setOutputLocation(job.getOutputLocation());
 			task.setFileFormat(job.getOutputFormat());
 			task.setStartFrame(currentFrame);
 			task.setEndFrame(currentFrame + partLengths[i] - 1);
 			
-			//TODO: Send the .blend file also
 			proxy.sendMessage(task);
 						
 			currentFrame += partLengths[i];
@@ -160,15 +165,21 @@ public class MasterBlenderer extends Task{
 		}
 		
 		long replies = 0;
+		List<RenderResult> results = new ArrayList<RenderResult>();
+		
 		while(replies < partLengths.length) {
 			for (TaskProxy proxy: slaveProxies) {
 				if (proxy.hasMessage()) {
 					replies++;
-					//TODO: Receive the part
-					proxy.sendMessage(new Long(-1L));
+					results.add((RenderResult)proxy.receiveMessage());
 				}
 			}
 		}
+		
+		Collections.sort(results);
+		//FIXME: Find output file
+		String outputFile = job.getOutputLocation() + "test.avi";
+		FileUtil.composeFile(results, outputFile);
 			
 		long end = System.currentTimeMillis();
 		System.out.println("Took " + (end - start) / 1000 + "s");
