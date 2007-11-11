@@ -23,12 +23,12 @@ public class NatMessageProcessor {
 		encodedMessage = (encodedMessage.startsWith("/NAT>/")) ? encodedMessage.substring(6) : encodedMessage;
 		//log.debug("Prefix removed [" + encodedMessage + "]");
 		//remove  /NAT>:contact/ suffix
-		String from = null;
+		String to = null;
 		try{
 			if (encodedMessage != null){
 				//String[] temp = encodedMessage.split("/NAT>/");
 				//log.debug("Splitted size [" + temp.length + "]");
-				from = encodedMessage.split("/NAT>/")[1];
+				to = encodedMessage.split("/NAT>/")[1];
 				encodedMessage = encodedMessage.split("/NAT>/")[0];
 			}
 		} catch (ArrayIndexOutOfBoundsException e){
@@ -40,7 +40,7 @@ public class NatMessageProcessor {
 		if (encodedMessage != null && !"".equals(encodedMessage)){
 			try{
 				NatMessage nmsg = new NatMessage(encodedMessage);
-				nmsg.setFrom(from);
+				nmsg.setTo(to);
 				processMessage(nmsg);
 			} catch (NatMessageException e) {
 				log.error("Error parsing message [" + encodedMessage + "]", e);

@@ -1,10 +1,11 @@
 package ee.ut.f2f.util.nat.traversal;
 
-import java.lang.reflect.Field;
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
-public class StunInfo{
+public class StunInfo implements Serializable{
+	private static final long serialVersionUID = 1438325011621700229L;
 	private InetSocketAddress localAddress;
 	private InetSocketAddress publicAddress;
 	private String firewallType;

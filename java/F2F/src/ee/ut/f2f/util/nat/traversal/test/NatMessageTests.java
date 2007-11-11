@@ -2,12 +2,16 @@ package ee.ut.f2f.util.nat.traversal.test;
 
 import ee.ut.f2f.util.nat.traversal.NatMessageException;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
+import ee.ut.f2f.util.nat.traversal.StunInfo;
 import junit.framework.TestCase;
 
 public class NatMessageTests extends TestCase {
-	NatMessage message = new NatMessage("Me", "To",0,"66666");
+	NatMessage message = new NatMessage("From", "To",NatMessage.REPORT_STUN_INFO,null);
 	
 	public void testEncodeDecode(){
+		StunInfo sinf = new StunInfo("192.168.6.166",6666,"192.168.6.166",6666,"Open");
+		message.setContent(sinf);
+		
 		//encoding
 		String encoded = null;
 		try {
@@ -28,8 +32,10 @@ public class NatMessageTests extends TestCase {
 		}
 		assertNotNull(nmsg);
 		
-		assertEquals(0, nmsg.getType());
-		assertEquals("66666", nmsg.getContent());
+		assertEquals(NatMessage.REPORT_STUN_INFO, nmsg.getType());
+		assertEquals("From", nmsg.getFrom());
+		assertEquals("To", nmsg.getTo());
+		//assertEquals(sinf, nmsg.getContent());
 		
 		System.out.println(nmsg.toString());
 	}
