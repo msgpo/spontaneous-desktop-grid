@@ -268,9 +268,7 @@ public class UIController{
 						String[] localIds = SipCommunicationLayer.getInstance().getLocalPeerIDs();
 						//writeNatLog(localIds[0]);
 						NatMessage nmsg = new NatMessage(localIds[0], to.getID(),NatMessage.COMMAND_GET_STUN_INFO,null);
-						
-						
-						//NatMessageProcessor.sendNatMessage(nmsg);
+						NatMessageProcessor.sendNatMessage(nmsg);
 					}
 				}
 		);
