@@ -2,43 +2,41 @@ package ee.ut.f2f.util.nat.traversal;
 
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.Enumeration;
-import java.util.List;
+
+import de.javawi.jstun.test.DiscoveryInfo;
+import de.javawi.jstun.test.DiscoveryTest;
 
 public class ConnectionManager {
 	
 	final static NatLogger log = new NatLogger(ConnectionManager.class);
 	
-	public static List<InetAddress> getSystemIpAddres(){
-		ArrayList<InetAddress> systemIpList = null;
-		try{
-			Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();	
-			while(interfaces.hasMoreElements()){
-				NetworkInterface inet = interfaces.nextElement();
-				if(inet.isUp()){
-					Enumeration<InetAddress> ipAdresses = inet.getInetAddresses();
-					while(ipAdresses.hasMoreElements()){
-						InetAddress ip = ipAdresses.nextElement();
-						systemIpList = new ArrayList<InetAddress>();
-						if(!ip.isLoopbackAddress() && !ip.isLinkLocalAddress()){
-							systemIpList.add(ip);
-						}
+	/**
+	 * 
+	 * @param jStunServerName the name of JSTUN server (e.g. "stun.xten.net", "larry.gloo.net", "stun.xten.net")
+	 * @param jStunServerPort the port of JSTUN server (e.g. 3478)
+	 * @return DiscoveryInfo
+	 * @throws Exception if something goes wrong
+	 */
+	public DiscoveryInfo startNetworkDiscovery(String jStunServerName, int jStunServerPort ) throws Exception {
+		Enumeration<NetworkInterface> ifaces = NetworkInterface
+				.getNetworkInterfaces();
+		while (ifaces.hasMoreElements()) {
+			NetworkInterface iface = ifaces.nextElement();
+			if (iface.isUp()) {
+				Enumeration<InetAddress> iaddresses = iface.getInetAddresses();
+				while (iaddresses.hasMoreElements()) {
+					InetAddress iaddress = iaddresses.nextElement();
+					if (!iaddress.isLoopbackAddress()
+							&& !iaddress.isLinkLocalAddress()) {
+						DiscoveryTest test = new DiscoveryTest(iaddress,
+								jStunServerName, jStunServerPort);
+						DiscoveryInfo di =  test.test();
+						return di;
 					}
 				}
 			}
-		} catch (SocketException ex){
-			log.error("Unable to get the system IP addresses list : ", ex);
 		}
-		log.debug("Total [" + systemIpList.size() + "] addresses");
-		return systemIpList;
-	}
-	
-	public static StunInfo getStunInfo(){
-		//for testing purposes
-		StunInfo sinf = new StunInfo("192.168.6.166",6666,"192.168.6.166",6666,"Open");
-			
-		return sinf;
+		throw new Exception("Cannot get a response from the STUN server");
 	}
 }
