@@ -12,13 +12,9 @@ import java.awt.event.ActionListener;
 
 import java.io.File;
 import java.io.IOException;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.Iterator;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
@@ -58,6 +54,8 @@ import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.F2FTests;
+import ee.ut.f2f.util.nat.traversal.NatMessage;
+import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 
 public class UIController{
 	private JFrame frame = null;
@@ -206,6 +204,7 @@ public class UIController{
 								+ "' failed with '" + cfe.getMessage() + "'");
 					}					
 				}
+				writeMessage("me", sendMessageTextArea.getText());
 			}
 		});
 		
@@ -262,37 +261,13 @@ public class UIController{
 		JButton initButton = new JButton("START");
 		initButton.addActionListener(
 				new ActionListener(){
+					@Override
 					public void actionPerformed(ActionEvent e) {
 						
-						InetAddress ip = null;
-						String temp = null;
-						try{
-							Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();	
-							while(interfaces.hasMoreElements()){
-								NetworkInterface inet = interfaces.nextElement();
-								if(inet.isUp()){
-									Enumeration<InetAddress> ipAdresses = inet.getInetAddresses();
-									while(ipAdresses.hasMoreElements()){
-										ip = ipAdresses.nextElement();
-										if(!ip.isLoopbackAddress() && !ip.isLinkLocalAddress()){
-											temp = "\n" + ip.toString().split("/")[1];
-										}
-									}
-								}
-							}
+						Peer to = (Peer) friendsList.getSelectedValue();
+						NatMessage nmsg = new NatMessage("Me", to.getID(),61,601,"Test");
 						
-							//DiscoveryTest discTest = new DiscoveryTest(iaddress, "stun.xten.net", 3478);
-						} catch (SocketException ex){
-							System.out.println("Exception at loading interfaces : " + ex.toString());
-							ip = null;
-							temp = null;
-						}
-						ip = null;
-						if(temp != null){
-							natLogArea.setText("Your local ip : " + temp + "\n");
-						} else {
-							natLogArea.setText("No ip info");
-						}
+						NatMessageProcessor.sendNatMessage(nmsg);
 					}
 				}
 		);
@@ -617,4 +592,7 @@ public class UIController{
 		receievedMessagesTextArea.setText(receievedMessagesTextArea.getText()+"\n"+from+": "+msg);
 	}
 	
+	public void writeNatLog(String msg){
+		natLogArea.setText(natLogArea.getText() + "\n" + msg); 
+	}
 }

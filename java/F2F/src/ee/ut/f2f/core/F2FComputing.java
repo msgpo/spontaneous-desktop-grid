@@ -17,6 +17,7 @@ import ee.ut.f2f.comm.sip.SipCommunicationLayer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
+import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 
 /**
  * This is the core class of F2F framework. It provides methods to create new
@@ -530,8 +531,16 @@ public class F2FComputing
 				F2FDebug.println("\tERROR!!! master node: COULD NOT ROUTE MESSAGE TO RECEIVER NODE!!!");
 			}
 			else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
-			{
-				F2FComputingGUI.controller.writeMessage(fromPeer.getID(), (String)f2fMessage.getData());
+			{	
+				//NAT/Traversal filtering
+				String msg = (String) f2fMessage.getData();
+				if( msg != null && msg.startsWith("/NAT>/")){
+					//NAT Messages
+					NatMessageProcessor.processIncomingNatMessage(msg);
+				} else {
+					//Others
+					F2FComputingGUI.controller.writeMessage(fromPeer.getID(), (String)f2fMessage.getData());
+				}
 			}
 		}
 

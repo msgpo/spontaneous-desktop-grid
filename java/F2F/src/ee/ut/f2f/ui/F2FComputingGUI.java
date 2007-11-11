@@ -17,6 +17,7 @@ public class F2FComputingGUI {
 	 * Different Print streams for different log4j appenders. This could be done better (?)
 	 */
 	//private static PrintStream debugPrintStream  = new PrintStream(new FilteredStream(new ByteArrayOutputStream()));
+	//static Logger log = LogManager.getLogger(UIController.class);
 	
 	public static void main(final String[] args) {
 		//Redirect System.out and System.err to our GUI. Do this before initializing log4j
@@ -25,9 +26,24 @@ public class F2FComputingGUI {
 		//System.setErr(debugPrintStream);
 		
 		//BasicConfigurator.configure();
+		
+		/*
+		Layout layout = new org.apache.log4j.PatternLayout("%d [%t] %-5p %c - %m%n");
+		Appender console = new ConsoleAppender (layout);
+		RollingFileAppender file = new RollingFileAppender ();
+		file.setLayout(layout);
+		file.setFile("./log/f2f.log");
+		file.setAppend(true);
+		file.setMaxFileSize("500KB");
+		file.setMaxBackupIndex(10);
+		log.addAppender(console);
+		log.addAppender(file);
+		*/
+		
 		//LogManager.getRootLogger().setLevel(Level.DEBUG);
 		//Schedule a job for the event-dispatching thread:
 		//creating and showing this application's GUI.
+		//log.debug("TEST");
 		javax.swing.SwingUtilities.invokeLater(new Runnable() {
 			public void run() {
 				runF2F();

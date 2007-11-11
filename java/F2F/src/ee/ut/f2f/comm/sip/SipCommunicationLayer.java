@@ -23,6 +23,7 @@ import ee.ut.f2f.comm.CommunicationListener;
 import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
+import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
 import net.java.sip.communicator.service.protocol.OperationSetPersistentPresence;
