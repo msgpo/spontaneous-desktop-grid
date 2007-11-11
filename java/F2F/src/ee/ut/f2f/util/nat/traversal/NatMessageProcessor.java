@@ -1,6 +1,5 @@
 package ee.ut.f2f.util.nat.traversal;
 
-import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Hashtable;
@@ -20,17 +19,14 @@ public class NatMessageProcessor {
 	
 	//Logger log = Logger.getLogger(InfoMessageProcessor.class);
 	static private NatLogger log = new NatLogger(NatMessageProcessor.class);
+
 	
-	//Command codes
-	static final int GET_STUN_INFO = 6001;
+	//Type codes
+	public static final int COMMAND_GET_STUN_INFO = 601;
+	public static final int REPORT_STUN_INFO = 61;
+	public static final int REPORT_BROKEN_MESSAGE = 60;
 	
-	//Content types
-	static final int STUN_INFO = 601;
-	static final int TEXT = 602;
 	
-	//Types
-	static final int COMMAND = 61;
-	static final int REPORT = 62;
 	
 	
 	
@@ -51,20 +47,26 @@ public class NatMessageProcessor {
 	}
 	
 	private static void processMessage(NatMessage nmsg) {
-		log.debug("Processing NAT message : [" + nmsg.toString() + "]");
-
-		
-		
+		log.debug("Processing Incoming NAT message : [" + nmsg.toString() + "]");
 		/*
 		switch(nmsg.getType()){
-			case COMMAND : //TODO execute
-			case REPORT :  //TODO analize	
+			case COMMAND : {
+				switch(((Integer) nmsg.getContent()).intValue()){
+					case GET_STUN_INFO: //@TODO Get Stun Info
+				}
+			}
+			
+			case REPORT :  {
+				switch(nmsg.getContentType()){
+					case STUN_INFO: /@TODO Process stun info
+				}
+			}
 		}
 		*/
 	}
 	
 	public static void sendNatMessage(NatMessage nmsg){
-		Peer localPeer = SipCommunicationLayer.getInstance().getLocalPeer(); 
+		Peer localPeer = SipCommunicationLayer.getInstance().getLocalPeer();
 		nmsg.setFrom(localPeer.getID());
 		log.debug("Processing to send, NAT message [" + nmsg.toString() + "]");
 		
@@ -91,8 +93,8 @@ public class NatMessageProcessor {
 			try {
 				peer.sendMessage(f2fmsg);
 			} catch (CommunicationFailedException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
+				log.error("Unable to send f2f message [" + f2fmsg.toString() + "]", e);
+				//@TODO communication failed handling
 			}
 		}
 	}
