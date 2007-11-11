@@ -40,4 +40,10 @@ public class ConnectionManager {
 		log.debug("Total [" + systemIpList.size() + "] addresses");
 		return systemIpList;
 	}
+	
+	public static StunInfo getStunInfo(){
+		StunInfo sinf = null;
+			
+		return sinf;
+	}
 }

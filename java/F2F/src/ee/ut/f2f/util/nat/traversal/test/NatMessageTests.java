@@ -5,7 +5,7 @@ import ee.ut.f2f.util.nat.traversal.NatMessage;
 import junit.framework.TestCase;
 
 public class NatMessageTests extends TestCase {
-	NatMessage message = new NatMessage("Me", "To",0,0,"66666");
+	NatMessage message = new NatMessage("Me", "To",0,"66666");
 	
 	public void testEncodeDecode(){
 		//encoding
@@ -29,7 +29,6 @@ public class NatMessageTests extends TestCase {
 		assertNotNull(nmsg);
 		
 		assertEquals(0, nmsg.getType());
-		assertEquals(0, nmsg.getContentType());
 		assertEquals("66666", nmsg.getContent());
 		
 		System.out.println(nmsg.toString());

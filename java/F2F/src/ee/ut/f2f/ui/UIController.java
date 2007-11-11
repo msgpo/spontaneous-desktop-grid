@@ -258,14 +258,14 @@ public class UIController{
 		
 		
 		//Control Buttons
-		JButton initButton = new JButton("START");
+		JButton initButton = new JButton("TEST");
 		initButton.addActionListener(
 				new ActionListener(){
 					@Override
 					public void actionPerformed(ActionEvent e) {
 						
 						Peer to = (Peer) friendsList.getSelectedValue();
-						NatMessage nmsg = new NatMessage("Me", to.getID(),61,601,"Test");
+						NatMessage nmsg = new NatMessage("Me", to.getID(),NatMessageProcessor.COMMAND_GET_STUN_INFO,null);
 						
 						NatMessageProcessor.sendNatMessage(nmsg);
 					}

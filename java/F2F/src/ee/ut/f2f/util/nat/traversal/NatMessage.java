@@ -17,7 +17,6 @@ public class NatMessage implements Serializable{
 	private String from;
 	private String to;
 	private int type;
-	private int contentType;
 	private Object content;
 	
 	/**
@@ -25,11 +24,10 @@ public class NatMessage implements Serializable{
 	 * @param contentType
 	 * @param content
 	 */
-	public NatMessage(String from, String to, int type, int contentType, Object content) {
+	public NatMessage(String from, String to, int type, Object content) {
 		this.to = to;
 		this.from = from;
 		this.type = type;
-		this.contentType = contentType;
 		this.content = content;
 	}
 	
@@ -38,7 +36,6 @@ public class NatMessage implements Serializable{
 		this.to = temp.getTo();
 		this.from = temp.getFrom();
 		this.content = temp.getContent();
-		this.contentType = temp.getContentType();
 		this.type = temp.getType();
 		temp = null;
 	}
@@ -57,14 +54,6 @@ public class NatMessage implements Serializable{
 
 	public void setType(int type) {
 		this.type = type;
-	}
-
-	public int getContentType() {
-		return contentType;
-	}
-
-	public void setContentType(int contentType) {
-		this.contentType = contentType;
 	}
 
 	public Object getContent() {

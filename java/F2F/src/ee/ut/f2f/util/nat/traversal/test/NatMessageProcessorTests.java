@@ -1,8 +1,5 @@
 package ee.ut.f2f.util.nat.traversal.test;
 
-import ee.ut.f2f.util.nat.traversal.NatMessage;
-import ee.ut.f2f.util.nat.traversal.NatMessageException;
-import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 import junit.framework.TestCase;
 
 /**
@@ -10,7 +7,7 @@ import junit.framework.TestCase;
  *
  */
 public class NatMessageProcessorTests extends TestCase {
-	NatMessage nmsg = new NatMessage("Me","Temp",601,61,"666666");
+	//NatMessage nmsg = new NatMessage("Me","Temp",601,"666666");
 	
 	/**
 	 * 
