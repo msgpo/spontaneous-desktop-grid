@@ -45,6 +45,7 @@ import javax.swing.filechooser.FileFilter;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.comm.sip.SipCommunicationLayer;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
@@ -264,9 +265,12 @@ public class UIController{
 					public void actionPerformed(ActionEvent e) {
 						
 						Peer to = (Peer) friendsList.getSelectedValue();
-						NatMessage nmsg = new NatMessage("temp_7777@hotmail.com", to.getID(),NatMessage.COMMAND_GET_STUN_INFO,null);
+						String[] localIds = SipCommunicationLayer.getInstance().getLocalPeerIDs();
+						//writeNatLog(localIds[0]);
+						NatMessage nmsg = new NatMessage(localIds[0], to.getID(),NatMessage.COMMAND_GET_STUN_INFO,null);
 						
-						NatMessageProcessor.sendNatMessage(nmsg);
+						
+						//NatMessageProcessor.sendNatMessage(nmsg);
 					}
 				}
 		);
