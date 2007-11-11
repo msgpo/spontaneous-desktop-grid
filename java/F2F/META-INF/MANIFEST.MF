@@ -27,5 +27,5 @@ Bundle-ClassPath: lib/bcprov-jdk14.jar,
  lib/jxta.jar,
  lib/log4j-1.2.14.jar,
  lib/p2psockets-core.jar,
- lib/jstun.jar,
+ lib/jstun-f2f.jar,
  F2F.jar

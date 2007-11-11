@@ -1,8 +1,8 @@
 package ee.ut.f2f.util.nat.traversal.test;
 
 import ee.ut.f2f.util.nat.traversal.NatMessage;
-import ee.ut.f2f.util.nat.traversal.NatMessageException;
 import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
+import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
 import junit.framework.TestCase;
 
 /**
@@ -36,7 +36,12 @@ public class NatMessageProcessorTests extends TestCase {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
 		}
-		NatMessageProcessor.processIncomingNatMessage(encoded);
+		try {
+			NatMessageProcessor.processIncomingNatMessage(encoded);
+		} catch (Exception e) {
+			e.printStackTrace();
+			fail();
+		}
 	}
 	
 	public void testSendMessage(){

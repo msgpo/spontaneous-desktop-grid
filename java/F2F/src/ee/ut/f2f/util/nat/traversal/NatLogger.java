@@ -10,12 +10,12 @@ import ee.ut.f2f.ui.F2FComputingGUI;
 
 public class NatLogger {
 	
-	private Class clazz = null;
+	private Class<?> clazz = null;
 	private String LEVEL = "DEBUG";
 	private String prefix = "NATLOG:[" + LEVEL + "] ";
 	
 	
-	public NatLogger(Class clazz){
+	public NatLogger(Class<?> clazz){
 		this.clazz = clazz;
 		if (clazz != null) prefix = prefix + clazz.getSimpleName() + " ";
 	}
@@ -32,6 +32,8 @@ public class NatLogger {
 	
 	private void log(String msg){
 		String out = (new Date(System.currentTimeMillis())).toString() + " - " + msg;
+		File logDir = new File("./log");
+		if(!logDir.exists() && !logDir.isDirectory()) logDir.mkdir();
 		File logfile = new File("./log/f2fnat.log");
 		BufferedWriter bufOut = null;
 		try{
@@ -43,9 +45,10 @@ public class NatLogger {
 			try {
 				bufOut.close();
 			} catch (IOException e) {
+				e.printStackTrace();
 			}
 		}
 		System.out.println(prefix + out);
-		F2FComputingGUI.controller.writeNatLog(out);
+		//F2FComputingGUI.controller.writeNatLog(out);
 	}
 }

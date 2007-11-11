@@ -5,10 +5,13 @@ import java.util.Collection;
 import java.util.Hashtable;
 import java.util.Map;
 
+import de.javawi.jstun.test.DiscoveryInfo;
+
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
+import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
 
 public class NatMessageProcessor {
 	
@@ -16,7 +19,7 @@ public class NatMessageProcessor {
 	static private NatLogger log = new NatLogger(NatMessageProcessor.class);
 
 	
-	public static void processIncomingNatMessage(String encodedMessage){
+	public static void processIncomingNatMessage(String encodedMessage) throws Exception{
 		log.debug("Received NAT encoded message, length [" + encodedMessage.length() + "]");
 		
 		//remove /NAT>/ prefix
@@ -51,14 +54,16 @@ public class NatMessageProcessor {
 		}
 	}
 	
-	private static void processMessage(NatMessage nmsg) {
+	private static void processMessage(NatMessage nmsg) throws Exception{
 		log.debug("Processing Incoming NAT message : [" + nmsg.toString() + "]");
 		
 		switch(nmsg.getType()){
 			//COMMAND CASES
 			case NatMessage.COMMAND_GET_STUN_INFO : {
 				log.debug("Receved getStunInfo from [" + nmsg.getFrom() + "]");
-			    StunInfo sinf = ConnectionManager.getStunInfo();
+			    DiscoveryInfo diin = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+			    StunInfo sinf = new StunInfo(diin);
+			    sinf.setId(nmsg.getTo());
 			    log.debug("Prepared StunInfo  " + sinf.toString());
 				//preparesendback
 				String from = nmsg.getTo();

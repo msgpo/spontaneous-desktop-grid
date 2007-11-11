@@ -7,10 +7,9 @@ import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 public class ConnectionManagerTest extends TestCase{
 	
 	public void testgetStunInfoData(){
-		ConnectionManager cmt = new ConnectionManager();
 		try {
-			DiscoveryInfo di = cmt.startNetworkDiscovery("stun.xten.net", 3478);
-			//assertNotNull(si);
+			DiscoveryInfo di = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+			assertNotNull(di);
 			System.out.println(di);
 		} catch (Exception e) {
 			e.printStackTrace();

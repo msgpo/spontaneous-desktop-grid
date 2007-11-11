@@ -6,6 +6,7 @@ import java.util.Enumeration;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
+import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 
 public class ConnectionManager {
 	
@@ -18,7 +19,7 @@ public class ConnectionManager {
 	 * @return DiscoveryInfo
 	 * @throws Exception if something goes wrong
 	 */
-	public DiscoveryInfo startNetworkDiscovery(String jStunServerName, int jStunServerPort ) throws Exception {
+	public static DiscoveryInfo startNetworkDiscovery(String jStunServerName, int jStunServerPort ) throws NetworkDiscoveryException, Exception {
 		Enumeration<NetworkInterface> ifaces = NetworkInterface
 				.getNetworkInterfaces();
 		while (ifaces.hasMoreElements()) {
@@ -37,6 +38,6 @@ public class ConnectionManager {
 				}
 			}
 		}
-		throw new Exception("Cannot get a response from the STUN server");
+		throw new NetworkDiscoveryException("Cannot get a response from the STUN server");
 	}
 }

@@ -9,6 +9,8 @@ import java.io.Serializable;
 import java.lang.reflect.InvocationTargetException;
 import java.lang.reflect.Method;
 
+import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
+
 import sun.misc.UUDecoder;
 import sun.misc.UUEncoder;
 

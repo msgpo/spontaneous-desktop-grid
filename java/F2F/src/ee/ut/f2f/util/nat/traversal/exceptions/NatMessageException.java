@@ -1,4 +1,4 @@
-package ee.ut.f2f.util.nat.traversal;
+package ee.ut.f2f.util.nat.traversal.exceptions;
 
 public class NatMessageException extends Exception {
 
