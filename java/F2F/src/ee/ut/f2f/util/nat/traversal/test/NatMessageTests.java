@@ -10,7 +10,7 @@ public class NatMessageTests extends TestCase {
 	
 	public void testEncodeDecode(){
 		StunInfo sinf = new StunInfo("192.168.6.166",6666,"192.168.6.166",6666,"Open");
-		message.setContent(sinf);
+		message.setContent(null);
 		
 		//encoding
 		String encoded = null;
