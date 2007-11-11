@@ -261,7 +261,6 @@ public class UIController{
 		JButton initButton = new JButton("TEST");
 		initButton.addActionListener(
 				new ActionListener(){
-					@Override
 					public void actionPerformed(ActionEvent e) {
 						
 						Peer to = (Peer) friendsList.getSelectedValue();
