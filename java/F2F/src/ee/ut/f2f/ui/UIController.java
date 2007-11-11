@@ -265,7 +265,7 @@ public class UIController{
 					public void actionPerformed(ActionEvent e) {
 						
 						Peer to = (Peer) friendsList.getSelectedValue();
-						NatMessage nmsg = new NatMessage("Me", to.getID(),NatMessageProcessor.COMMAND_GET_STUN_INFO,null);
+						NatMessage nmsg = new NatMessage("Me", to.getID(),NatMessage.COMMAND_GET_STUN_INFO,null);
 						
 						NatMessageProcessor.sendNatMessage(nmsg);
 					}

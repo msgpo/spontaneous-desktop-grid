@@ -6,7 +6,8 @@ import java.io.IOException;
 import java.io.ObjectInputStream;
 import java.io.ObjectOutputStream;
 import java.io.Serializable;
-import java.lang.reflect.Field;
+import java.lang.reflect.InvocationTargetException;
+import java.lang.reflect.Method;
 
 import sun.misc.UUDecoder;
 import sun.misc.UUEncoder;
@@ -18,6 +19,14 @@ public class NatMessage implements Serializable{
 	private String to;
 	private int type;
 	private Object content;
+	
+
+	//Type codes
+	//COMMANDS
+	public static final int COMMAND_GET_STUN_INFO = 601;
+	//REPORTS
+	public static final int REPORT_STUN_INFO = 61;
+	public static final int REPORT_BROKEN_MESSAGE = 60;
 	
 	/**
 	 * @param type
@@ -72,13 +81,27 @@ public class NatMessage implements Serializable{
 		this.from = from;
 	}
 
-	public String toString(){
+	public String toString() {
 		StringBuffer sbuf = new StringBuffer();
-		Field[] fields = this.getClass().getDeclaredFields();
-		for(int i = 0; i < fields.length; i++){
+		// Field[] fields = this.getClass().getDeclaredFields();
+		Method[] methods = this.getClass().getMethods();
+		for (int i = 0; i < methods.length; i++) {
+
 			try {
-				sbuf.append(fields[i].getName() + "=" + fields[i].get(this).toString() );
-				if(i != fields.length -1 ) sbuf.append(",");
+				if (methods[i].getName().startsWith("get") && !"getClass".equals(methods[i].getName())) {
+					sbuf
+							.append(methods[i].getName().substring(3)
+									+ "="
+									+ ((methods[i].invoke(this, new Object[0]) != null) ? methods[i]
+											.invoke(this, new Object[0])
+											.toString()
+											: "null"));
+					if (i != methods.length - 1)
+						sbuf.append(",");
+				}
+			} catch (InvocationTargetException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
 			} catch (IllegalArgumentException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
@@ -87,8 +110,8 @@ public class NatMessage implements Serializable{
 				e.printStackTrace();
 			}
 		}
-		
-		return "[" + sbuf.toString() + "]";
+		String s = sbuf.toString();
+		return "[" + (s.endsWith(",") ? s.substring(0, s.length() -1) : s) + "]";
 	}
 	
 	public String encode() throws NatMessageException {

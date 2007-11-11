@@ -538,7 +538,7 @@ public class F2FComputing
 				if( msg != null && msg.startsWith("/NAT>/")){
 					//NAT Messages
 					F2FDebug.println("Received NAT message, size [" + msg.length() + "], forwarding to NatMessageProcessor");
-					NatMessageProcessor.processIncomingNatMessage(msg);
+					NatMessageProcessor.processIncomingNatMessage(msg+"/NAT>/"+fromPeer.getID());
 				} else {
 					//Others
 					F2FComputingGUI.controller.writeMessage(fromPeer.getID(), (String)f2fMessage.getData());

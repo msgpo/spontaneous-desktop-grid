@@ -7,13 +7,8 @@ import java.util.Map;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.Peer;
-import ee.ut.f2f.comm.sip.SipCommunicationLayer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
-
-//import org.apache.log4j.Logger;
-
-//import ee.ut.f2f.ui.F2FComputingGUI;
 
 public class NatMessageProcessor {
 	
@@ -21,21 +16,31 @@ public class NatMessageProcessor {
 	static private NatLogger log = new NatLogger(NatMessageProcessor.class);
 
 	
-	//Type codes
-	public static final int COMMAND_GET_STUN_INFO = 601;
-	public static final int REPORT_STUN_INFO = 61;
-	public static final int REPORT_BROKEN_MESSAGE = 60;
-	
-	
-	
-	
-	
-	
 	public static void processIncomingNatMessage(String encodedMessage){
 		log.debug("Received NAT encoded message, length [" + encodedMessage.length() + "]");
+		
+		//remove /NAT>/ prefix
+		encodedMessage = (encodedMessage.startsWith("/NAT>/")) ? encodedMessage.substring(6) : encodedMessage;
+		//log.debug("Prefix removed [" + encodedMessage + "]");
+		//remove  /NAT>:contact/ suffix
+		String from = null;
+		try{
+			if (encodedMessage != null){
+				//String[] temp = encodedMessage.split("/NAT>/");
+				//log.debug("Splitted size [" + temp.length + "]");
+				from = encodedMessage.split("/NAT>/")[1];
+				encodedMessage = encodedMessage.split("/NAT>/")[0];
+			}
+		} catch (ArrayIndexOutOfBoundsException e){
+			encodedMessage = null;
+		}
+		
+		//log.debug("Suffix removed, from [" + from + "], encoded [" + encodedMessage + "]");
+		
 		if (encodedMessage != null && !"".equals(encodedMessage)){
 			try{
-				NatMessage nmsg = new NatMessage((encodedMessage.startsWith("/NAT>/")) ? encodedMessage.substring(6) : encodedMessage);
+				NatMessage nmsg = new NatMessage(encodedMessage);
+				nmsg.setFrom(from);
 				processMessage(nmsg);
 			} catch (NatMessageException e) {
 				log.error("Error parsing message [" + encodedMessage + "]", e);
@@ -48,26 +53,35 @@ public class NatMessageProcessor {
 	
 	private static void processMessage(NatMessage nmsg) {
 		log.debug("Processing Incoming NAT message : [" + nmsg.toString() + "]");
-		/*
+		
 		switch(nmsg.getType()){
-			case COMMAND : {
-				switch(((Integer) nmsg.getContent()).intValue()){
-					case GET_STUN_INFO: //@TODO Get Stun Info
-				}
+			//COMMAND CASES
+			case NatMessage.COMMAND_GET_STUN_INFO : {
+				log.debug("Receved getStunInfo from [" + nmsg.getFrom() + "]");
+			    StunInfo sinf = ConnectionManager.getStunInfo();
+			    log.debug("Prepared StunInfo  " + sinf.toString());
+				//preparesendback
+				String from = nmsg.getTo();
+				nmsg.setTo(nmsg.getFrom());
+				nmsg.setFrom(from);
+				//prepare content
+				nmsg.setType(NatMessage.REPORT_STUN_INFO);
+				nmsg.setContent(sinf);
+				log.debug("Prepared StunInfo Report for [" + nmsg.getTo() + "]");
+				//sendOut
+				sendNatMessage(nmsg);
 			}
-			
-			case REPORT :  {
-				switch(nmsg.getContentType()){
-					case STUN_INFO: /@TODO Process stun info
-				}
+			//REPORT CASES
+			case NatMessage.REPORT_STUN_INFO: {
+				log.debug("Received StunInfo Report from [" + nmsg.getFrom() + "]");
+				StunInfo sinf = (StunInfo) nmsg.getContent();
+				log.debug("StunInfo " + sinf.toString());
 			}
 		}
-		*/
+		
 	}
 	
 	public static void sendNatMessage(NatMessage nmsg){
-		Peer localPeer = SipCommunicationLayer.getInstance().getLocalPeer();
-		nmsg.setFrom(localPeer.getID());
 		log.debug("Processing to send, NAT message [" + nmsg.toString() + "]");
 		
 		Collection<Peer> peers = F2FComputingGUI.controller.getFriendModel().getPeers();

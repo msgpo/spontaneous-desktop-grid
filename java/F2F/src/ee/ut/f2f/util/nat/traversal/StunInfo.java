@@ -1,5 +1,6 @@
 package ee.ut.f2f.util.nat.traversal;
 
+import java.lang.reflect.Field;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 
@@ -62,6 +63,17 @@ public class StunInfo{
 	
 	public int getPublicPort(){
 		return publicAddress.getPort();
+	}
+	
+	public String toString(){
+		StringBuffer sbuf = new StringBuffer();
+		sbuf.append("locIp=" + getLocalInetAddress().getHostAddress() + ",");
+		sbuf.append("locPort=" + getLocalPort() + ",");
+		sbuf.append("pubIp=" + getPublicInetAddress().getHostAddress() + ",");
+		sbuf.append("pubPort=" + getPublicPort() + ",");
+		sbuf.append("firewallType=" + getFirewallType());
+		
+		return "[" + sbuf.toString() + "]";
 	}
 	
 	public boolean isOpen(){

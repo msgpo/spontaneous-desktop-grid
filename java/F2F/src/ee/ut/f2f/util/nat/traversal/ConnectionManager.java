@@ -7,17 +7,11 @@ import java.util.ArrayList;
 import java.util.Enumeration;
 import java.util.List;
 
-import org.apache.log4j.Logger;
-
 public class ConnectionManager {
 	
-	final Logger log = Logger.getLogger(this.getClass().getName());
+	final static NatLogger log = new NatLogger(ConnectionManager.class);
 	
-	public ConnectionManager(){
-		
-	}
-	
-	public List<InetAddress> getSystemIpAddres(){
+	public static List<InetAddress> getSystemIpAddres(){
 		ArrayList<InetAddress> systemIpList = null;
 		try{
 			Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();	
@@ -42,7 +36,8 @@ public class ConnectionManager {
 	}
 	
 	public static StunInfo getStunInfo(){
-		StunInfo sinf = null;
+		//for testing purposes
+		StunInfo sinf = new StunInfo("192.168.6.166",6666,"192.168.6.166",6666,"Open");
 			
 		return sinf;
 	}
