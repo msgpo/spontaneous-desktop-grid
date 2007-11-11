@@ -6,6 +6,7 @@ import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 
 public class ConnectionManagerTest extends TestCase{
 	
+	/*
 	public void testgetStunInfoData(){
 		ConnectionManager cmt = new ConnectionManager();
 		try {
@@ -16,5 +17,5 @@ public class ConnectionManagerTest extends TestCase{
 			e.printStackTrace();
 		}
 	}
-	
+	*/
 }
