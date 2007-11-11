@@ -539,7 +539,7 @@ public class F2FComputing
 					//NAT Messages
 					F2FDebug.println("Received NAT message, size [" + msg.length() + "], forwarding to NatMessageProcessor");
 					try {
-						NatMessageProcessor.processIncomingNatMessage(msg+"/NAT>/"+fromPeer.getID());
+						NatMessageProcessor.processIncomingNatMessage(msg);
 					} catch (Exception e) {
 						// TODO Auto-generated catch block
 						e.printStackTrace();

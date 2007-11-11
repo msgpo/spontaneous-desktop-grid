@@ -24,26 +24,10 @@ public class NatMessageProcessor {
 		
 		//remove /NAT>/ prefix
 		encodedMessage = (encodedMessage.startsWith("/NAT>/")) ? encodedMessage.substring(6) : encodedMessage;
-		//log.debug("Prefix removed [" + encodedMessage + "]");
-		//remove  /NAT>:contact/ suffix
-		String to = null;
-		try{
-			if (encodedMessage != null){
-				//String[] temp = encodedMessage.split("/NAT>/");
-				//log.debug("Splitted size [" + temp.length + "]");
-				to = encodedMessage.split("/NAT>/")[1];
-				encodedMessage = encodedMessage.split("/NAT>/")[0];
-			}
-		} catch (ArrayIndexOutOfBoundsException e){
-			encodedMessage = null;
-		}
-		
-		//log.debug("Suffix removed, from [" + from + "], encoded [" + encodedMessage + "]");
 		
 		if (encodedMessage != null && !"".equals(encodedMessage)){
 			try{
 				NatMessage nmsg = new NatMessage(encodedMessage);
-				nmsg.setTo(to);
 				processMessage(nmsg);
 			} catch (NatMessageException e) {
 				log.error("Error parsing message [" + encodedMessage + "]", e);
@@ -60,19 +44,23 @@ public class NatMessageProcessor {
 		switch(nmsg.getType()){
 			//COMMAND CASES
 			case NatMessage.COMMAND_GET_STUN_INFO : {
-				log.debug("Receved getStunInfo from [" + nmsg.getFrom() + "]");
-			    DiscoveryInfo diin = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+				String from = nmsg.getFrom();
+				String to = nmsg.getTo();
+				log.debug("Received getStunInfo from [" + from + "]");
+			    
+				DiscoveryInfo diin = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
 			    StunInfo sinf = new StunInfo(diin);
 			    sinf.setId(nmsg.getTo());
 			    log.debug("Prepared StunInfo  " + sinf.toString());
-				//preparesendback
-				String from = nmsg.getTo();
-				nmsg.setTo(nmsg.getFrom());
-				nmsg.setFrom(from);
+				
+			    //prepare and send report
+				nmsg.setTo(from);	//reverse to -> from
+				nmsg.setFrom(to);	//reverse from -> to
+				
 				//prepare content
 				nmsg.setType(NatMessage.REPORT_STUN_INFO);
 				nmsg.setContent(sinf);
-				log.debug("Prepared StunInfo Report for [" + nmsg.getTo() + "]");
+				log.debug("Prepared StunInfo Report Message for [" + nmsg.getTo() + "]");
 				//sendOut
 				sendNatMessage(nmsg);
 			}
