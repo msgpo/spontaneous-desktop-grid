@@ -82,7 +82,7 @@ public class NatMessageProcessor {
 		}
 		
 		if(encoded != null){
-			encoded = encoded + "/NAT>/";
+			encoded = "/NAT>/" + encoded;
 			log.debug("Sending encoded message [" + encoded + "]");
 			try {
 				peer.sendMessage(encoded);
