@@ -533,9 +533,11 @@ public class F2FComputing
 			else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
 			{	
 				//NAT/Traversal filtering
+				//Decapsulating message content
 				String msg = (String) f2fMessage.getData();
 				if( msg != null && msg.startsWith("/NAT>/")){
 					//NAT Messages
+					F2FDebug.println("Received NAT message, size [" + msg.length() + "], forwarding to NatMessageProcessor");
 					NatMessageProcessor.processIncomingNatMessage(msg);
 				} else {
 					//Others

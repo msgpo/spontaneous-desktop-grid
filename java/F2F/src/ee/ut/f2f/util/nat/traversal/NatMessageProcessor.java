@@ -10,6 +10,7 @@ import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.comm.sip.SipCommunicationLayer;
 import ee.ut.f2f.ui.F2FComputingGUI;
+import ee.ut.f2f.util.F2FMessage;
 
 //import org.apache.log4j.Logger;
 
@@ -83,9 +84,12 @@ public class NatMessageProcessor {
 		
 		if(encoded != null){
 			encoded = "/NAT>/" + encoded;
-			log.debug("Sending encoded message [" + encoded + "]");
+			
+			F2FMessage f2fmsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, encoded);
+			log.debug("Incapsulating  NAT message into F2F message : [" + encoded + "]");
+			log.debug("Sending encoded message [" + f2fmsg.toString() + "]");
 			try {
-				peer.sendMessage(encoded);
+				peer.sendMessage(f2fmsg);
 			} catch (CommunicationFailedException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
