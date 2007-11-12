@@ -10,7 +10,7 @@ import junit.framework.TestCase;
  *
  */
 public class NatMessageProcessorTests extends TestCase {
-	NatMessage nmsg = new NatMessage("Me","Temp",601,"666666");
+	NatMessage nmsg = new NatMessage("Me","Temp",601,null);
 	
 	/**
 	 * 
@@ -31,7 +31,7 @@ public class NatMessageProcessorTests extends TestCase {
 	public void testProcessMessage(){
 		String encoded = null;
 		try {
-			encoded = "/NAT>/" + nmsg.encode() + "/NAT>/temp_6666@msn.com";
+			encoded = "/NAT>/" + nmsg.encode();
 		} catch (NatMessageException e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
