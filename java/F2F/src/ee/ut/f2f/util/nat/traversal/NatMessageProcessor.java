@@ -83,12 +83,14 @@ public class NatMessageProcessor {
 				log.debug("Prepared StunInfo Report Message for [" + nmsg.getTo() + "]");
 				//sendOut
 				sendNatMessage(nmsg);
+				break;
 			}
 			//REPORT CASES
 			case NatMessage.REPORT_STUN_INFO: {
 				log.debug("Received StunInfo Report from [" + nmsg.getFrom() + "]");
 				StunInfo sinf = (StunInfo) nmsg.getContent();
 				log.debug("StunInfo " + sinf.toString());
+				break;
 			}
 		}
 		
