@@ -20,14 +20,14 @@ public class NatMessageTests extends TestCase {
 		}
 		
 		assertNotNull(di);
-		System.out.println("DiscoveryInfo : " + di.toString());
+		System.out.println("DiscoveryInfo : " + di);
 		
 		StunInfo sinf = new StunInfo(di);
 		sinf.setId("From");
-		System.out.println("StunInfo :" + sinf.toString());
+		System.out.println("StunInfo :" + sinf);
 		
 		message.setContent(sinf);
-		System.out.println("NatMessage :" + message.toString());
+		System.out.println("NatMessage :" + message);
 		
 		//encoding
 		String encoded = null;
@@ -54,7 +54,7 @@ public class NatMessageTests extends TestCase {
 		assertEquals("To", nmsg.getTo());
 		//assertEquals(sinf, nmsg.getContent());
 		
-		System.out.println("Decoded NatMessage :" + nmsg.toString());
+		System.out.println("Decoded NatMessage :" + nmsg);
 	}
 	
 	/*

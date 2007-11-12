@@ -22,7 +22,7 @@ public class StunInfoTest extends TestCase{
 		
 		//StunInfo sinf = new StunInfo(di);
 		
-		System.out.println(di.getLocalIP().toString());
+		System.out.println(di.getLocalIP().getHostAddress());
 	}
 	
 }
