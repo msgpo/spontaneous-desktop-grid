@@ -14,8 +14,6 @@ import ee.ut.xpp2p.model.RenderJob;
  */
 public class MasterBlendererTest extends TestCase {
 
-	
-
 	/**
 	 * Tests splitting job into tasks
 	 */
@@ -93,6 +91,7 @@ public class MasterBlendererTest extends TestCase {
 	 * Tests job rendering
 	 */
 	public void testRenderJob() {
+		//FIXME: Adapt to new filename in renderJob
 		RenderJob job = new RenderJob();
 		job.setInputFile("etc\\VictorDancing.blend");
 		job.setOutputLocation("etc\\");

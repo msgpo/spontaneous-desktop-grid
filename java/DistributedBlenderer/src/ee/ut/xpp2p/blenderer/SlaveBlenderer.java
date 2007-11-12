@@ -15,96 +15,101 @@ import ee.ut.xpp2p.util.FileUtil;
  * @author Jaan Neljandik
  * @created 05.11.2007
  */
-public class SlaveBlenderer extends Task{
+public class SlaveBlenderer extends Task {
 
-	/* (non-Javadoc)
+	/*
+	 * (non-Javadoc)
+	 * 
 	 * @see ee.ut.f2f.core.Task#runTask()
 	 */
-	public void runTask() { 
+	public void runTask() {
 		// Gets proxy of MasterRenderer
-		TaskProxy masterProxy = this.getTaskProxy(this.getJob().getMasterTaskID());
-		if (masterProxy == null) throw new RuntimeException("Proxy of master task was not found!");
-		
+		TaskProxy masterProxy = this.getTaskProxy(this.getJob()
+				.getMasterTaskID());
+		if (masterProxy == null)
+			throw new RuntimeException("Proxy of master task was not found!");
+
 		boolean taskReceived = false;
 		while (!taskReceived) {
-			RenderTask receivedRenderTask = (RenderTask)masterProxy.receiveMessage();
+			RenderTask receivedRenderTask = (RenderTask) masterProxy
+					.receiveMessage();
 			if (receivedRenderTask != null) {
 				taskReceived = true;
 				try {
 					renderTask(receivedRenderTask);
-					
+
 					RenderResult result = new RenderResult();
 					result.setEndFrame(receivedRenderTask.getEndFrame());
 					result.setStartFrame(receivedRenderTask.getStartFrame());
-					//FIXME Find output file correctly
+					// FIXME Find output file via user interface or some other way
+					// FIXME Find file extension
 					String outputFile = receivedRenderTask.getOutputLocation()
-							+ "000" + receivedRenderTask.getStartFrame()
-							+ "_00" + receivedRenderTask.getEndFrame() + ".avi";
+							+ "part" + receivedRenderTask.getStartFrame()
+							+ "-" + receivedRenderTask.getEndFrame() + ".avi";
 					result.setRenderedPart(FileUtil.loadFile(outputFile));
 					masterProxy.sendMessage(result);
+					// FIXME Delete output file
 					break;
-				}
-				catch (NothingRenderedException e){
+				} catch (NothingRenderedException e) {
 					System.out.println(e.getMessage());
-					//TODO: Handle exception
-				}				
+					// TODO: Handle exception
+				} catch (IOException e) {
+					System.out.println(e.getMessage());
+					// TODO: Handle exception
+				}
 			}
 		}
 	}
-	
-	
+
 	/**
-	 * Calls the Blender command line tool to render an
-	 * animation in AVIJPEG format from a .blend file.
-	 * Writes info about the process to standard output.
-	 * @param task task to render
+	 * Calls the Blender command line tool to render an animation in AVIJPEG
+	 * format from a .blend file. Writes info about the process to standard
+	 * output.
+	 * 
+	 * @param task
+	 *            task to render
 	 * @throws NothingRenderedException
 	 */
-	public void renderTask(RenderTask task) throws NothingRenderedException{
-		FileUtil.saveFile(task.getBlenderFile(), task.getFileName());
-		
-		String[] cmdarr = {"blender", 
-					"-b", task.getFileName(), 
-					"-o", task.getOutputLocation(), 
-					"-F", task.getFileFormat(), 
-					"-s", String.valueOf(task.getStartFrame()),
-					"-e", String.valueOf(task.getEndFrame()), 
-					"-a", "-x", "1"}; 
+	public void renderTask(RenderTask task) throws NothingRenderedException {
 		try {
+			FileUtil.saveFile(task.getBlenderFile(), task.getFileName());
+
+			String[] cmdarr = { "blender", "-b", task.getFileName(), "-o",
+					task.getOutputLocation(), "-F", task.getFileFormat(), "-s",
+					String.valueOf(task.getStartFrame()), "-e",
+					String.valueOf(task.getEndFrame()), "-a", "-x", "1" };
 			Process proc = Runtime.getRuntime().exec(cmdarr);
-			BufferedReader br = new BufferedReader(new InputStreamReader(proc.getInputStream()));
-		
+			BufferedReader br = new BufferedReader(new InputStreamReader(proc
+					.getInputStream()));
+
 			String line;
 			boolean anythingRendered = false;
-			
+
 			while ((line = br.readLine()) != null) {
-				if (
-					line.startsWith("'blender' is not recognized") ||
-					line.indexOf("blender") != -1 && line.indexOf("not found") != -1
-				)
+				if (line.startsWith("'blender' is not recognized")
+						|| line.indexOf("blender") != -1
+						&& line.indexOf("not found") != -1)
 					throw new NothingRenderedException("Blender not found!");
-				
-				else if (
-					line.startsWith("Append frame") ||
-					line.startsWith("added frame") ||
-					line.startsWith("Writing frame")
-				) {
+
+				else if (line.startsWith("Append frame")
+						|| line.startsWith("added frame")
+						|| line.startsWith("Writing frame")) {
 					System.out.println("Rendered frame " + line.split(" +")[2]);
 					anythingRendered = true;
 				}
-				
+
 				else if (line.startsWith("Blender quit") && anythingRendered) {
 					System.out.println("Rendering finished");
 				}
 			}
 			proc.destroy();
-		
+
 			if (!anythingRendered)
-				throw new NothingRenderedException("Nothing rendered!");			
-		}
-		catch(IOException e){
+				throw new NothingRenderedException("Nothing rendered!");
+		} catch (IOException e) {
 			System.out.println(e.getMessage());
+			//TODO: Handle Exception
 		}
 	}
-	
+
 }

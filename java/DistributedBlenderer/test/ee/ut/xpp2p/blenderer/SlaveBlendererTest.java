@@ -19,6 +19,7 @@ public class SlaveBlendererTest extends TestCase {
 	 * location.
 	 */
 	public void testRenderTask() {
+		//FIXME: Adapt to new filename and behavior in renderTask
 		RenderTask task = new RenderTask();
 		task.setFileName("etc\\VictorDancing.blend");
 		task.setOutputLocation("etc\\");

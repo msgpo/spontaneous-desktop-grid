@@ -4,7 +4,7 @@ package ee.ut.xpp2p.model;
  * @author Jaan Neljandik
  * @created 09.11.2007
  */
-public class RenderResult implements Comparable {
+public class RenderResult implements Comparable<RenderResult> {
 
 	private byte[] renderedPart;
 	private long startFrame;
@@ -35,11 +35,10 @@ public class RenderResult implements Comparable {
 	}
 
 	@Override
-	public int compareTo(Object obj) {
-		RenderResult resultToCompare = (RenderResult) obj;
-		if (this.getStartFrame() < resultToCompare.getStartFrame()) {
+	public int compareTo(RenderResult obj) {
+		if (this.getStartFrame() < obj.getStartFrame()) {
 			return -1;
-		} else if (this.getStartFrame() > resultToCompare.getStartFrame()) {
+		} else if (this.getStartFrame() > obj.getStartFrame()) {
 			return 1;
 		} else {
 			return 0;
