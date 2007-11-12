@@ -1,5 +1,7 @@
 package ee.ut.f2f.util.nat.traversal.test;
 
+import de.javawi.jstun.test.DiscoveryInfo;
+import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.StunInfo;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
@@ -9,8 +11,23 @@ public class NatMessageTests extends TestCase {
 	NatMessage message = new NatMessage("From", "To",NatMessage.REPORT_STUN_INFO,null);
 	
 	public void testEncodeDecode(){
-		//StunInfo sinf = new StunInfo("192.168.6.166",6666,"192.168.6.166",6666,"Open");
-		message.setContent(null);
+		DiscoveryInfo di = null;
+		try {
+			di = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+		} catch (Exception e1) {
+			fail();
+			e1.printStackTrace();
+		}
+		
+		assertNotNull(di);
+		System.out.println("DiscoveryInfo : " + di.toString());
+		
+		StunInfo sinf = new StunInfo(di);
+		sinf.setId("From");
+		System.out.println("StunInfo :" + sinf.toString());
+		
+		message.setContent(sinf);
+		System.out.println("NatMessage :" + message.toString());
 		
 		//encoding
 		String encoded = null;
@@ -21,7 +38,7 @@ public class NatMessageTests extends TestCase {
 		}
 		assertNotNull(encoded);
 		
-		System.out.println(encoded);
+		System.out.println("Encoded NatMessage :" + encoded);
 		
 		//decoding
 		NatMessage nmsg = null;
@@ -37,7 +54,7 @@ public class NatMessageTests extends TestCase {
 		assertEquals("To", nmsg.getTo());
 		//assertEquals(sinf, nmsg.getContent());
 		
-		System.out.println(nmsg.toString());
+		System.out.println("Decoded NatMessage :" + nmsg.toString());
 	}
 	
 	/*
