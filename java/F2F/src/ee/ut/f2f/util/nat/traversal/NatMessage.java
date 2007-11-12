@@ -85,35 +85,13 @@ public class NatMessage implements Serializable{
 
 	public String toString() {
 		StringBuffer sbuf = new StringBuffer();
-		// Field[] fields = this.getClass().getDeclaredFields();
-		Method[] methods = this.getClass().getMethods();
-		for (int i = 0; i < methods.length; i++) {
-
-			try {
-				if (methods[i].getName().startsWith("get") && !"getClass".equals(methods[i].getName())) {
-					sbuf
-							.append(methods[i].getName().substring(3)
-									+ "="
-									+ ((methods[i].invoke(this, new Object[0]) != null) ? methods[i]
-											.invoke(this, new Object[0])
-											.toString()
-											: "null"));
-					if (i != methods.length - 1)
-						sbuf.append(",");
-				}
-			} catch (InvocationTargetException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalArgumentException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			} catch (IllegalAccessException e) {
-				// TODO Auto-generated catch block
-				e.printStackTrace();
-			}
-		}
-		String s = sbuf.toString();
-		return "[" + (s.endsWith(",") ? s.substring(0, s.length() -1) : s) + "]";
+		sbuf.append("from=" + getFrom() + ",");
+		sbuf.append("to=" + getTo() + ",");
+		sbuf.append("type=" + getType() + ",");
+		sbuf.append("content=");
+		if(getContent() != null) sbuf.append(getContent().toString());
+		else sbuf.append("null");
+		return "[" + sbuf.toString() + "]";
 	}
 	
 	public String encode() throws NatMessageException {

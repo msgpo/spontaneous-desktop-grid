@@ -12,6 +12,7 @@ import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
+import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 
 public class NatMessageProcessor {
 	
@@ -19,26 +20,34 @@ public class NatMessageProcessor {
 	static private NatLogger log = new NatLogger(NatMessageProcessor.class);
 
 	
-	public static void processIncomingNatMessage(String encodedMessage) throws Exception{
+	public static void processIncomingNatMessage(String encodedMessage){
 		log.debug("Received NAT encoded message, length [" + encodedMessage.length() + "]");
 		
 		//remove /NAT>/ prefix
 		encodedMessage = (encodedMessage.startsWith("/NAT>/")) ? encodedMessage.substring(6) : encodedMessage;
-		
+		NatMessage nmsg = null;
 		if (encodedMessage != null && !"".equals(encodedMessage)){
 			try{
-				NatMessage nmsg = new NatMessage(encodedMessage);
-				processMessage(nmsg);
+				nmsg = new NatMessage(encodedMessage);
 			} catch (NatMessageException e) {
 				log.error("Error parsing message [" + encodedMessage + "]", e);
+				e.printStackTrace();
 				//@TODO: report failure, request resend
 			}
 		} else {
 			log.debug("Discarding empty NAT message");
 		}
+
+		processMessage(nmsg);
+
 	}
 	
-	private static void processMessage(NatMessage nmsg) throws Exception{
+	private static void processMessage(NatMessage nmsg){
+		if (nmsg == null){
+			log.debug("Null argument NatMessage");
+			throw new NullPointerException("Null argument NatMessage");
+		}
+		
 		log.debug("Processing Incoming NAT message : [" + nmsg.toString() + "]");
 		
 		switch(nmsg.getType()){
@@ -48,7 +57,18 @@ public class NatMessageProcessor {
 				String to = nmsg.getTo();
 				log.debug("Received getStunInfo from [" + from + "]");
 			    
-				DiscoveryInfo diin = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+				DiscoveryInfo diin = null;
+				try{
+					diin = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+				} catch (NetworkDiscoveryException e){
+					//@TODO workaround if could not get the stun info from server
+					log.error("Could not get the stun info from server", e);
+					e.printStackTrace();
+				} catch (Exception e){
+					//TODO another exceptions
+					log.error("Error getting stun info", e);
+					e.printStackTrace();
+				}
 			    StunInfo sinf = new StunInfo(diin);
 			    sinf.setId(nmsg.getTo());
 			    log.debug("Prepared StunInfo  " + sinf.toString());
@@ -95,6 +115,7 @@ public class NatMessageProcessor {
 			encoded = nmsg.encode();
 		} catch (NatMessageException e) {
 			log.error(e.getMessage(),e);
+			e.printStackTrace();
 		}
 		
 		if(encoded != null){
@@ -108,45 +129,9 @@ public class NatMessageProcessor {
 			} catch (CommunicationFailedException e) {
 				log.error("Unable to send f2f message [" + f2fmsg.toString() + "]", e);
 				//@TODO communication failed handling
+				e.printStackTrace();
 			}
 		}
 	}
-	
-	
-	
-	/**
-	 * @deprecated
-	 * We do not need to parse
-	 * We do not exchange parameter=arg anymore, we exchange NatMessage objects
-	 * @param params
-	 * @return
-	 * @throws NatMessageException
-	 */
-	@Deprecated
-	public Map<String,String> parseParams(String params) throws NatMessageException{
-		Hashtable<String,String> map = new Hashtable<String,String>();
-		log.debug("Params : [" + params + "]");
-		String [] pairs = params.split("&");
-		log.debug("Params pairs " + Arrays.toString(pairs));
-		for (String s : pairs){
-			String parameter = null;
-			String args = null;
-			try{
-				parameter = s.split("=")[0];
-				args = s.split("=")[1];
-			} catch (ArrayIndexOutOfBoundsException e){
-				log.debug("[" + s + "] contains null values");
-			}
-			if (parameter != null && args != null){
-				if(!map.containsKey(parameter)) map.put(parameter, args);
-				else {
-					log.debug("contains parameters of the same type, [" + parameter + "] throwing exception");
-					throw new NatMessageException("Message contains parameters of the same type : [" + parameter + "]");
-				}
-			} else {
-				log.debug("Discarding null values [" + parameter + "=" + args + "]");
-			}
-		}
-		return map;
-	}
+
 }
