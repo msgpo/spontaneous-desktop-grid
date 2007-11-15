@@ -58,13 +58,6 @@ class SocketPeer implements Peer
 	}
 
 	/* (non-Javadoc)
-	 * @see ee.ut.f2f.comm.Peer#isOnline()
-	 */
-	public boolean isOnline() {
-		return true;
-	}
-
-	/* (non-Javadoc)
 	 * @see ee.ut.f2f.comm.Peer#sendMessage(ee.ut.f2f.comm.Message)
 	 */
 	public synchronized void sendMessage(Object message)

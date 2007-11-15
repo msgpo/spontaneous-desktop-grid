@@ -19,13 +19,6 @@ public interface Peer
 	String getDisplayName();
 
 	/**
-	 * Peer online/offline indicator.
-	 *
-	 * @return
-	 */
-	boolean isOnline();
-
-	/**
 	 * Sends message to peer.
 	 *
 	 * @param message

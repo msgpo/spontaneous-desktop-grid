@@ -47,11 +47,6 @@ class SipPeer implements Peer
 		return ID;
 	}
 	
-	public boolean isOnline()
-	{
-		return true;
-	}
-	
 	public synchronized void sendMessage(Object message) throws CommunicationFailedException
 	{
 		if (contact != null)
