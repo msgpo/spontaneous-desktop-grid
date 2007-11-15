@@ -93,7 +93,8 @@ public class TaskProxy
 			}
 		}
 		// todo: throw an exception
-		F2FDebug.println("\tERRRORRRR!!! COULD NOT ROUTE MESSAGE TO MASTER NODE!!!");
+		F2FDebug.println("\tERRRORRRR!!! COULD NOT ROUTE A MESSAGE TO THE MASTER NODE!!!");
+		//throw new CommunicationException("COULD NOT ROUTE A MESSAGE TO THE MASTER NODE!");
 	}
 
 	/**

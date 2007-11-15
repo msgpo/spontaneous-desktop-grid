@@ -18,14 +18,15 @@ Import-Package: javax.crypto,
  net.java.sip.communicator.service.contactlist.event,
  net.java.sip.communicator.service.protocol,
  net.java.sip.communicator.service.protocol.event,
+ net.java.sip.communicator.service.gui,
+ net.java.sip.communicator.service.gui.event,
  org.apache.log4j,
  org.osgi.framework,
  sun.misc;resolution:=optional
 Bundle-ClassPath: lib/bcprov-jdk14.jar,
  lib/commons-codec-1.3.jar,
  lib/commons-io-1.3.1.jar,
- lib/jxta.jar,
  lib/log4j-1.2.14.jar,
- lib/p2psockets-core.jar,
  lib/jstun-f2f.jar,
  F2F.jar
+Export-Package: ee.ut.f2f.comm.sip
