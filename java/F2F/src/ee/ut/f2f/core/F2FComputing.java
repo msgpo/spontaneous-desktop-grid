@@ -364,6 +364,19 @@ public class F2FComputing
 		}
 		peer.addCommProvider(comm);
 	}
+
+	public static void peerUnContacted(UUID peerID, CommunicationProvider comm)
+	{
+		if (!isInitialized()) return;
+		F2FPeer peer = peers.get(peerID);
+		if (peer == null) return;
+		peer.removeCommProvider(comm);
+		if (peer.isContactable()) return;
+		synchronized (peers)
+		{
+			peers.remove(peerID);
+		}
+	}
 	
 	private static void startJobTasks(Job job)
 	{

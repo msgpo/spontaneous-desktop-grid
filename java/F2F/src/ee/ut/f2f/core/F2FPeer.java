@@ -37,6 +37,11 @@ public class F2FPeer
 		this.commProviders = new ArrayList<CommunicationProvider>();
 	}
 	
+	boolean isContactable()
+	{
+		return commProviders.size() > 0;
+	}
+	
 	private Collection<CommunicationProvider> commProviders = null;
 	void addCommProvider(CommunicationProvider comm)
 	{
