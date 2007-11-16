@@ -195,7 +195,9 @@ public class SipCommunicationProvider
 
 	private void removeF2FPeerIfNeeded(final Contact contact)
 	{
-		UUID peerID = sipPeers.get(contact.getAddress()).id;
+		UUIDSipPeer up = sipPeers.get(contact.getAddress());
+		if (up == null) return;
+		UUID peerID = up.id;
 		synchronized (idMap)
 		{
 			idMap.get(peerID).remove(contact.getAddress());
