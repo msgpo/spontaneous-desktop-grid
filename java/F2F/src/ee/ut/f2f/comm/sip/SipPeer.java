@@ -7,11 +7,9 @@ import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.CommunicationLayer;
-import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.util.F2FDebug;
 
-class SipPeer implements Peer
+class SipPeer
 {
 	private String ID = null;
 	private String displayName = null;
@@ -34,11 +32,6 @@ class SipPeer implements Peer
 		displayName = c.getDisplayName();
 	}
 	
-	public CommunicationLayer getCommunicationLayer()
-	{
-		return SipCommunicationLayer.getInstance();
-	}
-	
 	public String getDisplayName() { return displayName; }
 	
 	
@@ -50,7 +43,7 @@ class SipPeer implements Peer
 	public synchronized void sendMessage(Object message) throws CommunicationFailedException
 	{
 		if (contact != null)
-			SipCommunicationLayer.sendIMmessage(im, contact, message);
+			SipCommunicationProvider.sendIMmessage(im, contact, message);
 		else
 			F2FDebug.println("\t\t ERROR (contact == null) sendMessage() called on peer " + displayName);
 	}

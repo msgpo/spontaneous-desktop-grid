@@ -4,8 +4,7 @@ import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.CommunicationLayer;
-import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
 
@@ -30,8 +29,9 @@ public class TaskProxy
 		F2FDebug.println("\tCreated new TaskProxy of task " + remoteTaskDescription.getTaskID());
 	}
 
-	/** Sends a message to the corresponding task. */
-	public void sendMessage(Object message)
+	/** Sends a message to the corresponding task. 
+	 * @throws CommunicationFailedException */
+	public void sendMessage(Object message) throws CommunicationFailedException
 	{
 		if (remoteTaskDescription == null)
 		{
@@ -46,52 +46,24 @@ public class TaskProxy
 					task.getTaskID(),
 					message);
 		// try to send message directly to the receiver
-		for (CommunicationLayer commLayer: F2FComputing.getCommunicationLayers())
+		F2FPeer receiver = F2FComputing.peers.get(remoteTaskDescription.peerID);
+		if (receiver != null)
 		{
-			if (remoteTaskDescription.mapComm2Peer.containsKey(commLayer.getID()))
+			try
 			{
-				try
-				{
-					// if receiver task is in local peer send it directly
-					if (commLayer.isLocalPeerID(remoteTaskDescription.mapComm2Peer.get(commLayer.getID())))
-					{
-						F2FComputing.workHandler.messageRecieved(f2fMessage, commLayer.getLocalPeer());
-						return;
-					}
-					Peer peer = commLayer.findPeerByID(remoteTaskDescription.mapComm2Peer.get(commLayer.getID()));
-					if (peer == null) continue;
-					peer.sendMessage(f2fMessage);
-					//F2FDebug.println("\t(last message was sent directly to the receiver node)");
-					return;
-				}
-				catch (CommunicationFailedException e)
-				{
-					F2FDebug.println("\tSending message ("+message+") to the peer ("+remoteTaskDescription.mapComm2Peer.get(commLayer.getID())+") directly failed. Try to route through master. " + e);
-				}
+				receiver.sendMessage(f2fMessage);
+				return;
+			}
+			catch (CommunicationFailedException e)
+			{
+				F2FDebug.println("\tcould not send a message to a tast directly, try to route via master");
 			}
 		}
 		// could not find receiver directly -> try routing through master node
-		F2FDebug.println("\tmessage has to be ROUTED through MASTER");
 		f2fMessage.setType(F2FMessage.Type.ROUTE);
 		TaskDescription masterTaskDesc = task.getTaskProxy(F2FComputing.getJob(task.getJob().getJobID()).getMasterTaskID()).getRemoteTaskDescription();
-		for (CommunicationLayer commLayer: F2FComputing.getCommunicationLayers())
-		{
-			if (masterTaskDesc.mapComm2Peer.containsKey(commLayer.getID()))
-			{
-				try
-				{
-					Peer peer = commLayer.findPeerByID(masterTaskDesc.mapComm2Peer.get(commLayer.getID()));
-					if (peer == null) continue;
-					peer.sendMessage(f2fMessage);
-					F2FDebug.println("\tmessage was sent to MASTER for ROUTING");
-					return;
-				}
-				catch (CommunicationFailedException e)
-				{
-					F2FDebug.println("\tSending message ("+message+") to the peer ("+remoteTaskDescription.mapComm2Peer.get(commLayer.getID())+") failed. " + e);
-				}
-			}
-		}
+		F2FPeer master = F2FComputing.peers.get(masterTaskDesc.peerID);
+		master.sendMessage(f2fMessage);
 		// todo: throw an exception
 		F2FDebug.println("\tERRRORRRR!!! COULD NOT ROUTE A MESSAGE TO THE MASTER NODE!!!");
 		//throw new CommunicationException("COULD NOT ROUTE A MESSAGE TO THE MASTER NODE!");

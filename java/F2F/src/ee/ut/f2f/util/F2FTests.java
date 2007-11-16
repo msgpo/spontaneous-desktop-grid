@@ -8,14 +8,13 @@ import net.java.sip.communicator.service.contactlist.MetaContactListService;
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.Message;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
-import net.java.sip.communicator.service.protocol.event.MessageListener;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.ServiceReference;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.F2FPeer;
 
 public class F2FTests {
 	
@@ -76,7 +75,7 @@ public class F2FTests {
 	static void testMaxMessageSize()
 	{
 		String msg = "1";
-		Peer peer;
+		F2FPeer peer;
 		try {
 			peer = F2FComputing.getPeers().iterator().next();
 			while (true)

@@ -6,14 +6,12 @@ import java.util.HashMap;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
+import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFactory;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
-import ee.ut.f2f.comm.CommunicationLayer;
-import ee.ut.f2f.comm.CommunicationListener;
-import ee.ut.f2f.comm.Peer;
-import ee.ut.f2f.comm.sip.SipCommunicationLayer;
+import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
@@ -25,56 +23,62 @@ import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
  */
 public class F2FComputing
 {
-	// private static final Logger LOG = LogManager.getLogger(F2FComputing.class);
 	/**
 	 * The time how long to wait for the answers of REQUEST_FOR_CPU before
 	 * throwing error that there are not enough CPUs
 	 */
 	private static final long REQUEST_FOR_CPUS_TIMEOUT = 10000;
-
-	/**
-	 * Collection of all communication layer instances that are initialized and
-	 * can be used for communication with other nodes.
-	 */
-	private static Collection<CommunicationLayer> communicationLayers = null;
-	static Collection<CommunicationLayer> getCommunicationLayers() { return communicationLayers; }
-
+	
 	/**
 	 * Map jobID->Job, contains all the jobs that the F2F framework is aware
 	 * at. New jobs can be added by user by GUI or received from other nodes.
 	 */
-	private static Map<String, Job> jobs = new HashMap<String, Job>();
-	public static Collection<Job> getJobs() { return jobs.values(); }
-	static Job getJob(String jobID) { return jobs.get(jobID); }
+	private static Map<String, Job> jobs = null;
+	public static Collection<Job> getJobs()
+	{
+		if (!isInitialized()) return null;
+		return jobs.values();
+	}
+	static Job getJob(String jobID)
+	{
+		if (!isInitialized()) return null;
+		return jobs.get(jobID);
+	}
 	
 	/**
 	 * The parent directory for all job directories.
 	 */
-	private static java.io.File rootDirectory;
+	private static java.io.File rootDirectory = null;
 
 	/**
 	 * Peers who allow their CPU to be used for F2F.
+	 * JobID -> Peer
 	 */
-	private static Map<String, Collection<Peer>> reservedPeers = new HashMap<String, Collection<Peer>>();
+	private static Map<String, Collection<F2FPeer>> reservedPeers = null;
 
+	private static F2FPeer localPeer = null;
+	public static F2FPeer getLocalPeer() {return localPeer;}
+	/**
+	 * Collection of remote peers that are known.
+	 */
+	static Map<UUID, F2FPeer> peers = null;
+	
+	private static boolean isInitialized() { return localPeer != null; } 
 	/**
 	 * Private constructor for singleton implementation.
 	 * 
 	 * @throws CommunicationInitException
 	 */
-	private F2FComputing(java.io.File rootDirectory)
+	private F2FComputing(java.io.File rootDir)
 	{
-		workHandler = new WorkHandler();
+		localPeer = new F2FPeer();
+		F2FDebug.println("\tlocal F2FPeer ID is " + localPeer.getID());
+		peers = new HashMap<UUID, F2FPeer>();
+		jobs = new HashMap<String, Job>();
+		reservedPeers = new HashMap<String, Collection<F2FPeer>>();
+		CommunicationFactory.getInitializedCommunicationProviders();
+		rootDirectory = rootDir;
 		rootDirectory.mkdir();
-		F2FComputing.rootDirectory = rootDirectory;
-		communicationLayers = CommunicationFactory.getInitializedCommunicationLayers();
-		if (!communicationLayers.contains(SipCommunicationLayer.getInstance()))
-			communicationLayers.add(SipCommunicationLayer.getInstance());
-
-		for(CommunicationLayer communicationLayer :communicationLayers)
-		{
-			communicationLayer.addListener(workHandler);
-		}
 	}
 
 	/**
@@ -85,12 +89,10 @@ public class F2FComputing
 	 * @throws F2FComputingException 
 	 * @throws CommunicationInitException
 	 */
-	public static F2FComputing initiateF2FComputing(java.io.File rootDirectory) throws F2FComputingException
+	public static void initiateF2FComputing(java.io.File rootDirectory)
 	{
-		if (workHandler != null)
-			throw new F2FComputingException("F2FComputing already intiated, initiateF2FComputing() was called more than once!");
-		
-		return new F2FComputing(rootDirectory);
+		if (isInitialized()) return;
+		new F2FComputing(rootDirectory);
 	}
 
 	/**
@@ -100,11 +102,12 @@ public class F2FComputing
 	 * @throws CommunicationInitException
 	 * @throws F2FComputingException 
 	 */
-	public static F2FComputing initiateF2FComputing() throws F2FComputingException
+	public static void initiateF2FComputing() throws F2FComputingException
 	{
+		if (isInitialized()) return;
 		String tempName = "__F2F_ROOTDIRECTORY";
 		tempName = tempName.replaceAll("\\W", "_");
-		return initiateF2FComputing(new java.io.File(tempName));
+		initiateF2FComputing(new java.io.File(tempName));
 	}
 
 	/**
@@ -119,8 +122,9 @@ public class F2FComputing
 	 * @param peers The peers that have been selected to be 'slaves' of the algorithm.
 	 * @throws F2FComputingException 
 	 */
-	public static Job createJob(Collection<String> jarFilesNames, String masterTaskClassName, Collection<Peer> peers) throws F2FComputingException
+	public static Job createJob(Collection<String> jarFilesNames, String masterTaskClassName, Collection<F2FPeer> peers) throws F2FComputingException
 	{
+		if (!isInitialized()) return null;
 		// create a job
 		String jobID = newJobID();
 		Job job = new Job(rootDirectory, jobID, jarFilesNames, peers);
@@ -131,18 +135,11 @@ public class F2FComputing
 		String masterTaskID = job.newTaskId();
 		job.setMasterTaskID(masterTaskID);
 		// create the description of master task and add it to the job
-		Map<String, String> localPeerIDmap = new HashMap<String, String>();
-		for (CommunicationLayer commLayer: communicationLayers)
-		{
-			for (String localPeerID: commLayer.getLocalPeerIDs())
-				localPeerIDmap.put(commLayer.getID(), localPeerID);
-		}
 		TaskDescription masterTaskDescription = 
 			new TaskDescription( 
 					jobID, 
 					masterTaskID, 
-					//null, 
-					localPeerIDmap, 
+					localPeer.getID(), 
 					masterTaskClassName
 			);
 		job.addTaskDescription(masterTaskDescription);
@@ -186,8 +183,9 @@ public class F2FComputing
 	 * @throws F2FComputingException 
 	 */
 	static void submitTasks(String jobID, String className,
-			int taskCount, Collection<Peer> peers) throws F2FComputingException
+			int taskCount, Collection<F2FPeer> peers) throws F2FComputingException
 	{
+		if (!isInitialized()) return;
 		F2FDebug.println("\tSubmitting " + taskCount + " tasks of " + className);
 		if (taskCount <= 0)
 			throw new F2FComputingException("Can not submit 0 tasks!");
@@ -211,11 +209,11 @@ public class F2FComputing
 		}
 
 		// ask peers for CPU power
-		reservedPeers.put(jobID, new ArrayList<Peer>());
+		reservedPeers.put(jobID, new ArrayList<F2FPeer>());
 		F2FDebug.println("\tSending REQUEST_FOR_CPU to: " + peers + ".");
 		F2FMessage message = 
 			new F2FMessage(F2FMessage.Type.REQUEST_FOR_CPU, jobID, null, null, null);
-		for (Peer peer : peers)
+		for (F2FPeer peer : peers)
 		{
 			try {
 				peer.sendMessage(message);
@@ -242,21 +240,18 @@ public class F2FComputing
 		}
 		
 		// now we know in which peers new tasks should be started
-		Peer[] peersToBeUsed = new Peer[taskCount];
-		Iterator<Peer> reservedPeersIterator = reservedPeers.get(jobID).iterator();
+		F2FPeer[] peersToBeUsed = new F2FPeer[taskCount];
+		Iterator<F2FPeer> reservedPeersIterator = reservedPeers.get(jobID).iterator();
 		for (int i = 0; i < taskCount; i++) peersToBeUsed[i] = reservedPeersIterator.next();
 		
 		// create descriptions of new tasks and add them to the job
 		Collection<TaskDescription> newTaskDescriptions = new ArrayList<TaskDescription>();
-		for (Peer peer: peersToBeUsed)
+		for (F2FPeer peer: peersToBeUsed)
 		{
-			Map<String, String> peerIDmap = new HashMap<String, String>();
-			peerIDmap.put(peer.getCommunicationLayer().getID(),
-					peer.getID());
 			TaskDescription newTaskDescription = 
 				new TaskDescription(
 					jobID, job.newTaskId(),
-					peerIDmap, className);
+					peer.getID(), className);
 			job.addTaskDescription(newTaskDescription);
 			newTaskDescriptions.add(newTaskDescription);
 			F2FDebug.println("\tAdded new taskdescription to the job: "
@@ -264,15 +259,15 @@ public class F2FComputing
 		}
 		
 		// send Job to those peers who are new for this job and ...
-		Collection<Peer> newPeers = new ArrayList<Peer>();
-		for (Peer peer: peersToBeUsed)
+		Collection<F2FPeer> newPeers = new ArrayList<F2FPeer>();
+		for (F2FPeer peer: peersToBeUsed)
 		{
 			if (job.getWorkingPeers() == null || !job.getWorkingPeers().contains(peer)) newPeers.add(peer);
 		}
 		job.addWorkingPeers(newPeers);
 		F2FMessage messageJob = 
 			new F2FMessage(F2FMessage.Type.JOB, null, null, null, job);
-		for (Peer peer: newPeers)
+		for (F2FPeer peer: newPeers)
 		{
 			try {
 				peer.sendMessage(messageJob);
@@ -283,7 +278,7 @@ public class F2FComputing
 		// ... notify other peers about additional tasks
 		F2FMessage messageTasks = 
 			new F2FMessage(F2FMessage.Type.TASKS, job.getJobID(), null, null, newTaskDescriptions);
-		for (Peer peer: peersToBeUsed)
+		for (F2FPeer peer: peersToBeUsed)
 		{
 			if (newPeers.contains(peer)) continue;
 			try {
@@ -332,9 +327,10 @@ public class F2FComputing
 	 * @return the class loader of the specific job; <code>null</code> if
 	 *         there is no loader for this job
 	 */
-	public static ClassLoader getJobClassLoader(String jobID) {
+	public static ClassLoader getJobClassLoader(String jobID)
+	{
 		// If there is no such job
-		if (jobs == null || !jobs.containsKey(jobID))
+		if (!isInitialized() || !jobs.containsKey(jobID))
 			return null;
 		// Return the classloader.
 		return jobs.get(jobID).getClassLoader();
@@ -346,220 +342,198 @@ public class F2FComputing
 	 * @return All peers that are known through communication layers.
 	 * @throws CommunicationFailedException
 	 */
-	public static Collection<Peer> getPeers()
+	public static Collection<F2FPeer> getPeers()
 			throws CommunicationFailedException
 	{
-		Collection<Peer> peers = new java.util.ArrayList<Peer>();
-		for (CommunicationLayer commLayer : communicationLayers)
-			peers.addAll(commLayer.getPeers());
-		return peers;
+		if (!isInitialized()) return null;
+		return peers.values();
+	}
+
+	public static void peerContacted(UUID peerID, String displayName, CommunicationProvider comm)
+	{
+		if (!isInitialized()) return;
+		F2FPeer peer = null;
+		synchronized (peers)
+		{
+			peer = peers.get(peerID);
+			if (peer == null)
+			{
+				peer = new F2FPeer(peerID, displayName);
+				peers.put(peerID, peer);
+			}
+		}
+		peer.addCommProvider(comm);
+	}
+	
+	private static void startJobTasks(Job job)
+	{
+		// find the tasks, that are not created yet and are
+		// ment for execution in this peer, and start them
+		for (TaskDescription taskDesc : job.getTaskDescriptions())
+		{
+			if (job.getTask(taskDesc.getTaskID()) == null &&
+				taskDesc.peerID.equals(localPeer.getID()))
+			{
+				try
+				{
+					F2FDebug.println(
+							"\tStarting a task: "
+							+ taskDesc);
+					Task task = newTask(taskDesc);
+					task.start();
+				}
+				catch (Exception e)
+				{
+					F2FDebug.println("\tError starting a task: "
+							+ taskDesc
+							+ e);
+				}
+			}
+		}
 	}
 
 	/**
 	 * Handles F2F framework messages and forwards messages sent between tasks.
 	 */
-	static WorkHandler workHandler = null;
-
-	/**
-	 * Handles F2F framework messages and forwards messages sent between tasks.
-	 */
-	class WorkHandler implements CommunicationListener
+	@SuppressWarnings("unchecked")
+	public static void messageRecieved(Object message, UUID senderID)
 	{
-		private void startJobTasks(Job job)
+		if (!isInitialized()) return;
+		F2FPeer sender = peers.get(senderID);
+		// throw away messages from unknown peers
+		if (sender == null) return;
+		
+		if (message instanceof F2FMessage);
+		else 
 		{
-			// find the tasks, that are not created yet and are
-			// ment for execution in the peer, and start them
-			for (CommunicationLayer communicationLayer : communicationLayers) {
-				for (TaskDescription taskDesc : job.getTaskDescriptions()) {
-					if (job.getTask(taskDesc.getTaskID()) == null &&
-						taskDesc.mapComm2Peer.containsKey(communicationLayer.getID()) &&
-						communicationLayer.isLocalPeerID(taskDesc.mapComm2Peer.get(communicationLayer.getID())))
-					{
-						try
-						{
-							F2FDebug.println(
-									"\tStarting a task: "
-									+ taskDesc);
-							Task task = newTask(taskDesc);
-							task.start();
-						}
-						catch (Exception e)
-						{
-							F2FDebug.println("\tError starting a task: "
-									+ taskDesc
-									+ e);
-						}
-					}
-				}
-			}
+			F2FDebug.println("\tWorkHandler.messageRecieved() handles only F2FMessages!");
+			return;
 		}
-		@SuppressWarnings("unchecked")
-		public void messageRecieved(Object message, Peer fromPeer)
+		F2FMessage f2fMessage = (F2FMessage) message;
+		if (f2fMessage.getType() == F2FMessage.Type.REQUEST_FOR_CPU)
 		{
-			F2FMessage f2fMessage = null;
 			try
 			{
-				f2fMessage = (F2FMessage) message;
+				F2FDebug.println("\tgot REQUEST_FOR_CPU. aswer it with RESPONSE_FOR_CPU");
+				F2FMessage responseMessage = 
+					new F2FMessage(
+						F2FMessage.Type.RESPONSE_FOR_CPU, 
+						f2fMessage.getJobID(), null, null,
+						Boolean.TRUE);
+				sender.sendMessage(responseMessage);
 			}
-			catch (Exception e)
+			catch (CommunicationFailedException e)
 			{
-				F2FDebug.println("\tError with casting message to F2FMessage");
-				return;
+				e.printStackTrace();
 			}
-			if (f2fMessage.getType() == F2FMessage.Type.REQUEST_FOR_CPU)
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.RESPONSE_FOR_CPU)
+		{
+			if ((Boolean)f2fMessage.getData() &&
+				reservedPeers.get(f2fMessage.getJobID()) != null)
 			{
-				try
+				synchronized(reservedPeers.get(f2fMessage.getJobID()))
 				{
-					F2FDebug.println("\tgot REQUEST_FOR_CPU. aswer it with RESPONSE_FOR_CPU");
-					F2FMessage responseMessage = 
-						new F2FMessage(
-							F2FMessage.Type.RESPONSE_FOR_CPU, 
-							f2fMessage.getJobID(), null, null,
-							Boolean.TRUE);
-					fromPeer.sendMessage(responseMessage);
-				}
-				catch (CommunicationFailedException e)
-				{
-					e.printStackTrace();
-				}
-			}
-			else if (f2fMessage.getType() == F2FMessage.Type.RESPONSE_FOR_CPU)
-			{
-				if ((Boolean)f2fMessage.getData() &&
-					reservedPeers.get(f2fMessage.getJobID()) != null)
-				{
-					synchronized(reservedPeers.get(f2fMessage.getJobID()))
-					{
-						reservedPeers.get(f2fMessage.getJobID()).add(fromPeer);
-						reservedPeers.get(f2fMessage.getJobID()).notifyAll();
-					}
-				}
-			}
-			else if (f2fMessage.getType() == F2FMessage.Type.JOB)
-			{
-				F2FDebug.println("\tgot JOB");
-				Job job = (Job) f2fMessage.getData();
-				// check if we know this job already
-				if (jobs.containsKey(job.getJobID()))
-				{
-					F2FDebug.println("\tERROR!!! Received a job that is already known!");
-					return;
-				}
-				try
-				{
-					job.initialize(rootDirectory);
-					jobs.put(job.getJobID(), job);
-					startJobTasks(job);
-				}
-				catch (F2FComputingException e)
-				{
-					F2FDebug.println("\tERROR!!! " + e);
-				}
-			}
-			else if (f2fMessage.getType() == F2FMessage.Type.TASKS)
-			{
-				F2FDebug.println("\tgot TASKS");
-				Job job = getJob(f2fMessage.getJobID());
-				if (job == null)
-				{
-					F2FDebug.println("\tERROR!!! Received tasks for unknown job");
-					return;
-				}
-				Collection<TaskDescription> taskDescriptions = (Collection<TaskDescription>) f2fMessage.getData();
-				job.addTaskDescriptions(taskDescriptions);
-				startJobTasks(job);
-			}
-			else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
-			{
-				F2FDebug.println("\tMESSAGE received " + f2fMessage);
-				Task recepientTask = getJob(f2fMessage.getJobID()).getTask(
-						f2fMessage.getReceiverTaskID());
-				if (recepientTask == null)
-				{
-					F2FDebug.println("\tGot MESSAGE for unknown task wiht ID: "
-							+ f2fMessage.getReceiverTaskID());
-					return;
-				}
-				recepientTask.getTaskProxy(f2fMessage.getSenderTaskID())
-						.saveMessage(f2fMessage.getData());
-			}
-			else if (f2fMessage.getType() == F2FMessage.Type.ROUTE)
-			{
-				F2FDebug.println("\tReceived ROUTE: " + f2fMessage);
-				f2fMessage.setType(F2FMessage.Type.MESSAGE);
-				Job job = getJob(f2fMessage.getJobID());
-				if (job == null)
-				{
-					F2FDebug.println("\tERROR!!! didn't find the job");
-					return;
-				}
-				TaskDescription receiverTaskDesc = job
-						.getTaskDescription(f2fMessage.getReceiverTaskID());
-				if (receiverTaskDesc == null)
-				{
-					F2FDebug.println("\tERROR!!! didn't find the receiver task description");
-					return;
-				}
-				// try to send message the receiver
-				for (CommunicationLayer commLayer : getCommunicationLayers())
-				{
-					if (receiverTaskDesc.mapComm2Peer.containsKey(commLayer
-							.getID()))
-					{
-						try
-						{
-							Peer peer = commLayer
-									.findPeerByID(receiverTaskDesc.mapComm2Peer
-											.get(commLayer.getID()));
-							if (peer == null)
-								continue;
-							peer.sendMessage(f2fMessage);
-							return;
-						}
-						catch (CommunicationFailedException e)
-						{
-							F2FDebug.println("\tRouting message ("
-									+ message
-									+ ") to the peer ("
-									+ receiverTaskDesc.mapComm2Peer
-											.get(commLayer.getID())
-									+ ") failed.");
-							e.printStackTrace();
-						}
-					}
-				}
-				F2FDebug.println("\tERROR!!! master node: COULD NOT ROUTE MESSAGE TO RECEIVER NODE!!!");
-			}
-			else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
-			{	
-				//NAT/Traversal filtering
-				//Decapsulating message content
-				String msg = (String) f2fMessage.getData();
-				if( msg != null && msg.startsWith("/NAT>/")){
-					//NAT Messages
-					F2FDebug.println("Received NAT message, size [" + msg.length() + "], forwarding to NatMessageProcessor");
-
-						NatMessageProcessor.processIncomingNatMessage(msg);
-
-				} else {
-					//Others
-					F2FComputingGUI.controller.writeMessage(fromPeer.getID(), (String)f2fMessage.getData());
+					reservedPeers.get(f2fMessage.getJobID()).add(sender);
+					reservedPeers.get(f2fMessage.getJobID()).notifyAll();
 				}
 			}
 		}
+		else if (f2fMessage.getType() == F2FMessage.Type.JOB)
+		{
+			F2FDebug.println("\tgot JOB");
+			Job job = (Job) f2fMessage.getData();
+			// check if we know this job already
+			if (jobs.containsKey(job.getJobID()))
+			{
+				F2FDebug.println("\tERROR!!! Received a job that is already known!");
+				return;
+			}
+			try
+			{
+				job.initialize(rootDirectory);
+				jobs.put(job.getJobID(), job);
+				startJobTasks(job);
+			}
+			catch (F2FComputingException e)
+			{
+				F2FDebug.println("\tERROR!!! " + e);
+			}
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.TASKS)
+		{
+			F2FDebug.println("\tgot TASKS");
+			Job job = getJob(f2fMessage.getJobID());
+			if (job == null)
+			{
+				F2FDebug.println("\tERROR!!! Received tasks for unknown job");
+				return;
+			}
+			Collection<TaskDescription> taskDescriptions = (Collection<TaskDescription>) f2fMessage.getData();
+			job.addTaskDescriptions(taskDescriptions);
+			startJobTasks(job);
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
+		{
+			F2FDebug.println("\tMESSAGE received " + f2fMessage);
+			Task recepientTask = getJob(f2fMessage.getJobID()).getTask(
+					f2fMessage.getReceiverTaskID());
+			if (recepientTask == null)
+			{
+				F2FDebug.println("\tGot MESSAGE for unknown task wiht ID: "
+						+ f2fMessage.getReceiverTaskID());
+				return;
+			}
+			recepientTask.getTaskProxy(f2fMessage.getSenderTaskID())
+					.saveMessage(f2fMessage.getData());
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE)
+		{
+			F2FDebug.println("\tReceived ROUTE: " + f2fMessage);
+			f2fMessage.setType(F2FMessage.Type.MESSAGE);
+			Job job = getJob(f2fMessage.getJobID());
+			if (job == null)
+			{
+				F2FDebug.println("\tERROR!!! didn't find the job");
+				return;
+			}
+			TaskDescription receiverTaskDesc = job
+					.getTaskDescription(f2fMessage.getReceiverTaskID());
+			if (receiverTaskDesc == null)
+			{
+				F2FDebug.println("\tERROR!!! didn't find the receiver task description");
+				return;
+			}
+			F2FPeer receiver = peers.get(receiverTaskDesc.peerID);
+			if (receiver == null)
+			{
+				F2FDebug.println("\tERROR!!! didn't find the receiver peer");
+				return;
+			}
+			try
+			{
+				receiver.sendMessage(f2fMessage);
+			}
+			catch (CommunicationFailedException e)
+			{
+				F2FDebug.println("\tERROR!!! couldn't send the message to the route target");
+			}
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
+		{	
+			//NAT/Traversal filtering
+			//Decapsulating message content
+			String msg = (String) f2fMessage.getData();
+			if( msg != null && msg.startsWith("/NAT>/")){
+				//NAT Messages
+				F2FDebug.println("Received NAT message, size [" + msg.length() + "], forwarding to NatMessageProcessor");
 
-		public void communicationOffline() {}
+					NatMessageProcessor.processIncomingNatMessage(msg);
 
-		public void communicationOnline() {}
-
-		public void messageReceiveProgress(String id, int packetNumber,
-				Peer fromPeer) {}
-
-		public void messageReceiveStarted(String id, int packetCount,
-				Peer fromPeer) {}
-
-		public void peerOffline(Peer peer) {}
-
-		public void peerOnline(Peer peer) {}
+			} else {
+				//Others
+				F2FComputingGUI.controller.writeMessage(sender.getDisplayName(), (String)f2fMessage.getData());
+			}
+		}
 	}
 }

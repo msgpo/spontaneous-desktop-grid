@@ -3,6 +3,7 @@
  */
 package ee.ut.f2f.comm.sip;
 
+import java.io.Serializable;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -12,16 +13,15 @@ import java.util.Enumeration;
 import java.util.EventObject;
 import java.util.Hashtable;
 import java.util.Iterator;
-import java.util.Random;
+import java.util.UUID;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
 import ee.ut.f2f.comm.CommunicationException;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
-import ee.ut.f2f.comm.CommunicationLayer;
-import ee.ut.f2f.comm.CommunicationListener;
-import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
 import net.java.sip.communicator.service.protocol.Contact;
@@ -53,8 +53,8 @@ import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 
-public class SipCommunicationLayer 
-	implements 	CommunicationLayer,
+public class SipCommunicationProvider 
+	implements 	CommunicationProvider,
 				ServiceListener,
 				ContactPresenceStatusListener, MessageListener
 {	
@@ -64,29 +64,31 @@ public class SipCommunicationLayer
 	private static final String SIP_LAYER_ID = "F2FSipCommLayer";
 	
 	/**
-	 * PeerID (account ID) -> Peer
+	 * SipPeer ID (account ID) -> <UUID, SipPeer>
 	 */
-	private Hashtable<String, Peer> peersHash = null;
-	public Collection<Peer> getPeers() { return peersHash.values(); }
-	private SipPeer localPeer = null;
-	private Collection<CommunicationListener> listeners = new ArrayList<CommunicationListener>();
+	private Hashtable<String, UUIDSipPeer> sipPeers = null;
+	/**
+	 * UUID -> list of according SipPeer IDs
+	 */
+	private Hashtable<UUID, Collection<String>> idMap = null;
 
-	private static SipCommunicationLayer siplayer = null;
-	public static SipCommunicationLayer getInstance() { return siplayer; }
+	private static SipCommunicationProvider siplayer = null;
+	public static SipCommunicationProvider getInstance() { return siplayer; }
 	
-	public static SipCommunicationLayer initiateSipCommunicationLayer(BundleContext bc) throws CommunicationException
+	public static SipCommunicationProvider initiateSipCommunicationProvider(BundleContext bc) throws CommunicationException
 	{
 		if (siplayer!=null) 
-			throw new CommunicationInitException("SIP layer already initiated, initiateSipCommunicationLayer() was called more than once!");		
+			throw new CommunicationInitException("SIP layer already initiated, initiateSipCommunicationProvider() was called more than once!");		
 		
 		// Create the F2F layer
-		return (siplayer = new SipCommunicationLayer(bc));
+		return (siplayer = new SipCommunicationProvider(bc));
 	}
 	
 	private BundleContext bundleContext = null;
-	private SipCommunicationLayer(BundleContext bc) throws CommunicationException
+	private SipCommunicationProvider(BundleContext bc) throws CommunicationException
 	{
-		peersHash = new Hashtable<String, Peer>();
+		sipPeers = new Hashtable<String, UUIDSipPeer>();
+		idMap = new Hashtable<UUID, Collection<String>>();
 		messageCache = new Hashtable<Contact, byte[]>();
 		protocols = new ArrayList<ProtocolProviderService>();
 		allowedContacts = new ArrayList<Contact>();
@@ -103,10 +105,6 @@ public class SipCommunicationLayer
 	            new SipContactF2FMenuItem());
 	    }
 	
-		// compose local SipPeer
-		// all other SipPeers have account ID as PeerID
-		String localID = "";
-		String displayName = "";
 		// get the protocols that peer has account in
 		ServiceReference[] protocolProviderRefs = null;
 		try
@@ -121,29 +119,8 @@ public class SipCommunicationLayer
 			F2FDebug.println("\t\tError while retrieving service refs" + ex);
 			return;
 		}
-		// in case we found any
-		if (protocolProviderRefs != null)
-		{
-			// compose local peer name ...
-			//NB! this name may not be surrounded with '[' and ']' because JXTA does not allow this!!!
-			localID += "{F2F:";
-			for (int i = 0; i < protocolProviderRefs.length; i++)
-			{
-				ProtocolProviderService provider = (ProtocolProviderService) bc
-					.getService(protocolProviderRefs[i]);
-				localID += "<"+provider.getProtocolName()+":"+ provider.getAccountID().getUserID()+">";
-				if (displayName == null || displayName.isEmpty())
-				{
-					displayName = (String)provider.getAccountID().getAccountProperties().get(ProtocolProviderFactory.DISPLAY_NAME);
-				}
-			}
-			localID += "}";
-		}
-		else localID = "{F2F:" + new Random(System.currentTimeMillis()).nextInt() + "}";
-		F2FDebug.println("\t\tlocal peerID is: " + localID);
-		this.localPeer = new SipPeer(localID, displayName);
 		
-		// check for other peers
+		// listen for contacts presence status changes
 		if (protocolProviderRefs != null)
 		{
 			for (int i = 0; i < protocolProviderRefs.length; i++)
@@ -153,11 +130,12 @@ public class SipCommunicationLayer
 				handleProviderAdded(provider);
 			}
 		}
+		// listen for changes in used protocols
 		bc.addServiceListener(this);
+		// listen for changes in SC contact list
 		if (getMetaContactListService() != null)
 		{
 			getMetaContactListService().addMetaContactListListener(new SipMetaContactListListener());
-			addF2FPeersFromMetaContactGroup(getMetaContactListService().getRoot());
 		}
 	}
 	
@@ -176,26 +154,6 @@ public class SipCommunicationLayer
 		return metaCListService;
 	}
 
-	public void addListener(CommunicationListener listener)
-	{
-		listeners.add(listener);
-	}
-
-	public Peer findPeerByID(String sID) throws CommunicationFailedException
-	{
-		return peersHash.get(sID);
-	}
-
-	Collection<CommunicationListener> getListeners()
-	{
-		return listeners;
-	}
-
-	public Peer getLocalPeer()
-	{
-		return localPeer;
-	}
-
 	public String getID()
 	{
 		return SIP_LAYER_ID;
@@ -208,7 +166,7 @@ public class SipCommunicationLayer
 		while (contacts.hasNext())
 		{
 			Contact contact = (Contact)contacts.next();
-			if (peersHash.containsKey(contact.getAddress())) continue;
+			if (sipPeers.containsKey(contact.getAddress())) continue;
 			allowedContacts.add(contact);
 			addF2FPeerIfNeeded(contact);
 		}
@@ -226,7 +184,7 @@ public class SipCommunicationLayer
 		.getOperationSet(OperationSetBasicInstantMessaging.class);
 		try 
 		{
-			sendIMmessage(im, contact, F2F_TEST_MSG);
+			sendIMmessage(im, contact, new F2FTestMessage(F2FComputing.getLocalPeer().getID()));
 		}
 		catch (CommunicationFailedException e)
 		{
@@ -237,9 +195,10 @@ public class SipCommunicationLayer
 
 	private void removeF2FPeerIfNeeded(final Contact contact)
 	{
-		synchronized (peersHash)
+		synchronized (sipPeers)
 		{
-			peersHash.remove(contact.getAddress());
+			sipPeers.remove(contact.getAddress());
+			//TODO: inform Core if needed
 		}
 	}
 
@@ -360,7 +319,7 @@ public class SipCommunicationLayer
     	//F2FDebug.println("\t\t handleProviderAdded (" + provider.getProtocolName()+" : " + provider.getAccountID().getUserID() + ")");
     	protocols.add(provider);
     	
-    	//add a presence status listener so that we could reorder contacts upon status change.
+    	//add a presence status listener so that we could contact peers if they come online
     	OperationSetPersistentPresence opSetPresence
     	= (OperationSetPersistentPresence)provider
     		.getOperationSet(OperationSetPersistentPresence.class);
@@ -486,7 +445,6 @@ public class SipCommunicationLayer
 	private static final int MAX_MSG_LENGTH = 1050 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
 	private final static byte F2F_MORE = 2;
 	private final static byte F2F_COMPLETE = 3;
-	private final static Byte F2F_TEST_MSG = 1;
 	private Hashtable<Contact, byte[]> messageCache = null;
 	private static boolean isF2FMessage(String str)
 	{
@@ -573,8 +531,8 @@ public class SipCommunicationLayer
 				raw_obj = Util.unzip(raw_obj);
 				//F2FDebug.println("\t\t deserialize byte[] with length " + raw_obj.length);
 				Object message = Util.deserializeObject(raw_obj);
-				boolean bIsF2Ftest = F2F_TEST_MSG.equals(message);
-				if (peersHash.containsKey(evt.getSourceContact().getAddress()))
+				boolean bIsF2Ftest = (message instanceof F2FTestMessage);
+				if (sipPeers.containsKey(evt.getSourceContact().getAddress()))
 				{
 					// dump F2F capability test messages from known peers
 					if (bIsF2Ftest)
@@ -584,10 +542,7 @@ public class SipCommunicationLayer
 					else
 					{
 						//F2FDebug.println("\t\t received a F2F message from peer " + evt.getSourceContact().getAddress());
-						for(CommunicationListener listener: getListeners())
-						{
-							listener.messageRecieved(message, peersHash.get(evt.getSourceContact().getAddress()));
-						}
+						F2FComputing.messageRecieved(message, sipPeers.get(evt.getSourceContact().getAddress()).id);
 					}
 				}
 				else
@@ -595,11 +550,24 @@ public class SipCommunicationLayer
 					// process F2F capability test
 					if (bIsF2Ftest)
 					{
-						synchronized (peersHash)
+						synchronized (sipPeers)
 						{
+							// do an additional test
+							if (sipPeers.containsKey(evt.getSourceContact().getAddress()))
+								return;
 							// add new peer
-							SipPeer peer = new SipPeer(evt.getSourceContact()); 
-							peersHash.put(evt.getSourceContact().getAddress(), peer);
+							SipPeer peer = new SipPeer(evt.getSourceContact());
+							F2FTestMessage tmsg = (F2FTestMessage) message;
+							sipPeers.put(evt.getSourceContact().getAddress(), new UUIDSipPeer(tmsg.id, peer));
+							synchronized (idMap)
+							{
+								if (!idMap.containsKey(tmsg.id))
+								{
+									idMap.put(tmsg.id, new ArrayList<String>());
+									F2FComputing.peerContacted(tmsg.id, evt.getSourceContact().getDisplayName(), this);
+								}
+								idMap.get(tmsg.id).add(evt.getSourceContact().getAddress());
+							}
 							// send F2F capability test message back
 							allowedContacts.add(evt.getSourceContact());
 							addF2FPeerIfNeeded(evt.getSourceContact());
@@ -706,5 +674,46 @@ public class SipCommunicationLayer
 		for (ProtocolProviderService protocol: protocols)
 			ret[i++] = protocol.getAccountID().getUserID();
 		return ret;
+	}
+
+	public void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException
+	{
+		for (String sipID: idMap.get(destinationPeer))
+		{
+			SipPeer peer = sipPeers.get(sipID).peer;
+			if (peer == null) continue;
+			try
+			{
+				peer.sendMessage(message);
+				return;
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+				continue;
+			}
+		}
+		throw new CommunicationFailedException();
+	}
+}
+
+class UUIDSipPeer
+{
+	UUID id = null;
+	SipPeer peer = null;
+	UUIDSipPeer(UUID id, SipPeer peer)
+	{
+		this.id = id;
+		this.peer = peer;
+	}
+}
+
+@SuppressWarnings("serial")
+class F2FTestMessage implements Serializable
+{
+	UUID id;
+	F2FTestMessage(UUID id)
+	{
+		this.id = id;
 	}
 }

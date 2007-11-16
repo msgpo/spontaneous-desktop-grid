@@ -8,8 +8,8 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 
-import ee.ut.f2f.comm.sip.SipCommunicationLayer;
-import ee.ut.f2f.comm.socket.SocketCommunicationLayer;
+import ee.ut.f2f.comm.sip.SipCommunicationProvider;
+import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.util.F2FDebug;
 
 /**
@@ -21,25 +21,25 @@ public class CommunicationFactory
 	
 	private static final String PROPERTIES_FILE_DEFAULT_NAME = "F2FComputing.properties";
 
-	public static Collection<CommunicationLayer> getInitializedCommunicationLayers()
+	public static Collection<CommunicationProvider> getInitializedCommunicationProviders()
 	{
-		Collection<CommunicationLayer> commLayers = new ArrayList<CommunicationLayer>();
+		Collection<CommunicationProvider> commProviders = new ArrayList<CommunicationProvider>();
 		
 		// initialize layers according to properties file
 		final CommLayerProperties props = readProps();
 		if (props == null)
 		{
 			F2FDebug.println("\t\t"+PROPERTIES_FILE_DEFAULT_NAME+" was not found");
-			return commLayers;
+			return commProviders;
 		}
 		
-		CommunicationLayer commLayer = null;
+		CommunicationProvider commProvider = null;
 		if (props.bInitSocket)
 		{
 			F2FDebug.println("\t\tINIT SOCKET");
 			try
 			{
-				commLayers.add(GetSocketCommununication(props.socketLayerProps));
+				commProviders.add(GetSocketCommununication(props.socketLayerProps));
 			}
 			catch (CommunicationInitException e)
 			{
@@ -50,8 +50,8 @@ public class CommunicationFactory
 		if (props.bInitSip)
 		{
 			F2FDebug.println("\t\tINIT SIP");
-			commLayer = GetSipCommununication();
-			if (commLayer != null) commLayers.add(commLayer);
+			commProvider = GetSipCommununication();
+			if (commProvider != null) commProviders.add(commProvider);
 			else
 			{
 				F2FDebug.println("\t\tGetSipCommununication() returned NULL");
@@ -59,7 +59,7 @@ public class CommunicationFactory
 		}
 
 		
-		return commLayers;
+		return commProviders;
 	}
 	
 	/**
@@ -139,18 +139,18 @@ public class CommunicationFactory
 		return interAddrRet;
 	}
 	
-	private static CommunicationLayer GetSocketCommununication(SocketLayerProperties props) throws CommunicationInitException
+	private static CommunicationProvider GetSocketCommununication(SocketProviderProperties props) throws CommunicationInitException
 	{
-		return new SocketCommunicationLayer(
+		return new SocketCommunicationProvider(
 				new InetSocketAddress(
 					props.local.getAddress().getHostAddress(),
 					props.local.getPort()),
 				props.friends);
 	}
 
-	private static CommunicationLayer GetSipCommununication()
+	private static CommunicationProvider GetSipCommununication()
 	{
-		return SipCommunicationLayer.getInstance();
+		return SipCommunicationProvider.getInstance();
 		/*return new SipCommunicationLayer(
 				new InetSocketAddress(
 					props.local.getAddress().getHostAddress(),
@@ -170,13 +170,13 @@ public class CommunicationFactory
 		/** Shows if Socket communication layer should be initialzed. */
 		boolean bInitSip = false;
 		/** Properties for Socket communication layer. */
-		SocketLayerProperties socketLayerProps = new SocketLayerProperties();
+		SocketProviderProperties socketLayerProps = new SocketProviderProperties();
 	}
 	
 	/**
 	 * POJO for holding the properties of the Socket communication layer.  
 	 */
-	private static class SocketLayerProperties
+	private static class SocketProviderProperties
 	{
 		/** This program's IP and port. */
 		InetSocketAddress local;

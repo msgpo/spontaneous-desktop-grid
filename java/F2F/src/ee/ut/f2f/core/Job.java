@@ -14,8 +14,6 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
-import ee.ut.f2f.comm.Peer;
-
 /**
  * Job is an entity that represents an implementation of an 
  * algorithm (in jar file(s)) and descriptions of tasks that 
@@ -80,16 +78,16 @@ public class Job implements Serializable
 	 * Collection of peers that have been selected for this job during job creation. 
 	 * This list is not NULL only for master node.
 	 */
-	private transient Collection<Peer> peers = null;
-	public Collection<Peer> getPeers() { return peers; }
+	private transient Collection<F2FPeer> peers = null;
+	public Collection<F2FPeer> getPeers() { return peers; }
 	
-	private transient Collection<Peer> workingPeers = null;
-	Collection<Peer> getWorkingPeers() { return workingPeers; }
-	void addWorkingPeers(Collection<Peer> peers)
+	private transient Collection<F2FPeer> workingPeers = null;
+	Collection<F2FPeer> getWorkingPeers() { return workingPeers; }
+	void addWorkingPeers(Collection<F2FPeer> peers)
 	{ 
 		if (workingPeers == null) workingPeers = peers;
 		else 
-			for (Peer peer: peers)
+			for (F2FPeer peer: peers)
 				if (!workingPeers.contains(peer)) workingPeers.add(peer);
 	}
 	
@@ -103,7 +101,7 @@ public class Job implements Serializable
 	 * @param jobID
 	 * @throws F2FComputingException 
 	 */
-	Job(java.io.File rootDirectory, String jobID, Collection<String> jarFilesNames, Collection<Peer> peers) throws F2FComputingException
+	Job(java.io.File rootDirectory, String jobID, Collection<String> jarFilesNames, Collection<F2FPeer> peers) throws F2FComputingException
 	{
 		this.jobID = jobID;
 		this.jarFiles = new ArrayList<F2FJarFile>();
@@ -187,7 +185,7 @@ public class Job implements Serializable
 	 *  throws RuntimeError. 
 	 * @throws F2FComputingException 
 	 */
-	public void submitTasks(String className, int taskCount, Collection<Peer> peers) throws F2FComputingException
+	public void submitTasks(String className, int taskCount, Collection<F2FPeer> peers) throws F2FComputingException
 	{
 		if (getTask(getMasterTaskID()) == null)
 			throw new F2FComputingException("Tasks can only be submitted from master task!");

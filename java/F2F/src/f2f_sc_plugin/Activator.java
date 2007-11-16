@@ -3,7 +3,7 @@ package f2f_sc_plugin;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
-import ee.ut.f2f.comm.sip.SipCommunicationLayer;
+import ee.ut.f2f.comm.sip.SipCommunicationProvider;
 import ee.ut.f2f.ui.F2FComputingGUI;
 
 public class Activator implements BundleActivator {
@@ -14,7 +14,7 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext context) throws Exception {
 		System.out.println("f2f-plugin: Start F2F SC-plugin");
-		SipCommunicationLayer.initiateSipCommunicationLayer(context);
+		SipCommunicationProvider.initiateSipCommunicationProvider(context);
 		F2FComputingGUI.main(new String[]{});
 	}
 	

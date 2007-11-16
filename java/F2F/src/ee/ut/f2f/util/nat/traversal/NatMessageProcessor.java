@@ -8,7 +8,7 @@ import java.util.Map;
 import de.javawi.jstun.test.DiscoveryInfo;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
@@ -99,9 +99,9 @@ public class NatMessageProcessor {
 	public static void sendNatMessage(NatMessage nmsg){
 		log.debug("Processing to send, NAT message [" + nmsg.toString() + "]");
 		
-		Collection<Peer> peers = F2FComputingGUI.controller.getFriendModel().getPeers();
-		Peer peer = null;
-		for(Peer p : peers){
+		Collection<F2FPeer> peers = F2FComputingGUI.controller.getFriendModel().getPeers();
+		F2FPeer peer = null;
+		for(F2FPeer p : peers){
 			log.debug("Peers by ID [" + p.getID() + "]");
 			if(nmsg.getTo().equals(p.getID())) peer = p;
 		}		

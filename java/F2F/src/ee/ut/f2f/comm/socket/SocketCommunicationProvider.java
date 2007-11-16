@@ -10,16 +10,15 @@ import java.net.ServerSocket;
 import java.net.Socket;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
-import ee.ut.f2f.comm.CommunicationLayer;
-import ee.ut.f2f.comm.CommunicationListener;
-import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.F2FDebug;
 
-public class SocketCommunicationLayer implements CommunicationLayer
+public class SocketCommunicationProvider implements CommunicationProvider
 {
 	//private final Logger LOG = LogManager.getLogger(SocketCommunicationLayer.class);
 
@@ -28,15 +27,14 @@ public class SocketCommunicationLayer implements CommunicationLayer
 	 */
 	private static final String SOCKET_LAYER_ID = "F2FSocketCommLayer";
 	
-	private Collection<Peer> peers = new ArrayList<Peer>();
+	private Collection<SocketPeer> peers = new ArrayList<SocketPeer>();
 	private SocketPeer localPeer;
-	private Collection<CommunicationListener> listeners = new ArrayList<CommunicationListener>();
 
 	/**
 	 * Creates the communication layer with fixed count of friends.
 	 * @throws CommunicationInitException 
 	 */
-	public SocketCommunicationLayer(InetSocketAddress localPeerAddr, Collection<InetSocketAddress> friends) throws CommunicationInitException
+	public SocketCommunicationProvider(InetSocketAddress localPeerAddr, Collection<InetSocketAddress> friends) throws CommunicationInitException
 	{
 		// Create the list of friend-nodes only when passed. 
 		if (friends!=null)
@@ -49,41 +47,19 @@ public class SocketCommunicationLayer implements CommunicationLayer
 		this.localPeer = new SocketPeer(this, localPeerAddr);
 		new Thread(new SocketListener(this.localPeer.socketAddress.getPort())).start();
 	}
-		
-	/* (non-Javadoc)
-	 * @see ee.ut.f2f.comm.CommunicationLayer#getPeers()
-	 */
-	public Collection<Peer> getPeers() {
-		return this.peers;
-	}
-
-	/* (non-Javadoc)
-	 * @see ee.ut.f2f.comm.CommunicationLayer#setListener(ee.ut.f2f.comm.CommunicationListener)
-	 */
-	public void addListener(CommunicationListener listener)
-	{
-		listeners.add(listener);
-	}
 
 	/* (non-Javadoc)
 	 * @see ee.ut.f2f.comm.CommunicationLayer#findPeerByID(java.lang.String)
 	 */
-	public Peer findPeerByID(String sID) throws CommunicationFailedException {
-		for(Peer peer: peers)
+	public SocketPeer findPeerByID(String sID) throws CommunicationFailedException {
+		for(SocketPeer peer: peers)
 		{
 			if(sID.equals(peer.getID())) return peer;
 		}
 		return null;
 	}
 
-	/**
-	 * @return the listeners
-	 */
-	Collection<CommunicationListener> getListeners() {
-		return listeners;
-	}
-
-	public Peer getLocalPeer() {
+	SocketPeer getLocalPeer() {
 		return localPeer;
 	}
 
@@ -121,6 +97,8 @@ public class SocketCommunicationLayer implements CommunicationLayer
 					
 					// the first message has to be the ID of remote peer
 					String remoteID = (String)oi.readObject();
+					//TODO: inform Core that new peer is found
+					// and accept the connection even if the peer is not in the peer list!
 					F2FDebug.println("\t\tSearching for peer by ID '"+remoteID+"'");
 					SocketPeer peer = (SocketPeer) findPeerByID(remoteID);
 					if (peer != null)
@@ -151,5 +129,10 @@ public class SocketCommunicationLayer implements CommunicationLayer
 	public String[] getLocalPeerIDs()
 	{
 		return new String[]{ localPeer.getID() };
+	}
+
+	public void sendMessage(UUID destinationPeer, Object message) {
+		// TODO Auto-generated method stub
+		
 	}
 }

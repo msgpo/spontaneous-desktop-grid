@@ -5,7 +5,7 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 
-import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.ui.model.FriendModel;
@@ -69,15 +69,15 @@ public class F2FComputingGUI {
 					while (true)
 					{
 						try {
-							Collection<Peer> peersF2F = F2FComputing.getPeers();
-							Collection<Peer> peersGUI = friendModel.getPeers();
+							Collection<F2FPeer> peersF2F = F2FComputing.getPeers();
+							Collection<F2FPeer> peersGUI = friendModel.getPeers();
 							// at first check if someone has to be removed
-							for (Peer peer: peersGUI)
+							for (F2FPeer peer: peersGUI)
 							{
 								if (!peersF2F.contains(peer)) friendModel.remove(peer);
 							}
 							// then check if someone has to be added
-							for (Peer peer: peersF2F)
+							for (F2FPeer peer: peersF2F)
 							{
 								if (!peersGUI.contains(peer)) friendModel.add(peer);
 							}

@@ -44,8 +44,8 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.Peer;
-import ee.ut.f2f.comm.sip.SipCommunicationLayer;
+import ee.ut.f2f.core.F2FPeer;
+import ee.ut.f2f.comm.sip.SipCommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
@@ -98,7 +98,7 @@ public class UIController{
 	/**
 	 *  The peers from whom the computation peers will be selected.
 	 */
-	private Collection<Peer> selectFromPeers = new ArrayList<Peer>();
+	private Collection<F2FPeer> selectFromPeers = new ArrayList<F2FPeer>();
 	
 	public UIController(String title)
 	{		
@@ -191,10 +191,11 @@ public class UIController{
 			{
 				F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, sendMessageTextArea.getText());
 				// get selected peers and send the message to them
-				for (Peer peer : getSelectedFriends())
+				for (F2FPeer peer : getSelectedFriends())
 				{
 					try
 					{
+						F2FDebug.println("1");
 						peer.sendMessage(msg);
 					}
 					catch (CommunicationFailedException cfe)
@@ -264,9 +265,9 @@ public class UIController{
 				new ActionListener(){
 					public void actionPerformed(ActionEvent e) {
 						
-						Peer to = (Peer) friendsList.getSelectedValue();
-						String[] localIds = SipCommunicationLayer.getInstance().getLocalPeerIDs();
-						NatMessage nmsg = new NatMessage(localIds[0], to.getID(),NatMessage.COMMAND_GET_STUN_INFO,null);
+						F2FPeer to = (F2FPeer) friendsList.getSelectedValue();
+						String[] localIds = SipCommunicationProvider.getInstance().getLocalPeerIDs();
+						NatMessage nmsg = new NatMessage(localIds[0], to.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
 						NatMessageProcessor.sendNatMessage(nmsg);
 					}
 				}
@@ -532,9 +533,9 @@ public class UIController{
 	/**
 	 * @return the collection of peers selected from the friends list.
 	 */
-	Collection<Peer> getSelectedFriends()
+	Collection<F2FPeer> getSelectedFriends()
 	{
-		Collection<Peer> selectedPeers = new ArrayList<Peer>();
+		Collection<F2FPeer> selectedPeers = new ArrayList<F2FPeer>();
 		for (int i : friendsList.getSelectedIndices())
 		{
 			selectedPeers.add(friendModel.getElementAt(i));

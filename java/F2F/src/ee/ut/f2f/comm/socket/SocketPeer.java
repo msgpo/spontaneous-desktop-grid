@@ -11,16 +11,13 @@ import java.net.InetSocketAddress;
 import java.net.Socket;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.CommunicationLayer;
-import ee.ut.f2f.comm.CommunicationListener;
-import ee.ut.f2f.comm.Peer;
 import ee.ut.f2f.util.F2FDebug;
 
-class SocketPeer implements Peer
+class SocketPeer
 {
 
-	private SocketCommunicationLayer layer;
-	public CommunicationLayer getCommunicationLayer()
+	private SocketCommunicationProvider layer;
+	public SocketCommunicationProvider getCommunicationLayer()
 	{
 		return this.layer;
 	}
@@ -30,7 +27,7 @@ class SocketPeer implements Peer
 	private ObjectOutput oo;
 	private ObjectInput oi;
 	
-	SocketPeer(SocketCommunicationLayer layer, InetSocketAddress socketAddress)
+	SocketPeer(SocketCommunicationProvider layer, InetSocketAddress socketAddress)
 	{
 		this.layer = layer;
 		this.socketAddress = socketAddress;
@@ -106,10 +103,11 @@ class SocketPeer implements Peer
 						Object message = oi.readObject();
 						F2FDebug.println("\t\tReceived message from"
 								+ " '" + socketAddress + "'. Message: '" + message + "'.");
-						for(CommunicationListener listener: layer.getListeners())
-						{
-							listener.messageRecieved(message, SocketPeer.this);
-						}
+//						TODO
+//						for(CommunicationListener listener: layer.getListeners())
+//						{
+//							listener.messageRecieved(message, SocketPeer.this);
+//						}
 					}
 					catch (Exception e)
 					{

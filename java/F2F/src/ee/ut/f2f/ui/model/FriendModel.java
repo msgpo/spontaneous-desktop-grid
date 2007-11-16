@@ -7,14 +7,14 @@ import java.util.List;
 
 import javax.swing.AbstractListModel;
 
-import ee.ut.f2f.comm.Peer;
+import ee.ut.f2f.core.F2FPeer;
 
+@SuppressWarnings("serial")
 public class FriendModel extends AbstractListModel
 {
-	private static final long serialVersionUID = -3371463492464758776L;
-	private List<Peer> friends = new ArrayList<Peer>();
+	private List<F2FPeer> friends = new ArrayList<F2FPeer>();
 
-	public void add(Peer friend) {
+	public void add(F2FPeer friend) {
 		friends.add(friend);
 		this.fireContentsChanged(this,0,friends.size());
 	}
@@ -23,14 +23,14 @@ public class FriendModel extends AbstractListModel
 		return friends.size();
 	}
 
-	public Peer getElementAt(int index) {
+	public F2FPeer getElementAt(int index) {
 		return friends.get(index);
 	}
 	
-	public void remove(Peer friend)
+	public void remove(F2FPeer friend)
 	{
 		friends.remove(friend);
 		this.fireContentsChanged(this,0,friends.size());
 	}
-	public Collection<Peer> getPeers() { return new HashSet<Peer>(friends); }
+	public Collection<F2FPeer> getPeers() { return new HashSet<F2FPeer>(friends); }
 }

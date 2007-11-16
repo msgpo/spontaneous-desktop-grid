@@ -2,6 +2,7 @@ package ee.ut.f2f.core;
 
 import java.util.Collection;
 
+import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.util.F2FDebug;
 
 /**
@@ -56,8 +57,9 @@ public class MultiTaskProxy //extends TaskProxy
 	 * Sends a message through the tisted proxies.
 	 * 
 	 * @param message The message to be sent.
+	 * @throws CommunicationFailedException 
 	 */
-	public void sendMessage(Object message)
+	public void sendMessage(Object message) throws CommunicationFailedException
 	{
 		for(TaskProxy taskProxy : taskProxies)
 		{

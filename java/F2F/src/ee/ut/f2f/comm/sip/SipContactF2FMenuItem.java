@@ -32,6 +32,6 @@ class SipContactF2FMenuItem
 
 	public void actionPerformed(ActionEvent e)
 	{
-		SipCommunicationLayer.getInstance().makeF2FTest(metaContact);
+		SipCommunicationProvider.getInstance().makeF2FTest(metaContact);
 	}
 }

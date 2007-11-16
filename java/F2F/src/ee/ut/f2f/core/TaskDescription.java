@@ -1,7 +1,7 @@
 package ee.ut.f2f.core;
 
 import java.io.Serializable;
-import java.util.Map;
+import java.util.UUID;
 
 /**
  * Description of a task that specifies identifier of the task, 
@@ -18,13 +18,9 @@ class TaskDescription implements Serializable
 	String getTaskID() { return taskID; }
 	
 	/**
-	 * Map CommLayerID->peerID, specifies the ID of a peer where 
-	 * the described class should be executed in the context of one 
-	 * or more communication layers.
-	 * PS: right now, only a peer where master task is executed can be specified 
-	 * in the context of multiple communication layers.  
+	 * Specifies the ID of a peer where the described class should be executed  
 	 */
-	Map<String, String> mapComm2Peer;
+	UUID peerID;
 	
 	/**
 	 * The unique ID of the corresponding job.
@@ -38,10 +34,10 @@ class TaskDescription implements Serializable
 	String className;
 
 	TaskDescription(String jobID, String taskID, 
-			Map<String, String> Comm2Peer, String className) 
+			UUID peerID, String className) 
 	{
 		this.taskID = taskID;
-		this.mapComm2Peer = Comm2Peer;
+		this.peerID = peerID;
 		this.jobID = jobID;
 		this.className = className;
 	}
@@ -51,7 +47,7 @@ class TaskDescription implements Serializable
 		return
 		"TaskDescription:" +
 		"[taskID="+taskID+
-		"][peerIdmap="+mapComm2Peer+
+		"][peerID="+peerID+
 		"][jobID="+jobID+
 		"][className="+className+
 		"]";
