@@ -195,7 +195,6 @@ public class UIController{
 				{
 					try
 					{
-						F2FDebug.println("1");
 						peer.sendMessage(msg);
 					}
 					catch (CommunicationFailedException cfe)
@@ -415,6 +414,8 @@ public class UIController{
 						Task task = taskIterator.next();
 						info("\tTask " + task.getTaskID());
 						info("\t\tstate: java.lang.Thread.State." + task.getState());
+						if (task.getException() != null)
+							info("\t\texception: " + task.getException() + task.getException().getMessage());
 						Collection<TaskProxy> proxies = task.getTaskProxies();
 						Iterator<TaskProxy> proxyIterator = proxies.iterator();
 						while (proxyIterator.hasNext())

@@ -61,12 +61,10 @@ public class F2FPeer
 	}
 	public void sendMessage(Object message) throws CommunicationFailedException
 	{
-		F2FDebug.println("2");
 		for (CommunicationProvider commProvider: commProviders)
 		{
 			try
 			{
-				F2FDebug.println("3");
 				commProvider.sendMessage(id, message);
 			}
 			catch (Exception e)

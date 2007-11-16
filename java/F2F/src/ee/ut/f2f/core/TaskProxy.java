@@ -45,6 +45,10 @@ public class TaskProxy
 					remoteTaskDescription.getTaskID(),
 					task.getTaskID(),
 					message);
+		if (remoteTaskDescription.peerID.equals(F2FComputing.getLocalPeer().getID()))
+		{
+			F2FComputing.messageRecieved(f2fMessage, remoteTaskDescription.peerID);
+		}
 		// try to send message directly to the receiver
 		F2FPeer receiver = F2FComputing.peers.get(remoteTaskDescription.peerID);
 		if (receiver != null)
@@ -63,10 +67,16 @@ public class TaskProxy
 		f2fMessage.setType(F2FMessage.Type.ROUTE);
 		TaskDescription masterTaskDesc = task.getTaskProxy(F2FComputing.getJob(task.getJob().getJobID()).getMasterTaskID()).getRemoteTaskDescription();
 		F2FPeer master = F2FComputing.peers.get(masterTaskDesc.peerID);
-		master.sendMessage(f2fMessage);
-		// todo: throw an exception
-		F2FDebug.println("\tERRRORRRR!!! COULD NOT ROUTE A MESSAGE TO THE MASTER NODE!!!");
-		//throw new CommunicationException("COULD NOT ROUTE A MESSAGE TO THE MASTER NODE!");
+		try
+		{
+			master.sendMessage(f2fMessage);
+			return;
+		}
+		catch (CommunicationFailedException e)
+		{
+			F2FDebug.println("\tERRRORRRR!!! COULD NOT ROUTE A MESSAGE TO THE MASTER NODE!!!");
+			throw e;
+		}
 	}
 
 	/**

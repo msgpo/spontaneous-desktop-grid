@@ -278,7 +278,7 @@ public class F2FComputing
 		// ... notify other peers about additional tasks
 		F2FMessage messageTasks = 
 			new F2FMessage(F2FMessage.Type.TASKS, job.getJobID(), null, null, newTaskDescriptions);
-		for (F2FPeer peer: peersToBeUsed)
+		for (F2FPeer peer: job.getWorkingPeers())
 		{
 			if (newPeers.contains(peer)) continue;
 			try {
