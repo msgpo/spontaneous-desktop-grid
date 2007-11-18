@@ -2,6 +2,8 @@ package ee.ut.f2f.ui.model;
 
 import javax.swing.table.AbstractTableModel;
 
+import ee.ut.f2f.util.nat.traversal.StunInfo;
+
 public class StunInfoTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 5032243596390541739L;
@@ -24,4 +26,17 @@ public class StunInfoTableModel extends AbstractTableModel {
 		return null;
 	}
 	
+	public void add(StunInfo sinf){
+		// TODO
+	}
+	
+	public void remove(String id){
+		// TODO
+	}
+	
+	public StunInfo get(String id){
+		// TODO
+		return null;
+		
+	}
 }
