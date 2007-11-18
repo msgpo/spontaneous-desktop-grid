@@ -99,8 +99,8 @@ public class NatMessageProcessor {
 		Collection<F2FPeer> peers = F2FComputingGUI.controller.getFriendModel().getPeers();
 		F2FPeer peer = null;
 		for(F2FPeer p : peers){
-			log.debug("Peers by ID [" + p.getID() + "]");
-			if(nmsg.getTo().equals(p.getID())) peer = p;
+			log.debug("Peers by ID [" + p.getID().toString() + "]");
+			if(nmsg.getTo().equals(p.getID().toString())) peer = p;
 		}		
 		if (peer == null){
 			//TODO No peers found 
