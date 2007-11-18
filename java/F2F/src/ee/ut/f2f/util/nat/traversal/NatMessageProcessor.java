@@ -1,16 +1,13 @@
 package ee.ut.f2f.util.nat.traversal;
 
-import java.util.Arrays;
-import java.util.Collection;
-import java.util.Hashtable;
-import java.util.Map;
 
-import de.javawi.jstun.test.DiscoveryInfo;
+import java.util.Collection;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
+import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
 import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 
@@ -57,19 +54,19 @@ public class NatMessageProcessor {
 				String to = nmsg.getTo();
 				log.debug("Received getStunInfo from [" + from + "]");
 			    
-				DiscoveryInfo diin = null;
+				StunInfo sinf = null;
 				try{
-					diin = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+					sinf = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
 				} catch (NetworkDiscoveryException e){
-					//@TODO workaround if could not get the stun info from server
+					//TODO workaround if could not get the stun info from server
 					log.error("Could not get the stun info from server", e);
 					e.printStackTrace();
-				} catch (Exception e){
+				} catch (ConnectionManagerException e){
 					//TODO another exceptions
 					log.error("Error getting stun info", e);
 					e.printStackTrace();
 				}
-			    StunInfo sinf = new StunInfo(diin);
+				//set Id
 			    sinf.setId(nmsg.getTo());
 			    log.debug("Prepared StunInfo  " + sinf.toString());
 				

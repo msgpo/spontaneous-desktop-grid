@@ -265,8 +265,8 @@ public class UIController{
 					public void actionPerformed(ActionEvent e) {
 						
 						F2FPeer to = (F2FPeer) friendsList.getSelectedValue();
-						String[] localIds = SipCommunicationProvider.getInstance().getLocalPeerIDs();
-						NatMessage nmsg = new NatMessage(localIds[0], to.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
+						String localId = SipCommunicationProvider.getInstance().getLocalPeerIDs()[0];
+						NatMessage nmsg = new NatMessage(localId, to.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
 						NatMessageProcessor.sendNatMessage(nmsg);
 					}
 				}
