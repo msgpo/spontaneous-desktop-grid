@@ -52,6 +52,7 @@ import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.ui.model.FriendModel;
+import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.F2FTests;
@@ -87,6 +88,7 @@ public class UIController{
 	//NAT/Traversal panel
 	private JPanel traversalPanel = null;
 	private JTable stunInfoTable = null;
+	private StunInfoTableModel stunInfoTableModel = null;
 	private JTextArea natLogArea = null;
 	
 	
@@ -236,10 +238,8 @@ public class UIController{
 		traversalPanel.setLayout(new GridLayout(3,1));
 		traversalPanel.setPreferredSize(new Dimension(770, 0));
 		
-		//STUN Info table
-		String[] infoTableHeader = new String[] {"Peer","Adapter","Local IP","Pulic IP","Firewall Type"};
-		
-		stunInfoTable = new JTable(new Object[][]{{"You","...","...","...","..."}}, infoTableHeader);
+		stunInfoTableModel = new StunInfoTableModel();
+		stunInfoTable = new JTable(stunInfoTableModel);
 		stunInfoTable.setAutoscrolls(true);
 		stunInfoTable.setEnabled(false);
 		
@@ -596,5 +596,13 @@ public class UIController{
 	
 	public void writeNatLog(String msg){
 		natLogArea.setText(natLogArea.getText() + "\n" + msg); 
+	}
+
+	public StunInfoTableModel getStunInfoTableModel() {
+		return stunInfoTableModel;
+	}
+
+	public void setStunInfoTableModel(StunInfoTableModel stunInfoTableModel) {
+		this.stunInfoTableModel = stunInfoTableModel;
 	}
 }
