@@ -2,6 +2,8 @@ package ee.ut.f2f.util.nat.traversal;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
@@ -74,7 +76,12 @@ public class Client extends Thread {
 	 * @param data
 	 */
 	public void send(byte[] data){
-		//TODO
+		try {
+			out.write(data);
+		}
+		catch (IOException e) {
+			e.printStackTrace();
+		}
 	}
 
 	public String getIp() {
@@ -92,4 +99,13 @@ public class Client extends Thread {
 	public void setPort(int port) {
 		this.port = port;
 	}
+	
+	public BufferedOutputStream getOutputStream() {
+		return out;
+	}
+
+	public BufferedInputStream getInputStream() {
+		return in;
+	}
+
 }

@@ -5,8 +5,10 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
+import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
+import java.util.NoSuchElementException;
 
 public class Server extends Thread {
 
@@ -74,6 +76,31 @@ public class Server extends Thread {
 	 * @param data
 	 */
 	public void send(String id, byte[] data){
-		//TODO
+		try {			
+			Socket s = getSocketByID(id);
+			log.debug("Sending data to client " + id);
+			s.getOutputStream().write(data);
+		}
+		catch (NoSuchElementException e) {
+			log.debug("Client " + id + " not found!");
+		}
+		catch (IOException e) {
+			log.debug("Unable to send data to " + id);			
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Send data to client
+	 * @param id Client's Id
+	 */	
+	public Socket getSocketByID(String id) throws NoSuchElementException {
+		Socket s = clients.get(id);
+		if (s == null) {
+			log.debug("Client " + id + " not found!");
+			throw new NoSuchElementException("Client with ID " + id + " not found");
+		}
+		log.debug("Returning client " + id);
+		return s;
 	}
 }
