@@ -11,42 +11,68 @@ public class StunInfoTableModel extends AbstractTableModel {
 
 	private static final long serialVersionUID = 5032243596390541739L;
 
-	private List<StunInfo> stunInfoList = new ArrayList<StunInfo>();
+	private List<StunInfoTableItem> stunInfoList = new ArrayList<StunInfoTableItem>();
 	
 	public final int
 		C_PEER = 0,
-		C_ADAPTER = 1,
-		C_LOCALIP = 2,
-		C_PUBLICIP = 3,
-		C_FIREWALL = 4
+		C_LOCAL_IP = 1,
+		C_PUBLIC_IP = 2,
+		C_BLOCKED_UDP = 3,
+		C_FULL_CONE = 4,
+		C_OPEN_ACCESS = 5,
+		C_PORT_RESTR_CONE = 6,
+		C_RESTR_CONE = 7,
+		C_SYMM_CONE = 8,
+		C_SYMM_UDP = 9
 	;
 	
 	private static final String[] headers = new String[] {
-		"Peer", "Adapter", "Local IP", "Public IP", "Firewall Type"
+		"Peer", "Local IP", "Public IP", "Blocked UDP", "Full Cone",
+		"Open Access", "Port Restricted Cone", "Restricted Cone",
+		"Symmetric Cone", "Symmetric UDP Firewall"
 	};
 	
 	public Object getValueAt(int rowIndex, int columnIndex) {
-		StunInfo sinf = stunInfoList.get(rowIndex);
+		StunInfoTableItem sinf = stunInfoList.get(rowIndex);
 		
 		switch (columnIndex) {
 			case C_PEER:
-				return "-peer-";
+				return sinf.getId();
 			
-			case C_ADAPTER:
-				return "-adapter-";
-			
-			case C_LOCALIP:
+			case C_LOCAL_IP:
 				return sinf.getLocalIp();
 			
-			case C_PUBLICIP:
+			case C_PUBLIC_IP:
 				return sinf.getPublicIP();
 			
-			case C_FIREWALL:
-				return "-firewall-";
+			case C_BLOCKED_UDP:
+				return boolStr(sinf.isBlockedUDP());
+			
+			case C_FULL_CONE:
+				return boolStr(sinf.isFullCone());
+				
+			case C_OPEN_ACCESS:
+				return boolStr(sinf.isOpenAccess());
+				
+			case C_PORT_RESTR_CONE:
+				return boolStr(sinf.isPortRestrictedCone());
+				
+			case C_RESTR_CONE:
+				return boolStr(sinf.isRestrictedCone());
+				
+			case C_SYMM_CONE:
+				return boolStr(sinf.isSymmetricCone());
+				
+			case C_SYMM_UDP:
+				return boolStr(sinf.isSymmetricUDPFirewall());
 			
 			default:
 				return null;
 		}
+	}
+	
+	private static String boolStr(boolean b) {
+		return b ? "Yes" : "No";
 	}
 	
 	public int getColumnCount() {
@@ -62,7 +88,7 @@ public class StunInfoTableModel extends AbstractTableModel {
 	}
 	
 	public void add(StunInfo sinf){
-		stunInfoList.add(sinf);
+		stunInfoList.add((StunInfoTableItem) sinf);
 		fireTableDataChanged();
 	}
 	
