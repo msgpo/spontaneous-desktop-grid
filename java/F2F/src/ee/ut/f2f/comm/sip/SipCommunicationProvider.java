@@ -456,7 +456,10 @@ public class SipCommunicationProvider
 	
 	private final static String F2F_TAG_START = "<f2f>\n";
 	private final static String F2F_TAG_END = "\n</f2f>";
-	private static final int MAX_MSG_LENGTH = 1050 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
+// optimal for msn	private static final int MAX_MSG_LENGTH = 1050 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
+	private static final int MAX_MSG_LENGTH = 256 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
+//optimal for msn	private static final int SLEEP_TIME = 100; // How long to wait between sending messages
+	private static final int SLEEP_TIME = 500; // How long to wait between sending messages
 	private final static byte F2F_MORE = 2;
 	private final static byte F2F_COMPLETE = 3;
 	private Hashtable<Contact, byte[]> messageCache = null;
@@ -623,7 +626,7 @@ public class SipCommunicationProvider
 				//F2FDebug.println("\t\t\t sent " + sentData);
 				// give IM channel some time to send the data
 				// MSN connection is closed if too much data is pushed too fast
-				Thread.sleep(100);
+				Thread.sleep(SLEEP_TIME);
 			}
 			while (bMore);
 		}

@@ -9,7 +9,7 @@
 	<target name="make">
 		<delete dir="../sip-communicator/sip-communicator.bin"/>
 		<jar 
-			basedir="bin"
+			basedir="build/classes"
 			destfile="build/F2F.jar"
 		/>
 		<copy todir="build/lib">
