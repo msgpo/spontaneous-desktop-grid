@@ -10,6 +10,7 @@ import java.util.List;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 import de.javawi.jstun.test.DiscoveryTest;
+import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 import ee.ut.f2f.util.nat.traversal.exceptions.NetworkInterfaceNotFoundException;
@@ -120,6 +121,21 @@ public class ConnectionManager {
 					continue;
 				}
 			}
+		}
+		
+		return sinf;
+	}
+	
+	private static StunInfo sinf = null; 
+	public static StunInfo getLocalStunInfo()  throws ConnectionManagerException, NetworkDiscoveryException {
+		return getLocalStunInfo(false);
+	}
+	
+	
+	public static StunInfo getLocalStunInfo(boolean forceReload)  throws ConnectionManagerException, NetworkDiscoveryException {
+		if (sinf == null || forceReload) {
+		  sinf = startNetworkDiscovery("stun.xten.net", 3478);
+		  sinf.setId(F2FComputing.getLocalPeer().getID().toString());
 		}
 		
 		return sinf;

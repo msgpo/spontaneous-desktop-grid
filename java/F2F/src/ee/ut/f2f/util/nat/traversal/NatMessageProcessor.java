@@ -4,6 +4,7 @@ package ee.ut.f2f.util.nat.traversal;
 import java.util.Collection;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
@@ -56,7 +57,7 @@ public class NatMessageProcessor {
 			    
 				StunInfo sinf = null;
 				try{
-					sinf = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+					sinf = ConnectionManager.getLocalStunInfo();
 				} catch (NetworkDiscoveryException e){
 					//TODO workaround if could not get the stun info from server
 					log.error("Could not get the stun info from server", e);
@@ -86,6 +87,14 @@ public class NatMessageProcessor {
 			case NatMessage.REPORT_STUN_INFO: {
 				log.debug("Received StunInfo Report from [" + nmsg.getFrom() + "]");
 				StunInfo sinf = (StunInfo) nmsg.getContent();
+				if (F2FComputingGUI.controller.getStunInfoTableModel().get(sinf.getId()) == null) {
+					F2FComputingGUI.controller.getStunInfoTableModel().add(sinf);
+				   	log.debug("Adding " + sinf.getId() + " to StunInfoTable");
+				}
+				else {
+					log.debug(sinf.getId() + " not added, it already exists in StunInfoTable");
+				}
+					
 				log.debug("StunInfo " + sinf.toString());
 				break;
 			}
@@ -97,6 +106,7 @@ public class NatMessageProcessor {
 		log.debug("Processing to send, NAT message [" + nmsg.toString() + "]");
 		
 		Collection<F2FPeer> peers = F2FComputingGUI.controller.getFriendModel().getPeers();
+		peers.add(F2FComputing.getLocalPeer());
 		F2FPeer peer = null;
 		for(F2FPeer p : peers){
 			log.debug("Peers by ID [" + p.getID().toString() + "]");

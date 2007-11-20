@@ -56,6 +56,7 @@ import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.F2FTests;
+import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 
@@ -239,6 +240,10 @@ public class UIController{
 		traversalPanel.setPreferredSize(new Dimension(770, 0));
 		
 		stunInfoTableModel = new StunInfoTableModel();
+		try {
+			stunInfoTableModel.add(ConnectionManager.getLocalStunInfo());
+		}
+		catch (Exception e) {}
 		stunInfoTable = new JTable(stunInfoTableModel);
 		stunInfoTable.setAutoscrolls(true);
 		stunInfoTable.setEnabled(false);
@@ -265,9 +270,11 @@ public class UIController{
 					public void actionPerformed(ActionEvent e) {
 						
 						F2FPeer to = (F2FPeer) friendsList.getSelectedValue();
-						String localId = F2FComputing.getLocalPeer().getID().toString();
-						NatMessage nmsg = new NatMessage(localId, to.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
-						NatMessageProcessor.sendNatMessage(nmsg);
+						if (to != null) {
+							String localId = F2FComputing.getLocalPeer().getID().toString();
+							NatMessage nmsg = new NatMessage(localId, to.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
+							NatMessageProcessor.sendNatMessage(nmsg);
+						}
 					}
 				}
 		);
