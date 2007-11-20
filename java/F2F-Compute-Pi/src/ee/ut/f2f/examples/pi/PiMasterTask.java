@@ -45,20 +45,27 @@ public class PiMasterTask extends Task
 		// How many points to compute in total
 		long maxpoints = 1000000000L;
 
+		// Send the interval time to all slaves
+		for (TaskProxy proxy: slaveProxies)
+		{
+			try {
+					proxy.sendMessage(new Long(intervalms));
+				} catch (CommunicationFailedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
+		}
+
+		// collect results
 		while (received.getUnSyncTotal() < maxpoints)
 		{
-			// Send the interval time to all slaves
-			for (TaskProxy proxy: slaveProxies)
-			{
-				try {
-						proxy.sendMessage(new Long(intervalms));
-					} catch (CommunicationFailedException e) {
-						// TODO Auto-generated catch block
-						e.printStackTrace();
-					}
-			}
+			try {
+				Thread.sleep(100);
+			} catch (InterruptedException e) {
+				e.printStackTrace();
+			} // wait a little for collecting results
 			
-			// check if one of the slave tasks has found a prime
+			// check if one of the slaves has new numbers
 			for (TaskProxy proxy: slaveProxies)
 			{
 				if (proxy.hasMessage())
