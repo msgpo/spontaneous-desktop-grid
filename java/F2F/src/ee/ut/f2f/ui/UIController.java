@@ -59,6 +59,9 @@ import ee.ut.f2f.util.F2FTests;
 import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
+import ee.ut.f2f.util.nat.traversal.StunInfo;
+import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
+import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 
 public class UIController{
 	private JFrame frame = null;
@@ -240,17 +243,14 @@ public class UIController{
 		traversalPanel.setPreferredSize(new Dimension(770, 0));
 		
 		stunInfoTableModel = new StunInfoTableModel();
-		try {
-			stunInfoTableModel.add(ConnectionManager.getLocalStunInfo());
-		}
-		catch (Exception e) {}
+			
 		stunInfoTable = new JTable(stunInfoTableModel);
 		stunInfoTable.setAutoscrolls(true);
 		stunInfoTable.setEnabled(false);
 		
 		
 		JScrollPane stunInfoTableScrollPane = new JScrollPane(stunInfoTable);
-		stunInfoTableScrollPane.setAutoscrolls(false);
+		stunInfoTableScrollPane.setAutoscrolls(true);
 		stunInfoTableScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "STUN Info"));
 		
 		
@@ -264,6 +264,8 @@ public class UIController{
 		
 		
 		//Control Buttons
+		
+		/*
 		JButton initButton = new JButton("TEST");
 		initButton.addActionListener(
 				new ActionListener(){
@@ -272,14 +274,27 @@ public class UIController{
 						F2FPeer to = (F2FPeer) friendsList.getSelectedValue();
 						if (to != null) {
 							String localId = F2FComputing.getLocalPeer().getID().toString();
-							NatMessage nmsg = new NatMessage(localId, to.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
-							NatMessageProcessor.sendNatMessage(nmsg);
+							try {
+								StunInfo sinf = ConnectionManager.getLocalStunInfo();
+							} catch (ConnectionManagerException e1) {
+								// TODO Auto-generated catch block
+								F2FDebug.println(e1.getStackTrace().toString());
+								e1.printStackTrace();
+							} catch (NetworkDiscoveryException e1) {
+								// TODO Auto-generated catch block
+								F2FDebug.println(e1.getStackTrace().toString());
+								e1.printStackTrace();
+							}
+							//NatMessage nmsg = new NatMessage(localId, to.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
+							//NatMessageProcessor.sendNatMessage(nmsg);
 						}
 					}
 				}
 		);
+		*/
+		
 		JPanel natButtonPanel = new JPanel(new FlowLayout());
-		natButtonPanel.add(initButton);
+		//natButtonPanel.add(initButton);
 	
 		traversalPanel.add(stunInfoTableScrollPane);
 		traversalPanel.add(natButtonPanel);

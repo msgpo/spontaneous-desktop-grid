@@ -88,7 +88,8 @@ public class StunInfoTableModel extends AbstractTableModel {
 	}
 	
 	public void add(StunInfo sinf){
-		stunInfoList.add((StunInfoTableItem) sinf);
+		StunInfoTableItem sinft = new StunInfoTableItem(sinf);
+		stunInfoList.add(sinft);
 		fireTableDataChanged();
 	}
 	

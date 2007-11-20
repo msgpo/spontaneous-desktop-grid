@@ -24,9 +24,12 @@ public class NatMessage implements Serializable{
 	//Type codes
 	//COMMANDS
 	public static final int COMMAND_GET_STUN_INFO = 601;
+	public static final int COMMAND_TRY_CONNECT_TO = 602;
 	//REPORTS
 	public static final int REPORT_STUN_INFO = 61;
 	public static final int REPORT_BROKEN_MESSAGE = 60;
+	public static final int REPORT_UNABLE_TO_CONNECT_TO = 62;
+	public static final int REPORT_SUCCESS_TO_CONNECT_TO = 63;
 	
 	/**
 	 * @param type

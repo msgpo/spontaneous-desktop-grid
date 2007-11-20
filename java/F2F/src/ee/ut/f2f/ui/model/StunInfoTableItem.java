@@ -1,6 +1,5 @@
 package ee.ut.f2f.ui.model;
 
-import de.javawi.jstun.test.DiscoveryInfo;
 import ee.ut.f2f.util.nat.traversal.StunInfo;
 
 public class StunInfoTableItem extends StunInfo {
@@ -32,8 +31,19 @@ public class StunInfoTableItem extends StunInfo {
 	}
 
 	// required constructor overload as there is no super() without arguments
-	public StunInfoTableItem(DiscoveryInfo discoveryInfo) {
-		super(discoveryInfo);
+	public StunInfoTableItem(StunInfo sinf) {
+		super();
+		this.setBlockedUDP(sinf.isBlockedUDP());
+		this.setFullCone(sinf.isFullCone());
+		this.setId(sinf.getId());
+		this.setLocalIp(sinf.getLocalIp());
+		this.setOpenAccess(sinf.isOpenAccess());
+		this.setPortRestrictedCone(sinf.isPortRestrictedCone());
+		this.setPublicIP(sinf.getPublicIP());
+		this.setRestrictedCone(sinf.isRestrictedCone());
+		this.setSymmetricCone(sinf.isSymmetricCone());
+		this.setSymmetricUDPFirewall(sinf.isSymmetricUDPFirewall());
+		
 	}
 	
 }

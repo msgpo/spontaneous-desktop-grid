@@ -90,6 +90,12 @@ public class NatMessageProcessor {
 				if (F2FComputingGUI.controller.getStunInfoTableModel().get(sinf.getId()) == null) {
 					F2FComputingGUI.controller.getStunInfoTableModel().add(sinf);
 				   	log.debug("Adding " + sinf.getId() + " to StunInfoTable");
+				   	Collection<F2FPeer> peers = F2FComputingGUI.controller.getFriendModel().getPeers();
+				   	String displayName = null;
+				   	for(F2FPeer peer : peers){
+				   		if (sinf.getId().equals(peer.getID().toString())) displayName = peer.getDisplayName();
+				   	}
+				   	F2FComputingGUI.controller.writeNatLog("Received Stun info from [" + displayName + "]\n" + sinf.toString());
 				}
 				else {
 					log.debug(sinf.getId() + " not added, it already exists in StunInfoTable");

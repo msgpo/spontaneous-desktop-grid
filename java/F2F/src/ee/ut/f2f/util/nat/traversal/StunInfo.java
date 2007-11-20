@@ -20,6 +20,10 @@ public class StunInfo implements Serializable{
 	
 	private static final long serialVersionUID = 4721470383254301632L;
 
+	public StunInfo(){
+		
+	}
+	
 	public StunInfo(DiscoveryInfo discoveryInfo) {
 		if(discoveryInfo == null) throw new NullPointerException("Null argument discoveryInfo");
 		this.openAccess = discoveryInfo.isOpenAccess();

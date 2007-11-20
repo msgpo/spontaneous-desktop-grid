@@ -10,6 +10,12 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.nat.traversal.ConnectionManager;
+import ee.ut.f2f.util.nat.traversal.NatMessage;
+import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
+import ee.ut.f2f.util.nat.traversal.StunInfo;
+import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
+import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 
 public class F2FComputingGUI {
 	public static UIController controller;
@@ -66,6 +72,27 @@ public class F2FComputingGUI {
 						return;
 					}
 					FriendModel friendModel = controller.getFriendModel();
+					
+					//NAT Traversal stun info request for yourself
+					StunInfo sinf = null;
+					try {
+						sinf = ConnectionManager.getLocalStunInfo();
+					} catch (ConnectionManagerException e1) {
+						// TODO Auto-generated catch block
+						F2FDebug.println(e1.getStackTrace().toString());
+						e1.printStackTrace();
+					} catch (NetworkDiscoveryException e1) {
+						// TODO Auto-generated catch block
+						F2FDebug.println(e1.getStackTrace().toString());
+						e1.printStackTrace();
+					}
+					if (sinf != null){
+						controller.getStunInfoTableModel().add(sinf);
+						controller.writeNatLog("Your Stun info is \n" + sinf.toString());
+					} else {
+						//TODO What to do if could not get the stun info
+					}
+					
 					while (true)
 					{
 						try {
@@ -74,12 +101,21 @@ public class F2FComputingGUI {
 							// at first check if someone has to be removed
 							for (F2FPeer peer: peersGUI)
 							{
-								if (!peersF2F.contains(peer)) friendModel.remove(peer);
+								if (!peersF2F.contains(peer)){
+									friendModel.remove(peer);
+									//Remove also NAT Traversal Stun info
+									F2FComputingGUI.controller.getStunInfoTableModel().remove(peer.getID().toString());
+								}
 							}
 							// then check if someone has to be added
 							for (F2FPeer peer: peersF2F)
 							{
-								if (!peersGUI.contains(peer)) friendModel.add(peer);
+								if (!peersGUI.contains(peer)){
+									friendModel.add(peer);
+									//NAT Traversal automatic stun info request for new client
+									NatMessage nmsg = new NatMessage(F2FComputing.getLocalPeer().getID().toString(), peer.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
+									NatMessageProcessor.sendNatMessage(nmsg);
+								}
 							}
 							Thread.sleep(1000);
 						} catch (Exception e) {
