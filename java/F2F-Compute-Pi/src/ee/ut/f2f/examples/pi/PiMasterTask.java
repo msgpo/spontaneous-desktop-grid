@@ -90,7 +90,8 @@ public class PiMasterTask extends Task
 		long end = System.currentTimeMillis();
 
 		// show the result
-		System.out.println("The computed Pi is : " + received.getUnSyncTotal() * 4 / 3.0);
+		System.out.println("The computed Pi is : " + 
+				received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal());
 		System.out.println("Took " + (end - start) / 1000 + "s");
 	}
 }
