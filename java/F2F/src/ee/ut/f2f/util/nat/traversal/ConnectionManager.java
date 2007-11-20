@@ -1,5 +1,6 @@
 package ee.ut.f2f.util.nat.traversal;
 
+import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
@@ -53,6 +54,8 @@ public class ConnectionManager {
 					while(ips.hasMoreElements()){
 						InetAddress ip = ips.nextElement();
 						if( !ip.isLinkLocalAddress() && !ip.isLoopbackAddress() ){
+							if(ip instanceof Inet6Address)
+								continue;
 							localIps.add(ip);
 						}
 					}
