@@ -10,5 +10,5 @@
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="/sip-communicator/lib/bundle/junit.jar"/>
 	<classpathentry kind="lib" path="lib/jstun-0.6.1.jar"/>
-	<classpathentry kind="output" path="bin"/>
+	<classpathentry kind="output" path="build/classes"/>
 </classpath>
