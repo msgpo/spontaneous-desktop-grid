@@ -50,15 +50,16 @@ public class PiSlaveTask extends Task
 		}
 		
 		// stop the thread
-		compTask.interrupt();
+		compTask.run = false;
 	}
 
 	private class ComputePoints extends Thread
 	{
 		Random random = new Random(System.currentTimeMillis());
+		boolean run = true; 
 
 		public void run() {
-			while(true)
+			while(run)
 			{
 				double x = random.nextDouble();
 				double y = random.nextDouble();
