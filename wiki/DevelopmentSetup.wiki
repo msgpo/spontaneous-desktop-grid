@@ -17,10 +17,30 @@ Checkout sip-communicator from the SIPc SVN repository or download latest versio
  * for checkout see [http://www.sip-communicator.org/index.php/Development/VersionControl SIPc SVN page]
    # you need to become observer of SIPc project (send request via dev.java.net and wait for the project leader confirmation, may take time)
    # in eclipse open https://sip-communicator.dev.java.net/svn/sip-communicator SVN repository
-   # checkout trunk (it is suggested you rename it to 'sip-communicator')
+   # checkout trunk (may take up to 10 minutes)
+     * it is suggested you rename it to 'sip-communicator'
  * *or* download latest version
    # _haven't yet tried this scenario_
 
 == Configure and compile ==
 
- # copy `.project` and `.classpath` files from `ide/eclipse` to the project root (hint: use resources perspective)
+ # copy `.project` and `.classpath` files from `ide/eclipse` to the project root (hint: use _resource_ perspective)
+   * you may need to remove a couple of missing libraries from the build path
+   * you may need to fix `ant.jar` location in the build path (use `variable -> ECLIPSE_HOME -> extend`)
+ # remove excessive `jdic_stub.jar`s from the build path (otherwise you may get error with the tray icon)
+ # convert project to PDE project
+   * right click on project -> PDE tools -> convert
+ # open `META-INF/MANIFEST.MF` -> runtime and export all _net.java.sip.communicator_ packages
+ # run ant with `build.xml make`
+
+= F2F =
+
+== checkout ==
+
+ # checkout java/F2F from the [source repository]
+ # fix any errors
+ # run ant with `create-plugin.xml make`
+
+== configure and compile ==
+
+== run ==
