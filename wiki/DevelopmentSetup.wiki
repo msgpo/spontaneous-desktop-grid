@@ -31,16 +31,26 @@ Checkout sip-communicator from the SIPc SVN repository or download latest versio
  # convert project to PDE project
    * right click on project -> PDE tools -> convert
  # open `META-INF/MANIFEST.MF` -> runtime and export all _net.java.sip.communicator_ packages
+ # fix any errors
  # run ant with `build.xml make`
 
 = F2F =
 
-== checkout ==
+== checkout and compile ==
 
- # checkout java/F2F from the [source repository]
+ # checkout java/F2F from the [http://code.google.com/p/spontaneous-desktop-grid/source repository]
  # fix any errors
  # run ant with `create-plugin.xml make`
 
-== configure and compile ==
+== configure and run ==
 
-== run ==
+ # run SIP
+   * set class to _net.java.sip.communicator.launcher.SIPCommunicator_
+   * set VM arguments to (replace `linux` with your operating system)
+{{{
+-Dfelix.config.properties=file:../F2F/felix.client.run.properties
+-Djava.util.logging.config.file=lib/logging.properties
+-Dnet.java.sip.communicator.SC_HOME_DIR_LOCATION=../F2F/sip-communicator-profiles
+-Dnet.java.sip.communicator.SC_HOME_DIR_NAME=01
+-Djava.library.path=lib/native/linux
+}}}
