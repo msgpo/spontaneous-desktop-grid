@@ -1,0 +1,26 @@
+#summary Setup and configuration of development environment.
+#labels Phase-Implementation,Featured
+
+= Requirements =
+
+ * jdk-6 (jdk-5 is not possible because we are using couple of methods from jdk-6)
+ * eclipse >=3.2 (not sure about 3.3)
+
+ _it is possible that we relax requirements to jdk-5 later_
+
+= sip-communicator =
+
+== Checkout or download ==
+
+Checkout sip-communicator from the SIPc SVN repository or download latest version.
+
+ * for checkout see [http://www.sip-communicator.org/index.php/Development/VersionControl SIPc SVN page]
+   # you need to become observer of SIPc project (send request via dev.java.net and wait for the project leader confirmation, may take time)
+   # in eclipse open https://sip-communicator.dev.java.net/svn/sip-communicator SVN repository
+   # checkout trunk (it is suggested you rename it to 'sip-communicator')
+ * *or* download latest version
+   # _haven't yet tried this scenario_
+
+== Configure and compile ==
+
+ # copy `.project` and `.classpath` files from `ide/eclipse` to the project root (hint: use resources perspective)
