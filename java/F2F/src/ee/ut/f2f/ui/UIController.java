@@ -250,7 +250,10 @@ public class UIController{
 		stunInfoTable = new JTable(stunInfoTableModel);
 		stunInfoTable.setAutoscrolls(true);
 		stunInfoTable.setEnabled(false);
+		stunInfoTable.setAutoResizeMode(JTable.AUTO_RESIZE_OFF);
 		
+		for (int i = 0; i < stunInfoTableModel.getColumnCount(); i++)
+			stunInfoTable.getColumnModel().getColumn(i).setPreferredWidth(StunInfoTableModel.widths[i]);
 		
 		JScrollPane stunInfoTableScrollPane = new JScrollPane(stunInfoTable);
 		stunInfoTableScrollPane.setAutoscrolls(true);

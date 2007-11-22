@@ -27,10 +27,12 @@ public class StunInfoTableModel extends AbstractTableModel {
 	;
 	
 	private static final String[] headers = new String[] {
-		"Peer", "Local IP", "Public IP", "Blocked UDP", "Full Cone",
+		"Peer ID", "Local IP", "Public IP", "Blocked UDP", "Full Cone",
 		"Open Access", "Port Restricted Cone", "Restricted Cone",
 		"Symmetric Cone", "Symmetric UDP Firewall"
 	};
+	
+	public static final int[] widths = new int[] { 100, 110, 110, 90, 90, 90, 140, 110, 110, 140 };
 	
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		StunInfoTableItem sinf = stunInfoList.get(rowIndex);
