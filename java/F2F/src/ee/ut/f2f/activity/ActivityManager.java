@@ -21,10 +21,15 @@ import java.util.logging.Logger;
  * @todo olegus: register base system may be changed 
  */
 public class ActivityManager {
-	private static final Logger logger = LogManager.getLogManager().getLogger(
+	private final Logger logger = Logger.getLogger(
 			ActivityManager.class.getName());
 	
-	private HashMap<Enum, Set<ActivityListener>> listeners;
+	private static ActivityManager defaultActivityManager;
+	
+	private HashMap<Enum, Set<ActivityListener>> listeners = new HashMap<Enum, Set<ActivityListener>>();
+	
+	public ActivityManager() {
+	}
 	
 	/**
 	 * @param event
@@ -74,5 +79,12 @@ public class ActivityManager {
 				typeListeners.remove(listener);
 			}
 		}
+	}
+
+	public static ActivityManager getDefaultActivityManager() {
+		if(defaultActivityManager == null) {
+			defaultActivityManager = new ActivityManager();
+		}
+		return defaultActivityManager;
 	}
 }

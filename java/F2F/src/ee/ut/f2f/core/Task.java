@@ -4,6 +4,9 @@ import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
 
+import ee.ut.f2f.activity.Activity;
+import ee.ut.f2f.activity.ActivityEvent;
+import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.util.F2FDebug;
 
 /**
@@ -13,7 +16,7 @@ import ee.ut.f2f.util.F2FDebug;
  * Task is a thread that corresponds to a TaskDescription. 
  * Task provides proxies of other tasks of a job to communicate with.
  */
-public abstract class Task extends Thread
+public abstract class Task extends Thread implements Activity
 {
 	/**
 	 * Returns unique ID of the task in a job.
@@ -81,12 +84,16 @@ public abstract class Task extends Thread
 	 */
 	public final void run()
 	{
+		ActivityManager manager = ActivityManager.getDefaultActivityManager();
 		try
 		{
+			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
 			runTask();
+			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.FINISHED));
 		}
 		catch (Exception e)
 		{
+			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 			exception = e;
 			e.printStackTrace();
 		}
@@ -103,4 +110,9 @@ public abstract class Task extends Thread
 	 * code and let it be executed by F2FComputing framework!
 	 */
 	public abstract void runTask();
+
+	public String getActivityName() {
+		return taskDescription.getJobID() 
+			+ ":Task" + taskDescription.getTaskID();
+	}
 }

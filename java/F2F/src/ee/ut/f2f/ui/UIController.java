@@ -43,6 +43,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
+import ee.ut.f2f.activity.ActivityEvent;
+import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.comm.sip.SipCommunicationProvider;
@@ -51,6 +53,7 @@ import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.core.Job;
+import ee.ut.f2f.ui.model.ActivityInfoTableModel;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
@@ -302,6 +305,17 @@ public class UIController{
 		tabs.add("NAT Traversal", traversalPanel);
 		
 		//End of traversal panel
+		
+		// Activity model
+		ActivityInfoTableModel activityInfoTableModel = new ActivityInfoTableModel();
+		ActivityManager.getDefaultActivityManager().addListener(
+				ActivityEvent.Type.values(), activityInfoTableModel);
+		JTable activityInfoTable = new JTable(activityInfoTableModel);
+		activityInfoTable.setAutoscrolls(true);
+				
+		tabs.add("F2F activities", new JScrollPane(activityInfoTable));
+		
+		// other
 		
 		JLabel label1 = new JLabel("Choose file:");
 		layout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.SOUTH, messagingPanel);

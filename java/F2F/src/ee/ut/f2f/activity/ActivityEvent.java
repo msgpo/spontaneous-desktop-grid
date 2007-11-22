@@ -16,7 +16,7 @@ public class ActivityEvent {
 	 * Basic activity types. It is preferrable to keep this list minimal and
 	 * define other enum classes for more specific events.
 	 */
-	enum Type {
+	public enum Type {
 		STARTED,
 		CHANGED,
 		FINISHED,
