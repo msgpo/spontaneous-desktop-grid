@@ -22,6 +22,17 @@ public class StunInfoTableItem extends StunInfo {
 		return tcpConnectivity != TCP_UNTESTED;
 	}
 	
+	public String getTcpConnectivity() {
+		switch (tcpConnectivity) {
+			case TCP_CAN_CONNECT:
+				return "Yes";
+			case TCP_CANNOT_CONNECT:
+				return "No";
+			default:
+				return "Untested";
+		}
+	}
+	
 	public void setTcpConnectivity(boolean canConnect) {
 		tcpConnectivity = canConnect ? TCP_CAN_CONNECT : TCP_CANNOT_CONNECT;
 	}

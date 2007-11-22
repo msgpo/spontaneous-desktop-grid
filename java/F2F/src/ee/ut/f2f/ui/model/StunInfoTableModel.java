@@ -17,22 +17,23 @@ public class StunInfoTableModel extends AbstractTableModel {
 		C_PEER = 0,
 		C_LOCAL_IP = 1,
 		C_PUBLIC_IP = 2,
-		C_BLOCKED_UDP = 3,
-		C_FULL_CONE = 4,
-		C_OPEN_ACCESS = 5,
-		C_PORT_RESTR_CONE = 6,
-		C_RESTR_CONE = 7,
-		C_SYMM_CONE = 8,
-		C_SYMM_UDP = 9
+		C_CAN_USE_TCP = 3,
+		C_BLOCKED_UDP = 4,
+		C_FULL_CONE = 5,
+		C_OPEN_ACCESS = 6,
+		C_PORT_RESTR_CONE = 7,
+		C_RESTR_CONE = 8,
+		C_SYMM_CONE = 9,
+		C_SYMM_UDP = 10
 	;
 	
 	private static final String[] headers = new String[] {
-		"Peer ID", "Local IP", "Public IP", "Blocked UDP", "Full Cone",
-		"Open Access", "Port Restricted Cone", "Restricted Cone",
-		"Symmetric Cone", "Symmetric UDP Firewall"
+		"Peer ID", "Local IP", "Public IP", "Can Use TCP", "Blocked UDP",
+		"Full Cone", "Open Access", "Port Restricted Cone",
+		"Restricted Cone", "Symmetric Cone", "Symmetric UDP Firewall"
 	};
 	
-	public static final int[] widths = new int[] { 100, 110, 110, 90, 90, 90, 140, 110, 110, 140 };
+	public static final int[] widths = new int[] { 100, 110, 110, 90, 90, 90, 90, 140, 110, 110, 140 };
 	
 	public Object getValueAt(int rowIndex, int columnIndex) {
 		StunInfoTableItem sinf = stunInfoList.get(rowIndex);
@@ -47,6 +48,9 @@ public class StunInfoTableModel extends AbstractTableModel {
 			case C_PUBLIC_IP:
 				return sinf.getPublicIP();
 			
+			case C_CAN_USE_TCP:
+				return sinf.getTcpConnectivity();
+				
 			case C_BLOCKED_UDP:
 				return boolStr(sinf.isBlockedUDP());
 			
