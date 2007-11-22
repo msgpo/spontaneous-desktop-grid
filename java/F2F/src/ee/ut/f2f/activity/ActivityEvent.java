@@ -3,6 +3,8 @@
  */
 package ee.ut.f2f.activity;
 
+import java.util.Date;
+
 
 /**
  * Every type activity state changes it should emit event of the given class or
@@ -26,6 +28,7 @@ public class ActivityEvent {
 	private Enum type;
 	private Activity activity;
 	private String description;
+	private long time;
 	
 	/**
 	 * @param type event type
@@ -34,6 +37,7 @@ public class ActivityEvent {
 	public ActivityEvent(Activity activity, Enum type) {
 		this.type = type;
 		this.activity = activity;
+		this.time = System.currentTimeMillis();
 	}
 
 	public String getDescription() {
@@ -50,5 +54,13 @@ public class ActivityEvent {
 
 	public Enum getType() {
 		return type;
-	}	
+	}
+
+	public long getTime() {
+		return time;
+	}
+
+	public void setTime(long time) {
+		this.time = time;
+	}
 }

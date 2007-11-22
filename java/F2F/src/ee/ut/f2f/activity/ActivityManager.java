@@ -7,7 +7,6 @@ import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
 import java.util.logging.Level;
-import java.util.logging.LogManager;
 import java.util.logging.Logger;
 
 /**
@@ -18,7 +17,9 @@ import java.util.logging.Logger;
  * @author olegus
  * 
  * @todo olegus: this class may require different thread safety
- * @todo olegus: register base system may be changed 
+ * @todo olegus: register base system may be changed
+ * @todo olegus: The better name for this class would be ActivityEventManager,
+ *       because it does not manage activities
  */
 public class ActivityManager {
 	private final Logger logger = Logger.getLogger(

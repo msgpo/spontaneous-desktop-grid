@@ -3,7 +3,10 @@
  */
 package ee.ut.f2f.ui.model;
 
+import java.text.DateFormat;
+import java.text.SimpleDateFormat;
 import java.util.ArrayList;
+import java.util.Date;
 import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
@@ -20,15 +23,20 @@ import ee.ut.f2f.activity.ActivityListener;
  */
 @SuppressWarnings("serial")
 public class ActivityInfoTableModel extends AbstractTableModel implements ActivityListener {
-
+	private static DateFormat dateFormat = new SimpleDateFormat();
+	
 	private List<Activity> activities = new ArrayList<Activity>();
 	private Map<Activity, ActivityEvent> activityLastEvents = new HashMap<Activity, ActivityEvent>(); 
+	
+	private static final String[] columnNames = new String[]{
+		"Activity name", "Last event", "Time", "Event description"
+	};
 	
 	/* (non-Javadoc)
 	 * @see javax.swing.table.TableModel#getColumnCount()
 	 */
 	public int getColumnCount() {
-		return 2;
+		return 4;
 	}
 
 	/* (non-Javadoc)
@@ -49,7 +57,11 @@ public class ActivityInfoTableModel extends AbstractTableModel implements Activi
 		case 0:
 			return activity.getActivityName();
 		case 1:
-			return event.getDescription()!=null?event.getDescription():event.getType().name();
+			return event.getType().name();
+		case 2:
+			return ActivityInfoTableModel.dateFormat.format(new Date(event.getTime()));
+		case 3:
+			return event.getDescription();
 		default:
 			throw new RuntimeException("Invalid column index "+column);
 		}
@@ -57,7 +69,7 @@ public class ActivityInfoTableModel extends AbstractTableModel implements Activi
 	
 	@Override
 	public String getColumnName(int column) {
-		return column==0?"Activity name":"Last event";
+		return columnNames[column];
 	}	
 
 	public void activityEvent(ActivityEvent event) {
