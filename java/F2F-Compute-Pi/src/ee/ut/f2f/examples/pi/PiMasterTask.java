@@ -7,6 +7,7 @@ import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
+import ee.ut.f2f.util.F2FDebug;
 
 public class PiMasterTask extends Task
 {
@@ -55,10 +56,17 @@ public class PiMasterTask extends Task
 					e.printStackTrace();
 				}
 		}
-
+		
+		long debug = System.currentTimeMillis() - 10000;
 		// collect results
 		while (received.getUnSyncTotal() < maxpoints)
 		{
+			if (debug + 10000 < System.currentTimeMillis())
+			{
+				debug = System.currentTimeMillis();
+				F2FDebug.println("processed " + (int)(((float)received.getUnSyncTotal() / maxpoints)*100) + "%" );
+				F2FDebug.println("Pi is " + received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal() );
+			}
 			try {
 				Thread.sleep(100);
 			} catch (InterruptedException e) {
@@ -68,7 +76,7 @@ public class PiMasterTask extends Task
 			// check if one of the slaves has new numbers
 			for (TaskProxy proxy: slaveProxies)
 			{
-				if (proxy.hasMessage())
+				while (proxy.hasMessage())
 				{
 					AtomicLongVector receivedvector = (AtomicLongVector) proxy.receiveMessage();
 					received.add( receivedvector );
@@ -90,6 +98,8 @@ public class PiMasterTask extends Task
 		long end = System.currentTimeMillis();
 
 		// show the result
+		F2FDebug.println("The computed Pi is : " + received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal());
+		F2FDebug.println("Took " + (end - start) / 1000 + "s");
 		System.out.println("The computed Pi is : " + 
 				received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal());
 		System.out.println("Took " + (end - start) / 1000 + "s");
