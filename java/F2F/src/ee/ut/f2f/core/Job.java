@@ -19,9 +19,10 @@ import org.apache.commons.io.IOUtils;
  * algorithm (in jar file(s)) and descriptions of tasks that 
  * can be run in F2F framework to execute the algorithm.
  */
-@SuppressWarnings("serial")
 public class Job implements Serializable
 {
+	private static final long serialVersionUID = 2726160570171222435L;
+
 	/**
 	 * The identifier of the master task of the job.
 	 */
@@ -83,12 +84,10 @@ public class Job implements Serializable
 	
 	private transient Collection<F2FPeer> workingPeers = null;
 	Collection<F2FPeer> getWorkingPeers() { return workingPeers; }
-	void addWorkingPeers(Collection<F2FPeer> peers)
+	void addWorkingPeer(F2FPeer peer)
 	{ 
-		if (workingPeers == null) workingPeers = peers;
-		else 
-			for (F2FPeer peer: peers)
-				if (!workingPeers.contains(peer)) workingPeers.add(peer);
+		if (workingPeers == null) workingPeers = new ArrayList<F2FPeer>();
+		if (!workingPeers.contains(peer)) workingPeers.add(peer);
 	}
 	
 	/**

@@ -73,6 +73,10 @@ public class F2FComputingGUI {
 					}
 					FriendModel friendModel = controller.getFriendModel();
 					
+					new Thread(new Runnable()
+					{
+						public void run()
+						{
 					//NAT Traversal stun info request for yourself
 					StunInfo sinf = null;
 					try {
@@ -92,6 +96,8 @@ public class F2FComputingGUI {
 					} else {
 						//TODO What to do if could not get the stun info
 					}
+						}
+					}).start();
 					
 					while (true)
 					{

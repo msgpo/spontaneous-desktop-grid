@@ -71,9 +71,10 @@ public class F2FComputing
 	 */
 	private F2FComputing(java.io.File rootDir)
 	{
-		localPeer = new F2FPeer();
+		localPeer = new F2FPeer("me (localhost)");
 		F2FDebug.println("\tlocal F2FPeer ID is " + localPeer.getID());
 		peers = new HashMap<UUID, F2FPeer>();
+		peers.put(localPeer.getID(), localPeer);
 		jobs = new HashMap<String, Job>();
 		reservedPeers = new HashMap<String, Collection<F2FPeer>>();
 		CommunicationFactory.getInitializedCommunicationProviders();
@@ -143,6 +144,7 @@ public class F2FComputing
 					masterTaskClassName
 			);
 		job.addTaskDescription(masterTaskDescription);
+		job.addWorkingPeer(localPeer);
 		// create a task based on master task description and execute it	
 		try
 		{
@@ -262,9 +264,12 @@ public class F2FComputing
 		Collection<F2FPeer> newPeers = new ArrayList<F2FPeer>();
 		for (F2FPeer peer: peersToBeUsed)
 		{
-			if (job.getWorkingPeers() == null || !job.getWorkingPeers().contains(peer)) newPeers.add(peer);
+			if (job.getWorkingPeers() == null || !job.getWorkingPeers().contains(peer))
+			{
+				newPeers.add(peer);
+				job.addWorkingPeer(peer);
+			}
 		}
-		job.addWorkingPeers(newPeers);
 		F2FMessage messageJob = 
 			new F2FMessage(F2FMessage.Type.JOB, null, null, null, job);
 		for (F2FPeer peer: newPeers)

@@ -45,10 +45,6 @@ public class TaskProxy
 					remoteTaskDescription.getTaskID(),
 					task.getTaskID(),
 					message);
-		if (remoteTaskDescription.peerID.equals(F2FComputing.getLocalPeer().getID()))
-		{
-			F2FComputing.messageRecieved(f2fMessage, remoteTaskDescription.peerID);
-		}
 		// try to send message directly to the receiver
 		F2FPeer receiver = F2FComputing.peers.get(remoteTaskDescription.peerID);
 		if (receiver != null)

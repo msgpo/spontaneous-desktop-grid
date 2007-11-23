@@ -6,7 +6,6 @@ import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
-import ee.ut.f2f.util.F2FDebug;
 
 public class F2FPeer
 {
@@ -23,6 +22,11 @@ public class F2FPeer
 	F2FPeer()
 	{
 		this.id = UUID.randomUUID();
+	}
+	F2FPeer(String displayName)
+	{
+		this.id = UUID.randomUUID();
+		this.displayName = displayName;
 	}
 	
 	/**
@@ -61,6 +65,11 @@ public class F2FPeer
 	}
 	public void sendMessage(Object message) throws CommunicationFailedException
 	{
+		if(this.id.equals(F2FComputing.getLocalPeer().getID()))
+		{
+			F2FComputing.messageRecieved(message, this.getID());
+			return;
+		}
 		for (CommunicationProvider commProvider: commProviders)
 		{
 			try
