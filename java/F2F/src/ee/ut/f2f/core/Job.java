@@ -193,6 +193,7 @@ public class Job implements Serializable
 	
 	private class F2FJarFile implements Serializable
 	{
+		private static final long serialVersionUID = -6267263735468032833L;
 		/**
 		 * The name of the file.
 		 */
