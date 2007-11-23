@@ -9,10 +9,8 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import java.io.File;
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -22,7 +20,6 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import javax.swing.BorderFactory;
-import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
@@ -47,25 +44,18 @@ import javax.swing.filechooser.FileFilter;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.core.F2FPeer;
-import ee.ut.f2f.comm.sip.SipCommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
+import ee.ut.f2f.core.F2FPeer;
+import ee.ut.f2f.core.Job;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
-import ee.ut.f2f.core.Job;
 import ee.ut.f2f.ui.model.ActivityInfoTableModel;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.F2FTests;
-import ee.ut.f2f.util.nat.traversal.ConnectionManager;
-import ee.ut.f2f.util.nat.traversal.NatMessage;
-import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
-import ee.ut.f2f.util.nat.traversal.StunInfo;
-import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
-import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 
 public class UIController{
 	private JFrame frame = null;

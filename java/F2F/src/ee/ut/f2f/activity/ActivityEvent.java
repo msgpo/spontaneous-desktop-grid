@@ -3,7 +3,6 @@
  */
 package ee.ut.f2f.activity;
 
-import java.util.Date;
 
 
 /**
@@ -34,12 +33,17 @@ public class ActivityEvent {
 	 * @param type event type
 	 * @param activity process where event has happened
 	 */
-	public ActivityEvent(Activity activity, Enum type) {
+	public ActivityEvent(Activity activity, Enum type, String description) {
 		this.type = type;
 		this.activity = activity;
+		this.description = description;
 		this.time = System.currentTimeMillis();
 	}
 
+	public ActivityEvent(Activity activity, Enum type) {
+		this(activity, type, null);
+	}
+	
 	public String getDescription() {
 		return description;
 	}

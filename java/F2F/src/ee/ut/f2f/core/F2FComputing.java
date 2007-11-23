@@ -8,10 +8,13 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+import ee.ut.f2f.activity.ActivityEvent;
+import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFactory;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.core.activity.CPURequests;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
@@ -22,13 +25,7 @@ import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
  * jobs and tasks.
  */
 public class F2FComputing
-{
-	/**
-	 * The time how long to wait for the answers of REQUEST_FOR_CPU before
-	 * throwing error that there are not enough CPUs
-	 */
-	private static final long REQUEST_FOR_CPUS_TIMEOUT = 10000;
-	
+{	
 	/**
 	 * Map jobID->Job, contains all the jobs that the F2F framework is aware
 	 * at. New jobs can be added by user by GUI or received from other nodes.
@@ -50,12 +47,8 @@ public class F2FComputing
 	 */
 	private static java.io.File rootDirectory = null;
 
-	/**
-	 * Peers who allow their CPU to be used for F2F.
-	 * JobID -> Peer
-	 */
-	private static Map<String, Collection<F2FPeer>> reservedPeers = null;
-
+	private static CPURequests cpuRequests;
+	
 	private static F2FPeer localPeer = null;
 	public static F2FPeer getLocalPeer() {return localPeer;}
 	/**
@@ -76,7 +69,6 @@ public class F2FComputing
 		peers = new HashMap<UUID, F2FPeer>();
 		peers.put(localPeer.getID(), localPeer);
 		jobs = new HashMap<String, Job>();
-		reservedPeers = new HashMap<String, Collection<F2FPeer>>();
 		CommunicationFactory.getInitializedCommunicationProviders();
 		rootDirectory = rootDir;
 		rootDirectory.mkdir();
@@ -210,40 +202,33 @@ public class F2FComputing
 			throw new F2FComputingException("Could not initialize task " + className, e);
 		}
 
-		// ask peers for CPU power
-		reservedPeers.put(jobID, new ArrayList<F2FPeer>());
-		F2FDebug.println("\tSending REQUEST_FOR_CPU to: " + peers + ".");
-		F2FMessage message = 
-			new F2FMessage(F2FMessage.Type.REQUEST_FOR_CPU, jobID, null, null, null);
-		for (F2FPeer peer : peers)
-		{
-			try {
-				peer.sendMessage(message);
-			} catch (Exception e) {
-				F2FDebug.println("" + e);
-			}
-		}
-		// wait for answers
-		while (true)
-		{
-			if (reservedPeers.get(jobID).size() >= taskCount) break;
-			try
-			{
-				synchronized(reservedPeers.get(jobID))
-				{
-					reservedPeers.get(jobID).wait(REQUEST_FOR_CPUS_TIMEOUT);
-				}
-			}
-			catch (InterruptedException e)
-			{// timeout
-				reservedPeers.remove(jobID);
-				throw new F2FComputingException("Not enough available CPUs!");
-			}
+		cpuRequests = new CPURequests(jobID, peers, taskCount);
+		
+		try {
+			// ask peers for CPU power
+			cpuRequests.makeRequests();
+			
+			// wait for answers
+			cpuRequests.waitForResponses();
+		
+			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FINISHED,
+					"Reserved "+cpuRequests.getReservedPeers().size()+" peer(s)");
+			ActivityManager.getDefaultActivityManager().emitEvent(event);
+		} catch (RuntimeException e) {
+			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FAILED,
+					e.toString());
+			ActivityManager.getDefaultActivityManager().emitEvent(event);
+			throw e;
+		} catch (F2FComputingException e) {
+			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FAILED,
+					e.toString());
+			ActivityManager.getDefaultActivityManager().emitEvent(event);
+			throw e;
 		}
 		
 		// now we know in which peers new tasks should be started
 		F2FPeer[] peersToBeUsed = new F2FPeer[taskCount];
-		Iterator<F2FPeer> reservedPeersIterator = reservedPeers.get(jobID).iterator();
+		Iterator<F2FPeer> reservedPeersIterator = cpuRequests.getReservedPeers().get(jobID).iterator();
 		for (int i = 0; i < taskCount; i++) peersToBeUsed[i] = reservedPeersIterator.next();
 		
 		// create descriptions of new tasks and add them to the job
@@ -293,7 +278,7 @@ public class F2FComputing
 			}
 		}
 				
-		reservedPeers.remove(jobID);
+		cpuRequests.getReservedPeers().remove(jobID);
 	}
 
 	/**
@@ -447,14 +432,10 @@ public class F2FComputing
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.RESPONSE_FOR_CPU)
 		{
-			if ((Boolean)f2fMessage.getData() &&
-				reservedPeers.get(f2fMessage.getJobID()) != null)
-			{
-				synchronized(reservedPeers.get(f2fMessage.getJobID()))
-				{
-					reservedPeers.get(f2fMessage.getJobID()).add(sender);
-					reservedPeers.get(f2fMessage.getJobID()).notifyAll();
-				}
+			if(cpuRequests!=null) {
+				cpuRequests.responseReceived(f2fMessage, sender);
+			} else {
+				F2FDebug.println("\tERROR!!! Received unexpected 'CPU request' response");
 			}
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.JOB)

@@ -23,7 +23,7 @@ import ee.ut.f2f.activity.ActivityListener;
  */
 @SuppressWarnings("serial")
 public class ActivityInfoTableModel extends AbstractTableModel implements ActivityListener {
-	private static DateFormat dateFormat = new SimpleDateFormat();
+	private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	private List<Activity> activities = new ArrayList<Activity>();
 	private Map<Activity, ActivityEvent> activityLastEvents = new HashMap<Activity, ActivityEvent>(); 
