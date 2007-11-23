@@ -22,6 +22,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import javax.swing.BorderFactory;
+import javax.swing.JApplet;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
@@ -112,15 +113,15 @@ public class UIController{
 	public UIController(String title)
 	{		
 		frame = new JFrame("F2FComputing - " + title);
-		SpringLayout layout = new SpringLayout();
-		mainPanel = new JPanel(layout);
+		//SpringLayout layout = new SpringLayout();
+		mainPanel = new JPanel(new BorderLayout());
 		frame.setContentPane(mainPanel);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(800, 700);
 		
 		generalMenuBar = new JMenuBar();
 		frame.setJMenuBar(generalMenuBar);
-		mainPanel.setSize(frame.getSize());
+		mainPanel.setPreferredSize(frame.getSize());
 
 		fileMenu = new JMenu("File");
 		exitMenuItem = new JMenuItem("Exit");
@@ -146,9 +147,9 @@ public class UIController{
 		friendsPanel.setLayout(new GridLayout(1,1));
 		friendsPanel.setBorder(BorderFactory.createTitledBorder("Friends"));
 		friendsPanel.setPreferredSize(new Dimension(200, 300+200));
-		layout.putConstraint(SpringLayout.WEST, friendsPanel, 5, SpringLayout.WEST, mainPanel);
-		layout.putConstraint(SpringLayout.NORTH, friendsPanel, 5, SpringLayout.NORTH, mainPanel);
-		mainPanel.add(friendsPanel);
+		//layout.putConstraint(SpringLayout.WEST, friendsPanel, 5, SpringLayout.WEST, mainPanel);
+		//layout.putConstraint(SpringLayout.NORTH, friendsPanel, 5, SpringLayout.NORTH, mainPanel);
+		mainPanel.add(friendsPanel, BorderLayout.WEST);
 
 		friendModel = new FriendModel();
 		friendsList = new JList(friendModel);
@@ -164,8 +165,8 @@ public class UIController{
 		consolePanel.setLayout(new GridLayout(1,1));
 		//consolePanel.setBorder(BorderFactory.createEmptyBorder());
 		consolePanel.setPreferredSize(new Dimension(570, 300+200));
-		layout.putConstraint(SpringLayout.WEST, consolePanel, 5, SpringLayout.EAST, friendsPanel);
-		layout.putConstraint(SpringLayout.NORTH, consolePanel, 0, SpringLayout.NORTH, friendsPanel);
+		//layout.putConstraint(SpringLayout.WEST, consolePanel, 5, SpringLayout.EAST, friendsPanel);
+		//layout.putConstraint(SpringLayout.NORTH, consolePanel, 0, SpringLayout.NORTH, friendsPanel);
 		mainPanel.add(consolePanel);
 		
 		JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
@@ -183,8 +184,8 @@ public class UIController{
 		//messagingPanel.setPreferredSize(new Dimension(770, 200));
 		messagingPanel.setPreferredSize(new Dimension(770, 0));
 		// ===
-		layout.putConstraint(SpringLayout.NORTH, messagingPanel, 5, SpringLayout.SOUTH, friendsPanel);
-		layout.putConstraint(SpringLayout.WEST, messagingPanel, 5, SpringLayout.WEST, mainPanel);
+		//layout.putConstraint(SpringLayout.NORTH, messagingPanel, 5, SpringLayout.SOUTH, friendsPanel);
+		//layout.putConstraint(SpringLayout.WEST, messagingPanel, 5, SpringLayout.WEST, mainPanel);
 		
 		receievedMessagesTextArea = new JTextArea();
 		receievedMessagesTextArea.setEditable(false);
@@ -319,22 +320,26 @@ public class UIController{
 		tabs.add("F2F activities", new JScrollPane(activityInfoTable));
 		
 		// other
+		SpringLayout bottomPanelLayout = new SpringLayout();
+		JPanel bottomPanel = new JPanel(bottomPanelLayout);
+		bottomPanel.setSize(new Dimension(300,100));
+		mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 		
 		JLabel label1 = new JLabel("Choose file:");
-		layout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.SOUTH, messagingPanel);
-		layout.putConstraint(SpringLayout.WEST, label1, 0, SpringLayout.WEST, messagingPanel);
-		mainPanel.add(label1);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.NORTH, bottomPanel);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, label1, 0, SpringLayout.WEST, bottomPanel);
+		bottomPanel.add(label1);
 
 		tf1 = new JTextField();
 		tf1.setColumns(40);
-		layout.putConstraint(SpringLayout.NORTH, tf1, 5, SpringLayout.SOUTH, label1);
-		layout.putConstraint(SpringLayout.WEST, tf1, 0, SpringLayout.WEST, label1);
-		mainPanel.add(tf1);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, tf1, 5, SpringLayout.SOUTH, label1);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, tf1, 0, SpringLayout.WEST, label1);
+		bottomPanel.add(tf1);
 
 		JButton button1 = new JButton("Browse...");
-		layout.putConstraint(SpringLayout.NORTH, button1, 0, SpringLayout.NORTH, tf1);
-		layout.putConstraint(SpringLayout.WEST, button1, 5, SpringLayout.EAST, tf1);
-		mainPanel.add(button1);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button1, 0, SpringLayout.NORTH, tf1);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, button1, 5, SpringLayout.EAST, tf1);
+		bottomPanel.add(button1);
 		
 		// Main task will be filled from the manifest file's entry.
 		tf2 = new JTextField("");
@@ -394,15 +399,15 @@ public class UIController{
 		});
 		
 		tf2.setColumns(40);
-		layout.putConstraint(SpringLayout.NORTH, tf2, 5, SpringLayout.SOUTH, tf1);
-		layout.putConstraint(SpringLayout.WEST, tf2, 0, SpringLayout.WEST, tf1);
-		mainPanel.add(tf2);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, tf2, 5, SpringLayout.SOUTH, tf1);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, tf2, 0, SpringLayout.WEST, tf1);
+		bottomPanel.add(tf2);
 		
 
 		JButton button2 = new JButton("Compute");
-		layout.putConstraint(SpringLayout.NORTH, button2, 5, SpringLayout.SOUTH, tf2);
-		layout.putConstraint(SpringLayout.WEST, button2, 0, SpringLayout.WEST, tf2);
-		mainPanel.add(button2);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button2, 5, SpringLayout.SOUTH, tf2);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, button2, 0, SpringLayout.WEST, tf2);
+		bottomPanel.add(button2);
 		button2.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
@@ -433,9 +438,9 @@ public class UIController{
 		});
 		
 		JButton button3 = new JButton("Show stats");
-		layout.putConstraint(SpringLayout.NORTH, button3, 0, SpringLayout.NORTH, button2);
-		layout.putConstraint(SpringLayout.WEST, button3, 10, SpringLayout.EAST, button2);
-		mainPanel.add(button3);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button3, 0, SpringLayout.NORTH, button2);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, button3, 10, SpringLayout.EAST, button2);
+		bottomPanel.add(button3);
 		button3.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
@@ -468,9 +473,9 @@ public class UIController{
 		});
 		
 		JButton buttonDebug = new JButton("Open Debug window");
-		layout.putConstraint(SpringLayout.NORTH, buttonDebug, 0, SpringLayout.NORTH, button3);
-		layout.putConstraint(SpringLayout.WEST, buttonDebug, 10, SpringLayout.EAST, button3);
-		mainPanel.add(buttonDebug);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, buttonDebug, 0, SpringLayout.NORTH, button3);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, buttonDebug, 10, SpringLayout.EAST, button3);
+		bottomPanel.add(buttonDebug);
 		buttonDebug.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
@@ -481,9 +486,12 @@ public class UIController{
 
 		// Some room for playing and testing
 		JButton buttonTest = new JButton("Trigger tests");
-		layout.putConstraint(SpringLayout.NORTH, buttonTest, 0, SpringLayout.NORTH, buttonDebug);
-		layout.putConstraint(SpringLayout.WEST, buttonTest, 10, SpringLayout.EAST, buttonDebug);
-		mainPanel.add(buttonTest);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, buttonTest, 0, SpringLayout.NORTH, buttonDebug);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, buttonTest, 10, SpringLayout.EAST, buttonDebug);
+		bottomPanel.add(buttonTest);
+		
+		// bottomPanel constraints (constraint SOUTH of the bottom panel to the last button)
+		bottomPanelLayout.putConstraint(SpringLayout.SOUTH, bottomPanel, 5, SpringLayout.SOUTH, button2);		
 		
 		buttonTest.addActionListener(new ActionListener()
 		{
