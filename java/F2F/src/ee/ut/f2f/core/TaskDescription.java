@@ -8,9 +8,10 @@ import java.util.UUID;
  * a class that has to be executed and 
  * a peer where it has to be executed. 
  */
-@SuppressWarnings("serial")
 class TaskDescription implements Serializable
 {
+	private static final long serialVersionUID = 6393763867640026109L;
+
 	/**
 	 * The unique ID of a task in a job.
 	 */
