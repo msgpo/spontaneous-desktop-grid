@@ -494,8 +494,14 @@ public class F2FComputing
 		else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
 		{
 			F2FDebug.println("\tMESSAGE received " + f2fMessage);
-			Task recepientTask = getJob(f2fMessage.getJobID()).getTask(
-					f2fMessage.getReceiverTaskID());
+			Job job = getJob(f2fMessage.getJobID());
+			if (job == null)
+			{
+				F2FDebug.println("\tGot MESSAGE for unknown job wiht ID: "
+						+ f2fMessage.getJobID());
+				return;
+			}
+			Task recepientTask = job.getTask(f2fMessage.getReceiverTaskID());
 			if (recepientTask == null)
 			{
 				F2FDebug.println("\tGot MESSAGE for unknown task wiht ID: "
