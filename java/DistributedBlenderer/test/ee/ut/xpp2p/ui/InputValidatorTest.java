@@ -1,6 +1,7 @@
 package ee.ut.xpp2p.ui;
 
 import java.awt.event.ActionEvent;
+import java.io.File;
 
 import junit.framework.TestCase;
 import ee.ut.xpp2p.blenderer.MasterBlenderer;
@@ -15,6 +16,7 @@ public class InputValidatorTest extends TestCase {
 
 	/**
 	 * Test method for {@link ee.ut.xpp2p.ui.InputValidator#validate()}.
+	 * Tested through the user interface MainWindow
 	 */
 	public void testRenderButtonPressed() {
 		// testing valid input parameters
@@ -89,9 +91,10 @@ public class InputValidatorTest extends TestCase {
 		assertEquals(window.outputLocErrorLabel.getText(), "Output location doesn't exist");
 		tearDown();
 		
-		// test no write permission on folder
+		// test no write permission on output folder
 		setUp();
 		window.outputLocTextField.setText("etc/readOnlyLocation/");
+		new File("etc/readOnlyLocation").setReadOnly();
 		window.renderButton.getActionListeners()[0].actionPerformed(new ActionEvent(window.renderButton, 2, ""));
 		assertEquals(window.outputLocErrorLabel.getText(), "No write permission on the specified output location");
 		tearDown();
