@@ -34,7 +34,6 @@ public class RenderResult implements Comparable<RenderResult> {
 		this.endFrame = endFrame;
 	}
 
-	@Override
 	public int compareTo(RenderResult obj) {
 		if (this.getStartFrame() < obj.getStartFrame()) {
 			return -1;
