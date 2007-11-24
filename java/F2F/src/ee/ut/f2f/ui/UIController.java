@@ -41,6 +41,8 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
+import org.jdesktop.swingx.JXTreeTable;
+
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
@@ -304,7 +306,7 @@ public class UIController{
 		ActivityInfoTableModel activityInfoTableModel = new ActivityInfoTableModel();
 		ActivityManager.getDefaultActivityManager().addListener(
 				ActivityEvent.Type.values(), activityInfoTableModel);
-		JTable activityInfoTable = new JTable(activityInfoTableModel);
+		JTable activityInfoTable = new JXTreeTable(activityInfoTableModel);
 		activityInfoTable.setAutoscrolls(true);
 				
 		tabs.add("F2F activities", new JScrollPane(activityInfoTable));

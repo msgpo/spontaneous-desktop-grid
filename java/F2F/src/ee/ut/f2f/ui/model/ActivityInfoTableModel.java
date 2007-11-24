@@ -11,7 +11,9 @@ import java.util.HashMap;
 import java.util.List;
 import java.util.Map;
 
-import javax.swing.table.AbstractTableModel;
+import javax.swing.tree.TreePath;
+
+import org.jdesktop.swingx.treetable.AbstractTreeTableModel;
 
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
@@ -22,7 +24,7 @@ import ee.ut.f2f.activity.ActivityListener;
  *
  */
 @SuppressWarnings("serial")
-public class ActivityInfoTableModel extends AbstractTableModel implements ActivityListener {
+public class ActivityInfoTableModel extends AbstractTreeTableModel implements ActivityListener {
 	private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
 	private List<Activity> activities = new ArrayList<Activity>();
@@ -32,25 +34,40 @@ public class ActivityInfoTableModel extends AbstractTableModel implements Activi
 		"Activity name", "Last event", "Time", "Event description"
 	};
 	
+	public ActivityInfoTableModel() {
+		super(new Object()); // dummy root
+	}
+
 	/* (non-Javadoc)
 	 * @see javax.swing.table.TableModel#getColumnCount()
 	 */
 	public int getColumnCount() {
 		return 4;
 	}
+	
+	@Override
+	public String getColumnName(int column) {
+		return columnNames[column];
+	}	
 
-	/* (non-Javadoc)
-	 * @see javax.swing.table.TableModel#getRowCount()
-	 */
-	public int getRowCount() {
-		return activities.size();
+	public void activityEvent(ActivityEvent event) {
+		if(!activityLastEvents.containsKey(event.getActivity())) {
+			activities.add(event.getActivity());
+			activityLastEvents.put(event.getActivity(), event);
+			modelSupport.fireChildAdded(new TreePath(root),
+					activities.size() - 1, event.getActivity());
+		} else {
+			activityLastEvents.put(event.getActivity(), event);
+			modelSupport.fireChildChanged(new TreePath(root), activities
+					.indexOf(event.getActivity()), event.getActivity());			
+		}
 	}
 
-	/* (non-Javadoc)
-	 * @see javax.swing.table.TableModel#getValueAt(int, int)
-	 */
-	public Object getValueAt(int row, int column) {
-		Activity activity = activities.get(row);
+	public Object getValueAt(Object obj, int column) {
+		if(obj==root)
+			return null;
+		
+		Activity activity = (Activity) obj;
 		ActivityEvent event = activityLastEvents.get(activity);
 		
 		switch (column) {
@@ -66,17 +83,24 @@ public class ActivityInfoTableModel extends AbstractTableModel implements Activi
 			throw new RuntimeException("Invalid column index "+column);
 		}
 	}
-	
-	@Override
-	public String getColumnName(int column) {
-		return columnNames[column];
-	}	
 
-	public void activityEvent(ActivityEvent event) {
-		if(!activityLastEvents.containsKey(event.getActivity())) {
-			activities.add(event.getActivity());
+	public Object getChild(Object parent, int index) {
+		if(parent == root) {
+			return activities.get(index);
 		}
-		activityLastEvents.put(event.getActivity(), event);
-		fireTableDataChanged();		
+		
+		return null;
+	}
+
+	public int getChildCount(Object parent) {
+		if(parent == root) {
+			return activities.size();
+		}
+		
+		return 0;
+	}
+
+	public int getIndexOfChild(Object parent, Object child) {
+		return activities.indexOf(child);
 	}
 }

@@ -45,7 +45,7 @@ public class ActivityManager {
 			try {
 				listener.activityEvent(event);
 			} catch (Throwable e) {
-				logger.warning("Error in activity event notification. "+e);
+				logger.log(Level.WARNING, "Error in activity event notification.", e);
 			}			
 		}
 	}
