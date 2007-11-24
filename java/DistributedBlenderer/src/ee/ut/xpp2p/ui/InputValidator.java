@@ -87,6 +87,10 @@ public class InputValidator {
 			window.outputLocErrorLabel
 					.setText("Output location must be a directory");
 			hasErrors = true;
+		} else if (!new File(outputLoc).canWrite()) {
+			window.outputLocErrorLabel
+					.setText("No write permission on the specified output location");
+			hasErrors = true;
 		} else {
 			window.outputLocErrorLabel.setText("");
 		}
@@ -112,7 +116,7 @@ public class InputValidator {
 		} else if (endFrame.equals("")) {
 			window.framesErrorLabel.setText("End frame must be specified");
 			hasErrors = true;
-		} else if (!startFrame.matches("\\d*") || !startFrame.matches("\\d*")) {
+		} else if (!startFrame.matches("\\d*") || !endFrame.matches("\\d*")) {
 			window.framesErrorLabel
 					.setText("Frames must be specified as integers");
 			hasErrors = true;

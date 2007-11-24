@@ -45,14 +45,14 @@ public class InputValidatorTest extends TestCase {
 		assertEquals(window.endFrameTextField.getText(), "5");
 		tearDown();
 		
-		// test startFrame number bigger than endFrame number
+		// test startFrame number less than endFrame number
 		setUp();
-		window.startFrameTextField.setText("5");
-		window.endFrameTextField.setText("3");
+		window.startFrameTextField.setText("3");
+		window.endFrameTextField.setText("5");
 		window.renderButton.getActionListeners()[0].actionPerformed(new ActionEvent(window.renderButton, 2, ""));
-		assertEquals(window.framesErrorLabel.getText(), "Starting frame number can't be bigger than ending frame number");
-		assertEquals(window.startFrameTextField.getText(), "5");
-		assertEquals(window.endFrameTextField.getText(), "3");
+		assertEquals(window.framesErrorLabel.getText(), "");
+		assertEquals(window.startFrameTextField.getText(), "3");
+		assertEquals(window.endFrameTextField.getText(), "5");
 		tearDown();
 		
 		// testing empty input parameters
@@ -73,7 +73,7 @@ public class InputValidatorTest extends TestCase {
 		assertEquals(window.framesErrorLabel.getText(), "End frame must be specified");
 		tearDown();
 		
-		//TODO: test  invalid input parameters
+		//test  invalid input parameters
 		
 		// test nonexistent input file
 		setUp();
@@ -82,23 +82,43 @@ public class InputValidatorTest extends TestCase {
 		assertEquals(window.inputFileErrorLabel.getText(), "Input file doesn't exist");
 		tearDown();
 		
-		//TODO: nonexistent folder
-		//TODO: no write permission on folder
-		//TODO: existing folder no slash
-		//TODO: non-numeric startframe
-		//TODO: non-numeric endframe
+		// test nonexistent output folder
+		setUp();
+		window.outputLocTextField.setText("nonexistent/");
+		window.renderButton.getActionListeners()[0].actionPerformed(new ActionEvent(window.renderButton, 2, ""));
+		assertEquals(window.outputLocErrorLabel.getText(), "Output location doesn't exist");
+		tearDown();
+		
+		// test no write permission on folder
+		setUp();
+		window.outputLocTextField.setText("etc/readOnlyLocation/");
+		window.renderButton.getActionListeners()[0].actionPerformed(new ActionEvent(window.renderButton, 2, ""));
+		assertEquals(window.outputLocErrorLabel.getText(), "No write permission on the specified output location");
+		tearDown();
+		
+		// non-numeric startframe
+		setUp();
+		window.startFrameTextField.setText("text");
+		window.renderButton.getActionListeners()[0].actionPerformed(new ActionEvent(window.renderButton, 2, ""));
+		assertEquals(window.framesErrorLabel.getText(), "Frames must be specified as integers");
+		tearDown();
+		
+		// non-numeric endframe
+		setUp();
+		window.endFrameTextField.setText("text");
+		window.renderButton.getActionListeners()[0].actionPerformed(new ActionEvent(window.renderButton, 2, ""));
+		assertEquals(window.framesErrorLabel.getText(), "Frames must be specified as integers");
+		tearDown();
 		
 		// test startFrame number bigger than endFrame number
 		setUp();
-		window.startFrameTextField.setText("3");
-		window.endFrameTextField.setText("5");
+		window.startFrameTextField.setText("5");
+		window.endFrameTextField.setText("3");
 		window.renderButton.getActionListeners()[0].actionPerformed(new ActionEvent(window.renderButton, 2, ""));
-		assertEquals(window.framesErrorLabel.getText(), "");
-		assertEquals(window.startFrameTextField.getText(), "3");
-		assertEquals(window.endFrameTextField.getText(), "5");
+		assertEquals(window.framesErrorLabel.getText(), "Starting frame number can't be bigger than ending frame number");
+		assertEquals(window.startFrameTextField.getText(), "5");
+		assertEquals(window.endFrameTextField.getText(), "3");
 		tearDown();
-		
-
 	}
 	
 	protected void setUp(){
