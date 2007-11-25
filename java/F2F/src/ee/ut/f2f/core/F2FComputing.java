@@ -216,7 +216,8 @@ public class F2FComputing
 			cpuRequests.waitForResponses();
 		
 			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FINISHED,
-					"Reserved "+cpuRequests.getReservedPeers().size()+" peer(s)");
+					"Reserved:"+cpuRequests.getReservedPeers().size()+" peer(s); " +
+							"busy:"+cpuRequests.getBusyPeers().size()+ " peer(s)");
 			ActivityManager.getDefault().emitEvent(event);
 		} catch (RuntimeException e) {
 			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FAILED,
@@ -232,7 +233,7 @@ public class F2FComputing
 		
 		// now we know in which peers new tasks should be started
 		F2FPeer[] peersToBeUsed = new F2FPeer[taskCount];
-		Iterator<F2FPeer> reservedPeersIterator = cpuRequests.getReservedPeers().get(jobID).iterator();
+		Iterator<F2FPeer> reservedPeersIterator = cpuRequests.getReservedPeers().iterator();
 		for (int i = 0; i < taskCount; i++) peersToBeUsed[i] = reservedPeersIterator.next();
 		
 		// create descriptions of new tasks and add them to the job
@@ -436,7 +437,8 @@ public class F2FComputing
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.RESPONSE_FOR_CPU)
 		{
-			if(cpuRequests!=null) {
+			if (cpuRequests != null
+					&& f2fMessage.getJobID().equals(cpuRequests.getJobID())) {
 				cpuRequests.responseReceived(f2fMessage, sender);
 			} else {
 				F2FDebug.println("\tERROR!!! Received unexpected 'CPU request' response");

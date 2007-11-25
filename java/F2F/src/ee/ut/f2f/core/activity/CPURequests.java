@@ -3,10 +3,8 @@
  */
 package ee.ut.f2f.core.activity;
 
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashMap;
-import java.util.Map;
+import java.util.HashSet;
 
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
@@ -33,20 +31,26 @@ public class CPURequests implements Activity {
 	private Collection<F2FPeer> requestedPeers;
 	/**
 	 * Peers who allow their CPU to be used for F2F.
-	 * JobID -> Peer
 	 */
-	private Map<String, Collection<F2FPeer>> reservedPeers;
+	private Collection<F2FPeer> reservedPeers;
+
+	private Collection<F2FPeer> busyPeers;
 
 	/**
 	 * Desired number of new tasks.
 	 */
 	private int taskCount;
 	
+	public Collection<F2FPeer> getBusyPeers() {
+		return busyPeers;
+	}
+
 	public CPURequests(String jobID, Collection<F2FPeer> peers, int taskCount) {
 		this.jobID = jobID;
 		this.taskCount = taskCount;
 		requestedPeers = peers;
-		reservedPeers = new HashMap<String, Collection<F2FPeer>>();		
+		reservedPeers = new HashSet<F2FPeer>();		
+		busyPeers = new HashSet<F2FPeer>();		
 	}
 	
 	/* (non-Javadoc)
@@ -57,7 +61,6 @@ public class CPURequests implements Activity {
 	}
 
 	public void makeRequests() {
-		reservedPeers.put(jobID, new ArrayList<F2FPeer>());
 		F2FDebug.println("\tSending REQUEST_FOR_CPU to: " + requestedPeers + ".");
 		
 		ActivityEvent event = new ActivityEvent(this, ActivityEvent.Type.STARTED);
@@ -84,12 +87,12 @@ public class CPURequests implements Activity {
 		
 		while (true)
 		{
-			if (reservedPeers.get(jobID).size() >= taskCount) break;
+			if (reservedPeers.size() >= taskCount) break;
 			try
 			{
-				synchronized(reservedPeers.get(jobID))
+				synchronized(reservedPeers)
 				{
-					reservedPeers.get(jobID).wait(REQUEST_FOR_CPUS_TIMEOUT);
+					reservedPeers.wait(REQUEST_FOR_CPUS_TIMEOUT);
 				}
 			}
 			catch (InterruptedException e)
@@ -100,7 +103,7 @@ public class CPURequests implements Activity {
 		}
 	}
 
-	public Map<String, Collection<F2FPeer>> getReservedPeers() {
+	public Collection<F2FPeer> getReservedPeers() {
 		return reservedPeers;
 	}
 
@@ -109,18 +112,26 @@ public class CPURequests implements Activity {
 	}
 
 	public void responseReceived(F2FMessage f2fMessage, F2FPeer sender) {
-		if ((Boolean)f2fMessage.getData() &&
-				reservedPeers.get(f2fMessage.getJobID()) != null)
+		if((Boolean) f2fMessage.getData()) {
+			synchronized(reservedPeers)
 			{
-				synchronized(reservedPeers.get(f2fMessage.getJobID()))
-				{
-					reservedPeers.get(f2fMessage.getJobID()).add(sender);
-					reservedPeers.get(f2fMessage.getJobID()).notifyAll();
-				}
-			}		
+				reservedPeers.add(sender);
+				reservedPeers.notifyAll();
+			}
+		} else {
+			synchronized(busyPeers)
+			{
+				busyPeers.add(sender);
+				busyPeers.notifyAll();
+			}			
+		}
 	}
 
 	public Activity getParentActivity() {
 		return F2FComputing.getJob(jobID).getJobActivity();
+	}
+
+	public Object getJobID() {
+		return jobID;
 	}
 }
