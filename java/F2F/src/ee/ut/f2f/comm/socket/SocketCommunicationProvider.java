@@ -12,13 +12,16 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.UUID;
 
+import ee.ut.f2f.activity.Activity;
+import ee.ut.f2f.activity.ActivityEvent;
+import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.F2FDebug;
 
-public class SocketCommunicationProvider implements CommunicationProvider
+public class SocketCommunicationProvider implements CommunicationProvider, Activity
 {
 	//private final Logger LOG = LogManager.getLogger(SocketCommunicationLayer.class);
 
@@ -89,6 +92,27 @@ public class SocketCommunicationProvider implements CommunicationProvider
 		
 		public void run()
 		{
+			ActivityEvent event;
+			try {
+				event = new ActivityEvent(SocketCommunicationProvider.this, 
+						ActivityEvent.Type.STARTED, "Listening to incoming connections");
+				ActivityManager.getDefault().emitEvent(event);
+				
+				//
+				acceptConnections();
+				
+				event = new ActivityEvent(SocketCommunicationProvider.this, 
+						ActivityEvent.Type.FINISHED, "Finished listening to incoming connections");
+				ActivityManager.getDefault().emitEvent(event);
+			} catch (RuntimeException e) {
+				event = new ActivityEvent(SocketCommunicationProvider.this, 
+						ActivityEvent.Type.FAILED, e.toString());
+				ActivityManager.getDefault().emitEvent(event);
+				throw e;
+			}
+		}
+
+		private void acceptConnections() {
 			while(true) {
 				try {
 					// wait while someone tries to connect
@@ -134,5 +158,13 @@ public class SocketCommunicationProvider implements CommunicationProvider
 	public void sendMessage(UUID destinationPeer, Object message) {
 		// TODO Auto-generated method stub
 		
+	}
+
+	public String getActivityName() {
+		return "Socket communication";
+	}
+
+	public Activity getParentActivity() {
+		return null;
 	}
 }

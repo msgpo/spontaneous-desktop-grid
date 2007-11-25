@@ -42,6 +42,7 @@ import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
 import org.jdesktop.swingx.JXTreeTable;
+import org.jdesktop.swingx.decorator.ColorHighlighter;
 
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
@@ -52,7 +53,9 @@ import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
+import ee.ut.f2f.ui.model.ActivityInfoSelectionListener;
 import ee.ut.f2f.ui.model.ActivityInfoTableModel;
+import ee.ut.f2f.ui.model.ActivityInfoNewRowsPredicate;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
@@ -261,37 +264,6 @@ public class UIController{
 		natLogAreaScrollPane.setAutoscrolls(true);
 		natLogAreaScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "Traversal Log"));
 		
-		
-		//Control Buttons
-		
-		/*
-		JButton initButton = new JButton("TEST");
-		initButton.addActionListener(
-				new ActionListener(){
-					public void actionPerformed(ActionEvent e) {
-						
-						F2FPeer to = (F2FPeer) friendsList.getSelectedValue();
-						if (to != null) {
-							String localId = F2FComputing.getLocalPeer().getID().toString();
-							try {
-								StunInfo sinf = ConnectionManager.getLocalStunInfo();
-							} catch (ConnectionManagerException e1) {
-								// TODO Auto-generated catch block
-								F2FDebug.println(e1.getStackTrace().toString());
-								e1.printStackTrace();
-							} catch (NetworkDiscoveryException e1) {
-								// TODO Auto-generated catch block
-								F2FDebug.println(e1.getStackTrace().toString());
-								e1.printStackTrace();
-							}
-							//NatMessage nmsg = new NatMessage(localId, to.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
-							//NatMessageProcessor.sendNatMessage(nmsg);
-						}
-					}
-				}
-		);
-		*/
-		
 		JPanel natButtonPanel = new JPanel(new FlowLayout());
 		//natButtonPanel.add(initButton);
 	
@@ -306,12 +278,20 @@ public class UIController{
 		ActivityInfoTableModel activityInfoTableModel = new ActivityInfoTableModel();
 		ActivityManager.getDefault().addListener(
 				ActivityEvent.Type.values(), activityInfoTableModel);
-		JTable activityInfoTable = new JXTreeTable(activityInfoTableModel);
+		JXTreeTable activityInfoTable = new JXTreeTable(activityInfoTableModel);
 		activityInfoTable.setAutoscrolls(true);
+		activityInfoTable.addHighlighter(new ColorHighlighter(new Color(1f,1f,.7f),
+				Color.BLACK, new ActivityInfoNewRowsPredicate(activityInfoTableModel)));
+		activityInfoTable.addTreeSelectionListener(new ActivityInfoSelectionListener(
+				activityInfoTableModel));
 				
-		tabs.add("F2F activities", new JScrollPane(activityInfoTable));
+		tabs.addTab("F2F activities", new JScrollPane(activityInfoTable));
 		
 		// other
+		createButtonPanel();
+	}
+
+	private void createButtonPanel() {
 		SpringLayout bottomPanelLayout = new SpringLayout();
 		JPanel bottomPanel = new JPanel(bottomPanelLayout);
 		bottomPanel.setSize(new Dimension(300,100));

@@ -10,10 +10,13 @@ import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
 
+import ee.ut.f2f.activity.Activity;
+import ee.ut.f2f.activity.ActivityEvent;
+import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.util.F2FDebug;
 
-class SocketPeer
+class SocketPeer implements Activity
 {
 
 	private SocketCommunicationProvider layer;
@@ -92,27 +95,45 @@ class SocketPeer
 	void setOi(ObjectInput oi_)
 	{
 		this.oi = oi_;
+		runSocketThread();
+	}
+
+	private void runSocketThread() {
 		new Thread(new Runnable()
 		{
 			public void run()
 			{
-				while(true)
-				{
-					try
+				try {
+					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+							ActivityEvent.Type.STARTED, "start receiving messages"));
+					while(true)
 					{
-						Object message = oi.readObject();
-						F2FDebug.println("\t\tReceived message from"
-								+ " '" + socketAddress + "'. Message: '" + message + "'.");
-//						TODO
-//						for(CommunicationListener listener: layer.getListeners())
-//						{
-//							listener.messageRecieved(message, SocketPeer.this);
-//						}
+						try
+						{
+							Object message = oi.readObject();
+							F2FDebug.println("\t\tReceived message from"
+									+ " '" + socketAddress + "'. Message: '" + message + "'.");
+	//						TODO
+	//						for(CommunicationListener listener: layer.getListeners())
+	//						{
+	//							listener.messageRecieved(message, SocketPeer.this);
+	//						}
+						}
+						catch (ClassNotFoundException e)
+						{
+							F2FDebug.println("\t\tError reading object from '"+socketAddress+"'" + e);
+						}
 					}
-					catch (Exception e)
-					{
-						F2FDebug.println("\t\tError reading object from '"+socketAddress+"'" + e);
-					}
+					//ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+					//		ActivityEvent.Type.FINISHED, "end receiving messages"));
+				} catch (IOException e) {
+					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+							ActivityEvent.Type.FAILED, e.toString()));
+					throw new RuntimeException(e);
+				} catch (RuntimeException e) {
+					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+							ActivityEvent.Type.FAILED, e.toString()));
+					throw e;
 				}
 			}
 		}).start();
@@ -124,4 +145,12 @@ class SocketPeer
 	}
 
 	public String getDisplayName() { return getID(); }
+
+	public String getActivityName() {
+		return "Peer "+socketAddress;
+	}
+
+	public Activity getParentActivity() {
+		return layer;
+	}
 }
