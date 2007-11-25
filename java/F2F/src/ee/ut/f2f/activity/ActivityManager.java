@@ -82,7 +82,7 @@ public class ActivityManager {
 		}
 	}
 
-	public static ActivityManager getDefaultActivityManager() {
+	public static ActivityManager getDefault() {
 		if(defaultActivityManager == null) {
 			defaultActivityManager = new ActivityManager();
 		}

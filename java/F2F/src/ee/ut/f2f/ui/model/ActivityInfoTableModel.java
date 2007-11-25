@@ -8,6 +8,7 @@ import java.text.SimpleDateFormat;
 import java.util.ArrayList;
 import java.util.Date;
 import java.util.HashMap;
+import java.util.LinkedList;
 import java.util.List;
 import java.util.Map;
 
@@ -27,8 +28,10 @@ import ee.ut.f2f.activity.ActivityListener;
 public class ActivityInfoTableModel extends AbstractTreeTableModel implements ActivityListener {
 	private static DateFormat dateFormat = new SimpleDateFormat("yyyy-MM-dd HH:mm:ss");
 	
-	private List<Activity> activities = new ArrayList<Activity>();
-	private Map<Activity, ActivityEvent> activityLastEvents = new HashMap<Activity, ActivityEvent>(); 
+	/** Top level (root) activities */
+	private List<Object> activities = new ArrayList<Object>();
+	/** Children (activities and events) of all activities. */
+	private Map<Activity, List<Object>> childrenMap = new HashMap<Activity, List<Object>>();
 	
 	private static final String[] columnNames = new String[]{
 		"Activity name", "Last event", "Time", "Event description"
@@ -51,28 +54,85 @@ public class ActivityInfoTableModel extends AbstractTreeTableModel implements Ac
 	}	
 
 	public void activityEvent(ActivityEvent event) {
-		if(!activityLastEvents.containsKey(event.getActivity())) {
-			activities.add(event.getActivity());
-			activityLastEvents.put(event.getActivity(), event);
-			modelSupport.fireChildAdded(new TreePath(root),
-					activities.size() - 1, event.getActivity());
+		Activity activity = event.getActivity();
+		Activity parentActivity = activity.getParentActivity();
+		TreePath parentPath = constructTreePath(parentActivity);
+		List<Object> parentChildren;
+		if(parentActivity == null) {
+			parentChildren = this.activities;
 		} else {
-			activityLastEvents.put(event.getActivity(), event);
-			modelSupport.fireChildChanged(new TreePath(root), activities
-					.indexOf(event.getActivity()), event.getActivity());			
+			parentChildren = childrenMap.get(parentActivity);
 		}
+		
+		List<Object> children;
+		// if it is new activity initialize its children map entry
+		// and add it to parent children
+		if(childrenMap.containsKey(activity)) {
+			children = childrenMap.get(activity);			
+		} else {
+			children = new ArrayList<Object>();
+			childrenMap.put(activity, children);
+			parentChildren.add(activity);
+			
+			modelSupport.fireChildAdded(parentPath,
+					parentChildren.size() - 1, event);			
+		}
+		
+		// now add event
+		children.add(event);
+		modelSupport.fireChildAdded(constructTreePath(activity),
+				children.size() - 1, event);
+		// this is needed because activity shows its latest event info in the columns
+		modelSupport.fireChildChanged(parentPath, 
+				parentChildren.indexOf(activity), activity);
 	}
 
+	private TreePath constructTreePath(Activity parentActivity) {
+		if(parentActivity == null)
+			return new TreePath(root);
+		
+		List<Object> parents = new LinkedList<Object>();
+		while(parentActivity!=null) {
+			parents.add(0, parentActivity);
+			parentActivity = parentActivity.getParentActivity();
+		}
+		parents.add(0, root);
+		return new TreePath(parents.toArray());
+	}
+
+	/* (non-Javadoc)
+	 * @see org.jdesktop.swingx.treetable.TreeTableModel#getValueAt(java.lang.Object, int)
+	 */
 	public Object getValueAt(Object obj, int column) {
 		if(obj==root)
 			return null;
 		
-		Activity activity = (Activity) obj;
-		ActivityEvent event = activityLastEvents.get(activity);
+		if(obj instanceof ActivityEvent) {
+			return getValueAt((ActivityEvent)obj, column);
+		}
 		
+		Activity activity = (Activity) obj;
+		if(column == 0)
+			return activity.getActivityName();
+		
+		List<Object> children = childrenMap.get(activity);
+		ActivityEvent event = findLatestEvent(children);
+		return getValueAt(event, column);
+	}
+		
+	private ActivityEvent findLatestEvent(List<Object> children) {
+		for(int i=children.size()-1; i>=0; i--) {
+			if(children.get(i) instanceof ActivityEvent)
+				return (ActivityEvent) children.get(i);
+		}
+		
+		return null;
+	}
+
+	private Object getValueAt(ActivityEvent event, int column) {
 		switch (column) {
 		case 0:
-			return activity.getActivityName();
+			return null;
 		case 1:
 			return event.getType().name();
 		case 2:
@@ -84,23 +144,42 @@ public class ActivityInfoTableModel extends AbstractTreeTableModel implements Ac
 		}
 	}
 
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#getChild(java.lang.Object, int)
+	 */
 	public Object getChild(Object parent, int index) {
 		if(parent == root) {
 			return activities.get(index);
 		}
 		
-		return null;
+		Activity activity = (Activity) parent;
+		return childrenMap.get(activity).get(index);
 	}
 
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#getChildCount(java.lang.Object)
+	 */
 	public int getChildCount(Object parent) {
 		if(parent == root) {
 			return activities.size();
 		}
 		
-		return 0;
+		if(!(parent instanceof Activity))
+			return 0;
+		
+		Activity activity = (Activity) parent;
+		return childrenMap.get(activity).size();
 	}
 
+	/* (non-Javadoc)
+	 * @see javax.swing.tree.TreeModel#getIndexOfChild(java.lang.Object, java.lang.Object)
+	 */
 	public int getIndexOfChild(Object parent, Object child) {
-		return activities.indexOf(child);
+		if(parent == root) {
+			return activities.indexOf(child);
+		}
+
+		Activity activity = (Activity) parent;
+		return childrenMap.get(activity).indexOf(child);	
 	}
 }

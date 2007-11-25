@@ -84,7 +84,7 @@ public abstract class Task extends Thread implements Activity
 	 */
 	public final void run()
 	{
-		ActivityManager manager = ActivityManager.getDefaultActivityManager();
+		ActivityManager manager = ActivityManager.getDefault();
 		try
 		{
 			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
@@ -112,7 +112,10 @@ public abstract class Task extends Thread implements Activity
 	public abstract void runTask();
 
 	public String getActivityName() {
-		return taskDescription.getJobID() 
-			+ ":Task" + taskDescription.getTaskID();
+		return "Task " + taskDescription.getTaskID();
+	}
+
+	public Activity getParentActivity() {
+		return getJob().getJobActivity();
 	}
 }

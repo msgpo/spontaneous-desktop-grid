@@ -11,6 +11,7 @@ import java.util.Map;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
+import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.util.F2FDebug;
@@ -52,7 +53,7 @@ public class CPURequests implements Activity {
 	 * @see ee.ut.f2f.activity.Activity#getActivityName()
 	 */
 	public String getActivityName() {
-		return jobID+" CPU requests for "+taskCount+" task(s)";
+		return "CPU requests for "+taskCount+" task(s)";
 	}
 
 	public void makeRequests() {
@@ -61,7 +62,7 @@ public class CPURequests implements Activity {
 		
 		ActivityEvent event = new ActivityEvent(this, ActivityEvent.Type.STARTED);
 		event.setDescription("Making requests to " + requestedPeers.size() + " peer(s)");
-		ActivityManager.getDefaultActivityManager().emitEvent(event);
+		ActivityManager.getDefault().emitEvent(event);
 		
 		F2FMessage message = 
 			new F2FMessage(F2FMessage.Type.REQUEST_FOR_CPU, jobID, null, null, null);
@@ -79,7 +80,7 @@ public class CPURequests implements Activity {
 		
 		ActivityEvent event = new ActivityEvent(this, ActivityEvent.Type.CHANGED);
 		event.setDescription("Waiting for responses");
-		ActivityManager.getDefaultActivityManager().emitEvent(event);		
+		ActivityManager.getDefault().emitEvent(event);		
 		
 		while (true)
 		{
@@ -117,5 +118,9 @@ public class CPURequests implements Activity {
 					reservedPeers.get(f2fMessage.getJobID()).notifyAll();
 				}
 			}		
+	}
+
+	public Activity getParentActivity() {
+		return F2FComputing.getJob(jobID).getJobActivity();
 	}
 }

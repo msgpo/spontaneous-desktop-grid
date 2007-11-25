@@ -14,6 +14,8 @@ import java.util.Map;
 
 import org.apache.commons.io.IOUtils;
 
+import ee.ut.f2f.core.activity.JobActivity;
+
 /**
  * Job is an entity that represents an implementation of an 
  * algorithm (in jar file(s)) and descriptions of tasks that 
@@ -23,6 +25,9 @@ public class Job implements Serializable
 {
 	private static final long serialVersionUID = 2726160570171222435L;
 
+	/** Object that signifies F2F activity in the core. */
+	private JobActivity jobActivity;
+	
 	/**
 	 * The identifier of the master task of the job.
 	 */
@@ -107,6 +112,7 @@ public class Job implements Serializable
 		for (String fileName: jarFilesNames)
 			jarFiles.add(new F2FJarFile(fileName.trim()));
 		this.peers = peers;
+		this.jobActivity = new JobActivity(jobID);
 		initialize(rootDirectory);
 	}
 
@@ -222,5 +228,9 @@ public class Job implements Serializable
 				throw new F2FComputingException("Error reading file "+absName, e);
 			}
 		}
+	}
+
+	public JobActivity getJobActivity() {
+		return jobActivity;
 	}
 }

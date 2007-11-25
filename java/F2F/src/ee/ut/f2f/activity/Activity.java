@@ -24,5 +24,6 @@ package ee.ut.f2f.activity;
 public interface Activity {
 	
 	String getActivityName();
+	Activity getParentActivity();
 
 }

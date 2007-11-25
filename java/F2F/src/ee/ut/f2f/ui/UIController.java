@@ -304,7 +304,7 @@ public class UIController{
 		
 		// Activity model
 		ActivityInfoTableModel activityInfoTableModel = new ActivityInfoTableModel();
-		ActivityManager.getDefaultActivityManager().addListener(
+		ActivityManager.getDefault().addListener(
 				ActivityEvent.Type.values(), activityInfoTableModel);
 		JTable activityInfoTable = new JXTreeTable(activityInfoTableModel);
 		activityInfoTable.setAutoscrolls(true);

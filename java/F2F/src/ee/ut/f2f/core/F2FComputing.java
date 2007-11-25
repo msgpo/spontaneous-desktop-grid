@@ -36,7 +36,7 @@ public class F2FComputing
 		if (!isInitialized()) return null;
 		return jobs.values();
 	}
-	static Job getJob(String jobID)
+	public static Job getJob(String jobID)
 	{
 		if (!isInitialized()) return null;
 		return jobs.get(jobID);
@@ -124,6 +124,10 @@ public class F2FComputing
 		F2FDebug.println("\tCreated new job with ID: " + jobID);
 		// add job to jobs map
 		jobs.put(jobID, job);
+		ActivityManager.getDefault().emitEvent(
+				new ActivityEvent(job.getJobActivity(),
+						ActivityEvent.Type.STARTED, "Job created"));
+		
 		// set the master task ID of the job
 		String masterTaskID = job.newTaskId();
 		job.setMasterTaskID(masterTaskID);
@@ -213,16 +217,16 @@ public class F2FComputing
 		
 			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FINISHED,
 					"Reserved "+cpuRequests.getReservedPeers().size()+" peer(s)");
-			ActivityManager.getDefaultActivityManager().emitEvent(event);
+			ActivityManager.getDefault().emitEvent(event);
 		} catch (RuntimeException e) {
 			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FAILED,
 					e.toString());
-			ActivityManager.getDefaultActivityManager().emitEvent(event);
+			ActivityManager.getDefault().emitEvent(event);
 			throw e;
 		} catch (F2FComputingException e) {
 			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FAILED,
 					e.toString());
-			ActivityManager.getDefaultActivityManager().emitEvent(event);
+			ActivityManager.getDefault().emitEvent(event);
 			throw e;
 		}
 		
@@ -452,6 +456,10 @@ public class F2FComputing
 			{
 				job.initialize(rootDirectory);
 				jobs.put(job.getJobID(), job);
+				ActivityManager.getDefault().emitEvent(
+						new ActivityEvent(job.getJobActivity(),
+								ActivityEvent.Type.STARTED, "Job created"));				
+				
 				startJobTasks(job);
 			}
 			catch (F2FComputingException e)
