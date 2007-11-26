@@ -6,6 +6,7 @@ import java.io.ObjectStreamClass;
 import java.io.StreamCorruptedException;
 
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.util.logging.Logger;
 
 /**
  * Custom input object stream reader in order to make use of the custom
@@ -13,7 +14,7 @@ import ee.ut.f2f.core.F2FComputing;
  */
 public class CustomObjectInputStream extends java.io.ObjectInputStream
 {
-	//private final static Logger LOG = LogManager.getLogger(CustomObjectInputStream.class);
+	private final static Logger logger = Logger.getLogger(CustomObjectInputStream.class);
 	
 	/**
 	 * If set, then the class has to be resolved using the classloader of this job.
@@ -36,7 +37,9 @@ public class CustomObjectInputStream extends java.io.ObjectInputStream
      */
     protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException
     {
-    	if (jobID != null) F2FDebug.println("\tResolving custom class: " + osc.getName());
+    	if(logger.isTraceEnabled()) {
+    		logger.trace("Resolving custom class: " + osc.getName());
+    	}
     	
         Class theClass = null;
         try
@@ -47,8 +50,7 @@ public class CustomObjectInputStream extends java.io.ObjectInputStream
         }
         catch (Exception e)
         {
-        	F2FDebug.println("\tCould not reslove the class: "+osc.getName());
-            e.printStackTrace();
+        	logger.warn("Could not reslove the class: "+osc.getName());
         }
         return theClass;
     }

@@ -3,10 +3,14 @@ package ee.ut.f2f.util;
 import java.io.IOException;
 import java.io.Serializable;
 
+import ee.ut.f2f.util.logging.Logger;
+
 
 @SuppressWarnings("serial")
 public class F2FMessage implements Serializable
 {
+	private static final Logger logger = Logger.getLogger(F2FMessage.class);
+	
 	/**
 	 * Defines the nature of a message.
 	 */
@@ -117,7 +121,7 @@ public class F2FMessage implements Serializable
 		// Do we use custom object input stream?
 		boolean customOIPresent = stream instanceof CustomObjectInputStream;
 		if (!customOIPresent)
-			F2FDebug.println("\t!!! CustomObjectInputStream IS NOT BEING USED! Cannot cast custom objects!!!");
+			logger.warn("CustomObjectInputStream IS NOT BEING USED! Cannot cast custom objects!!!");
 
 		type = (Type) stream.readObject();
 		jobID = (String) stream.readObject();
@@ -136,7 +140,7 @@ public class F2FMessage implements Serializable
 		}
 		catch (ClassNotFoundException e)
 		{
-			F2FDebug.println("\tERROR!!! deserializing F2FMessage data" + e);
+			logger.error("Error deserializing F2FMessage data", e);
 		}
 	}
 }

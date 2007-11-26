@@ -41,6 +41,7 @@ import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 import javax.swing.filechooser.FileFilter;
 
+import org.jdesktop.swingx.JXTable;
 import org.jdesktop.swingx.JXTreeTable;
 import org.jdesktop.swingx.decorator.ColorHighlighter;
 
@@ -53,16 +54,22 @@ import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
+import ee.ut.f2f.ui.log.LogHandler;
+import ee.ut.f2f.ui.log.LogHighlighter;
+import ee.ut.f2f.ui.log.LogTableModel;
+import ee.ut.f2f.ui.model.ActivityInfoNewRowsPredicate;
 import ee.ut.f2f.ui.model.ActivityInfoSelectionListener;
 import ee.ut.f2f.ui.model.ActivityInfoTableModel;
-import ee.ut.f2f.ui.model.ActivityInfoNewRowsPredicate;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.F2FTests;
+import ee.ut.f2f.util.logging.Logger;
 
 public class UIController{
+	private static final Logger logger = Logger.getLogger(UIController.class);	
+	
 	private JFrame frame = null;
 	private JMenuBar generalMenuBar = null;
 	private JPanel mainPanel = null;
@@ -287,6 +294,19 @@ public class UIController{
 				
 		tabs.addTab("F2F activities", new JScrollPane(activityInfoTable));
 		
+		// log panel
+		LogHandler logHandler = LogHandler.getInstance();
+		logHandler.setLevel(java.util.logging.Level.FINE);
+		java.util.logging.Logger.getLogger("ee.ut.f2f").addHandler(logHandler);
+		if(logHandler != null) {
+			LogTableModel tableModel = new LogTableModel();
+			JXTable logTable = new JXTable(tableModel);
+			logTable.addHighlighter(new LogHighlighter());
+			logHandler.setTableModel(tableModel);
+			tabs.addTab("Logs", new JScrollPane(logTable));
+			logger.trace("Log table created");
+		}
+
 		// other
 		createButtonPanel();
 	}

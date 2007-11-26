@@ -3,7 +3,7 @@ package ee.ut.f2f.core;
 import java.util.Collection;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.logging.Logger;
 
 /**
  * This is a proxy to/from multiple tasks. 
@@ -11,6 +11,7 @@ import ee.ut.f2f.util.F2FDebug;
  */
 public class MultiTaskProxy //extends TaskProxy
 {
+	private static final Logger logger = Logger.getLogger(MultiTaskProxy.class);
 	//private static final Logger LOG = LogManager.getLogger(MultiTaskProxy.class);
 	
 	/**
@@ -48,7 +49,7 @@ public class MultiTaskProxy //extends TaskProxy
 	{
 		//super(null, null);
 		if(taskProxies != null) this.taskProxies = taskProxies; 
-		else F2FDebug.println("\tWARNING: no TaskProxies given to MultiTaskProxy constructor!");
+		else logger.warn("no TaskProxies given to MultiTaskProxy constructor!");
 		
 		if (pollingTimeInMillis > 0) this.pollingTimeInMillis = pollingTimeInMillis;
 	}

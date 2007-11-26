@@ -12,14 +12,15 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
-import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
+import ee.ut.f2f.util.logging.Logger;
 
 /**
  * @author olegus
  *
  */
 public class CPURequests implements Activity {
+	private final static Logger logger = Logger.getLogger(CPURequests.class);
 
 	/**
 	 * The time how long to wait for the answers of REQUEST_FOR_CPU before
@@ -61,7 +62,7 @@ public class CPURequests implements Activity {
 	}
 
 	public void makeRequests() {
-		F2FDebug.println("\tSending REQUEST_FOR_CPU to: " + requestedPeers + ".");
+		logger.debug("Sending REQUEST_FOR_CPU to: " + requestedPeers + ".");
 		
 		ActivityEvent event = new ActivityEvent(this, ActivityEvent.Type.STARTED);
 		event.setDescription("Making requests to " + requestedPeers.size() + " peer(s)");
@@ -74,7 +75,7 @@ public class CPURequests implements Activity {
 			try {
 				peer.sendMessage(message);
 			} catch (Exception e) {
-				F2FDebug.println("" + e);
+				logger.warn("Error sending CPU request", e);
 			}
 		}
 	}

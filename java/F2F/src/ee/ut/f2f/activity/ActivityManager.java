@@ -6,8 +6,8 @@ package ee.ut.f2f.activity;
 import java.util.HashMap;
 import java.util.HashSet;
 import java.util.Set;
-import java.util.logging.Level;
-import java.util.logging.Logger;
+
+import ee.ut.f2f.util.logging.Logger;
 
 /**
  * This is central place where all activity events are emitted and forwarded to
@@ -17,12 +17,12 @@ import java.util.logging.Logger;
  * @author olegus
  * 
  * @todo olegus: this class may require different thread safety
- * @todo olegus: register base system may be changed
- * @todo olegus: The better name for this class would be ActivityEventManager,
- *       because it does not manage activities
+ * @todo olegus: registering mechanism may be changed
+ * @todo olegus: The better name for this class would be ActivityEventManager or
+ *       even EventManager, because it does not manage activities
  */
 public class ActivityManager {
-	private final Logger logger = Logger.getLogger(
+	private final static Logger logger = Logger.getLogger(
 			ActivityManager.class.getName());
 	
 	private static ActivityManager defaultActivityManager;
@@ -36,8 +36,8 @@ public class ActivityManager {
 	 * @param event
 	 */
 	public void emitEvent(ActivityEvent event) {
-		if(logger.isLoggable(Level.FINER)) {
-			logger.finer("Activity event "+event+" emitted.");
+		if(logger.isTraceEnabled()) {
+			logger.trace("Activity event "+event+" emitted.");
 		}
 		Set<ActivityListener> typeListeners = listeners.get(event.getType());
 		
@@ -45,7 +45,7 @@ public class ActivityManager {
 			try {
 				listener.activityEvent(event);
 			} catch (Throwable e) {
-				logger.log(Level.WARNING, "Error in activity event notification.", e);
+				logger.warn("Error in activity event notification.", e);
 			}			
 		}
 	}

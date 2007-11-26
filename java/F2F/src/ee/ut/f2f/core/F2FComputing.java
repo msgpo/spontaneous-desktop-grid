@@ -16,8 +16,8 @@ import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.core.activity.CPURequests;
 import ee.ut.f2f.ui.F2FComputingGUI;
-import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
+import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 
 /**
@@ -25,7 +25,8 @@ import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
  * jobs and tasks.
  */
 public class F2FComputing
-{	
+{
+	private static final Logger logger = Logger.getLogger(F2FComputing.class);
 	/**
 	 * Map jobID->Job, contains all the jobs that the F2F framework is aware
 	 * at. New jobs can be added by user by GUI or received from other nodes.
@@ -65,7 +66,7 @@ public class F2FComputing
 	private F2FComputing(java.io.File rootDir)
 	{
 		localPeer = new F2FPeer("me (localhost)");
-		F2FDebug.println("\tlocal F2FPeer ID is " + localPeer.getID());
+		logger.debug("\tlocal F2FPeer ID is " + localPeer.getID());
 		peers = new HashMap<UUID, F2FPeer>();
 		peers.put(localPeer.getID(), localPeer);
 		jobs = new HashMap<String, Job>();
@@ -121,7 +122,7 @@ public class F2FComputing
 		// create a job
 		String jobID = newJobID();
 		Job job = new Job(rootDirectory, jobID, jarFilesNames, peers);
-		F2FDebug.println("\tCreated new job with ID: " + jobID);
+		logger.info("Created new job with ID: " + jobID);
 		// add job to jobs map
 		jobs.put(jobID, job);
 		ActivityManager.getDefault().emitEvent(
@@ -149,7 +150,7 @@ public class F2FComputing
 		}
 		catch (Exception e)
 		{
-			F2FDebug.println("\tError starting a master task: "+masterTaskDescription + e);
+			logger.error("Error starting a master task: "+masterTaskDescription + e, e);
 		}
 		return job;
 	}
@@ -184,7 +185,7 @@ public class F2FComputing
 			int taskCount, Collection<F2FPeer> peers) throws F2FComputingException
 	{
 		if (!isInitialized()) return;
-		F2FDebug.println("\tSubmitting " + taskCount + " tasks of " + className);
+		logger.debug("Submitting " + taskCount + " tasks of " + className);
 		if (taskCount <= 0)
 			throw new F2FComputingException("Can not submit 0 tasks!");
 		if (peers == null || peers.size() == 0)
@@ -246,7 +247,7 @@ public class F2FComputing
 					peer.getID(), className);
 			job.addTaskDescription(newTaskDescription);
 			newTaskDescriptions.add(newTaskDescription);
-			F2FDebug.println("\tAdded new taskdescription to the job: "
+			logger.debug("Added new taskdescription to the job: "
 					+ newTaskDescription);
 		}
 		
@@ -267,7 +268,7 @@ public class F2FComputing
 			try {
 				peer.sendMessage(messageJob);
 			} catch (CommunicationFailedException e) {
-				F2FDebug.println("\tError sending the job to a peer. " + e);
+				logger.error("Error sending the job to a peer. " + e, e);
 			}
 		}
 		// ... notify other peers about additional tasks
@@ -279,7 +280,7 @@ public class F2FComputing
 			try {
 				peer.sendMessage(messageTasks);
 			} catch (CommunicationFailedException e) {
-				F2FDebug.println("\tError sending new tasks to a peer. " + e);
+				logger.error("Error sending new tasks to a peer. " + e, e);
 			}
 		}
 				
@@ -308,7 +309,7 @@ public class F2FComputing
 		// this job must definetely exist!
 		Job job = jobs.get(taskDescription.getJobID());
 		ClassLoader loader = job.getClassLoader();
-		F2FDebug.println("\tLoading class: " + taskDescription.className);
+		logger.debug("Loading class: " + taskDescription.className);
 		Class clazz = loader.loadClass(taskDescription.className);
 		Task task = (Task) clazz.newInstance();
 		task.setTaskDescription(taskDescription);
@@ -384,17 +385,15 @@ public class F2FComputing
 			{
 				try
 				{
-					F2FDebug.println(
-							"\tStarting a task: "
-							+ taskDesc);
+					logger.debug("Starting a task: " + taskDesc);
 					Task task = newTask(taskDesc);
 					task.start();
 				}
 				catch (Exception e)
 				{
-					F2FDebug.println("\tError starting a task: "
+					logger.error("Error starting a task: "
 							+ taskDesc
-							+ e);
+							+ e, e);
 				}
 			}
 		}
@@ -414,7 +413,7 @@ public class F2FComputing
 		if (message instanceof F2FMessage);
 		else 
 		{
-			F2FDebug.println("\tWorkHandler.messageRecieved() handles only F2FMessages!");
+			logger.warn("messageRecieved() handles only F2FMessages!");
 			return;
 		}
 		F2FMessage f2fMessage = (F2FMessage) message;
@@ -422,7 +421,7 @@ public class F2FComputing
 		{
 			try
 			{
-				F2FDebug.println("\tgot REQUEST_FOR_CPU. aswer it with RESPONSE_FOR_CPU");
+				logger.debug("got REQUEST_FOR_CPU. answer it with RESPONSE_FOR_CPU");
 				F2FMessage responseMessage = 
 					new F2FMessage(
 						F2FMessage.Type.RESPONSE_FOR_CPU, 
@@ -441,17 +440,17 @@ public class F2FComputing
 					&& f2fMessage.getJobID().equals(cpuRequests.getJobID())) {
 				cpuRequests.responseReceived(f2fMessage, sender);
 			} else {
-				F2FDebug.println("\tERROR!!! Received unexpected 'CPU request' response");
+				logger.warn("Received unexpected 'CPU request' response");
 			}
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.JOB)
 		{
-			F2FDebug.println("\tgot JOB");
+			logger.info("got JOB");
 			Job job = (Job) f2fMessage.getData();
 			// check if we know this job already
 			if (jobs.containsKey(job.getJobID()))
 			{
-				F2FDebug.println("\tERROR!!! Received a job that is already known!");
+				logger.error("Received a job that is already known!");
 				return;
 			}
 			try
@@ -466,16 +465,16 @@ public class F2FComputing
 			}
 			catch (F2FComputingException e)
 			{
-				F2FDebug.println("\tERROR!!! " + e);
+				logger.error("" + e, e);
 			}
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.TASKS)
 		{
-			F2FDebug.println("\tgot TASKS");
+			logger.info("got TASKS");
 			Job job = getJob(f2fMessage.getJobID());
 			if (job == null)
 			{
-				F2FDebug.println("\tERROR!!! Received tasks for unknown job");
+				logger.error("Received tasks for unknown job");
 				return;
 			}
 			Collection<TaskDescription> taskDescriptions = (Collection<TaskDescription>) f2fMessage.getData();
@@ -484,18 +483,20 @@ public class F2FComputing
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
 		{
-			F2FDebug.println("\tMESSAGE received " + f2fMessage);
+			if(logger.isTraceEnabled()) {
+				logger.trace("MESSAGE received " + f2fMessage);
+			}
 			Job job = getJob(f2fMessage.getJobID());
 			if (job == null)
 			{
-				F2FDebug.println("\tGot MESSAGE for unknown job wiht ID: "
+				logger.warn("Got MESSAGE for unknown job with ID: "
 						+ f2fMessage.getJobID());
 				return;
 			}
 			Task recepientTask = job.getTask(f2fMessage.getReceiverTaskID());
 			if (recepientTask == null)
 			{
-				F2FDebug.println("\tGot MESSAGE for unknown task wiht ID: "
+				logger.warn("Got MESSAGE for unknown task with ID: "
 						+ f2fMessage.getReceiverTaskID());
 				return;
 			}
@@ -504,25 +505,27 @@ public class F2FComputing
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE)
 		{
-			F2FDebug.println("\tReceived ROUTE: " + f2fMessage);
+			if(logger.isTraceEnabled()) {
+				logger.trace("Received ROUTE: " + f2fMessage);
+			}
 			f2fMessage.setType(F2FMessage.Type.MESSAGE);
 			Job job = getJob(f2fMessage.getJobID());
 			if (job == null)
 			{
-				F2FDebug.println("\tERROR!!! didn't find the job");
+				logger.error("didn't find the job");
 				return;
 			}
 			TaskDescription receiverTaskDesc = job
 					.getTaskDescription(f2fMessage.getReceiverTaskID());
 			if (receiverTaskDesc == null)
 			{
-				F2FDebug.println("\tERROR!!! didn't find the receiver task description");
+				logger.error("didn't find the receiver task description");
 				return;
 			}
 			F2FPeer receiver = peers.get(receiverTaskDesc.peerID);
 			if (receiver == null)
 			{
-				F2FDebug.println("\tERROR!!! didn't find the receiver peer");
+				logger.error("didn't find the receiver peer");
 				return;
 			}
 			try
@@ -531,7 +534,7 @@ public class F2FComputing
 			}
 			catch (CommunicationFailedException e)
 			{
-				F2FDebug.println("\tERROR!!! couldn't send the message to the route target");
+				logger.error("couldn't send the message to the route target", e);
 			}
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
@@ -541,7 +544,7 @@ public class F2FComputing
 			String msg = (String) f2fMessage.getData();
 			if( msg != null && msg.startsWith("/NAT>/")){
 				//NAT Messages
-				F2FDebug.println("Received NAT message, size [" + msg.length() + "], forwarding to NatMessageProcessor");
+				logger.debug("Received NAT message, size [" + msg.length() + "], forwarding to NatMessageProcessor");
 
 					NatMessageProcessor.processIncomingNatMessage(msg);
 

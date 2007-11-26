@@ -6,9 +6,12 @@ import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.util.logging.Logger;
 
 public class F2FPeer
 {
+	private static final Logger logger = Logger.getLogger(F2FPeer.class);
+	
 	private UUID id = null;
 	public UUID getID() { return id; }
 	
@@ -78,7 +81,7 @@ public class F2FPeer
 			}
 			catch (Exception e)
 			{
-				e.printStackTrace();
+				logger.warn("Error sending message to "+id+" through "+commProvider);
 				// try again with different communication provider
 				continue;
 			}

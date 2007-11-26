@@ -7,7 +7,7 @@ import java.util.Map;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.logging.Logger;
 
 /**
  * This is the base class for all task that can be run in F2FComputing framework.
@@ -18,6 +18,7 @@ import ee.ut.f2f.util.F2FDebug;
  */
 public abstract class Task extends Thread implements Activity
 {
+	private final static Logger logger = Logger.getLogger(Task.class);
 	/**
 	 * Returns unique ID of the task in a job.
 	 */
@@ -95,13 +96,8 @@ public abstract class Task extends Thread implements Activity
 		{
 			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 			exception = e;
-			e.printStackTrace();
+			logger.error(this.taskDescription+" exited with error", e);
 		}
-		F2FDebug.println("\t" + taskDescription + " task exited" + 
-				(exception == null ? 
-						"" :
-						" with error " + exception)
-				);
 	}
 
 	/**
@@ -118,4 +114,6 @@ public abstract class Task extends Thread implements Activity
 	public Activity getParentActivity() {
 		return getJob().getJobActivity();
 	}
+	
+	
 }
