@@ -1,6 +1,8 @@
 package ee.ut.xpp2p.blenderer;
 
 import java.io.File;
+import java.io.FileInputStream;
+import java.io.InputStream;
 
 import junit.framework.TestCase;
 import ee.ut.xpp2p.exception.NothingRenderedException;
@@ -18,13 +20,18 @@ public class SlaveBlendererTest extends TestCase {
 	 * Tests rendering frames 10 to 13 of a Blender file to the specified output
 	 * location.
 	 */
-	public void testRenderTask() {
-		//FIXME: Adapt to new filename and behavior in renderTask
+	public void testRenderTask() throws Exception {
 		RenderTask task = new RenderTask();
-		task.setFileName("etc\\VictorDancing.blend");
+		task.setFileName("etc\\VictorDancingTest.blend");
 		task.setOutputLocation("etc\\");
 		task.setFileFormat("AVIJPEG");
 		task.setStartFrame(10);
+		
+		InputStream is = new FileInputStream("etc\\VictorDancing.blend");
+		byte[] fileBytes = new byte[is.available()];
+		
+		is.read(fileBytes);
+		task.setBlenderFile(fileBytes);
 		task.setEndFrame(13);
 
 		SlaveBlenderer slave = new SlaveBlenderer();
