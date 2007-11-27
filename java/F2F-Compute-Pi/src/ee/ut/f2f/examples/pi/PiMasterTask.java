@@ -79,7 +79,15 @@ public class PiMasterTask extends Task
 				while (proxy.hasMessage())
 				{
 					AtomicLongVector receivedvector = (AtomicLongVector) proxy.receiveMessage();
+					F2FDebug.println("Received: total " 
+							+ receivedvector.getUnSyncTotal()
+							+ " positives " 
+							+ receivedvector.getUnSyncPositive());
 					received.add( receivedvector );
+					F2FDebug.println("Sum is now: total " 
+							+ received.getUnSyncTotal()
+							+ " positives " 
+							+ received.getUnSyncPositive());
 				}
 			}
 		}
