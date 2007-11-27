@@ -9,8 +9,10 @@ import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
+
 import java.io.File;
 import java.io.IOException;
+
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Iterator;
@@ -66,6 +68,7 @@ import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.F2FTests;
 import ee.ut.f2f.util.logging.Logger;
+import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 
 public class UIController{
 	private static final Logger logger = Logger.getLogger(UIController.class);	
@@ -100,7 +103,7 @@ public class UIController{
 	private JTable stunInfoTable = null;
 	private StunInfoTableModel stunInfoTableModel = null;
 	private JTextArea natLogArea = null;
-	
+	private JButton initButton = null;	
 	
 	private boolean showDebug = true;
 	private boolean showInfo = true;
@@ -271,8 +274,19 @@ public class UIController{
 		natLogAreaScrollPane.setAutoscrolls(true);
 		natLogAreaScrollPane.setBorder(BorderFactory.createTitledBorder(BorderFactory.createLineBorder(Color.BLACK), "Traversal Log"));
 		
+		
+		initButton = new JButton("Refresh stun info");
+		initButton.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent e) {
+						String localId = F2FComputing.getLocalPeer().getID().toString();
+						F2FComputingGUI.controller.getStunInfoTableModel().remove(localId);
+						F2FComputingGUI.connectionManager.refreshStunInfo();
+					}
+				}
+		);
 		JPanel natButtonPanel = new JPanel(new FlowLayout());
-		//natButtonPanel.add(initButton);
+		natButtonPanel.add(initButton);
 	
 		traversalPanel.add(stunInfoTableScrollPane);
 		traversalPanel.add(natButtonPanel);

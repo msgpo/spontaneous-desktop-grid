@@ -1,6 +1,5 @@
 package ee.ut.f2f.util.nat.traversal.test;
 
-import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.StunInfo;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
@@ -12,7 +11,9 @@ public class NatMessageTests extends TestCase {
 	public void testEncodeDecode(){
 		StunInfo sinf = null;
 		try {
-			sinf = ConnectionManager.startNetworkDiscovery("stun.xten.net", 3478);
+			sinf = new StunInfo();
+			sinf.setPublicIP("193.40.36.2");
+			sinf.setLocalIp("192.168.10.187");
 		} catch (Exception e1) {
 			fail();
 			e1.printStackTrace();

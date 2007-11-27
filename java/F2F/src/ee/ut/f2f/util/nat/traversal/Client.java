@@ -2,11 +2,11 @@ package ee.ut.f2f.util.nat.traversal;
 
 import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
 import java.io.IOException;
 import java.net.Socket;
 import java.net.UnknownHostException;
+
+import ee.ut.f2f.util.logging.Logger;
 
 public class Client extends Thread {
 	
@@ -17,7 +17,7 @@ public class Client extends Thread {
     private BufferedOutputStream out = null;
     private BufferedInputStream in = null;
     
-    private final static NatLogger log = new NatLogger(Client.class);
+    private final static Logger log = Logger.getLogger(Client.class);
 	
 	/**
 	 * Constructor

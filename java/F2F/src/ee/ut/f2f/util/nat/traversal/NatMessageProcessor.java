@@ -8,14 +8,13 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
-import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
+import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
-import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 
 public class NatMessageProcessor {
 	
 	//Logger log = Logger.getLogger(InfoMessageProcessor.class);
-	static private NatLogger log = new NatLogger(NatMessageProcessor.class);
+	static private Logger log = Logger.getLogger(NatMessageProcessor.class);
 
 	
 	public static void processIncomingNatMessage(String encodedMessage){
@@ -56,17 +55,11 @@ public class NatMessageProcessor {
 				log.debug("Received getStunInfo from [" + from + "]");
 			    
 				StunInfo sinf = null;
-				try{
-					sinf = ConnectionManager.getLocalStunInfo();
-				} catch (NetworkDiscoveryException e){
-					//TODO workaround if could not get the stun info from server
-					log.error("Could not get the stun info from server", e);
-					e.printStackTrace();
-				} catch (ConnectionManagerException e){
-					//TODO another exceptions
-					log.error("Error getting stun info", e);
-					e.printStackTrace();
-				}
+				
+					String localId = F2FComputing.getLocalPeer().getID().toString();
+					sinf = F2FComputingGUI.controller.getStunInfoTableModel().get(localId);
+					
+
 				//set Id
 			    sinf.setId(nmsg.getTo());
 			    log.debug("Prepared StunInfo  " + sinf.toString());
@@ -83,6 +76,27 @@ public class NatMessageProcessor {
 				sendNatMessage(nmsg);
 				break;
 			}
+			
+			case NatMessage.COMMAND_TRY_CONNECT_TO :{
+				String from = nmsg.getFrom();
+				String to = nmsg.getTo();
+				log.debug("Received tryConnectTo from [" + from + "]");
+				
+				
+				//Content in form of 
+				String content = (String) nmsg.getContent();
+				
+				if (content == null) throw new NullPointerException("Empty NatMessage content, shouldbe ip:port"); 
+				//if (content.split(":").length < 2) throw 
+				
+				//IP and port to connect to
+				String ip = content.split(":")[0];
+				int port = Integer.parseInt(content.split(":")[1]);
+				
+				
+				break;
+			}
+			
 			//REPORT CASES
 			case NatMessage.REPORT_STUN_INFO: {
 				log.debug("Received StunInfo Report from [" + nmsg.getFrom() + "]");

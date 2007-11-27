@@ -5,14 +5,15 @@ import java.io.BufferedOutputStream;
 import java.io.IOException;
 import java.net.ServerSocket;
 import java.net.Socket;
-import java.util.ArrayList;
 import java.util.Hashtable;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import ee.ut.f2f.util.logging.Logger;
+
 public class Server extends Thread {
 
-	private final static NatLogger log = new NatLogger(Client.class);
+	private final static Logger log = Logger.getLogger(Client.class);
 	
 	ServerSocket serverSocket = null;
 	Map<String, Socket> clients = new Hashtable<String, Socket>();

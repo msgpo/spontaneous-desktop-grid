@@ -25,8 +25,10 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
+import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
+import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.Message;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
@@ -74,7 +76,7 @@ public class SipCommunicationProvider
 	 * UUID -> list of according SipPeer IDs
 	 */
 	private Hashtable<UUID, Collection<String>> idMap = null;
-
+	
 	private static SipCommunicationProvider siplayer = null;
 	public static SipCommunicationProvider getInstance() { return siplayer; }
 	

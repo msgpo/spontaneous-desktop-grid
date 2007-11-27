@@ -5,20 +5,20 @@ import java.io.IOException;
 import java.io.OutputStream;
 import java.util.Collection;
 
-import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
-import ee.ut.f2f.util.nat.traversal.StunInfo;
 import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
-import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 
 public class F2FComputingGUI {
 	public static UIController controller;
+	//temporary for testing purposes
+	public static ConnectionManager connectionManager = null;
 	/**
 	 * Different Print streams for different log4j appenders. This could be done better (?)
 	 */
@@ -65,6 +65,12 @@ public class F2FComputingGUI {
 				public void run()
 				{
 					controller = new UIController("GUI");
+					try{
+						connectionManager = new ConnectionManager("../F2F/conf/nat-traversal.properties");
+					} catch (ConnectionManagerException e){
+						controller.writeNatLog(e.getMessage() + "\nStopping ConnectionManager ...");
+						return;
+					}
 					try {
 						F2FComputing.initiateF2FComputing();
 					} catch (F2FComputingException e) {
@@ -73,31 +79,8 @@ public class F2FComputingGUI {
 					}
 					FriendModel friendModel = controller.getFriendModel();
 					
-					new Thread(new Runnable()
-					{
-						public void run()
-						{
 					//NAT Traversal stun info request for yourself
-					StunInfo sinf = null;
-					try {
-						sinf = ConnectionManager.getLocalStunInfo();
-					} catch (ConnectionManagerException e1) {
-						// TODO Auto-generated catch block
-						F2FDebug.println(e1.getStackTrace().toString());
-						e1.printStackTrace();
-					} catch (NetworkDiscoveryException e1) {
-						// TODO Auto-generated catch block
-						F2FDebug.println(e1.getStackTrace().toString());
-						e1.printStackTrace();
-					}
-					if (sinf != null){
-						controller.getStunInfoTableModel().add(sinf);
-						controller.writeNatLog("Your Stun info is \n" + sinf.toString());
-					} else {
-						//TODO What to do if could not get the stun info
-					}
-						}
-					}).start();
+					connectionManager.refreshStunInfo();
 					
 					while (true)
 					{
@@ -119,8 +102,11 @@ public class F2FComputingGUI {
 								if (!peersGUI.contains(peer)){
 									friendModel.add(peer);
 									//NAT Traversal automatic stun info request for new client
-									NatMessage nmsg = new NatMessage(F2FComputing.getLocalPeer().getID().toString(), peer.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
-									NatMessageProcessor.sendNatMessage(nmsg);
+									String localId = F2FComputing.getLocalPeer().getID().toString();
+									if(!localId.equals(peer.getID().toString())){
+										NatMessage nmsg = new NatMessage(localId, peer.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
+										NatMessageProcessor.sendNatMessage(nmsg);
+									}
 								}
 							}
 							Thread.sleep(1000);

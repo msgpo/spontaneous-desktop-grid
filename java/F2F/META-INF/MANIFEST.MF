@@ -34,5 +34,6 @@ Bundle-ClassPath: lib/bcprov-jdk14.jar,
  lib/log4j-1.2.14.jar,
  lib/jstun-0.6.1.jar,
  lib/swingx-0.9.1.jar,
+ lib/spring-core.jar,
  F2F.jar
 Export-Package: ee.ut.f2f.comm.sip
