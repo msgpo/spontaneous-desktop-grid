@@ -141,7 +141,7 @@ public class ConnectionManager {
 				port = STUN_SERVER_DEFAULT_PORT;
 			}
 			for(InetAddress ip : localIps){
-				if(isReachable(ip, address)){
+				if(localIps.size() == 1 || isReachable(ip, address)){
 					DiscoveryTest diTest = new DiscoveryTest(ip, address, port);
 						try{
 							sinf = new StunInfo(diTest.test());
