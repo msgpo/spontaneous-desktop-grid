@@ -17,9 +17,10 @@ public class StunInfoClient extends Thread implements Activity {
 	
 	@Override
 	public void run(){
+		F2FComputingGUI.connectionManager.setThreadRunning(true);
+		try{
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
 		log.debug("Starting StunInfoClient Thread ...");
-		while(true){
 			StunInfo sinf = null;
 			try {
 				sinf = F2FComputingGUI.connectionManager.startNetworkDiscovery();
@@ -33,9 +34,8 @@ public class StunInfoClient extends Thread implements Activity {
 			}
 			log.debug("Loaded StunInfo for this machine [\n" + sinf.toString() + "]" );
 			F2FComputingGUI.controller.getStunInfoTableModel().add(sinf);
-			log.debug("StunInfoClient state : suspended");
-			this.suspend();
-			log.debug("StunInfoClient state : resumed");
+		} finally {
+			F2FComputingGUI.connectionManager.setThreadRunning(false);
 		}
 	}
 

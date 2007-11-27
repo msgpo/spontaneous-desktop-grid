@@ -4,12 +4,16 @@ import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
+import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.List;
+import java.util.Map;
+import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import org.springframework.core.io.FileSystemResource;
@@ -31,11 +35,16 @@ public class ConnectionManager {
 	
 	final private int STUN_SERVER_DEFAULT_PORT = 3478;
 	
+	private boolean isThreadRunning = false;
+	
 	//stunServers
 	private List<String> stunServers = null;
 	
 	//stun info client
 	private StunInfoClient stClient = null;
+	
+	//Table of TCP clients
+	private Map<String, Socket> tcpClients = new Hashtable<String, Socket>();
 	
 	public ConnectionManager(String propertiesFilePath) throws ConnectionManagerException{
 		loadProperties(propertiesFilePath);
@@ -161,9 +170,12 @@ public class ConnectionManager {
 	}
 	
 	public void refreshStunInfo(){
-		if (stClient == null) stClient = new StunInfoClient();
-		if (stClient.isAlive()) stClient.resume();
-		else stClient.start();
+		if (!isThreadRunning()){
+			StunInfoClient stClient = new StunInfoClient();
+			stClient.start();
+		} else {
+			log.warn("StunInfoClient Thread is allready running");
+		}
 	}
 	
 	
@@ -173,5 +185,51 @@ public class ConnectionManager {
 		if (sinf == null || forceReload) {
 		  refreshStunInfo();
 		}
+	}
+	
+	public Map<String, Socket> getTcpClients(){
+		return tcpClients;
+	}
+	
+	/**
+	 * Send data to client
+	 * @param id Client's Id
+	 * @param data
+	 */
+	public void send(String id, byte[] data){
+		try {			
+			Socket s = getSocketByID(id);
+			log.debug("Sending data to client " + id);
+			s.getOutputStream().write(data);
+		}
+		catch (NoSuchElementException e) {
+			log.debug("Client " + id + " not found!");
+		}
+		catch (IOException e) {
+			log.debug("Unable to send data to " + id);			
+			e.printStackTrace();
+		}
+	}
+	
+	/**
+	 * Send data to client
+	 * @param id Client's Id
+	 */	
+	public Socket getSocketByID(String id) throws NoSuchElementException {
+		Socket s = tcpClients.get(id);
+		if (s == null) {
+			log.debug("Client " + id + " not found!");
+			throw new NoSuchElementException("Client with ID " + id + " not found");
+		}
+		log.debug("Returning client " + id);
+		return s;
+	}
+
+	public boolean isThreadRunning() {
+		return isThreadRunning;
+	}
+
+	public void setThreadRunning(boolean isThreadRunning) {
+		this.isThreadRunning = isThreadRunning;
 	}
 }
