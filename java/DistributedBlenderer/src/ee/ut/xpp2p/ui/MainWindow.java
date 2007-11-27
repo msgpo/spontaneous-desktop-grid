@@ -9,25 +9,29 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.beans.PropertyChangeEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
 import javax.swing.JPanel;
+import javax.swing.JProgressBar;
 import javax.swing.JTextField;
+import javax.swing.SwingUtilities;
 
 import ee.ut.xpp2p.blenderer.MasterBlenderer;
 import ee.ut.xpp2p.model.RenderJob;
 
 /**
  * Main window of the program, made with Eclipse Visual Editor
+ * 
  * @author Jaan Neljandik
  * @created 27.10.2007
  */
-public class MainWindow extends JFrame{
+public class MainWindow extends JFrame {
 	private static final long serialVersionUID = 1L;
-	//TODO: Add Progress bar for input file selecting
-	private JFrame mainWindow = null;  
-	private JPanel mainContentPane = null;  //  @jve:decl-index=0:visual-constraint="10,54"
+	// TODO: Add Progress bar for input file selecting
+	private JFrame mainWindow = null;
+	private JPanel mainContentPane = null; // @jve:decl-index=0:visual-constraint="10,54"
 	public JTextField inputFileTextField = null;
 	public JTextField outputLocTextField = null;
 	public JLabel inputFileErrorLabel = null;
@@ -48,23 +52,25 @@ public class MainWindow extends JFrame{
 	public Button renderButton = null;
 	public InputValidator inputChecker = new InputValidator();
 	private MasterBlenderer master;
+	private JProgressBar jProgressBar = null;
+	long frameCount = 0L;
 
 	/**
-	 *  Initializes main window
+	 * Initializes main window
 	 */
 	public MainWindow(MasterBlenderer master) {
 		this.master = master;
 		mainWindow = new JFrame("Specify parameters");
-		mainWindow.setSize(new Dimension(430, 267));
+		mainWindow.setSize(new Dimension(430, 300));
 		mainWindow.setContentPane(getMainContentPane());
 		mainWindow.setLocationRelativeTo(null);
 		mainWindow.setVisible(true);
 	}
-	
+
 	/**
-	 * This method initializes mainContentPane	
-	 * 	
-	 * @return javax.swing.JPanel	
+	 * This method initializes mainContentPane
+	 * 
+	 * @return javax.swing.JPanel
 	 */
 	private JPanel getMainContentPane() {
 		if (mainContentPane == null) {
@@ -104,7 +110,7 @@ public class MainWindow extends JFrame{
 			inputFileErrorLabel.setText("");
 			mainContentPane = new JPanel();
 			mainContentPane.setLayout(null);
-			mainContentPane.setSize(new Dimension(430, 237));
+			mainContentPane.setSize(new Dimension(430, 269));
 			mainContentPane.add(getInputFileTextField(), null);
 			mainContentPane.add(getOutputLocTextField(), null);
 			mainContentPane.add(inputFileErrorLabel, null);
@@ -123,14 +129,15 @@ public class MainWindow extends JFrame{
 			mainContentPane.add(getEndFrameTextField(), null);
 			mainContentPane.add(getExitButton(), null);
 			mainContentPane.add(getRenderButton(), null);
+			mainContentPane.add(getJProgressBar(), null);
 		}
 		return mainContentPane;
 	}
 
 	/**
-	 * This method initializes inputFileTextField	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes inputFileTextField
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getInputFileTextField() {
 		if (inputFileTextField == null) {
@@ -141,9 +148,9 @@ public class MainWindow extends JFrame{
 	}
 
 	/**
-	 * This method initializes outputLocTextField	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes outputLocTextField
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getOutputLocTextField() {
 		if (outputLocTextField == null) {
@@ -154,9 +161,9 @@ public class MainWindow extends JFrame{
 	}
 
 	/**
-	 * This method initializes inputFileButton	
-	 * 	
-	 * @return java.awt.Button	
+	 * This method initializes inputFileButton
+	 * 
+	 * @return java.awt.Button
 	 */
 	private Button getInputFileButton() {
 		if (inputFileButton == null) {
@@ -173,9 +180,9 @@ public class MainWindow extends JFrame{
 	}
 
 	/**
-	 * This method initializes outputLocButton	
-	 * 	
-	 * @return java.awt.Button	
+	 * This method initializes outputLocButton
+	 * 
+	 * @return java.awt.Button
 	 */
 	private Button getOutputLocButton() {
 		if (outputLocButton == null) {
@@ -192,9 +199,9 @@ public class MainWindow extends JFrame{
 	}
 
 	/**
-	 * This method initializes filetypeChoice	
-	 * 	
-	 * @return java.awt.Choice	
+	 * This method initializes filetypeChoice
+	 * 
+	 * @return java.awt.Choice
 	 */
 	private Choice getFiletypeChoice() {
 		if (filetypeChoice == null) {
@@ -204,13 +211,12 @@ public class MainWindow extends JFrame{
 		}
 		return filetypeChoice;
 	}
-	
-	
+
 	/**
 	 * Initializes File type selection
 	 */
-	private void initFileTypeChoice(){
-		filetypeChoice.add("AVIJPEG"); 
+	private void initFileTypeChoice() {
+		filetypeChoice.add("AVIJPEG");
 		filetypeChoice.add("TGA");
 		filetypeChoice.add("IRIS");
 		filetypeChoice.add("HAMK");
@@ -226,9 +232,9 @@ public class MainWindow extends JFrame{
 	}
 
 	/**
-	 * This method initializes startFrameTextField	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes startFrameTextField
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getStartFrameTextField() {
 		if (startFrameTextField == null) {
@@ -240,9 +246,9 @@ public class MainWindow extends JFrame{
 	}
 
 	/**
-	 * This method initializes endFrameTextField	
-	 * 	
-	 * @return javax.swing.JTextField	
+	 * This method initializes endFrameTextField
+	 * 
+	 * @return javax.swing.JTextField
 	 */
 	private JTextField getEndFrameTextField() {
 		if (endFrameTextField == null) {
@@ -252,16 +258,16 @@ public class MainWindow extends JFrame{
 		}
 		return endFrameTextField;
 	}
-	
+
 	/**
-	 * This method initializes exitButton	
-	 * 	
-	 * @return java.awt.Button	
+	 * This method initializes exitButton
+	 * 
+	 * @return java.awt.Button
 	 */
 	private Button getExitButton() {
 		if (exitButton == null) {
 			exitButton = new Button();
-			exitButton.setBounds(new Rectangle(88, 199, 111, 23));
+			exitButton.setBounds(new Rectangle(86, 231, 111, 23));
 			exitButton.setLabel("Quit Program");
 			exitButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent arg0) {
@@ -273,26 +279,26 @@ public class MainWindow extends JFrame{
 	}
 
 	/**
-	 * This method initializes renderButton	
-	 * 	
-	 * @return java.awt.Button	
+	 * This method initializes renderButton
+	 * 
+	 * @return java.awt.Button
 	 */
 	private Button getRenderButton() {
 		if (renderButton == null) {
 			renderButton = new Button();
-			renderButton.setBounds(new Rectangle(223, 199, 111, 23));
+			renderButton.setBounds(new Rectangle(220, 231, 111, 23));
 			renderButton.setLabel("Start Rendering");
 			renderButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
-					renderButtonPressed();				
+					renderButtonPressed();
 				}
 			});
 		}
 		return renderButton;
 	}
-	
-	private void renderButtonPressed(){
-		if(inputChecker.validate(this)){
+
+	private void renderButtonPressed() {
+		if (inputChecker.validate(this)) {
 			RenderJob job = new RenderJob();
 			job.setInputFile(inputFileTextField.getText());
 			job.setOutputLocation(outputLocTextField.getText());
@@ -300,10 +306,10 @@ public class MainWindow extends JFrame{
 			job.setStartFrame(Long.parseLong(startFrameTextField.getText()));
 			job.setEndFrame(Long.parseLong(endFrameTextField.getText()));
 			mainWindow.dispose();
-			master.renderJob(job);			
+			master.renderJob(job);
 		}
 	}
-	
+
 	/**
 	 * Method that executes when quit button is pressed
 	 */
@@ -313,13 +319,42 @@ public class MainWindow extends JFrame{
 
 	/**
 	 * Method that executes when input file browsing button is pressed
+	 * 
+	 * @throws InterruptedException
+	 * 
+	 * @throws InterruptedException
 	 */
 	private void inputFileButtonPressed() {
-		String inputFile = BlenderFileChooser.openBlendFile();
+		String inputFile = "D:\\Programming\\workspace\\DistributedBlenderer\\etc\\VictorDancing.blend";
 		if (inputFile != null) {
 			inputFileTextField.setText(inputFile);
-			long frameCount = master.countFrames(inputFile);
-			endFrameTextField.setText(String.valueOf(frameCount));
+			class FrameHelper implements Runnable {
+				private String inputFile;
+
+				FrameHelper(String inputFile) {
+					this.inputFile = inputFile;
+				}
+
+				public void run() {
+					frameCount = master.countFrames(inputFile);
+					SwingUtilities.invokeLater(new Runnable() {
+						public void run() {
+							jProgressBar.setIndeterminate(false);
+							jProgressBar.setStringPainted(false);
+							endFrameTextField.setText(String
+									.valueOf(frameCount));
+						}
+					});
+				}
+			}
+
+			jProgressBar.setString("Counting frames ...");
+			jProgressBar.setStringPainted(true);
+			jProgressBar.setIndeterminate(true);
+			FrameHelper fh = new FrameHelper(inputFile);
+			Thread thFrames = new Thread(fh);
+			thFrames.start();
+
 		}
 	}
 
@@ -333,4 +368,16 @@ public class MainWindow extends JFrame{
 		}
 	}
 
+	/**
+	 * This method initializes jProgressBar
+	 * 
+	 * @return javax.swing.JProgressBar
+	 */
+	private JProgressBar getJProgressBar() {
+		if (jProgressBar == null) {
+			jProgressBar = new JProgressBar();
+			jProgressBar.setBounds(new Rectangle(26, 201, 370, 14));
+		}
+		return jProgressBar;
+	}
 }
