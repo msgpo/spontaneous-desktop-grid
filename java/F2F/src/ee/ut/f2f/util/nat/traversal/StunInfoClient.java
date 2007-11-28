@@ -39,12 +39,10 @@ public class StunInfoClient extends Thread implements Activity {
 		}
 	}
 
-	@Override
 	public String getActivityName() {
 		return "StunInfoClient";
 	}
 
-	@Override
 	public Activity getParentActivity() {
 		return null;
 	}
