@@ -565,16 +565,21 @@ public class F2FComputing
 	}
 	private static Boolean askForCPU(F2FPeer peer)
 	{
-		Boolean result = Boolean.TRUE;
-		// ask the user if needed
-		if (!allowAllFriendsToUseMyPC)
-		{
-			int n = JOptionPane.showConfirmDialog(
-                    null, "Do you allow " + peer.getDisplayName() + " to use your PC?",
-                    "F2FComputing", JOptionPane.YES_NO_OPTION);
-			if (n != JOptionPane.YES_OPTION) result = Boolean.FALSE;
-			// TODO: add checkbox to the dialog that user would not be asked again later
-		}
-		return result;
+		// do not ask the permission from ourselves
+		if (peer.equals(localPeer)) return Boolean.TRUE;
+		
+		// check if all friends are allowed to use this PC
+		if (allowAllFriendsToUseMyPC) return Boolean.TRUE;
+	
+		// ask the owner
+		int n = JOptionPane.showConfirmDialog(
+                null, "Do you allow " + peer.getDisplayName() + " to use your PC?",
+                "F2FComputing", JOptionPane.YES_NO_OPTION);
+		if (n == JOptionPane.YES_OPTION) return Boolean.TRUE;
+		
+		// TODO: 
+		//?   1) add a checkbox to the dialog that user would not be asked again later at all (allow all)
+		//?   2) add a checkbox that the specified friend is always trusted
+		return Boolean.FALSE;
 	}
 }
