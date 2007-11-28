@@ -8,6 +8,8 @@ import java.util.Map;
 import java.util.Random;
 import java.util.UUID;
 
+import javax.swing.JOptionPane;
+
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFactory;
@@ -426,7 +428,7 @@ public class F2FComputing
 					new F2FMessage(
 						F2FMessage.Type.RESPONSE_FOR_CPU, 
 						f2fMessage.getJobID(), null, null,
-						Boolean.TRUE);
+						askForCPU(sender));
 				sender.sendMessage(responseMessage);
 			}
 			catch (CommunicationFailedException e)
@@ -553,5 +555,26 @@ public class F2FComputing
 				F2FComputingGUI.controller.writeMessage(sender.getDisplayName(), (String)f2fMessage.getData());
 			}
 		}
+	}
+	
+	private static boolean allowAllFriendsToUseMyPC = false;
+	public static void allowAllFriendsToUseMyPC(boolean allow)
+	{
+		logger.info((allow ? "Allow" : "Do not allow") + " all my friends to use my PC by default");
+		allowAllFriendsToUseMyPC = allow;
+	}
+	private static Boolean askForCPU(F2FPeer peer)
+	{
+		Boolean result = Boolean.TRUE;
+		// ask the user if needed
+		if (!allowAllFriendsToUseMyPC)
+		{
+			int n = JOptionPane.showConfirmDialog(
+                    null, "Do you allow " + peer.getDisplayName() + " to use your PC?",
+                    "F2FComputing", JOptionPane.YES_NO_OPTION);
+			if (n != JOptionPane.YES_OPTION) result = Boolean.FALSE;
+			// TODO: add checkbox to the dialog that user would not be asked again later
+		}
+		return result;
 	}
 }

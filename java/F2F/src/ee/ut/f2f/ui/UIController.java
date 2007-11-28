@@ -114,6 +114,10 @@ public class UIController{
 	 *  The peers from whom the computation peers will be selected.
 	 */
 	private Collection<F2FPeer> selectFromPeers = new ArrayList<F2FPeer>();
+
+	// Options menu
+	private JMenu optionsMenu;
+	private JCheckBoxMenuItem allowCPUMenuItem;
 	
 	public UIController(String title)
 	{		
@@ -141,11 +145,24 @@ public class UIController{
 		viewMenu.addSeparator();
 		viewMenu.add(autoScrollMenuItem);
 		fileMenu.add(exitMenuItem);
+
+		optionsMenu = new JMenu("Options");
+		allowCPUMenuItem = new JCheckBoxMenuItem("Allow All Friends To Use My PC", false);
+		F2FComputing.allowAllFriendsToUseMyPC(allowCPUMenuItem.getState());
+		optionsMenu.add(allowCPUMenuItem);
+		allowCPUMenuItem.addActionListener(new ActionListener()
+		{
+			public void actionPerformed(ActionEvent e)
+			{
+				F2FComputing.allowAllFriendsToUseMyPC(allowCPUMenuItem.getState());
+			}
+		});
 		
 		helpMenu = new JMenu("Help");
 
 		generalMenuBar.add(fileMenu);
 		generalMenuBar.add(viewMenu);
+		generalMenuBar.add(optionsMenu);
 		generalMenuBar.add(helpMenu);
 
 		friendsPanel = new JPanel();
