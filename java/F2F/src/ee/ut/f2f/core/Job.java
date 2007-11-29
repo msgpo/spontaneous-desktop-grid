@@ -109,8 +109,9 @@ public class Job implements Serializable
 	{
 		this.jobID = jobID;
 		this.jarFiles = new ArrayList<F2FJarFile>();
-		for (String fileName: jarFilesNames)
-			jarFiles.add(new F2FJarFile(fileName.trim()));
+		if (jarFilesNames != null)
+			for (String fileName: jarFilesNames)
+				jarFiles.add(new F2FJarFile(fileName.trim()));
 		this.peers = peers;
 		this.jobActivity = new JobActivity(jobID);
 		initialize(rootDirectory);
