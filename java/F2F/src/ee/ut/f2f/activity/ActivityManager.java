@@ -41,6 +41,7 @@ public class ActivityManager {
 		}
 		Set<ActivityListener> typeListeners = listeners.get(event.getType());
 		
+		if (typeListeners == null) return;
 		for(ActivityListener listener: typeListeners) {
 			try {
 				listener.activityEvent(event);
