@@ -18,7 +18,8 @@ public class PiMasterTask extends Task
 		long start = System.currentTimeMillis();
 		// submit slave tasks
 		try {
-			// start 3 slaves in localhost if peers are not given
+			// HACK for running PiTest
+			// start 2 slaves in localhost if job is created without specifying friends
 			if (this.getJob().getPeers() == null || this.getJob().getPeers().size() == 0)
 			{
 				Collection<F2FPeer> peer = new ArrayList<F2FPeer>();
