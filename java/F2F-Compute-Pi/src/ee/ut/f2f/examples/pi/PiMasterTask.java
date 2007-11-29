@@ -23,7 +23,7 @@ public class PiMasterTask extends Task
 			{
 				Collection<F2FPeer> peer = new ArrayList<F2FPeer>();
 				peer.add(F2FComputing.getLocalPeer());
-				for (int i = 0; i < 3; i++)
+				for (int i = 0; i < 2; i++)
 					this.getJob().submitTasks(
 							"ee.ut.f2f.examples.pi.PiSlaveTask",
 							1,
