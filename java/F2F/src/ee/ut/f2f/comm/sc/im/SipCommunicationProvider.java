@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ee.ut.f2f.comm.sip;
+package ee.ut.f2f.comm.sc.im;
 
 import java.io.Serializable;
 import java.net.InetAddress;
@@ -567,7 +567,7 @@ public class SipCommunicationProvider
 							if (sipPeers.containsKey(evt.getSourceContact().getAddress()))
 								return;
 							// add new peer
-							SipPeer peer = new SipPeer(evt.getSourceContact());
+							SipIMPeer peer = new SipIMPeer(evt.getSourceContact());
 							F2FTestMessage tmsg = (F2FTestMessage) message;
 							sipPeers.put(evt.getSourceContact().getAddress(), new UUIDSipPeer(tmsg.id, peer));
 							synchronized (idMap)
@@ -733,7 +733,7 @@ public class SipCommunicationProvider
 		//	* ICQ is not very good
 		for (String sipID: idMap.get(destinationPeer))
 		{
-			SipPeer peer = sipPeers.get(sipID).peer;
+			SipIMPeer peer = sipPeers.get(sipID).peer;
 			if (peer == null) continue;
 			try
 			{
@@ -753,8 +753,8 @@ public class SipCommunicationProvider
 class UUIDSipPeer
 {
 	UUID id = null;
-	SipPeer peer = null;
-	UUIDSipPeer(UUID id, SipPeer peer)
+	SipIMPeer peer = null;
+	UUIDSipPeer(UUID id, SipIMPeer peer)
 	{
 		this.id = id;
 		this.peer = peer;

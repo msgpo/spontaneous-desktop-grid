@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 
-import ee.ut.f2f.comm.sip.SipCommunicationProvider;
+import ee.ut.f2f.comm.sc.im.SipCommunicationProvider;
 import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.util.F2FDebug;
 

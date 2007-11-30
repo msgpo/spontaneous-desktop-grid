@@ -3,7 +3,7 @@ package f2f_sc_plugin;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
-import ee.ut.f2f.comm.sip.SipCommunicationProvider;
+import ee.ut.f2f.comm.sc.im.SipCommunicationProvider;
 import ee.ut.f2f.ui.F2FComputingGUI;
 
 public class Activator implements BundleActivator {

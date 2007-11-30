@@ -1,26 +1,26 @@
 /**
  * 
  */
-package ee.ut.f2f.comm.sip;
+package ee.ut.f2f.comm.sc.im;
 
 import net.java.sip.communicator.service.protocol.Contact;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.util.F2FDebug;
 
-class SipPeer
+class SipIMPeer
 {
 	private String ID = null;
 	private String displayName = null;
 	private Contact contact = null;
 
-	public SipPeer(String sID, String displayName)
+	public SipIMPeer(String sID, String displayName)
 	{
 		this.ID = sID;
 		this.displayName = displayName;
 	}
 	
-	public SipPeer(Contact c)
+	public SipIMPeer(Contact c)
 	{
 		if (c == null) throw new RuntimeException("SipPeer created with Contact == NULL!");
 		contact = c;		  

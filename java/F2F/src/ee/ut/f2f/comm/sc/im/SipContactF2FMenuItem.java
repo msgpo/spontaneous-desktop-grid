@@ -1,4 +1,4 @@
-package ee.ut.f2f.comm.sip;
+package ee.ut.f2f.comm.sc.im;
 
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
