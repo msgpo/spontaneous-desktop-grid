@@ -10,15 +10,21 @@ import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.Iterator;
+import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
+import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
+import javax.swing.JTextField;
+import javax.swing.ListSelectionModel;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FPeer;
+import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FMessage;
 
 /**
@@ -30,11 +36,12 @@ public class GroupChatWindow extends JFrame {
 	
 	public static final String MESSAGE_STRUCTURE = "F2F;key;msg"; 
 	
-	private JTextArea sendMessageTextArea = null;
+	private JTextField messageField = null;
 	private JPanel messagingPanel = null;
 	private JButton sendMessageButton = null;
 	private JTextArea receievedMessagesTextArea = null;	
-	private Collection<F2FPeer> members = new ArrayList<F2FPeer>();
+	private JList memberList = null;
+	private FriendModel memberModel;
 	private UIController mainWindow;
 	private JButton addButton;
 	private JButton removeButton;
@@ -42,7 +49,6 @@ public class GroupChatWindow extends JFrame {
 	
 	public GroupChatWindow(Collection<F2FPeer> members, UIController mainWindow, String chatId){
 		
-		this.members = members;
 		this.mainWindow = mainWindow;
 		this.setSize(new Dimension(400, 300));
 		this.setLocationRelativeTo(null);
@@ -65,8 +71,20 @@ public class GroupChatWindow extends JFrame {
 		receievedMessagesTextArea.setEditable(false);
 		
 		JScrollPane receievedMessagesTextAreaScrollPane = new JScrollPane(receievedMessagesTextArea); 
-		sendMessageTextArea = new JTextArea();
-		JScrollPane messagingPanelScrollPanel = new JScrollPane(sendMessageTextArea);
+		messageField = new JTextField();
+		
+		memberModel = new FriendModel();
+		memberList = new JList(memberModel);
+		for (F2FPeer peer : members) {
+			memberModel.add(peer);
+		}
+		
+		memberList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		memberList.setLayoutOrientation(JList.VERTICAL);
+		JScrollPane listScroller = new JScrollPane(memberList);
+		listScroller.setPreferredSize(new Dimension(150, 500));
+		messagingPanel.add(listScroller, BorderLayout.EAST);
+		
 		
 		addButton = new JButton("Add...");
 		addButton.addActionListener(new ActionListener() {
@@ -108,14 +126,21 @@ public class GroupChatWindow extends JFrame {
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 0.8;
 		c.weighty = 1.0;
-		southPanel.add(messagingPanelScrollPanel, c);
+		c.gridy = 0;
 		
-		c.weightx = 0.2;
+		southPanel.add(messageField, c);
+		
 		southPanel.add(sendMessageButton, c);
+		
+		c.gridx = 0;
+		c.gridy = 1;		
 		southPanel.add(addButton, c);
+		
+		c.weightx = 0.5;
+		c.gridx = 1;		
 		southPanel.add(removeButton, c);
 		
-		messagingPanelScrollPanel.setPreferredSize(new Dimension(300, 20));
+		messageField.setPreferredSize(new Dimension(300, 20));
 		sendMessageButton.setPreferredSize(new Dimension(80, 20));
 		
 		this.setContentPane(messagingPanel);	
@@ -133,22 +158,22 @@ public class GroupChatWindow extends JFrame {
 	private void onSendMessage() {
 		String messageText = MESSAGE_STRUCTURE;
 		messageText.replaceAll("key", chatId);	
-		messageText.replaceAll("msg", sendMessageTextArea.getText());		
+		messageText.replaceAll("msg", messageField.getText());		
 		
 		F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, messageText);
 		// get selected peers and send the message to them
-		for (F2FPeer peer : members) {
+		for (F2FPeer peer : ((FriendModel)memberList.getModel()).getPeers()) {
 			try	{
 				peer.sendMessage(msg);
 			}
 			catch (CommunicationFailedException cfe) {
 				mainWindow.error("Sending message '"
-						+ sendMessageTextArea.getText() + "' to the peer '"
+						+ messageField.getText() + "' to the peer '"
 						+ peer.getDisplayName() + "' failed with '"
 						+ cfe.getMessage() + "'");
 			}					
 		}
-		writeMessage("me", sendMessageTextArea.getText());
+		writeMessage("me", messageField.getText());
 	}
 
 	public String getChatId() {
