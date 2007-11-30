@@ -269,7 +269,6 @@ public class F2FComputing
 		{
 			try {
 				peer.sendMessage(messageJob);
-				logger.info("Sent new job " + job.getJobID() + " to peer " + peer.getDisplayName());
 			} catch (CommunicationFailedException e) {
 				logger.error("Error sending the job to a peer. " + e, e);
 			}
@@ -282,7 +281,6 @@ public class F2FComputing
 			if (newPeers.contains(peer)) continue;
 			try {
 				peer.sendMessage(messageTasks);
-				logger.info("Sent new tasks of job " + job.getJobID() + " to peer " + peer.getDisplayName());
 			} catch (CommunicationFailedException e) {
 				logger.error("Error sending new tasks to a peer. " + e, e);
 			}
@@ -463,7 +461,7 @@ public class F2FComputing
 				jobs.put(job.getJobID(), job);
 				ActivityManager.getDefault().emitEvent(
 						new ActivityEvent(job.getJobActivity(),
-								ActivityEvent.Type.STARTED, "Job received"));				
+								ActivityEvent.Type.STARTED, "Job created"));				
 				
 				startJobTasks(job);
 			}
@@ -554,7 +552,7 @@ public class F2FComputing
 
 			} else {
 				//Others
-				F2FComputingGUI.controller.writeMessage(sender.getDisplayName(), (String)f2fMessage.getData());
+				F2FComputingGUI.controller.chatMessageReceived(sender.getDisplayName(), (String)f2fMessage.getData());
 			}
 		}
 	}

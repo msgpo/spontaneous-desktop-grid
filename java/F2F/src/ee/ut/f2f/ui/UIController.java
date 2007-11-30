@@ -4,24 +4,23 @@ import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
 import java.awt.FlowLayout;
-import java.awt.GridBagConstraints;
-import java.awt.GridBagLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-
 import java.io.File;
 import java.io.IOException;
-
 import java.util.ArrayList;
 import java.util.Collection;
+import java.util.HashMap;
 import java.util.Iterator;
+import java.util.Map;
 import java.util.StringTokenizer;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import javax.swing.BorderFactory;
+import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
 import javax.swing.JFileChooser;
@@ -49,7 +48,6 @@ import org.jdesktop.swingx.decorator.ColorHighlighter;
 
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
@@ -65,10 +63,8 @@ import ee.ut.f2f.ui.model.ActivityInfoTableModel;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.F2FTests;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 
 public class UIController{
 	private static final Logger logger = Logger.getLogger(UIController.class);	
@@ -91,12 +87,9 @@ public class UIController{
 	private JTextField tf1 = null;
 	private JTextField tf2 = null;
 	
-	private JTextArea receievedMessagesTextArea = null;
-	private JTextArea sendMessageTextArea = null;
-	private JPanel messagingPanel = null;
-	private JButton sendMessageButton = null;
 	private File[] selectedFiles = null;
-	
+	private JButton createChatButton;
+	private Map<String, GroupChatWindow> chats = new HashMap<String, GroupChatWindow>();
 	
 	//NAT/Traversal panel
 	private JPanel traversalPanel = null;
@@ -166,13 +159,13 @@ public class UIController{
 		generalMenuBar.add(helpMenu);
 
 		friendsPanel = new JPanel();
-		friendsPanel.setLayout(new GridLayout(1,1));
+		friendsPanel.setLayout(new BoxLayout(friendsPanel, BoxLayout.PAGE_AXIS));
 		friendsPanel.setBorder(BorderFactory.createTitledBorder("Friends"));
 		friendsPanel.setPreferredSize(new Dimension(200, 300+200));
 		//layout.putConstraint(SpringLayout.WEST, friendsPanel, 5, SpringLayout.WEST, mainPanel);
 		//layout.putConstraint(SpringLayout.NORTH, friendsPanel, 5, SpringLayout.NORTH, mainPanel);
 		mainPanel.add(friendsPanel, BorderLayout.WEST);
-
+		
 		friendModel = new FriendModel();
 		friendsList = new JList(friendModel);
 		friendsList.addListSelectionListener(new FriendsListListener());
@@ -181,7 +174,15 @@ public class UIController{
 		friendsList.setLayoutOrientation(JList.VERTICAL);
 		JScrollPane listScroller = new JScrollPane(friendsList);
 		friendsPanel.add(listScroller);
-
+		
+		createChatButton = new JButton("Create chat");
+		createChatButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				createChat(null);
+			}
+		});
+		
+		friendsPanel.add(createChatButton);
 			
 		JPanel consolePanel = new JPanel();
 		consolePanel.setLayout(new GridLayout(1,1));
@@ -198,70 +199,6 @@ public class UIController{
 		tabs.addTab("Information", consoleScroller);
 		consolePanel.add(tabs);
 		
-		// Messaging panel elements.
-		messagingPanel = new JPanel();
-		messagingPanel.setLayout(new BorderLayout());
-		//messagingPanel.setBorder(BorderFactory.createTitledBorder("Messaging"));
-		// Currently, will not add the messaging panel, as its usage has become obselete.
-		//messagingPanel.setPreferredSize(new Dimension(770, 200));
-		messagingPanel.setPreferredSize(new Dimension(770, 0));
-		// ===
-		//layout.putConstraint(SpringLayout.NORTH, messagingPanel, 5, SpringLayout.SOUTH, friendsPanel);
-		//layout.putConstraint(SpringLayout.WEST, messagingPanel, 5, SpringLayout.WEST, mainPanel);
-		
-		receievedMessagesTextArea = new JTextArea();
-		receievedMessagesTextArea.setEditable(false);
-		
-		JScrollPane receievedMessagesTextAreaScrollPane = new JScrollPane(receievedMessagesTextArea); 
-		sendMessageTextArea = new JTextArea();
-		JScrollPane messagingPanelScrollPanel = new JScrollPane(sendMessageTextArea);
-		
-		sendMessageButton = new JButton("Send");
-		sendMessageButton.setPreferredSize(new Dimension(sendMessageButton.getPreferredSize().width, 10));
-		sendMessageButton.addActionListener(new ActionListener() {
-			public void actionPerformed(ActionEvent e)
-			{
-				F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, sendMessageTextArea.getText());
-				// get selected peers and send the message to them
-				for (F2FPeer peer : getSelectedFriends())
-				{
-					try
-					{
-						peer.sendMessage(msg);
-					}
-					catch (CommunicationFailedException cfe)
-					{
-						error("Sending message '"
-								+ sendMessageTextArea.getText()
-								+ "' to the peer '" + peer.getDisplayName()
-								+ "' failed with '" + cfe.getMessage() + "'");
-					}					
-				}
-				writeMessage("me", sendMessageTextArea.getText());
-			}
-		});
-		
-		messagingPanel.add(receievedMessagesTextAreaScrollPane, BorderLayout.CENTER);		
-		JPanel southPanel = new JPanel(new GridBagLayout());
-		messagingPanel.add(southPanel, BorderLayout.SOUTH);
-		
-		GridBagConstraints c = new GridBagConstraints();
-		
-		//messagingPanelScrollPanel.setMinimumSize(new Dimension(300, 25));
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weightx = 0.8;
-		c.weighty = 1.0;
-		southPanel.add(messagingPanelScrollPanel, c);
-		
-		c.weightx = 0.2;
-		southPanel.add(sendMessageButton, c);
-		
-		messagingPanelScrollPanel.setPreferredSize(new Dimension(300, 20));
-		sendMessageButton.setPreferredSize(new Dimension(80, 20));
-		
-		// Currently, will not add the messaging panel, as its usage has become obselete.
-		tabs.add("Chat", messagingPanel);
-
 		//NAT/Traversal Panel
 		
 		traversalPanel = new JPanel();
@@ -660,9 +597,6 @@ public class UIController{
 
 	}
 	
-	public void writeMessage(String from, String msg) {
-		receievedMessagesTextArea.setText(receievedMessagesTextArea.getText()+"\n"+from+": "+msg);
-	}
 	
 	public void writeNatLog(String msg){
 		natLogArea.setText(natLogArea.getText() + "\n" + msg); 
@@ -674,5 +608,22 @@ public class UIController{
 
 	public void setStunInfoTableModel(StunInfoTableModel stunInfoTableModel) {
 		this.stunInfoTableModel = stunInfoTableModel;
+	}
+	
+	private GroupChatWindow createChat(String chatId){
+		GroupChatWindow chat = new GroupChatWindow(selectFromPeers, this, chatId);
+		chats.put(chat.getChatId(), chat);
+		
+		return chat;
+	}
+	
+	public void chatMessageReceived(String sender, String message) {
+		String chatId = GroupChatWindow.findChatId(message);
+		GroupChatWindow chat = chats.get(chatId);
+		if(chat==null) {
+			chat = createChat(chatId);
+			chats.put(chatId, chat);
+		}		
+		chat.writeMessage(sender, message);
 	}
 }
