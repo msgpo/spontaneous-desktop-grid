@@ -69,6 +69,15 @@ public class GroupChatWindow extends JFrame {
 		
 		JScrollPane receievedMessagesTextAreaScrollPane = new JScrollPane(receievedMessagesTextArea); 
 		messageField = new JTextField();
+		messageField.addKeyListener(new KeyListener() {
+			public void keyPressed(KeyEvent e) {}
+			public void keyTyped(KeyEvent e) {}
+			public void keyReleased(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					onSendMessage();
+				}
+			}			
+		});
 		
 		memberModel = new FriendModel();
 		memberList = new JList(memberModel);
@@ -96,15 +105,6 @@ public class GroupChatWindow extends JFrame {
 				onSendMessage();
 			}
 		});
-		sendMessageButton.addKeyListener(new KeyListener() {
-			public void keyPressed(KeyEvent e) {}
-			public void keyTyped(KeyEvent e) {}
-			public void keyReleased(KeyEvent e) {
-				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					onSendMessage();
-				}
-			}			
-		});
 		
 		removeButton = new JButton("Kick...");
 		removeButton.addActionListener(new ActionListener() {
@@ -122,7 +122,7 @@ public class GroupChatWindow extends JFrame {
 		//messagingPanelScrollPanel.setMinimumSize(new Dimension(300, 25));
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weightx = 0.8;
-		c.weighty = 1.0;
+		c.weighty = 1.2;
 		c.gridy = 0;
 		
 		southPanel.add(messageField, c);
