@@ -2,6 +2,8 @@ package ee.ut.f2f.util;
 
 import java.util.Iterator;
 
+import javax.swing.JOptionPane;
+
 import net.java.sip.communicator.service.contactlist.MetaContact;
 import net.java.sip.communicator.service.contactlist.MetaContactGroup;
 import net.java.sip.communicator.service.contactlist.MetaContactListService;
@@ -22,9 +24,11 @@ public class F2FTests {
 
 	public static void doTests() {
 		// This is some space for writing some spikes and tests
-		sendMessage();
+		//sendMessage();
 		
 		//testMaxMessageSize();
+		
+		//testAskForCPU();
 	}
 
 	public static void setBundleContext(BundleContext bc) {
@@ -74,7 +78,13 @@ public class F2FTests {
 	 */
 	static void testMaxMessageSize()
 	{
-		String msg = "1";
+		String msg1 = "1";
+		for (int i = 1; i < 1048576; i*= 2)
+			msg1 += msg1;
+		//String msg2 = msg1.substring(0, msg1.length()/10);
+		//while (msg1.length() < 1677718)
+		//	msg1 += msg2; 
+		String msg = msg1;
 		F2FPeer peer;
 		try {
 			peer = F2FComputing.getPeers().iterator().next();
@@ -82,9 +92,10 @@ public class F2FTests {
 			{
 				F2FMessage fmsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, msg);
 				peer.sendMessage(fmsg);
-				msg += msg;
+				F2FDebug.println("sent string of length " + msg.length());
+				//msg += msg2;
 				try {
-					Thread.sleep(1000);
+					Thread.sleep(100);
 				} catch (InterruptedException e) {
 					// TODO Auto-generated catch block
 					e.printStackTrace();
@@ -95,5 +106,12 @@ public class F2FTests {
 			e.printStackTrace();
 		}
 	}
-
+	
+	static void testAskForCPU()
+	{
+		int n = JOptionPane.showConfirmDialog(
+                null, "Would you like green eggs and ham?",
+                "", JOptionPane.YES_NO_OPTION);
+		F2FDebug.println("" + n + " " + (n == JOptionPane.YES_OPTION ? "yes" : "no"));
+	}
 }

@@ -65,6 +65,11 @@ public class TaskProxy
 		f2fMessage.setType(F2FMessage.Type.ROUTE);
 		TaskDescription masterTaskDesc = task.getTaskProxy(F2FComputing.getJob(task.getJob().getJobID()).getMasterTaskID()).getRemoteTaskDescription();
 		F2FPeer master = F2FComputing.peers.get(masterTaskDesc.peerID);
+		if (master == null)
+		{
+			logger.warn("MASTER PEER IS NOT KNOWN!!!");
+			throw new CommunicationFailedException();
+		}
 		try
 		{
 			master.sendMessage(f2fMessage);

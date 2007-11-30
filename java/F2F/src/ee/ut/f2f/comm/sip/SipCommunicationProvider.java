@@ -597,9 +597,15 @@ public class SipCommunicationProvider
 	}
 	
 	private static final int MAX_MSG_LENGTH_MSN = 1050 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
-	private static final int SLEEP_TIME_MSN = 100; // How long to wait between sending messages
+	private static final int SLEEP_TIME_MSN = 75; // How long to wait between sending messages
 	private static final int MAX_MSG_LENGTH_JABBER = Integer.MAX_VALUE;
 	private static final int SLEEP_TIME_JABBER = 0;
+	// seems that icq buffers messages
+	// we may send message almost 2M big but small messages travel much faster
+	// if messages are sent very frequently ICQ server buffers them and gives out 1 message per ~2s
+	// so lets keep messages small and do not send them out quickly
+	private static final int MAX_MSG_LENGTH_ICQ = 1024;
+	private static final int SLEEP_TIME_ICQ = 100;
 	private static final int MAX_MSG_LENGTH = 256 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
 	private static final int SLEEP_TIME = 200; // How long to wait between sending messages
 	static synchronized void sendIMmessage(Contact contact, Object msg) throws CommunicationFailedException
@@ -630,6 +636,11 @@ public class SipCommunicationProvider
 			{
 				maxMsgLen = MAX_MSG_LENGTH_JABBER;
 				sleepTime = SLEEP_TIME_JABBER;
+			}
+			else if (protProv.getProtocolName().equals(ProtocolNames.ICQ))
+			{
+				maxMsgLen = MAX_MSG_LENGTH_ICQ;
+				sleepTime = SLEEP_TIME_ICQ;
 			}
 			
 			// split message in parts if needed and surround each part with F2F-tags
@@ -716,6 +727,10 @@ public class SipCommunicationProvider
 
 	public void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException
 	{
+		//TODO: prefere some IM channels to other if more than one can be used
+		//	* Jabber is working very well 
+		//	* MSN is not very good
+		//	* ICQ is not very good
 		for (String sipID: idMap.get(destinationPeer))
 		{
 			SipPeer peer = sipPeers.get(sipID).peer;
@@ -746,9 +761,9 @@ class UUIDSipPeer
 	}
 }
 
-@SuppressWarnings("serial")
 class F2FTestMessage implements Serializable
 {
+	private static final long serialVersionUID = 731161872582048128L;
 	UUID id;
 	F2FTestMessage(UUID id)
 	{
