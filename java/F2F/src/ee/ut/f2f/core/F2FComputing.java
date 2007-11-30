@@ -461,7 +461,7 @@ public class F2FComputing
 				jobs.put(job.getJobID(), job);
 				ActivityManager.getDefault().emitEvent(
 						new ActivityEvent(job.getJobActivity(),
-								ActivityEvent.Type.STARTED, "Job created"));				
+								ActivityEvent.Type.STARTED, "Job received"));				
 				
 				startJobTasks(job);
 			}
