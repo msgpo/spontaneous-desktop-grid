@@ -624,6 +624,6 @@ public class UIController{
 			chat = createChat(chatId);
 			chats.put(chatId, chat);
 		}		
-		chat.writeMessage(sender, message);
+		chat.writeMessage(sender, message.split(";", 3)[2]);
 	}
 }

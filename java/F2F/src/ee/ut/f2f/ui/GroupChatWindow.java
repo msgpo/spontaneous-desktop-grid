@@ -8,10 +8,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
-import java.util.List;
 
 import javax.swing.JButton;
 import javax.swing.JFrame;
@@ -157,8 +154,8 @@ public class GroupChatWindow extends JFrame {
 	
 	private void onSendMessage() {
 		String messageText = MESSAGE_STRUCTURE;
-		messageText.replaceAll("key", chatId);	
-		messageText.replaceAll("msg", messageField.getText());		
+		messageText = messageText.replaceAll("key", chatId);	
+		messageText = messageText.replaceAll("msg", messageField.getText());		
 		
 		F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, messageText);
 		// get selected peers and send the message to them
