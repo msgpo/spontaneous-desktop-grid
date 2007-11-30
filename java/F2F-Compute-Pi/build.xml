@@ -39,6 +39,11 @@
 			<fileset dir="${basedir}/src"/>
 		</copy>
 		
+		<!-- Copy also the libs into temp dir -->
+		<copy todir="${propsBuildDir}">
+			<fileset dir="${basedir}/lib"/>
+		</copy>
+		
 		<!-- Package the task. -->
 		<jar
 			update="yes"
@@ -47,6 +52,8 @@
 			manifest="${basedir}/conf/MANIFEST.MF"
 			>
 			<include name="**/*.class"/>
+			<include name="**/*.java"/>
+			<include name="**/*.jar"/>
 		</jar>
 
 		<!-- Cleanup -->

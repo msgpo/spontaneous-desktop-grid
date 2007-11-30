@@ -7,9 +7,13 @@ import ee.ut.f2f.util.F2FDebug;
 
 import java.util.Random;
 
+import org.uncommons.maths.random.MersenneTwisterRNG;
+
 public class PiSlaveTask extends Task
 {
 	AtomicLongVector computedPoints = new AtomicLongVector (0,0);
+	// bad random Random random = new Random(System.currentTimeMillis());
+	MersenneTwisterRNG random = new MersenneTwisterRNG();
 	
 	public void runTask()
 	{
@@ -55,7 +59,6 @@ public class PiSlaveTask extends Task
 
 	private class ComputePoints extends Thread
 	{
-		Random random = new Random(System.currentTimeMillis());
 		boolean run = true; 
 
 		public void run() {
