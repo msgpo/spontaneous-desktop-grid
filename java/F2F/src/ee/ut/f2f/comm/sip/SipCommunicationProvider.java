@@ -22,17 +22,13 @@ import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
-import ee.ut.f2f.util.nat.traversal.ConnectionManager;
-import ee.ut.f2f.util.nat.traversal.NatMessage;
-import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
-import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.Message;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
 import net.java.sip.communicator.service.protocol.OperationSetPersistentPresence;
+import net.java.sip.communicator.service.protocol.ProtocolNames;
 import net.java.sip.communicator.service.protocol.ProtocolProviderFactory;
 import net.java.sip.communicator.service.protocol.ProtocolProviderService;
 import net.java.sip.communicator.service.protocol.event.ContactPresenceStatusChangeEvent;
@@ -98,7 +94,7 @@ public class SipCommunicationProvider
 		protocols = new ArrayList<ProtocolProviderService>();
 		allowedContacts = new ArrayList<Contact>();
 		// init Sip
-		F2FDebug.println("\t\tInitializing SIP communication layer ...");
+		//F2FDebug.println("\t\tInitializing SIP communication layer ...");
 		this.bundleContext = bc;
 		// add our button to SipCommunicator meta contact context menu 
 		ServiceReference uiServiceRef = bc.getServiceReference(UIService.class.getName());
@@ -189,7 +185,7 @@ public class SipCommunicationProvider
 		.getOperationSet(OperationSetBasicInstantMessaging.class);
 		try 
 		{
-			sendIMmessage(im, contact, new F2FTestMessage(F2FComputing.getLocalPeer().getID()));
+			sendIMmessage(contact, new F2FTestMessage(F2FComputing.getLocalPeer().getID()));
 		}
 		catch (CommunicationFailedException e)
 		{
@@ -458,10 +454,6 @@ public class SipCommunicationProvider
 	
 	private final static String F2F_TAG_START = "<f2f>\n";
 	private final static String F2F_TAG_END = "\n</f2f>";
-// opt for msn	private static final int MAX_MSG_LENGTH = 1050 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
-	private static final int MAX_MSG_LENGTH = 256 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
-// opt for msn	private static final int SLEEP_TIME = 100; // How long to wait between sending messages
-	private static final int SLEEP_TIME = 200; // How long to wait between sending messages
 	private final static byte F2F_MORE = 2;
 	private final static byte F2F_COMPLETE = 3;
 	private Hashtable<Contact, byte[]> messageCache = null;
@@ -473,7 +465,7 @@ public class SipCommunicationProvider
 		{
 			return true;
 		}
-		return false;	
+		return false;
 	}
 	public void messageReceived(MessageReceivedEvent evt)
 	{
@@ -604,22 +596,49 @@ public class SipCommunicationProvider
 		else F2FDebug.println("\t\t ERROR received broken F2F message from peer " + evt.getSourceContact().getAddress());
 	}
 	
-	static synchronized void sendIMmessage(OperationSetBasicInstantMessaging im, Contact contact, Object msg) throws CommunicationFailedException
+	private static final int MAX_MSG_LENGTH_MSN = 1050 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
+	private static final int SLEEP_TIME_MSN = 100; // How long to wait between sending messages
+	private static final int MAX_MSG_LENGTH_JABBER = Integer.MAX_VALUE;
+	private static final int SLEEP_TIME_JABBER = 0;
+	private static final int MAX_MSG_LENGTH = 256 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
+	private static final int SLEEP_TIME = 200; // How long to wait between sending messages
+	static synchronized void sendIMmessage(Contact contact, Object msg) throws CommunicationFailedException
 	{
+		ProtocolProviderService protProv = contact.getProtocolProvider();
+		OperationSetBasicInstantMessaging im = (OperationSetBasicInstantMessaging) protProv
+			.getOperationSet(OperationSetBasicInstantMessaging.class);
+		
 		try
 		{
-			// serialize message and add F2F tag to it
+			// serialize message
 			byte[] raw_msg = Util.serializeObject(msg);
 			//F2FDebug.println("\t\t serialized object to byte[] with length " + raw_msg.length);
+			// compress message
 			raw_msg = Util.zip(raw_msg);
 			//F2FDebug.println("\t\t zip data to byte[] with length " + raw_msg.length);
-			// split message in parts if needed
+			// set the maximum size of a message and the speed of pushing the message 
+			// parts to the IM channel according to the used IM protocol
+			int maxMsgLen = MAX_MSG_LENGTH;
+			int sleepTime = SLEEP_TIME;
+			
+			if (protProv.getProtocolName().equals(ProtocolNames.MSN))
+			{
+				maxMsgLen = MAX_MSG_LENGTH_MSN;
+				sleepTime = SLEEP_TIME_MSN;
+			}
+			else if (protProv.getProtocolName().equals(ProtocolNames.JABBER))
+			{
+				maxMsgLen = MAX_MSG_LENGTH_JABBER;
+				sleepTime = SLEEP_TIME_JABBER;
+			}
+			
+			// split message in parts if needed and surround each part with F2F-tags
 			int sentData = 0;
 			boolean bMore = false;
 			do
 			{
-				bMore = raw_msg.length > sentData + MAX_MSG_LENGTH;
-				byte[] data = new byte[bMore ? MAX_MSG_LENGTH + 1 : raw_msg.length - sentData + 1];
+				bMore = raw_msg.length > sentData + maxMsgLen;
+				byte[] data = new byte[bMore ? maxMsgLen + 1 : raw_msg.length - sentData + 1];
 				data[0] = bMore ? F2F_MORE : F2F_COMPLETE;
 				for (int j = 0; j < data.length - 1; j++) data [j+1] = raw_msg[j + sentData];
 				Message message = im.createMessage(F2F_TAG_START+Util.encode(data)+F2F_TAG_END);
@@ -628,7 +647,7 @@ public class SipCommunicationProvider
 				//F2FDebug.println("\t\t\t sent " + sentData);
 				// give IM channel some time to send the data
 				// MSN connection is closed if too much data is pushed too fast
-				Thread.sleep(SLEEP_TIME);
+				Thread.sleep(sleepTime);
 			}
 			while (bMore);
 		}
