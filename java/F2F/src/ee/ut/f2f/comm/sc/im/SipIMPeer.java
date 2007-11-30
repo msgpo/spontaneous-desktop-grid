@@ -39,7 +39,7 @@ class SipIMPeer
 	public synchronized void sendMessage(Object message) throws CommunicationFailedException
 	{
 		if (contact != null)
-			SipCommunicationProvider.sendIMmessage(contact, message);
+			SipIMCommunicationProvider.sendIMmessage(contact, message);
 		else
 			F2FDebug.println("\t\t ERROR (contact == null) sendMessage() called on peer " + displayName);
 	}

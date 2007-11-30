@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Properties;
 
-import ee.ut.f2f.comm.sc.im.SipCommunicationProvider;
+import ee.ut.f2f.comm.sc.im.SipIMCommunicationProvider;
 import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.util.F2FDebug;
 
@@ -150,7 +150,7 @@ public class CommunicationFactory
 
 	private static CommunicationProvider GetSipCommununication()
 	{
-		return SipCommunicationProvider.getInstance();
+		return SipIMCommunicationProvider.getInstance();
 		/*return new SipCommunicationLayer(
 				new InetSocketAddress(
 					props.local.getAddress().getHostAddress(),

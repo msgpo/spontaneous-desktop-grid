@@ -10,14 +10,14 @@ import net.java.sip.communicator.service.contactlist.MetaContactGroup;
 import net.java.sip.communicator.service.gui.ContactAwareComponent;
 
 @SuppressWarnings("serial")
-class SipContactF2FMenuItem
+class SipIMContactF2FMenuItem
 	extends JMenuItem
 	implements  ContactAwareComponent,
             ActionListener
 {
 	private MetaContact metaContact;
 	
-	public SipContactF2FMenuItem()
+	public SipIMContactF2FMenuItem()
 	{
 		super("F2F test");
 		this.addActionListener(this);       
@@ -32,6 +32,6 @@ class SipContactF2FMenuItem
 
 	public void actionPerformed(ActionEvent e)
 	{
-		SipCommunicationProvider.getInstance().makeF2FTest(metaContact);
+		SipIMCommunicationProvider.getInstance().makeF2FTest(metaContact);
 	}
 }

@@ -54,7 +54,7 @@ import org.osgi.framework.ServiceEvent;
 import org.osgi.framework.ServiceListener;
 import org.osgi.framework.ServiceReference;
 
-public class SipCommunicationProvider 
+public class SipIMCommunicationProvider 
 	implements 	CommunicationProvider,
 				ServiceListener,
 				ContactPresenceStatusListener, MessageListener
@@ -73,20 +73,20 @@ public class SipCommunicationProvider
 	 */
 	private Hashtable<UUID, Collection<String>> idMap = null;
 	
-	private static SipCommunicationProvider siplayer = null;
-	public static SipCommunicationProvider getInstance() { return siplayer; }
+	private static SipIMCommunicationProvider siplayer = null;
+	public static SipIMCommunicationProvider getInstance() { return siplayer; }
 	
-	public static SipCommunicationProvider initiateSipCommunicationProvider(BundleContext bc) throws CommunicationException
+	public static SipIMCommunicationProvider initiateSipIMCommunicationProvider(BundleContext bc) throws CommunicationException
 	{
 		if (siplayer!=null) 
 			throw new CommunicationInitException("SIP layer already initiated, initiateSipCommunicationProvider() was called more than once!");		
 		
 		// Create the F2F layer
-		return (siplayer = new SipCommunicationProvider(bc));
+		return (siplayer = new SipIMCommunicationProvider(bc));
 	}
 	
 	private BundleContext bundleContext = null;
-	private SipCommunicationProvider(BundleContext bc) throws CommunicationException
+	private SipIMCommunicationProvider(BundleContext bc) throws CommunicationException
 	{
 		sipPeers = new Hashtable<String, UUIDSipPeer>();
 		idMap = new Hashtable<UUID, Collection<String>>();
@@ -103,7 +103,7 @@ public class SipCommunicationProvider
 	    {   
 	    	uiService.addComponent(
 	            UIService.CONTAINER_CONTACT_RIGHT_BUTTON_MENU,
-	            new SipContactF2FMenuItem());
+	            new SipIMContactF2FMenuItem());
 	    }
 	
 		// get the protocols that peer has account in
