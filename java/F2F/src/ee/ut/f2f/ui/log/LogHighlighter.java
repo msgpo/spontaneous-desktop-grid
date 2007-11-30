@@ -32,7 +32,7 @@ public class LogHighlighter extends AbstractHighlighter {
 		if(logLevel >= Level.SEVERE.intValue())
 			component.setForeground(Color.RED);
 		else if(logLevel >= Level.WARNING.intValue())
-			component.setForeground(Color.ORANGE);
+			component.setForeground(Color.PINK);
 		else if(logLevel >= Level.INFO.intValue())
 			component.setForeground(Color.BLACK);
 		else
