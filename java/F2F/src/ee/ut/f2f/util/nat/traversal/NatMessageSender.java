@@ -50,6 +50,7 @@ public class NatMessageSender extends Thread implements Activity {
 		if (!(toReceiver instanceof String)) throw new IllegalArgumentException(this.getName() + " id [" + this.getId() + 
 				"]: argument should be instance of String");
 		this.action = SEND_MY_STUN_INFO;
+		this.toReceiver = toReceiver;
 	}
 	
 	
