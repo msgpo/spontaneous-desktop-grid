@@ -16,8 +16,8 @@ import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
+import javax.swing.ScrollPaneConstants;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FPeer;
@@ -33,7 +33,7 @@ public class GroupChatWindow extends JFrame {
 	
 	public static final String MESSAGE_STRUCTURE = "F2F;key;msg"; 
 	
-	private JTextField messageField = null;
+	private JTextArea typeArea = null;
 	private JPanel messagingPanel = null;
 	private JButton sendMessageButton = null;
 	private JTextArea receievedMessagesTextArea = null;	
@@ -59,25 +59,40 @@ public class GroupChatWindow extends JFrame {
 		messagingPanel.setLayout(new BorderLayout());
 		messagingPanel.setPreferredSize(new Dimension(400, 300));
 		
-		//TODO: Layout	 
-		// 	SpringLayout layout = new SpringLayout();
-		//	layout.putConstraint(SpringLayout.NORTH, messagingPanel, 5, SpringLayout.SOUTH, friendsPanel);
-		//	layout.putConstraint(SpringLayout.WEST, messagingPanel, 5, SpringLayout.WEST, mainPanel);
-		
 		receievedMessagesTextArea = new JTextArea();
 		receievedMessagesTextArea.setEditable(false);
 		
 		JScrollPane receievedMessagesTextAreaScrollPane = new JScrollPane(receievedMessagesTextArea); 
-		messageField = new JTextField();
-		messageField.addKeyListener(new KeyListener() {
-			public void keyPressed(KeyEvent e) {}
+		typeArea = new JTextArea();
+		typeArea.addKeyListener(new KeyListener() {
+			boolean shiftDown = false;
+			
+			public void keyPressed(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+					shiftDown = true;
+				}
+			}
 			public void keyTyped(KeyEvent e) {}
 			public void keyReleased(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
-					onSendMessage();
+					if(!shiftDown) {
+						onSendMessage();
+					}
+					else {
+						typeArea.setText(typeArea.getText() + "\n");
+					}
+				}				
+				else if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
+					shiftDown = false;
 				}
 			}			
 		});
+		typeArea.setLineWrap(true);
+		JScrollPane typeAreaScrollPane = new JScrollPane(typeArea); 
+		typeAreaScrollPane.setPreferredSize(new Dimension(310, 100));
+		typeAreaScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		typeAreaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		
 		
 		memberModel = new FriendModel();
 		memberList = new JList(memberModel);
@@ -88,7 +103,9 @@ public class GroupChatWindow extends JFrame {
 		memberList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		memberList.setLayoutOrientation(JList.VERTICAL);
 		JScrollPane listScroller = new JScrollPane(memberList);
-		listScroller.setPreferredSize(new Dimension(150, 500));
+		listScroller.setPreferredSize(new Dimension(100, 500));
+		listScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		listScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		messagingPanel.add(listScroller, BorderLayout.EAST);
 		
 		
@@ -97,12 +114,12 @@ public class GroupChatWindow extends JFrame {
 			public void actionPerformed(ActionEvent e) {
 				//TODO: Add people
 			}
-		});
+		});		
 		
 		sendMessageButton = new JButton("Send");
 		sendMessageButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				onSendMessage();
+				onSendMessage(); 
 			}
 		});
 		
@@ -119,34 +136,39 @@ public class GroupChatWindow extends JFrame {
 		
 		GridBagConstraints c = new GridBagConstraints();
 		
-		//messagingPanelScrollPanel.setMinimumSize(new Dimension(300, 25));
 		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weightx = 0.8;
-		c.weighty = 1.2;
+		c.weighty = 1.0;
+		c.gridx = 0;
 		c.gridy = 0;
+		c.gridheight = 3;
 		
-		southPanel.add(messageField, c);
+		southPanel.add(typeAreaScrollPane, c);
 		
+		c.gridheight = 1;
+		c.weighty = 0.3;
+		c.gridx = 1;
+		c.gridy = 0;
 		southPanel.add(sendMessageButton, c);
 		
-		c.gridx = 0;
-		c.gridy = 1;		
+		c.gridx = 1;
+		c.gridy = 1;
 		southPanel.add(addButton, c);
 		
-		c.weightx = 0.5;
-		c.gridx = 1;		
+		c.gridx = 1;
+		c.gridy = 2;
 		southPanel.add(removeButton, c);
-		
-		messageField.setPreferredSize(new Dimension(300, 20));
-		sendMessageButton.setPreferredSize(new Dimension(80, 20));
 		
 		this.setContentPane(messagingPanel);	
 		this.setVisible(true);		
 	}
 	
 	public void writeMessage(String from, String msg) {
-		receievedMessagesTextArea.setText(receievedMessagesTextArea.getText()+"\n"+from+": "+msg);
-	}
+		if(msg.trim().length() > 0) {
+			receievedMessagesTextArea.append("\n");
+			receievedMessagesTextArea.append(from + ": " + msg);
+			typeArea.setText("");
+		}
+	} 
 	
 	public void onPeopleAdd(Object[] selectedPeople) {
 		
@@ -155,9 +177,9 @@ public class GroupChatWindow extends JFrame {
 	private void onSendMessage() {
 		String messageText = MESSAGE_STRUCTURE;
 		messageText = messageText.replaceAll("key", chatId);	
-		messageText = messageText.replaceAll("msg", messageField.getText());		
+		messageText = messageText.replaceAll("msg", typeArea.getText());		
 		
-		F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, messageText);
+		F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, messageText.trim());
 		// get selected peers and send the message to them
 		for (F2FPeer peer : ((FriendModel)memberList.getModel()).getPeers()) {
 			try	{
@@ -165,12 +187,12 @@ public class GroupChatWindow extends JFrame {
 			}
 			catch (CommunicationFailedException cfe) {
 				mainWindow.error("Sending message '"
-						+ messageField.getText() + "' to the peer '"
+						+ typeArea.getText() + "' to the peer '"
 						+ peer.getDisplayName() + "' failed with '"
 						+ cfe.getMessage() + "'");
 			}					
 		}
-		writeMessage("me", messageField.getText());
+		writeMessage("me", typeArea.getText().trim());
 	}
 
 	public String getChatId() {
