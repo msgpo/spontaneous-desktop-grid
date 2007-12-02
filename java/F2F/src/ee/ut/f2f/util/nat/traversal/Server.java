@@ -9,6 +9,8 @@ import java.util.Hashtable;
 import java.util.Map;
 import java.util.NoSuchElementException;
 
+import ee.ut.f2f.ui.F2FComputingGUI;
+import ee.ut.f2f.ui.model.StunInfoTableItem;
 import ee.ut.f2f.util.logging.Logger;
 
 public class Server extends Thread {
@@ -16,7 +18,6 @@ public class Server extends Thread {
 	private final static Logger log = Logger.getLogger(Client.class);
 	
 	ServerSocket serverSocket = null;
-	Map<String, Socket> clients = new Hashtable<String, Socket>();
 	
 	/**
 	 * Constructor, setup server to listen on specific port
@@ -35,11 +36,18 @@ public class Server extends Thread {
 	@Override
 	public void run() {
 		Socket clientSocket = null;
-		BufferedInputStream bis = null;
-		BufferedOutputStream bos = null;
 		while( true ){
 			try {
 				clientSocket = serverSocket.accept();
+				String clientsIp = clientSocket.getInetAddress().getHostAddress();
+				StunInfoTableItem sinfTableItem = F2FComputingGUI.controller.getStunInfoTableModel().getByLocalIp(clientsIp);
+				log.debug("Loaded StunInfo by clients ip");
+				if(!sinfTableItem.isTcpConnectivityTested()){
+					sinfTableItem.setTcpConnectivity(true);
+				}
+				//F2FComputingGUI.connectionManager.getTcpClients().put(sinfTableItem.getId(), clientSocket);
+				
+				/*
 				log.debug("New client connected from [" + clientSocket.getInetAddress().getHostAddress() + ":" + clientSocket.getPort() + "]");
 				bis = new BufferedInputStream( clientSocket.getInputStream() );
 				bos = new BufferedOutputStream( clientSocket.getOutputStream() );
@@ -64,44 +72,12 @@ public class Server extends Thread {
 				bos.close();
 				clientSocket.close();
 				log.debug("Server continues listening ...");
+				*/
 			} catch (IOException e) {
 				// TODO Auto-generated catch block
 				e.printStackTrace();
 			}
+			
 		}
-	}
-	
-	/**
-	 * Send data to client
-	 * @param id Client's Id
-	 * @param data
-	 */
-	public void send(String id, byte[] data){
-		try {			
-			Socket s = getSocketByID(id);
-			log.debug("Sending data to client " + id);
-			s.getOutputStream().write(data);
-		}
-		catch (NoSuchElementException e) {
-			log.debug("Client " + id + " not found!");
-		}
-		catch (IOException e) {
-			log.debug("Unable to send data to " + id);			
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Send data to client
-	 * @param id Client's Id
-	 */	
-	public Socket getSocketByID(String id) throws NoSuchElementException {
-		Socket s = clients.get(id);
-		if (s == null) {
-			log.debug("Client " + id + " not found!");
-			throw new NoSuchElementException("Client with ID " + id + " not found");
-		}
-		log.debug("Returning client " + id);
-		return s;
 	}
 }

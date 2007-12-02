@@ -65,6 +65,7 @@ import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FTests;
 import ee.ut.f2f.util.logging.Logger;
+import ee.ut.f2f.util.nat.traversal.NatMessage;
 
 public class UIController{
 	private static final Logger logger = Logger.getLogger(UIController.class);	
@@ -234,8 +235,15 @@ public class UIController{
 				new ActionListener(){
 					public void actionPerformed(ActionEvent e) {
 						String localId = F2FComputing.getLocalPeer().getID().toString();
-						F2FComputingGUI.controller.getStunInfoTableModel().remove(localId);
-						F2FComputingGUI.connectionManager.refreshStunInfo();
+						String id = ((F2FPeer)friendsList.getSelectedValue()).getID().toString();
+						F2FComputingGUI.controller.getStunInfoTableModel().remove(id);
+						if(id.equals(localId)){
+							F2FComputingGUI.natMessageProcessor.getConnectionManager().refreshStunInfo();
+						} else {
+							NatMessage nmsg = new NatMessage(localId,id,NatMessage.COMMAND_GET_STUN_INFO,null);
+							F2FComputingGUI.natMessageProcessor.sendNatMessage(nmsg);
+						}
+						
 					}
 				}
 		);

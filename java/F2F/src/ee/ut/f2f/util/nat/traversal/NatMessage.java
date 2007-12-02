@@ -43,6 +43,7 @@ public class NatMessage implements Serializable{
 		this.content = content;
 	}
 	
+	@Deprecated
 	public NatMessage (String encoded) throws NatMessageException{
 		NatMessage temp = decode(encoded);
 		this.to = temp.getTo();
@@ -99,6 +100,7 @@ public class NatMessage implements Serializable{
 		return encode(this);
 	}
 	
+	@Deprecated
 	static String encode(NatMessage nmsg) throws NatMessageException{
 		String encoded = null;
 		UUEncoder uenc = new UUEncoder();
@@ -118,6 +120,7 @@ public class NatMessage implements Serializable{
 		return encoded;
 	}
 	
+	@Deprecated
 	static NatMessage decode(String encoded) throws NatMessageException{
 		NatMessage nmsg = null;
 		UUDecoder udec = new UUDecoder();

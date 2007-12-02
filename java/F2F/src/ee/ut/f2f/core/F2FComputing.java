@@ -20,6 +20,7 @@ import ee.ut.f2f.core.activity.CPURequests;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
+import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 
 /**
@@ -541,18 +542,16 @@ public class F2FComputing
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
 		{	
-			//NAT/Traversal filtering
-			//Decapsulating message content
-			String msg = (String) f2fMessage.getData();
-			if( msg != null && msg.startsWith("/NAT>/")){
-				//NAT Messages
-				logger.debug("Received NAT message, size [" + msg.length() + "], forwarding to NatMessageProcessor");
-
-					NatMessageProcessor.processIncomingNatMessage(msg);
-
-			} else {
-				//Others
 				F2FComputingGUI.controller.chatMessageReceived(sender.getDisplayName(), (String)f2fMessage.getData());
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.NAT){
+			Object data = f2fMessage.getData();
+			if (data instanceof NatMessage){
+				NatMessage nmsg = (NatMessage) data;
+				logger.debug("Received NAT message, size [" + nmsg + "], forwarding to NatMessageProcessor");
+				F2FComputingGUI.natMessageProcessor.processIncomingNatMessage(nmsg);
+			} else {
+				logger.debug("Received F2FMessage type:NAT, but not instance of NatMessage");
 			}
 		}
 	}

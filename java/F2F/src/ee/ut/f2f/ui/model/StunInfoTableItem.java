@@ -50,7 +50,7 @@ public class StunInfoTableItem extends StunInfo {
 		this.setLocalIp(sinf.getLocalIp());
 		this.setOpenAccess(sinf.isOpenAccess());
 		this.setPortRestrictedCone(sinf.isPortRestrictedCone());
-		this.setPublicIP(sinf.getPublicIP());
+		this.setPublicIp(sinf.getPublicIp());
 		this.setRestrictedCone(sinf.isRestrictedCone());
 		this.setSymmetricCone(sinf.isSymmetricCone());
 		this.setSymmetricUDPFirewall(sinf.isSymmetricUDPFirewall());

@@ -18,7 +18,7 @@ import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 public class F2FComputingGUI {
 	public static UIController controller;
 	//temporary for testing purposes
-	public static ConnectionManager connectionManager = null;
+	public static NatMessageProcessor natMessageProcessor;
 	/**
 	 * Different Print streams for different log4j appenders. This could be done better (?)
 	 */
@@ -66,9 +66,9 @@ public class F2FComputingGUI {
 				{
 					controller = new UIController("GUI");
 					try{
-						connectionManager = new ConnectionManager("../F2F/conf/nat-traversal.properties");
+						natMessageProcessor = new NatMessageProcessor(new ConnectionManager("../F2F/conf/nat-traversal.properties"));
 					} catch (ConnectionManagerException e){
-						controller.writeNatLog(e.getMessage() + "\nStopping ConnectionManager ...");
+						controller.writeNatLog(e.getMessage() + "\nUnable to get NatMessageProcessor instance ...");
 						return;
 					}
 					try {
@@ -80,7 +80,7 @@ public class F2FComputingGUI {
 					FriendModel friendModel = controller.getFriendModel();
 					
 					//NAT Traversal stun info request for yourself
-					connectionManager.refreshStunInfo();
+					natMessageProcessor.getConnectionManager().refreshStunInfo();
 					
 					while (true)
 					{
@@ -105,7 +105,7 @@ public class F2FComputingGUI {
 									String localId = F2FComputing.getLocalPeer().getID().toString();
 									if(!localId.equals(peer.getID().toString())){
 										NatMessage nmsg = new NatMessage(localId, peer.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
-										NatMessageProcessor.sendNatMessage(nmsg);
+										natMessageProcessor.sendNatMessage(nmsg);
 									}
 								}
 							}

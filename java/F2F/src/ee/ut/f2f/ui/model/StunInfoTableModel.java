@@ -46,7 +46,7 @@ public class StunInfoTableModel extends AbstractTableModel {
 				return sinf.getLocalIp();
 			
 			case C_PUBLIC_IP:
-				return sinf.getPublicIP();
+				return sinf.getPublicIp();
 			
 			case C_CAN_USE_TCP:
 				return sinf.getTcpConnectivity();
@@ -112,6 +112,22 @@ public class StunInfoTableModel extends AbstractTableModel {
 		for (StunInfo sinf : stunInfoList)
 			if (sinf.getId().equals(id))
 				return sinf;
+		
+		return null;
+	}
+	
+	public StunInfoTableItem getByLocalIp(String localIp){
+		for (StunInfoTableItem sinfItem : stunInfoList)
+			if (sinfItem.getLocalIp().equals(localIp))
+				return sinfItem;
+		
+		return null;
+	}
+	
+	public StunInfoTableItem getByPublicIp(String publicIp){
+		for (StunInfoTableItem sinfItem : stunInfoList)
+			if (sinfItem.getPublicIp().equals(publicIp))
+				return sinfItem;
 		
 		return null;
 	}

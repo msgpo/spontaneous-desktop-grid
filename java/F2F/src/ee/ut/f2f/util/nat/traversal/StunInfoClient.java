@@ -17,25 +17,26 @@ public class StunInfoClient extends Thread implements Activity {
 	
 	@Override
 	public void run(){
-		F2FComputingGUI.connectionManager.setThreadRunning(true);
+		F2FComputingGUI.natMessageProcessor.getConnectionManager().setThreadRunning(true);
 		try{
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
 		log.debug("Starting StunInfoClient Thread ...");
 			StunInfo sinf = null;
 			try {
-				sinf = F2FComputingGUI.connectionManager.startNetworkDiscovery();
+				sinf = F2FComputingGUI.natMessageProcessor.getConnectionManager().startNetworkDiscovery();
 				String localId = F2FComputing.getLocalPeer().getID().toString();
 				sinf.setId(localId);
-				//ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FINISHED));
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FINISHED));
 			} catch (Exception e) {
-				log.error(e.getLocalizedMessage() + "Stopping StunInfoClient thread", e);
+				log.error(e.getLocalizedMessage(), e);
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 				return;
 			}
 			log.debug("Loaded StunInfo for this machine [\n" + sinf.toString() + "]" );
 			F2FComputingGUI.controller.getStunInfoTableModel().add(sinf);
 		} finally {
-			F2FComputingGUI.connectionManager.setThreadRunning(false);
+			log.debug("Stopping StunInfoClient thread");
+			F2FComputingGUI.natMessageProcessor.getConnectionManager().setThreadRunning(false);
 		}
 	}
 

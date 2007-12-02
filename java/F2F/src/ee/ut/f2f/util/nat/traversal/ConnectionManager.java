@@ -4,16 +4,12 @@ import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.Socket;
 import java.net.SocketException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
-import java.util.Hashtable;
 import java.util.List;
-import java.util.Map;
-import java.util.NoSuchElementException;
 import java.util.Properties;
 
 import org.springframework.core.io.FileSystemResource;
@@ -38,13 +34,7 @@ public class ConnectionManager {
 	private boolean isThreadRunning = false;
 	
 	//stunServers
-	private List<String> stunServers = null;
-	
-	//stun info client
-	private StunInfoClient stClient = null;
-	
-	//Table of TCP clients
-	private Map<String, Socket> tcpClients = new Hashtable<String, Socket>();
+	private List<String> stunServers = null;	
 	
 	public ConnectionManager(String propertiesFilePath) throws ConnectionManagerException{
 		loadProperties(propertiesFilePath);
@@ -82,13 +72,14 @@ public class ConnectionManager {
 		Resource fs = new FileSystemResource(propertiesFilePath);
 		Properties props = null;
 		try {
+			log.info("Loading properties from [" + fs.getFile().getAbsolutePath() + "]");
 			props = PropertiesLoaderUtils.loadProperties(fs);
 		} catch (IOException e) {
 			throw new ConnectionManagerException("Unable to read properties form the file [" + propertiesFilePath + "]");
 		}
 		//load stun servers from properties
 		String[] stunServers = props.getProperty("stunServers").split(",");
-		if (stunServers == null || stunServers.length == 0) throw new ConnectionManagerException("No Stun servers specified in properties file");
+		if (stunServers == null || stunServers.length == 0) throw new ConnectionManagerException("No addresses specified in properties file");
 		this.stunServers = Arrays.asList(stunServers);
 		
 		//load another properties
@@ -139,6 +130,8 @@ public class ConnectionManager {
 		StunInfo sinf = null;
 		//get local ips
 		List<InetAddress> localIps = getLocalIps();
+		log.info("Found total [" + stunServers.size() + "] addresses in properties file");
+		log.info("Found total [" + localIps.size() + "] active local IP's");
 		for(String stunServer : stunServers){
 			String address = null;
 			int port = -1;
@@ -153,9 +146,11 @@ public class ConnectionManager {
 				if(localIps.size() == 1 || isReachable(ip, address)){
 					DiscoveryTest diTest = new DiscoveryTest(ip, address, port);
 						try{
+							log.info("Discovering network from local ip [" + ip.getHostAddress() + "]");
+							log.info("Using StunServer [" + address + ":" + port + "]");
 							sinf = new StunInfo(diTest.test());
 							sinf.setLocalIp(ip.getHostAddress());
-							log.debug("Network discovered from local ip [" + ip.getHostAddress() + "] using stun server [" + address + ":" + port + "]");
+							if (sinf != null) log.info("Network discovered successfully");
 							return sinf;
 						} catch (Exception e){
 							log.error("Error discovering network, using stun server [" + address + ":" + port + "] from localIp [" + ip.getHostAddress() + "]", e);
@@ -178,51 +173,28 @@ public class ConnectionManager {
 		}
 	}
 	
+	public StunInfo getLocalStunInfo(){
+		String id = F2FComputing.getLocalPeer().getID().toString();
+		return F2FComputingGUI.controller.getStunInfoTableModel().get(id);
+	}
 	
-	public void getLocalStunInfo(boolean forceReload) {
+	public StunInfo getLocalStunInfo(boolean forceReload) {
+		log.debug("Get local StunInfo from StunInfoTableModel");
 		String id = F2FComputing.getLocalPeer().getID().toString();
 		StunInfo sinf = F2FComputingGUI.controller.getStunInfoTableModel().get(id);
 		if (sinf == null || forceReload) {
-		  refreshStunInfo();
+			log.debug("No local StunInfo found in table, refreshing local StunInfo");
+			refreshStunInfo();
 		}
-	}
-	
-	public Map<String, Socket> getTcpClients(){
-		return tcpClients;
-	}
-	
-	/**
-	 * Send data to client
-	 * @param id Client's Id
-	 * @param data
-	 */
-	public void send(String id, byte[] data){
-		try {			
-			Socket s = getSocketByID(id);
-			log.debug("Sending data to client " + id);
-			s.getOutputStream().write(data);
+		while(sinf == null){
+			try {
+				Thread.sleep(5000);
+			} catch (InterruptedException e) {
+				log.error(e);
+			}
+			sinf = F2FComputingGUI.controller.getStunInfoTableModel().get(id);
 		}
-		catch (NoSuchElementException e) {
-			log.debug("Client " + id + " not found!");
-		}
-		catch (IOException e) {
-			log.debug("Unable to send data to " + id);			
-			e.printStackTrace();
-		}
-	}
-	
-	/**
-	 * Send data to client
-	 * @param id Client's Id
-	 */	
-	public Socket getSocketByID(String id) throws NoSuchElementException {
-		Socket s = tcpClients.get(id);
-		if (s == null) {
-			log.debug("Client " + id + " not found!");
-			throw new NoSuchElementException("Client with ID " + id + " not found");
-		}
-		log.debug("Returning client " + id);
-		return s;
+		return sinf;
 	}
 
 	public boolean isThreadRunning() {

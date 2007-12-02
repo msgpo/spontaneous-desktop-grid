@@ -46,6 +46,10 @@ public class F2FMessage implements Serializable
 		 * A chat message from one user to another.
 		 */
 		CHAT,
+		/**
+		 * A Nat/Traversal message
+		 */
+		NAT
 	}
 
 	public F2FMessage(Type type, String jobID, String receiverTaskID,

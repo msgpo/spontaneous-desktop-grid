@@ -15,7 +15,7 @@ public class StunInfo implements Serializable{
 	private boolean portRestrictedCone = false;
 	private boolean symmetricCone = false;
 	private boolean symmetricUDPFirewall = false;
-	private String publicIP = null;
+	private String publicIp = null;
 	private String localIp = null;
 	
 	private static final long serialVersionUID = 4721470383254301632L;
@@ -34,7 +34,7 @@ public class StunInfo implements Serializable{
 		this.symmetricCone = discoveryInfo.isSymmetricCone();
 		this.symmetricUDPFirewall = discoveryInfo.isSymmetricUDPFirewall();
 		if (discoveryInfo.getPublicIP() != null){
-			this.publicIP = discoveryInfo.getPublicIP().getHostAddress();
+			this.publicIp = discoveryInfo.getPublicIP().getHostAddress();
 		}
 	}
 	
@@ -103,12 +103,12 @@ public class StunInfo implements Serializable{
 		this.symmetricUDPFirewall = symmetricUDPFirewall;
 	}
 
-	public String getPublicIP() {
-		return publicIP;
+	public String getPublicIp() {
+		return publicIp;
 	}
 
-	public void setPublicIP(String publicIP) {
-		this.publicIP = publicIP;
+	public void setPublicIp(String publicIp) {
+		this.publicIp = publicIp;
 	}
 
 	public String getLocalIp() {
@@ -136,8 +136,8 @@ public class StunInfo implements Serializable{
 		if (symmetricUDPFirewall) sb.append ("Symmetric UDP Firewall handles connections.\n");
 		if (!openAccess && !blockedUDP && !fullCone && !restrictedCone && !portRestrictedCone && !symmetricCone && !symmetricUDPFirewall) sb.append("unkown\n");
 		sb.append("Public IP address: ");
-		if (publicIP != null) {
-			sb.append(publicIP);
+		if (publicIp != null) {
+			sb.append(publicIp);
 		} else {
 			sb.append("unknown");
 		}

@@ -12,7 +12,7 @@ public class NatMessageTests extends TestCase {
 		StunInfo sinf = null;
 		try {
 			sinf = new StunInfo();
-			sinf.setPublicIP("193.40.36.2");
+			sinf.setPublicIp("193.40.36.2");
 			sinf.setLocalIp("192.168.10.187");
 		} catch (Exception e1) {
 			fail();
