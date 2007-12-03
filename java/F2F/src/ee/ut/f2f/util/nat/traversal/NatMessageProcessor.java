@@ -1,12 +1,15 @@
 package ee.ut.f2f.util.nat.traversal;
 
 
+import java.net.InetAddress;
+import java.net.UnknownHostException;
 import java.util.Collection;
 
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
+import ee.ut.f2f.util.nat.traversal.exceptions.NetworkInterfaceNotFoundException;
 import ee.ut.f2f.util.nat.traversal.threads.NatMessageSender;
 
 public class NatMessageProcessor {
@@ -75,6 +78,10 @@ public class NatMessageProcessor {
 				   		if (sinf.getId().equals(peer.getID().toString())) displayName = peer.getDisplayName();
 				   	}
 				   	F2FComputingGUI.controller.writeNatLog("Received Stun info from [" + displayName + "]\n" + sinf.toString());
+				   	
+				   	//TODO Analyze received StunInfo (is in the same local network ?)
+
+				   	
 				}
 				else {
 					log.debug(sinf.getId() + " StunInfo with id [" + sinf.getId() + "] allready exist in StunInfoTable");

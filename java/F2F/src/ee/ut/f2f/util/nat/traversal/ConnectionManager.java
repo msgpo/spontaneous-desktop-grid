@@ -38,7 +38,10 @@ public class ConnectionManager {
 	private boolean isStunInfoClientRunning = false;
 	
 	//stunServers
-	private List<String> stunServers = null;	
+	private List<String> stunServers = null;
+	
+	//SocketCommunication listener port
+	private int scPort = -1;
 	
 	public ConnectionManager(String propertiesFilePath) throws ConnectionManagerException{
 		loadProperties(propertiesFilePath);
@@ -85,6 +88,8 @@ public class ConnectionManager {
 		String[] stunServers = props.getProperty("stunServers").split(",");
 		if (stunServers == null || stunServers.length == 0) throw new ConnectionManagerException("No addresses specified in properties file");
 		this.stunServers = Arrays.asList(stunServers);
+		
+		this.scPort = Integer.parseInt(props.getProperty("socketCommunicationPort"));
 		
 		//load another properties
 	}
@@ -223,8 +228,21 @@ public class ConnectionManager {
 			log.debug("SocketCommunicationProvider allready initiated");
 			return;
 		} else {
-			SocketCommunicationInitiator scInit = new SocketCommunicationInitiator();
+			SocketCommunicationInitiator scInit = null;
+			if(this.scPort == -1){
+				scInit = new SocketCommunicationInitiator();
+			} else {
+				scInit = new SocketCommunicationInitiator(scPort);
+			}
 			scInit.start();
 		}
+	}
+
+	public int getScPort() {
+		return scPort;
+	}
+
+	public void setScPort(int scPort) {
+		this.scPort = scPort;
 	}
 }
