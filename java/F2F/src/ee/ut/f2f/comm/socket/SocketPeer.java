@@ -9,11 +9,13 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.UUID;
 
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -107,6 +109,7 @@ class SocketPeer implements Activity
 							Object message = oi.readObject();
 							log.debug("\t\tReceived message from"
 									+ " '" + socketAddress + "'. Message: '" + message + "'.");
+							F2FComputing.messageRecieved(message, UUID.fromString(getID()));
 	//						TODO
 	//						for(CommunicationListener listener: layer.getListeners())
 	//						{
