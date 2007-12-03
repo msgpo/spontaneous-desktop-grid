@@ -19,8 +19,6 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
-import javax.swing.event.ListSelectionEvent;
-import javax.swing.event.ListSelectionListener;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
@@ -42,22 +40,22 @@ public class GroupChatWindow extends JFrame {
 	public static final String CHAT_OPTYPE_REM = "-"; 
 	
 	private JTextArea typeArea = null;
+	private JTextArea receievedMessagesTextArea = null;
+	
 	private JPanel messagingPanel = null;
-	private JButton sendMessageButton = null;
-	private JTextArea receievedMessagesTextArea = null;	
 	private JList memberList = null;
+
 	private FriendModel memberModel;
 	private UIController mainWindow;
-	private JButton addButton;
-	private JButton removeButton;
+	private JobSelector jobSelect;
 	private String chatId;
 	private boolean isCreator;
 	private F2FPeer creator;	
 	private Collection<F2FPeer> selectedMembers = new ArrayList<F2FPeer>();
 	
-	public GroupChatWindow(Collection<F2FPeer> members, UIController mainWindow, String chatId, boolean isCreator){
+	public GroupChatWindow(Collection<F2FPeer> members, UIController mainWnd, String chatId, boolean isCreator){
 		
-		this.mainWindow = mainWindow;
+		this.mainWindow = mainWnd;
 		this.setSize(new Dimension(400, 300));
 		this.setLocationRelativeTo(null);
 		this.isCreator = isCreator;
@@ -105,13 +103,12 @@ public class GroupChatWindow extends JFrame {
 		typeAreaScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		typeAreaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
-		
 		memberModel = new FriendModel();
 		memberList = new JList(memberModel);
 		if (isCreator){
 			addMembers(members, true);		
 		}
-		memberList.addListSelectionListener(new MembersListListener());	
+		
 		memberList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
 		memberList.setLayoutOrientation(JList.VERTICAL);
 		JScrollPane listScroller = new JScrollPane(memberList);
@@ -121,26 +118,36 @@ public class GroupChatWindow extends JFrame {
 		messagingPanel.add(listScroller, BorderLayout.EAST);
 		
 		
-		addButton = new JButton("Add...");
+		JButton addButton = new JButton("Add...");
 		addButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				addButtonPressed();
 			}
 		});		
 		
-		sendMessageButton = new JButton("Send");
+		JButton sendMessageButton = new JButton("Send");
 		sendMessageButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				sendButtonPressed(); 
 			}
 		});
 		
-		removeButton = new JButton("Kick...");
+		JButton removeButton = new JButton("Kick");
 		removeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				removeButtonPressed();
 			}
 		});
+		
+		JButton startJobButton  = new JButton("Job...");
+		startJobButton.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				if(jobSelect != null) {
+					jobSelect.dispose();
+				}
+				jobSelect = new JobSelector(mainWindow);
+			}
+		}); 
 		
 		messagingPanel.add(receievedMessagesTextAreaScrollPane, BorderLayout.CENTER);		
 		JPanel southPanel = new JPanel(new GridBagLayout());
@@ -152,7 +159,7 @@ public class GroupChatWindow extends JFrame {
 		c.weighty = 1.0;
 		c.gridx = 0;
 		c.gridy = 0;
-		c.gridheight = 3;
+		c.gridheight = 4;
 		
 		southPanel.add(typeAreaScrollPane, c);
 		
@@ -170,10 +177,14 @@ public class GroupChatWindow extends JFrame {
 			c.gridx = 1;
 			c.gridy = 2;
 			southPanel.add(removeButton, c);
+			
+			c.gridx = 1;
+			c.gridy = 3;
+			southPanel.add(startJobButton, c);
 		}
 		
-		this.setContentPane(messagingPanel);	
-		this.setVisible(true);		
+		this.setContentPane(messagingPanel);
+		this.setVisible(true);
 	}
 	
 	public void writeMessage(String from, String msg) {
@@ -183,10 +194,6 @@ public class GroupChatWindow extends JFrame {
 			typeArea.setText("");
 		}
 	} 
-	
-	public String getChatId() {
-		return chatId;
-	}
 	
 	public static String findMsgType(String message) {
 		return message.split(";", 2)[0];
@@ -239,8 +246,6 @@ public class GroupChatWindow extends JFrame {
 	}
 	
 	private void addButtonPressed() {
-		//TODO:
-		
 		Collection<F2FPeer> peers = mainWindow.getFriendModel().getPeers();
 		Collection<F2FPeer> peopleList = new ArrayList<F2FPeer>();
 		for (F2FPeer peer : peers) {
@@ -255,7 +260,8 @@ public class GroupChatWindow extends JFrame {
 			if (!isInChat) {
 				peopleList.add(peer);
 			}
-		}		
+		}
+		
 		new PeopleChooser(peopleList, this);
 	}
 	
@@ -275,9 +281,10 @@ public class GroupChatWindow extends JFrame {
 						+ selectedPeer.getDisplayName() + "' failed with '"
 						+ cfe.getMessage() + "'");
 			}
-		}	
-		selectedMembers.clear();		
-	}
+		}
+		
+		selectedMembers.clear();	
+	}	
 	
 	private void sendButtonPressed() {
 		//Message structure: msg;chatId;sender;text
@@ -315,24 +322,8 @@ public class GroupChatWindow extends JFrame {
 		writeMessage(F2FComputing.getLocalPeer().getDisplayName(), typeArea.getText().trim());
 	}
 	
-	private class MembersListListener implements ListSelectionListener {
-		public void valueChanged(ListSelectionEvent listSelectionEvent) {
-		
-			// Return if this is one of multiple change events.
-			if (listSelectionEvent.getValueIsAdjusting())
-				return;
-			selectedMembers.clear();
-			for (int i : memberList.getSelectedIndices()) {
-				selectedMembers.add(memberModel.getElementAt(i));
-			}
-			
-			if (selectedMembers.size() == 0 && removeButton.isEnabled()) {
-				removeButton.setEnabled(false);
-			}
-			else if (selectedMembers.size() > 0 && !removeButton.isEnabled()) {
-				removeButton.setEnabled(true);
-			}
-		}
+	public String getChatId() {
+		return chatId;
 	}
 	
 	public void addMembers(Collection<F2FPeer> members, boolean addSelf) {

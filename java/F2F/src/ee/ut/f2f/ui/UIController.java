@@ -7,26 +7,17 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.io.File;
-import java.io.IOException;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
-import java.util.Iterator;
 import java.util.Map;
-import java.util.StringTokenizer;
-import java.util.jar.Attributes;
-import java.util.jar.JarFile;
-import java.util.jar.Manifest;
 
 import javax.swing.BorderFactory;
 import javax.swing.BoxLayout;
 import javax.swing.JButton;
 import javax.swing.JCheckBoxMenuItem;
-import javax.swing.JFileChooser;
 import javax.swing.JFrame;
-import javax.swing.JLabel;
 import javax.swing.JList;
 import javax.swing.JMenu;
 import javax.swing.JMenuBar;
@@ -36,12 +27,9 @@ import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
 import javax.swing.JTable;
 import javax.swing.JTextArea;
-import javax.swing.JTextField;
 import javax.swing.ListSelectionModel;
-import javax.swing.SpringLayout;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
-import javax.swing.filechooser.FileFilter;
 
 import org.jdesktop.swingx.JXTable;
 import org.jdesktop.swingx.JXTreeTable;
@@ -52,11 +40,7 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
-import ee.ut.f2f.core.Job;
-import ee.ut.f2f.core.Task;
-import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.ui.log.LogHandler;
 import ee.ut.f2f.ui.log.LogHighlighter;
 import ee.ut.f2f.ui.log.LogTableModel;
@@ -67,7 +51,6 @@ import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
-import ee.ut.f2f.util.F2FTests;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.StunInfo;
@@ -76,26 +59,13 @@ public class UIController{
 	private static final Logger logger = Logger.getLogger(UIController.class);	
 	
 	private JFrame frame = null;
-	private JMenuBar generalMenuBar = null;
 	private JPanel mainPanel = null;
-	private JMenu fileMenu = null;
-	private JMenu viewMenu = null;
-	private JMenuItem exitMenuItem = null;
-	private JCheckBoxMenuItem showDebugMenuItem = null;
-	private JCheckBoxMenuItem showInfoMenuItem = null;
-	private JCheckBoxMenuItem showErrorMenuItem = null;
-	private JCheckBoxMenuItem autoScrollMenuItem = null;
-	private JMenu helpMenu = null;
 	private JPanel friendsPanel = null;
 	private JList friendsList = null;
 	private FriendModel friendModel = null;
 	private JTextArea console = null;
-	private JTextField tf1 = null;
-	private JTextField tf2 = null;
 	
-	private File[] selectedFiles = null;
 	private JButton createChatButton;
-	private Map<String, GroupChatWindow> chats = new HashMap<String, GroupChatWindow>();
 	
 	//NAT/Traversal panel
 	private JPanel traversalPanel = null;
@@ -104,19 +74,31 @@ public class UIController{
 	private JTextArea natLogArea = null;
 	private JButton initButton = null;	
 	
+	private JMenu optionsMenu;
+	private JMenuBar generalMenuBar = null;
+	private JMenu fileMenu = null;
+	private JMenu viewMenu = null;
+	private JMenu helpMenu = null;
+	private JCheckBoxMenuItem allowCPUMenuItem;
+	
+	private JCheckBoxMenuItem showDebugMenuItem = null;
+	private JCheckBoxMenuItem showInfoMenuItem = null;
+	private JCheckBoxMenuItem showErrorMenuItem = null;
+	private JCheckBoxMenuItem autoScrollMenuItem = null;
+	private JMenuItem showDebugWindowMenuItem = null;
+	private JMenuItem exitMenuItem = null;
+	
+	private Map<String, GroupChatWindow> chats = new HashMap<String, GroupChatWindow>();
+	
 	private boolean showDebug = true;
 	private boolean showInfo = true;
 	private boolean showError = true;
-	private boolean autoScroll = true;
+	private boolean autoscroll = true;
 	
 	/**
 	 *  The peers from whom the computation peers will be selected.
 	 */
 	private Collection<F2FPeer> selectFromPeers = new ArrayList<F2FPeer>();
-
-	// Options menu
-	private JMenu optionsMenu;
-	private JCheckBoxMenuItem allowCPUMenuItem;
 	
 	public UIController(String title)
 	{		
@@ -126,44 +108,8 @@ public class UIController{
 		frame.setContentPane(mainPanel);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 		frame.setSize(800, 700);
-		
-		generalMenuBar = new JMenuBar();
-		frame.setJMenuBar(generalMenuBar);
 		mainPanel.setPreferredSize(frame.getSize());
-
-		fileMenu = new JMenu("File");
-		exitMenuItem = new JMenuItem("Exit");
-		viewMenu = new JMenu("View");
-		showDebugMenuItem = new JCheckBoxMenuItem("Show debug messages", true);
-		showInfoMenuItem = new JCheckBoxMenuItem("Show info messages", true);
-		showErrorMenuItem = new JCheckBoxMenuItem("Show error messages", true);
-		autoScrollMenuItem = new JCheckBoxMenuItem("AutoScroll console", true);
-		viewMenu.add(showDebugMenuItem);
-		viewMenu.add(showInfoMenuItem);
-		viewMenu.add(showErrorMenuItem);
-		viewMenu.addSeparator();
-		viewMenu.add(autoScrollMenuItem);
-		fileMenu.add(exitMenuItem);
-
-		optionsMenu = new JMenu("Options");
-		allowCPUMenuItem = new JCheckBoxMenuItem("Allow All Friends To Use My PC", false);
-		F2FComputing.allowAllFriendsToUseMyPC(allowCPUMenuItem.getState());
-		optionsMenu.add(allowCPUMenuItem);
-		allowCPUMenuItem.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				F2FComputing.allowAllFriendsToUseMyPC(allowCPUMenuItem.getState());
-			}
-		});
 		
-		helpMenu = new JMenu("Help");
-
-		generalMenuBar.add(fileMenu);
-		generalMenuBar.add(viewMenu);
-		generalMenuBar.add(optionsMenu);
-		generalMenuBar.add(helpMenu);
-
 		friendsPanel = new JPanel();
 		friendsPanel.setLayout(new BoxLayout(friendsPanel, BoxLayout.PAGE_AXIS));
 		friendsPanel.setBorder(BorderFactory.createTitledBorder("Friends"));
@@ -345,224 +291,87 @@ public class UIController{
 			tabs.addTab("Logs", new JScrollPane(logTable));
 			logger.trace("Log table created");
 		}
-
-		// other
-		createButtonPanel();
-	}
-
-	private void createButtonPanel() {
-		SpringLayout bottomPanelLayout = new SpringLayout();
-		JPanel bottomPanel = new JPanel(bottomPanelLayout);
-		bottomPanel.setSize(new Dimension(300,100));
-		mainPanel.add(bottomPanel, BorderLayout.SOUTH);
 		
-		JLabel label1 = new JLabel("Choose file:");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.NORTH, bottomPanel);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, label1, 0, SpringLayout.WEST, bottomPanel);
-		bottomPanel.add(label1);
+		generalMenuBar = new JMenuBar();
+		frame.setJMenuBar(generalMenuBar);
 
-		tf1 = new JTextField();
-		tf1.setColumns(40);
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, tf1, 5, SpringLayout.SOUTH, label1);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, tf1, 0, SpringLayout.WEST, label1);
-		bottomPanel.add(tf1);
-
-		JButton button1 = new JButton("Browse...");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button1, 0, SpringLayout.NORTH, tf1);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, button1, 5, SpringLayout.EAST, tf1);
-		bottomPanel.add(button1);
+		fileMenu = new JMenu("File");
+		exitMenuItem = new JMenuItem("Exit");
+		viewMenu = new JMenu("View");
+		showDebugMenuItem = new JCheckBoxMenuItem("Show debug messages", true);
+		showInfoMenuItem = new JCheckBoxMenuItem("Show info messages", true);
+		showErrorMenuItem = new JCheckBoxMenuItem("Show error messages", true);
+		autoScrollMenuItem = new JCheckBoxMenuItem("AutoScroll console", true);
+		showDebugWindowMenuItem = new JMenuItem("Show Debug window");
 		
-		// Main task will be filled from the manifest file's entry.
-		tf2 = new JTextField("");
-		button1.addActionListener(new ActionListener()
+		viewMenu.add(showDebugWindowMenuItem);
+		viewMenu.add(showDebugMenuItem);
+		viewMenu.add(showInfoMenuItem);
+		viewMenu.add(showErrorMenuItem);
+		viewMenu.addSeparator();
+		viewMenu.add(autoScrollMenuItem);
+		fileMenu.add(exitMenuItem);
+
+		optionsMenu = new JMenu("Options");
+		allowCPUMenuItem = new JCheckBoxMenuItem("Allow All Friends To Use My PC", false);
+		F2FComputing.allowAllFriendsToUseMyPC(allowCPUMenuItem.getState());
+		optionsMenu.add(allowCPUMenuItem);
+		allowCPUMenuItem.addActionListener(new ActionListener()
 		{
 			public void actionPerformed(ActionEvent e)
 			{
-				final JFileChooser fc = new JFileChooser(selectedFiles == null || selectedFiles.length == 0 ? null : selectedFiles[0]);
-				fc.removeChoosableFileFilter(fc.getAcceptAllFileFilter());
-				FileFilter filter = new JarFilter();
-				fc.setFileFilter(filter);
-				fc.setMultiSelectionEnabled(true);
-				int returnVal = fc.showOpenDialog(frame);
-				if (returnVal == JFileChooser.APPROVE_OPTION)
-				{
-					File[] files = fc.getSelectedFiles();
-					if (files.length == 0) return;
-           			selectedFiles = files;
-					
-           			tf2.setText("");
-					// this string will show names of seleced files as semicolon-separated list
-					String sFiles = "";
-           			// try to find master class
-					boolean foundMasterClass = false;
-           			for (File file: selectedFiles)
-           			{
-           				// add the name of the file to sFiles
-	           			if (sFiles.length() > 0) sFiles += ";";
-           				sFiles += file.getAbsolutePath();
-           				
-           				// If it is a .jar file, scan it for main class manifest file entry.
-	           			if (!foundMasterClass && file != null && file.isFile() && file.canRead() && file.getName().indexOf(".jar") != -1)
-	           			{
-	           				try
-	           				{
-	           					JarFile jarFile = new JarFile(file);
-	           					Manifest man = jarFile.getManifest();
-	           					Attributes mainAttributes = man.getMainAttributes();
-	           					String masterClass = mainAttributes.getValue("F2F-MasterTask");
-	           					// Close the file.
-	           					jarFile.close();
-	        					if (masterClass != null && masterClass.length() > 0)
-	        					{
-	        						tf2.setText(masterClass);
-	        						foundMasterClass = true;
-	        					}
-	           				}
-	           				catch (IOException ioe)
-	           				{
-	           					// Not a .jar file - just continue.
-	           				}
-	           			}
-           			}
-					tf1.setText(sFiles);
-        		}
+				F2FComputing.allowAllFriendsToUseMyPC(allowCPUMenuItem.getState());
 			}
 		});
 		
-		tf2.setColumns(40);
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, tf2, 5, SpringLayout.SOUTH, tf1);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, tf2, 0, SpringLayout.WEST, tf1);
-		bottomPanel.add(tf2);
-		
+		helpMenu = new JMenu("Help");
 
-		JButton button2 = new JButton("Compute");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button2, 5, SpringLayout.SOUTH, tf2);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, button2, 0, SpringLayout.WEST, tf2);
-		bottomPanel.add(button2);
-		button2.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				if (tf1.getText().length() == 0)
-				{
-					error("no jar-files name was specified");
-				}
-				else if (tf2.getText().length() == 0)
-				{
-					error("master task name was not specified");
-				}
-				else
-				{
-					Collection<String> jarFilesNames = new ArrayList<String>();
-					StringTokenizer tokenizer = new StringTokenizer(tf1.getText(), ";", false);
-					while (tokenizer.hasMoreTokens()) jarFilesNames.add(tokenizer.nextToken().trim());
-					//for (File file: selectedFiles) jarFiles.add(new F2FJarFile(file.getAbsolutePath()));
-					String jobID;
-					try {
-						jobID = F2FComputing.createJob(jarFilesNames, tf2.getText(), getSelectedFriends()).getJobID();
-						info("Started job with ID: " + jobID);
-					} catch (F2FComputingException ex) {
-						error("Error with starting a job! " + ex);
-					}
-				}
-			}
-		});
+		generalMenuBar.add(fileMenu);
+		generalMenuBar.add(viewMenu);
+		generalMenuBar.add(optionsMenu);
+		generalMenuBar.add(helpMenu);
 		
-		JButton button3 = new JButton("Show stats");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button3, 0, SpringLayout.NORTH, button2);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, button3, 10, SpringLayout.EAST, button2);
-		bottomPanel.add(button3);
-		button3.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				Collection<Job> jobs = F2FComputing.getJobs();
-				Iterator<Job> jobIterator = jobs.iterator();
-				while (jobIterator.hasNext())
-				{
-					Job job = jobIterator.next();
-					info(job.getJobID());
-					Collection<Task> tasks = job.getTasks();
-					Iterator<Task> taskIterator = tasks.iterator();
-					while (taskIterator.hasNext())
-					{
-						Task task = taskIterator.next();
-						info("\tTask " + task.getTaskID());
-						info("\t\tstate: java.lang.Thread.State." + task.getState());
-						if (task.getException() != null)
-							info("\t\texception: " + task.getException() + task.getException().getMessage());
-						Collection<TaskProxy> proxies = task.getTaskProxies();
-						Iterator<TaskProxy> proxyIterator = proxies.iterator();
-						while (proxyIterator.hasNext())
-						{
-							TaskProxy proxy = proxyIterator.next();
-							info("\t\tTask " + proxy.getRemoteTaskID() + " message queue size: " + proxy.getMessageCount());
-						}
-					}
-				}
-			}
-		});
-		
-		JButton buttonDebug = new JButton("Open Debug window");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, buttonDebug, 0, SpringLayout.NORTH, button3);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, buttonDebug, 10, SpringLayout.EAST, button3);
-		bottomPanel.add(buttonDebug);
-		buttonDebug.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				F2FDebug.show(true);
-			}
-		});
-
-		// Some room for playing and testing
-		JButton buttonTest = new JButton("Trigger tests");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, buttonTest, 0, SpringLayout.NORTH, buttonDebug);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, buttonTest, 10, SpringLayout.EAST, buttonDebug);
-		bottomPanel.add(buttonTest);
-		
-		// bottomPanel constraints (constraint SOUTH of the bottom panel to the last button)
-		bottomPanelLayout.putConstraint(SpringLayout.SOUTH, bottomPanel, 5, SpringLayout.SOUTH, button2);		
-		
-		buttonTest.addActionListener(new ActionListener()
-		{
-			public void actionPerformed(ActionEvent e)
-			{
-				F2FTests.doTests();
-			}
-		});
-
-		//frame.pack();
-		frame.setVisible(true);
 		exitMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				frame.dispose();
 				System.exit(0);
 			}
 		});
+		
 		showDebugMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				showDebug = showDebugMenuItem.isSelected();
 			}
 		});
+		
 		showInfoMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				showInfo = showInfoMenuItem.isSelected();
 			}
 		});
+		
 		showErrorMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				showError = showErrorMenuItem.isSelected();
 			}
 		});
+		
 		autoScrollMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				autoScroll = autoScrollMenuItem.isSelected();
-				if (!autoScroll) {
+				autoscroll = autoScrollMenuItem.isSelected();
+				if (autoscroll) {
 					console.setCaretPosition(console.getText().length()-1);
 				}
 			}
 		});
+		
+		showDebugWindowMenuItem.addActionListener(new ActionListener() {
+			public void actionPerformed(ActionEvent e) {
+				F2FDebug.show(true);
+			}
+		});
+		
+		frame.setVisible(true);
 	}
 
 	public FriendModel getFriendModel() {
@@ -574,7 +383,7 @@ public class UIController{
 	 * @param msg
 	 */
 	public void info(String msg) {
-		if (showInfo) {
+		if(showInfo) {
 			console("INFO", msg);
 		}
 	}
@@ -584,7 +393,7 @@ public class UIController{
 	 * @param msg
 	 */
 	public void error(String msg) {
-		if (showError) {
+		if(showError) {
 			console("ERROR", msg);
 		}
 	}
@@ -594,7 +403,7 @@ public class UIController{
 	 * @param msg
 	 */
 	public void debug(String msg) {
-		if (showDebug) {
+		if(showDebug) {
 			console("DEBUG", msg);
 		}
 	}
@@ -604,7 +413,7 @@ public class UIController{
 		if (!msg.endsWith(String.valueOf('\n'))) {
 			console.append(String.valueOf('\n'));
 		}
-		if (autoScroll) {
+		if (autoscroll) {
 			console.setCaretPosition(console.getText().length());
 		}
 	}
@@ -642,32 +451,6 @@ public class UIController{
 			selectFromPeers.addAll(getSelectedFriends());
 		}
 	} // private class FriendsListListener
-	
-	private class JarFilter extends FileFilter {
-
-		public boolean accept(File f) {
-			if (f.isDirectory()) {
-	            return true;
-	        }
-			int dotPos = f.getName().lastIndexOf(".");
-			if (dotPos > 0) {
-				String ext = f.getName().substring(dotPos);
-		        if (ext.equals(".jar")) {
-		        	return true;
-		        } else {
-		        	return false;
-		        }
-	        } else {
-	        	return false;
-	        }
-		}
-
-		public String getDescription() {
-			return "Jar file (.jar)";
-		}
-
-	}
-	
 	
 	public void writeNatLog(String msg){
 		natLogArea.setText(natLogArea.getText() + "\n" + msg); 
