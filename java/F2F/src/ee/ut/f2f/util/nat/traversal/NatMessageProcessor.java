@@ -7,6 +7,7 @@ import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
+import ee.ut.f2f.util.nat.traversal.threads.NatMessageSender;
 
 public class NatMessageProcessor {
 	

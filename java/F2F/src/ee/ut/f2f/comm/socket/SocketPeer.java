@@ -14,11 +14,14 @@ import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.ui.F2FComputingGUI;
+import ee.ut.f2f.util.logging.Logger;
 
 class SocketPeer implements Activity
 {
-
+	final private static Logger log = Logger.getLogger(SocketPeer.class);
+	
+	
 	private SocketCommunicationProvider layer;
 	public SocketCommunicationProvider getCommunicationLayer()
 	{
@@ -43,17 +46,8 @@ class SocketPeer implements Activity
 	 */
 	public String getID()
 	{
-		// Get the ID as <hostname>:<port>
-		String id = socketAddress.getAddress().getHostName()+":"+socketAddress.getPort();
-		
-		// If restulted ID has also IP with its hostname, then resolve this only into hostname.
-		if (id.indexOf('/') != -1)
-		{
-			String hostname = id.substring(0, id.indexOf('/'));
-			String port = id.substring(id.indexOf('/')+1, id.length());
-			id = hostname + ":" + port;
-		}
-		
+		String id = F2FComputingGUI.controller.getStunInfoTableModel().getByLocalIp(socketAddress.getAddress().getHostAddress()).getId();
+		if (id == null) throw new NullPointerException("No F2FPeer id found by ip in StunInfoTableModel");
 		return id;
 	}
 
@@ -65,7 +59,7 @@ class SocketPeer implements Activity
 	{
 		try {
 			getOo().writeObject(message);
-			F2FDebug.println("\t\tSent message '" + message + "' to '" + getID() + "'");
+			log.debug("\t\tSent message '" + message + "' to '" + getID() + "'");
 		} catch (IOException e) {
 			throw new CommunicationFailedException(e);
 		}
@@ -111,7 +105,7 @@ class SocketPeer implements Activity
 						try
 						{
 							Object message = oi.readObject();
-							F2FDebug.println("\t\tReceived message from"
+							log.debug("\t\tReceived message from"
 									+ " '" + socketAddress + "'. Message: '" + message + "'.");
 	//						TODO
 	//						for(CommunicationListener listener: layer.getListeners())
@@ -121,7 +115,7 @@ class SocketPeer implements Activity
 						}
 						catch (ClassNotFoundException e)
 						{
-							F2FDebug.println("\t\tError reading object from '"+socketAddress+"'" + e);
+							log.debug("\t\tError reading object from '"+socketAddress+"'" + e);
 						}
 					}
 					//ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,

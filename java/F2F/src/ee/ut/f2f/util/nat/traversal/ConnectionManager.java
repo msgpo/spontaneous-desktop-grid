@@ -18,12 +18,15 @@ import org.springframework.core.io.support.PropertiesLoaderUtils;
 
 import de.javawi.jstun.test.DiscoveryTest;
 
+import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 import ee.ut.f2f.util.nat.traversal.exceptions.NetworkInterfaceNotFoundException;
+import ee.ut.f2f.util.nat.traversal.threads.SocketCommunicationInitiator;
+import ee.ut.f2f.util.nat.traversal.threads.StunInfoClient;
 
 public class ConnectionManager {
 	
@@ -31,7 +34,8 @@ public class ConnectionManager {
 	
 	final private int STUN_SERVER_DEFAULT_PORT = 3478;
 	
-	private boolean isThreadRunning = false;
+	private SocketCommunicationProvider socketCommunicationProvider = null;
+	private boolean isStunInfoClientRunning = false;
 	
 	//stunServers
 	private List<String> stunServers = null;	
@@ -165,7 +169,7 @@ public class ConnectionManager {
 	}
 	
 	public void refreshStunInfo(){
-		if (!isThreadRunning()){
+		if (!isStunInfoClientRunning()){
 			StunInfoClient stClient = new StunInfoClient();
 			stClient.start();
 		} else {
@@ -197,11 +201,30 @@ public class ConnectionManager {
 		return sinf;
 	}
 
-	public boolean isThreadRunning() {
-		return isThreadRunning;
+	public boolean isStunInfoClientRunning() {
+		return isStunInfoClientRunning;
 	}
 
-	public void setThreadRunning(boolean isThreadRunning) {
-		this.isThreadRunning = isThreadRunning;
+	public void setStunInfoClientRunning(boolean isStunInfoClientRunning) {
+		this.isStunInfoClientRunning = isStunInfoClientRunning;
+	}
+
+	public SocketCommunicationProvider getSocketCommunicationProvider() {
+		return socketCommunicationProvider;
+	}
+
+	public void setSocketCommunicationProvider(
+			SocketCommunicationProvider socketCommunicationProvider) {
+		this.socketCommunicationProvider = socketCommunicationProvider;
+	}
+	
+	public void initiateSocketCommunicationProvider(){
+		if(socketCommunicationProvider != null){
+			log.debug("SocketCommunicationProvider allready initiated");
+			return;
+		} else {
+			SocketCommunicationInitiator scInit = new SocketCommunicationInitiator();
+			scInit.start();
+		}
 	}
 }

@@ -73,7 +73,7 @@ public class F2FComputing
 		peers = new HashMap<UUID, F2FPeer>();
 		peers.put(localPeer.getID(), localPeer);
 		jobs = new HashMap<String, Job>();
-		CommunicationFactory.getInitializedCommunicationProviders();
+		//CommunicationFactory.getInitializedCommunicationProviders();
 		rootDirectory = rootDir;
 		rootDirectory.mkdir();
 	}

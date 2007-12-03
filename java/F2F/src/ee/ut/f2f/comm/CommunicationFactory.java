@@ -11,16 +11,19 @@ import java.util.Properties;
 import ee.ut.f2f.comm.sc.im.SipIMCommunicationProvider;
 import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.logging.Logger;
 
 /**
  * Factory for creating new CommunicationLayer instances.
  */
 public class CommunicationFactory
 {
+	final private static Logger log = Logger.getLogger(CommunicationFactory.class);
+	
 	private CommunicationFactory(){};
 	
 	private static final String PROPERTIES_FILE_DEFAULT_NAME = "F2FComputing.properties";
-
+	
 	public static Collection<CommunicationProvider> getInitializedCommunicationProviders()
 	{
 		Collection<CommunicationProvider> commProviders = new ArrayList<CommunicationProvider>();
@@ -29,32 +32,33 @@ public class CommunicationFactory
 		final CommLayerProperties props = readProps();
 		if (props == null)
 		{
-			F2FDebug.println("\t\t"+PROPERTIES_FILE_DEFAULT_NAME+" was not found");
+			log.debug("\t\t"+PROPERTIES_FILE_DEFAULT_NAME+" was not found");
 			return commProviders;
 		}
 		
 		CommunicationProvider commProvider = null;
 		if (props.bInitSocket)
 		{
-			F2FDebug.println("\t\tINIT SOCKET");
+			log.debug("\t\tINIT SOCKET");
 			try
 			{
-				commProviders.add(GetSocketCommununication(props.socketLayerProps));
+				commProvider = GetSocketCommununication(null);
+				if (commProvider != null) commProviders.add(commProvider);
 			}
 			catch (CommunicationInitException e)
 			{
-				F2FDebug.println("\t\tGetSocketCommununication() throwed CommunicationInitException!" + e);
+				log.debug("\t\tGetSocketCommununication() throwed CommunicationInitException!" + e);
 			}
 		}
 		
 		if (props.bInitSip)
 		{
-			F2FDebug.println("\t\tINIT SIP");
+			log.debug("\t\tINIT SIP");
 			commProvider = GetSipCommununication();
 			if (commProvider != null) commProviders.add(commProvider);
 			else
 			{
-				F2FDebug.println("\t\tGetSipCommununication() returned NULL");
+				log.debug("\t\tGetSipCommununication() returned NULL");
 			}
 		}
 
@@ -139,13 +143,17 @@ public class CommunicationFactory
 		return interAddrRet;
 	}
 	
+	
 	private static CommunicationProvider GetSocketCommununication(SocketProviderProperties props) throws CommunicationInitException
 	{
-		return new SocketCommunicationProvider(
+		return null;
+		/*
+		new SocketCommunicationProvider(
 				new InetSocketAddress(
 					props.local.getAddress().getHostAddress(),
 					props.local.getPort()),
 				props.friends);
+		*/
 	}
 
 	private static CommunicationProvider GetSipCommununication()

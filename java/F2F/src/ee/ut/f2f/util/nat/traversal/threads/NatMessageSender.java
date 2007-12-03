@@ -1,4 +1,4 @@
-package ee.ut.f2f.util.nat.traversal;
+package ee.ut.f2f.util.nat.traversal.threads;
 
 import java.util.Collection;
 
@@ -11,6 +11,8 @@ import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
+import ee.ut.f2f.util.nat.traversal.NatMessage;
+import ee.ut.f2f.util.nat.traversal.StunInfo;
 
 public class NatMessageSender extends Thread implements Activity {
 	
@@ -121,7 +123,7 @@ public class NatMessageSender extends Thread implements Activity {
 	}
 	
 	public String getActivityName() {
-		return this.getName();
+		return this.getName() + " id [" + this.getId() + "]";
 	}
 
 	public Activity getParentActivity() {

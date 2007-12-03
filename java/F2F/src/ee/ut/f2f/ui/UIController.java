@@ -247,8 +247,20 @@ public class UIController{
 					}
 				}
 		);
+		
+		JButton testButton = new JButton("TEST 1");
+		testButton.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent e) {
+						String id = F2FComputingGUI.natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().getID();
+						writeNatLog("\n" + id);
+					}
+				}
+		);
+		
 		JPanel natButtonPanel = new JPanel(new FlowLayout());
 		natButtonPanel.add(initButton);
+		natButtonPanel.add(testButton);
 	
 		traversalPanel.add(stunInfoTableScrollPane);
 		traversalPanel.add(natButtonPanel);

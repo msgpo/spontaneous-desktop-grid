@@ -82,6 +82,9 @@ public class F2FComputingGUI {
 					//NAT Traversal stun info request for yourself
 					natMessageProcessor.getConnectionManager().refreshStunInfo();
 					
+					//Init the SocketCommunicationProvider
+					natMessageProcessor.getConnectionManager().initiateSocketCommunicationProvider();
+					
 					while (true)
 					{
 						try {

@@ -5,6 +5,7 @@ package ee.ut.f2f.comm.socket;
 
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -19,11 +20,11 @@ import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.util.CustomObjectInputStream;
-import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.logging.Logger;
 
 public class SocketCommunicationProvider implements CommunicationProvider, Activity
 {
-	//private final Logger LOG = LogManager.getLogger(SocketCommunicationLayer.class);
+	private final Logger log = Logger.getLogger(SocketCommunicationProvider.class);
 
 	/**
 	 * Name that identifies Socket communication layer.
@@ -37,20 +38,30 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 	 * Creates the communication layer with fixed count of friends.
 	 * @throws CommunicationInitException 
 	 */
-	public SocketCommunicationProvider(InetSocketAddress localPeerAddr, Collection<InetSocketAddress> friends) throws CommunicationInitException
+	public SocketCommunicationProvider(InetSocketAddress localPeerAddr) throws CommunicationInitException
 	{
-		// Create the list of friend-nodes only when passed. 
-		if (friends!=null)
-		{
-			for (InetSocketAddress friend: friends)
-			{
-				peers.add(new SocketPeer(this, friend));
-			}
-		}
 		this.localPeer = new SocketPeer(this, localPeerAddr);
-		new Thread(new SocketListener(this.localPeer.socketAddress.getPort())).start();
+		new Thread(new SocketListener(this.localPeer.socketAddress)).start();
 	}
 
+	public void addFriend(InetSocketAddress friend){
+		SocketPeer sPeer = new SocketPeer(this, friend);
+		peers.add(sPeer);
+	}
+	
+	public boolean removeFriend(String id){
+		for(SocketPeer sPeer : peers){
+			if (sPeer.getID().equals(id)){
+				if(peers.remove(sPeer)){
+					log.debug("Removed SocketPeer by id [" + id + "]");
+					return true;
+				}
+			}
+		}
+		log.debug("No SocketPeers found by id [" + id + "], nothing removed");
+		return false;
+	}
+	
 	/* (non-Javadoc)
 	 * @see ee.ut.f2f.comm.CommunicationLayer#findPeerByID(java.lang.String)
 	 */
@@ -62,7 +73,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		return null;
 	}
 
-	SocketPeer getLocalPeer() {
+	public SocketPeer getLocalPeer() {
 		return localPeer;
 	}
 
@@ -88,6 +99,17 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 			{
 				throw new CommunicationInitException("Could not create server socket! ", e);
 			}
+		}
+		
+		public SocketListener(InetSocketAddress inetSoc) throws CommunicationInitException {
+			try {
+				serverSocket = new ServerSocket();
+				serverSocket.bind(inetSoc);
+			} catch (IOException e) {
+				log.error("Unable to bind ServerSocket to  local [" + inetSoc.getAddress().getHostAddress() + ":" + inetSoc.getPort() + "]" , e);
+				throw new CommunicationInitException("Could not create server socket! ", e);
+			}
+			
 		}
 		
 		public void run()
@@ -123,22 +145,22 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 					String remoteID = (String)oi.readObject();
 					//TODO: inform Core that new peer is found
 					// and accept the connection even if the peer is not in the peer list!
-					F2FDebug.println("\t\tSearching for peer by ID '"+remoteID+"'");
+					log.debug("\t\tSearching for peer by ID '"+remoteID+"'");
 					SocketPeer peer = (SocketPeer) findPeerByID(remoteID);
 					if (peer != null)
 					{
 						// start listening for messages from the peer
 						peer.setOi(oi);
-						F2FDebug.println("\t\tAccepted remote connection from '"+remoteID+"'");
+						log.debug("\t\tAccepted remote connection from '"+remoteID+"'");
 					}
 					else
 					{
 						oi.close();
 						socket.close();
-						F2FDebug.println("\t\tUID '"+remoteID+"' is unknown. Closed the connection.");
+						log.debug("\t\tUID '"+remoteID+"' is unknown. Closed the connection.");
 					}
 				} catch (Exception e) {
-					F2FDebug.println("\t\tProblems creating the socket communication: " + e);
+					log.debug("\t\tProblems creating the socket communication: " + e);
 					e.printStackTrace();
 				}
 			}
@@ -155,9 +177,16 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		return new String[]{ localPeer.getID() };
 	}
 
-	public void sendMessage(UUID destinationPeer, Object message) {
-		// TODO Auto-generated method stub
-		
+	public void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException {
+		log.debug("Sending Message to SocketPeer [" + destinationPeer.toString() + "]");
+		for(SocketPeer sPeer : peers){
+			if(sPeer.getID().equals(destinationPeer.toString())){
+				log.debug("Found destination SocketPeer by id [" + destinationPeer.toString() + "]");
+				sPeer.sendMessage(message);
+				log.debug("Sent message to SocketPeer [" + destinationPeer.toString() + "]");
+			}
+		}
+		log.debug("No SocketPeers found by id [" + destinationPeer.toString() + "], nothing send");
 	}
 
 	public String getActivityName() {

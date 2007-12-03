@@ -1,4 +1,4 @@
-package ee.ut.f2f.util.nat.traversal;
+package ee.ut.f2f.util.nat.traversal.threads;
 
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
@@ -6,6 +6,7 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.logging.Logger;
+import ee.ut.f2f.util.nat.traversal.StunInfo;
 
 public class StunInfoClient extends Thread implements Activity {
 	
@@ -17,7 +18,7 @@ public class StunInfoClient extends Thread implements Activity {
 	
 	@Override
 	public void run(){
-		F2FComputingGUI.natMessageProcessor.getConnectionManager().setThreadRunning(true);
+		F2FComputingGUI.natMessageProcessor.getConnectionManager().setStunInfoClientRunning(true);
 		try{
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
 		log.debug("Starting StunInfoClient Thread ...");
@@ -36,12 +37,12 @@ public class StunInfoClient extends Thread implements Activity {
 			F2FComputingGUI.controller.getStunInfoTableModel().add(sinf);
 		} finally {
 			log.debug("Stopping StunInfoClient thread");
-			F2FComputingGUI.natMessageProcessor.getConnectionManager().setThreadRunning(false);
+			F2FComputingGUI.natMessageProcessor.getConnectionManager().setStunInfoClientRunning(false);
 		}
 	}
 
 	public String getActivityName() {
-		return "StunInfoClient";
+		return this.getName() + " id [" + this.getId() + "]";
 	}
 
 	public Activity getParentActivity() {
