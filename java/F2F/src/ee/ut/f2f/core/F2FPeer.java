@@ -7,7 +7,6 @@ import java.util.UUID;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 
 public class F2FPeer
@@ -28,7 +27,7 @@ public class F2FPeer
 	{
 		this.id = UUID.randomUUID();
 	}
-	F2FPeer(String displayName)
+	public F2FPeer(String displayName)
 	{
 		this.id = UUID.randomUUID();
 		this.displayName = displayName;

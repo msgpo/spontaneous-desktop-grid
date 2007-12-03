@@ -43,7 +43,7 @@ public class F2FMessage implements Serializable
 		 */
 		ROUTE,
 		/**
-		 * A chat message from one user to another.
+		 * A chat message.
 		 */
 		CHAT,
 		/**

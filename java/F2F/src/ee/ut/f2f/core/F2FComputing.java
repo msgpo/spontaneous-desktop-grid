@@ -12,7 +12,6 @@ import javax.swing.JOptionPane;
 
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.comm.CommunicationFactory;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
@@ -21,7 +20,6 @@ import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
-import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 
 /**
  * This is the core class of F2F framework. It provides methods to create new
@@ -541,8 +539,8 @@ public class F2FComputing
 			}
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
-		{	
-				F2FComputingGUI.controller.chatMessageReceived(sender.getDisplayName(), (String)f2fMessage.getData());
+		{	 
+			F2FComputingGUI.controller.chatMessageReceived((String)f2fMessage.getData(), sender);
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.NAT){
 			Object data = f2fMessage.getData();

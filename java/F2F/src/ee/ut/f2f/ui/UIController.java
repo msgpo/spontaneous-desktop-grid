@@ -184,7 +184,7 @@ public class UIController{
 		createChatButton = new JButton("Create chat");
 		createChatButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				createChat(null);
+				createChat(null, true);
 			}
 		});
 		
@@ -681,20 +681,35 @@ public class UIController{
 		this.stunInfoTableModel = stunInfoTableModel;
 	}
 	
-	private GroupChatWindow createChat(String chatId){
-		GroupChatWindow chat = new GroupChatWindow(selectFromPeers, this, chatId);
+	private GroupChatWindow createChat(String chatId, boolean isCreator){
+		GroupChatWindow chat = new GroupChatWindow(selectFromPeers, this, chatId, isCreator);
 		chats.put(chat.getChatId(), chat);
 		
 		return chat;
 	}
 	
-	public void chatMessageReceived(String sender, String message) {
+	public void chatMessageReceived(String message, F2FPeer sender) {
+		//Message structure: type;chatId;restOfMessage
+		String type = GroupChatWindow.findMsgType(message);
 		String chatId = GroupChatWindow.findChatId(message);
+		message = GroupChatWindow.findMsg(message);
+		
 		GroupChatWindow chat = chats.get(chatId);
 		if(chat==null) {
-			chat = createChat(chatId);
+			chat = createChat(chatId, false);
 			chats.put(chatId, chat);
-		}		
-		chat.writeMessage(sender, message.split(";", 3)[2]);
+		}
+		
+		if (type.equals(GroupChatWindow.CHAT_TYPE_CTRL)) {
+			chat.chatControlReceived(message, sender);
+		}
+		else if (type.equals(GroupChatWindow.CHAT_TYPE_MSG)) {
+			chat.chatMessageReceived(message);
+		}
+		else if (type.equals(GroupChatWindow.CHAT_TYPE_END)) {
+			// Removes you from chat
+			chats.remove(chatId);
+			chat.dispose();
+		}
 	}
 }
