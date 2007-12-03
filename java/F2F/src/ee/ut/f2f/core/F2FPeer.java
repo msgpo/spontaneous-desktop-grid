@@ -6,6 +6,8 @@ import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
+import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 
 public class F2FPeer
@@ -50,7 +52,7 @@ public class F2FPeer
 	}
 	
 	private Collection<CommunicationProvider> commProviders = null;
-	void addCommProvider(CommunicationProvider comm)
+	public void addCommProvider(CommunicationProvider comm)
 	{
 		synchronized (commProviders)
 		{
@@ -68,16 +70,36 @@ public class F2FPeer
 	}
 	public void sendMessage(Object message) throws CommunicationFailedException
 	{
+		logger.debug("Sending F2FMessage to [" + this.getID().toString() + "]");
+		//Loopback
 		if(this.id.equals(F2FComputing.getLocalPeer().getID()))
 		{
 			F2FComputing.messageRecieved(message, this.getID());
 			return;
 		}
+		
+		SocketCommunicationProvider scp = getSocketCommunicationProvider();
+		if(scp != null){
+				logger.debug("Using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]");
+				try{
+					scp.sendMessage(this.getID(), message);
+					logger.debug("Succesfully sent message, using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]");
+					return;
+				} catch (CommunicationFailedException e){
+					logger.error("Unable to send message, using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]",e);
+					logger.error("Using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
+				}
+		} else {
+			logger.error("SocketCommunicationProvider is null, using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
+		}
+		
 		for (CommunicationProvider commProvider: commProviders)
 		{
 			try
-			{
-				commProvider.sendMessage(id, message);
+			{	
+				if(!(commProvider instanceof SocketCommunicationProvider)){	
+					commProvider.sendMessage(id, message);
+				}
 			}
 			catch (Exception e)
 			{
@@ -90,5 +112,14 @@ public class F2FPeer
 		}
 		// throw an exception if message is not sent
 		throw new CommunicationFailedException();
+	}
+	
+	private SocketCommunicationProvider getSocketCommunicationProvider(){
+		for(CommunicationProvider commProv : commProviders){
+			if (commProv instanceof SocketCommunicationProvider){
+				return (SocketCommunicationProvider) commProv;
+			}
+		}
+		return null;
 	}
 }

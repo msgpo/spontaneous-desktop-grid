@@ -9,6 +9,7 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.io.File;
 import java.io.IOException;
+import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -48,6 +49,8 @@ import org.jdesktop.swingx.decorator.ColorHighlighter;
 
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
+import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
@@ -63,9 +66,11 @@ import ee.ut.f2f.ui.model.ActivityInfoTableModel;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.F2FTests;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
+import ee.ut.f2f.util.nat.traversal.StunInfo;
 
 public class UIController{
 	private static final Logger logger = Logger.getLogger(UIController.class);	
@@ -248,12 +253,57 @@ public class UIController{
 				}
 		);
 		
-		JButton testButton = new JButton("TEST 1");
+		JButton testButton = new JButton("ADD TO SC");
 		testButton.addActionListener(
 				new ActionListener(){
 					public void actionPerformed(ActionEvent e) {
-						String id = F2FComputingGUI.natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().getID();
-						writeNatLog("\n" + id);
+						String localId = F2FComputing.getLocalPeer().getID().toString();
+						Collection<F2FPeer> f2fpeers = getSelectedFriends();
+						
+						for (F2FPeer f2fpeer : f2fpeers){
+							if(!f2fpeer.getID().toString().equals(localId)){
+								SocketCommunicationProvider sc = F2FComputingGUI.natMessageProcessor.getConnectionManager().getSocketCommunicationProvider();
+								f2fpeer.addCommProvider(sc);
+								StunInfo sinf = stunInfoTableModel.get(f2fpeer.getID().toString());
+								if(sinf == null){
+									writeNatLog("\n StunInfo null for id [" + f2fpeer.getID().toString() + "]");
+									return;
+								}
+								int port = F2FComputingGUI.natMessageProcessor.getConnectionManager().getScPort();
+								InetSocketAddress inetSoc = new InetSocketAddress(sinf.getLocalIp(),port);
+								if(inetSoc == null){
+									writeNatLog("\n InetSoc null for id [" + f2fpeer.getID().toString() + "]");
+									return;
+								}
+								F2FComputingGUI.natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().addFriend(inetSoc);
+								return;
+							} else {
+								writeNatLog("\nlocalID = RemoteId");
+								return;
+							}
+						}
+					}
+				}
+		);
+		
+		JButton testButton2 = new JButton("TEST SC");
+		testButton2.addActionListener(
+				new ActionListener(){
+					public void actionPerformed(ActionEvent e) {
+						String localId = F2FComputing.getLocalPeer().getID().toString();
+						Collection<F2FPeer> f2fpeers = getSelectedFriends();
+						for (F2FPeer f2fpeer : f2fpeers){
+							if(!f2fpeer.getID().toString().equals(localId)){
+								F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, "SC TEST1");
+								try {
+									f2fpeer.sendMessage(msg);
+									return;
+								} catch (CommunicationFailedException e1) {
+									e1.printStackTrace();
+									return;
+								}
+							}
+						}
 					}
 				}
 		);
@@ -261,6 +311,7 @@ public class UIController{
 		JPanel natButtonPanel = new JPanel(new FlowLayout());
 		natButtonPanel.add(initButton);
 		natButtonPanel.add(testButton);
+		natButtonPanel.add(testButton2);
 	
 		traversalPanel.add(stunInfoTableScrollPane);
 		traversalPanel.add(natButtonPanel);
