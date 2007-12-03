@@ -33,4 +33,13 @@ public class FriendModel extends AbstractListModel
 		this.fireContentsChanged(this,0,friends.size());
 	}
 	public Collection<F2FPeer> getPeers() { return new HashSet<F2FPeer>(friends); }
+	
+	public F2FPeer getF2FPeerById(String id){
+		for(F2FPeer f2fpeer : friends){
+			if(f2fpeer.getID().toString().equals(id)){
+				return f2fpeer;
+			}
+		}
+		return null;
+	}
 }

@@ -20,6 +20,7 @@ import de.javawi.jstun.test.DiscoveryTest;
 
 import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
@@ -173,7 +174,7 @@ public class ConnectionManager {
 		throw new NetworkDiscoveryException("No reliable stun server in list, or limited network connectivity");
 	}
 	
-	public void refreshStunInfo(){
+	public void refreshLocalStunInfo(){
 		if (!isStunInfoClientRunning()){
 			StunInfoClient stClient = new StunInfoClient();
 			stClient.start();
@@ -193,7 +194,7 @@ public class ConnectionManager {
 		StunInfo sinf = F2FComputingGUI.controller.getStunInfoTableModel().get(id);
 		if (sinf == null || forceReload) {
 			log.debug("No local StunInfo found in table, refreshing local StunInfo");
-			refreshStunInfo();
+			refreshLocalStunInfo();
 		}
 		while(sinf == null){
 			try {
@@ -244,5 +245,31 @@ public class ConnectionManager {
 
 	public void setScPort(int scPort) {
 		this.scPort = scPort;
+	}
+	
+	public void addToSocketCommunicationProvider(final StunInfo sinf){
+		new Thread(new Runnable(){
+			public void run() {
+				while(socketCommunicationProvider == null){
+					initiateSocketCommunicationProvider();
+					try {
+						Thread.sleep(5000);
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+					}
+				}
+			   	log.debug("Adding new SocketPeer to SocketCommunicationProvider [" + sinf.getLocalIp() + "] id [" + sinf.getId() + "]");
+			   	getSocketCommunicationProvider().addFriend(sinf.getLocalIp(), getScPort());
+			   	
+			   	//Add socket communication layer to F2FPeer
+			   	F2FPeer f2fpeer = F2FComputingGUI.controller.getFriendModel().getF2FPeerById(sinf.getId());
+			   	if(f2fpeer != null){
+			   		log.debug("Adding SocketCommunicationProvider to F2Fpeer by id [" + sinf.getId() + "]");
+			   		f2fpeer.addCommProvider(getSocketCommunicationProvider());
+			   	} else {
+			   		log.error("No F2FPeers found by id [" + sinf.getId() + "]");
+			   	}
+			}
+		}).start();
 	}
 }

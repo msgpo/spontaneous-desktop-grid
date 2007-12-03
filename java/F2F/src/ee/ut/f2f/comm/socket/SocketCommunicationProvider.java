@@ -5,7 +5,6 @@ package ee.ut.f2f.comm.socket;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -46,7 +45,14 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 
 	public void addFriend(InetSocketAddress friend){
 		SocketPeer sPeer = new SocketPeer(this, friend);
-		peers.add(sPeer);
+		if(!peers.contains(sPeer)){
+			peers.add(sPeer);
+		}
+	}
+	
+	public void addFriend(String ip, int port){
+		InetSocketAddress inetSoc = new InetSocketAddress(ip, port);
+		addFriend(inetSoc);
 	}
 	
 	public boolean removeFriend(String id){

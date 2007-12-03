@@ -1,15 +1,11 @@
 package ee.ut.f2f.util.nat.traversal;
 
-
-import java.net.InetAddress;
-import java.net.UnknownHostException;
 import java.util.Collection;
 
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
-import ee.ut.f2f.util.nat.traversal.exceptions.NetworkInterfaceNotFoundException;
 import ee.ut.f2f.util.nat.traversal.threads.NatMessageSender;
 
 public class NatMessageProcessor {
@@ -69,6 +65,7 @@ public class NatMessageProcessor {
 			case NatMessage.REPORT_STUN_INFO: {
 				log.debug("Received StunInfo Report from [" + nmsg.getFrom() + "]");
 				StunInfo sinf = (StunInfo) nmsg.getContent();
+				//Insert
 				if (F2FComputingGUI.controller.getStunInfoTableModel().get(sinf.getId()) == null) {
 					F2FComputingGUI.controller.getStunInfoTableModel().add(sinf);
 				   	log.debug("Adding " + sinf.getId() + " to StunInfoTable");
@@ -81,16 +78,19 @@ public class NatMessageProcessor {
 				   	
 				   	//TODO Analyze received StunInfo (is in the same local network ?)
 
-				   	
+				   	//Add to socket communication layer
+				   	cm.addToSocketCommunicationProvider(sinf);
 				}
 				else {
+					//Update
 					log.debug(sinf.getId() + " StunInfo with id [" + sinf.getId() + "] allready exist in StunInfoTable");
 					log.debug("Replacing StunInfo id [" + sinf.getId() + "]");
 					F2FComputingGUI.controller.getStunInfoTableModel().remove(sinf.getId());
 					F2FComputingGUI.controller.getStunInfoTableModel().add(sinf);
+					log.debug("Updating SocketPeer in SocketCommunication Provider by id [" + sinf.getId() + "]");
+					cm.getSocketCommunicationProvider().removeFriend(sinf.getId());
+					cm.getSocketCommunicationProvider().addFriend(sinf.getLocalIp(), cm.getScPort());
 				}
-					
-				log.debug("StunInfo " + sinf.toString());
 				break;
 			}
 		}

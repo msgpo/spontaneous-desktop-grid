@@ -7,7 +7,6 @@ import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
-import java.net.InetSocketAddress;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -37,8 +36,6 @@ import org.jdesktop.swingx.decorator.ColorHighlighter;
 
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.log.LogHandler;
@@ -50,10 +47,8 @@ import ee.ut.f2f.ui.model.ActivityInfoTableModel;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
-import ee.ut.f2f.util.nat.traversal.StunInfo;
 
 public class UIController{
 	private static final Logger logger = Logger.getLogger(UIController.class);	
@@ -189,7 +184,7 @@ public class UIController{
 						String id = ((F2FPeer)friendsList.getSelectedValue()).getID().toString();
 						F2FComputingGUI.controller.getStunInfoTableModel().remove(id);
 						if(id.equals(localId)){
-							F2FComputingGUI.natMessageProcessor.getConnectionManager().refreshStunInfo();
+							F2FComputingGUI.natMessageProcessor.getConnectionManager().refreshLocalStunInfo();
 						} else {
 							NatMessage nmsg = new NatMessage(localId,id,NatMessage.COMMAND_GET_STUN_INFO,null);
 							F2FComputingGUI.natMessageProcessor.sendNatMessage(nmsg);
@@ -198,7 +193,7 @@ public class UIController{
 					}
 				}
 		);
-		
+		/*
 		JButton testButton = new JButton("ADD TO SC");
 		testButton.addActionListener(
 				new ActionListener(){
@@ -253,11 +248,11 @@ public class UIController{
 					}
 				}
 		);
-		
+		*/
 		JPanel natButtonPanel = new JPanel(new FlowLayout());
 		natButtonPanel.add(initButton);
-		natButtonPanel.add(testButton);
-		natButtonPanel.add(testButton2);
+		//natButtonPanel.add(testButton);
+		//natButtonPanel.add(testButton2);
 	
 		traversalPanel.add(stunInfoTableScrollPane);
 		traversalPanel.add(natButtonPanel);
