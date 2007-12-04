@@ -14,6 +14,7 @@ public class RenderTask {
 	private String fileFormat;
 	private long startFrame;
 	private long endFrame;
+	private String extension;
 
 	public byte[] getBlenderFile() {
 		return blenderFile;
@@ -37,6 +38,7 @@ public class RenderTask {
 
 	public void setFileFormat(String fileFormat) {
 		this.fileFormat = fileFormat;
+		this.setExtension();
 	}
 
 	public long getStartFrame() {
@@ -61,5 +63,49 @@ public class RenderTask {
 
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
+	}
+	
+	public String getExtension() {
+		return extension;
+	}
+	
+	private void setExtension() {
+		if (this.fileFormat.equals("AVIJPEG")){
+			this.extension = "avi";
+		}
+		else if (this.fileFormat.equals("TGA")){
+			this.extension = "tga";
+		}
+		else if (this.fileFormat.equals("IRIS")){
+			this.extension = "rgb";
+		}
+		else if (this.fileFormat.equals("HAMX")){
+			this.extension = "tga";
+		}
+		else if (this.fileFormat.equals("FTYPE")){
+			this.extension = "tga";
+		}
+		else if (this.fileFormat.equals("JPEG")){
+			this.extension = "jpg";
+		}
+		else if (this.fileFormat.equals("MOVIE")){
+			this.extension = "avi";
+		}
+		else if (this.fileFormat.equals("IRIZ")){
+			this.extension = "rgb";
+		}
+		else if (this.fileFormat.equals("RAWTGA")){
+			this.extension = "tga";
+		}
+		else if (this.fileFormat.equals("AVIRAW")){
+			this.extension = "avi";
+		}
+		else if (this.fileFormat.equals("PNG")){
+			this.extension = "png";
+		}
+		else if (this.fileFormat.equals("BMP")){
+			this.extension = "bmp";
+		}
+		//TODO: FRAMESERVER format seems to take forever to start rendering
 	}
 }

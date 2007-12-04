@@ -45,7 +45,8 @@ public class SlaveBlenderer extends Task {
 					// FIXME Find file extension
 					String outputFile = receivedRenderTask.getOutputLocation()
 							+ "part" + receivedRenderTask.getStartFrame()
-							+ "-" + receivedRenderTask.getEndFrame() + ".avi";
+							+ "-" + receivedRenderTask.getEndFrame() + "."
+							+ receivedRenderTask.getExtension();
 					result.setRenderedPart(FileUtil.loadFile(outputFile));
 					masterProxy.sendMessage(result);
 					// FIXME Delete output file
