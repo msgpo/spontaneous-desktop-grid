@@ -14,6 +14,7 @@ public class RenderJob {
 	private long startFrame;
 	private long endFrame;
 	private int participants;
+	private String extension;
 
 	public String getInputFile() {
 		return inputFile;
@@ -37,6 +38,7 @@ public class RenderJob {
 
 	public void setOutputFormat(String outputFormat) {
 		this.outputFormat = outputFormat;
+		this.setExtension();
 	}
 
 	public long getStartFrame() {
@@ -50,7 +52,7 @@ public class RenderJob {
 	public long getEndFrame() {
 		return endFrame;
 	}
-
+	
 	public void setEndFrame(long endFrame) {
 		this.endFrame = endFrame;
 	}
@@ -62,4 +64,50 @@ public class RenderJob {
 	public void setParticipants(int participants) {
 		this.participants = participants;
 	}
+
+	public String getExtension() {
+		return extension;
+	}
+	
+	private void setExtension() {
+		if (this.outputFormat.equals("AVIJPEG")){
+			this.extension = "avi";
+		}
+		else if (this.outputFormat.equals("TGA")){
+			this.extension = "tga";
+		}
+		else if (this.outputFormat.equals("IRIS")){
+			this.extension = "rgb";
+		}
+		//FIXME: blender doesn't seem to recognize HAMK, but outputs an avi anyway
+		else if (this.outputFormat.equals("HAMK")){
+			this.extension = "avi";
+		}
+		else if (this.outputFormat.equals("FTYPE")){
+			this.extension = "tga";
+		}
+		else if (this.outputFormat.equals("JPEG")){
+			this.extension = "jpg";
+		}
+		else if (this.outputFormat.equals("MOVIE")){
+			this.extension = "avi";
+		}
+		else if (this.outputFormat.equals("IRIZ")){
+			this.extension = "rgb";
+		}
+		else if (this.outputFormat.equals("RAWTGA")){
+			this.extension = "tga";
+		}
+		else if (this.outputFormat.equals("AVIRAW")){
+			this.extension = "avi";
+		}
+		else if (this.outputFormat.equals("PNG")){
+			this.extension = "png";
+		}
+		else if (this.outputFormat.equals("BMP")){
+			this.extension = "bmp";
+		}
+		//TODO: FRAMESERVER format seems to take forever to start rendering
+	}
 }
+

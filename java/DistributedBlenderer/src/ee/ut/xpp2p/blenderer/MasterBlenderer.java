@@ -32,6 +32,7 @@ public class MasterBlenderer extends Task {
 	public static void main(String[] args) {
 		new MainWindow(new MasterBlenderer());
 	}
+
 	
 	/*
 	 * (non-Javadoc)
@@ -192,9 +193,8 @@ public class MasterBlenderer extends Task {
 			}
 
 			// FIXME: Find output file via user interface
-			// FIXME Find file extension
 			String outputFile = job.getOutputLocation() + job.getStartFrame()
-					+ "-" + job.getEndFrame() + ".avi";
+					+ "-" + job.getEndFrame() + job.getExtension();
 			FileUtil.composeFile(results, outputFile);
 
 			long end = System.currentTimeMillis();
