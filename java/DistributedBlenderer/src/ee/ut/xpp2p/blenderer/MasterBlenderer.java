@@ -194,7 +194,7 @@ public class MasterBlenderer extends Task {
 
 			// FIXME: Find output file via user interface
 			String outputFile = job.getOutputLocation() + job.getStartFrame()
-					+ "-" + job.getEndFrame() + job.getExtension();
+					+ "-" + job.getEndFrame() + "." + job.getExtension();
 			FileUtil.composeFile(results, outputFile);
 
 			long end = System.currentTimeMillis();
