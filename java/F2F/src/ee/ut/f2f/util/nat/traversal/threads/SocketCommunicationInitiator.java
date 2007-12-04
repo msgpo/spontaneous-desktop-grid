@@ -43,7 +43,7 @@ public class SocketCommunicationInitiator extends Thread implements Activity{
 		try {
 			log.debug(getActivityName() + " thread : Initiating SocketCommunicationProvider");
 			log.debug(getActivityName() + " thread : binding on local ip [" + inetSoc.getAddress().getHostAddress() + ":" + inetSoc.getPort() + "]");
-			F2FComputingGUI.natMessageProcessor.getConnectionManager().setSocketCommunicationProvider(new SocketCommunicationProvider(inetSoc));
+			F2FComputingGUI.natMessageProcessor.getConnectionManager().setSocketCommunicationProvider(new SocketCommunicationProvider(inetSoc, null));
 			log.debug(getActivityName() + " thread : initiated");
 		} catch (CommunicationInitException e) {
 			log.error(getActivityName() + " thread : Failed to initate SocketCommunicationProvider");

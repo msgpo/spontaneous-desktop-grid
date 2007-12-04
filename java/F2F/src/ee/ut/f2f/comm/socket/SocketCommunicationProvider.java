@@ -37,9 +37,18 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 	 * Creates the communication layer with fixed count of friends.
 	 * @throws CommunicationInitException 
 	 */
-	public SocketCommunicationProvider(InetSocketAddress localPeerAddr) throws CommunicationInitException
+	public SocketCommunicationProvider(InetSocketAddress localPeerAddr, Collection<InetSocketAddress> friends) throws CommunicationInitException
 	{
+		// Create the list of friend-nodes only when passed. 
+		if (friends!=null)
+		{
+			for (InetSocketAddress friend: friends)
+			{
+				peers.add(new SocketPeer(this, friend));
+			}
+		}
 		this.localPeer = new SocketPeer(this, localPeerAddr);
+		//TODO: kill this thread if the communication provider is deleted/not used any more
 		new Thread(new SocketListener(this.localPeer.socketAddress)).start();
 	}
 
@@ -79,7 +88,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		return null;
 	}
 
-	public SocketPeer getLocalPeer() {
+	SocketPeer getLocalPeer() {
 		return localPeer;
 	}
 
@@ -107,7 +116,8 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 			}
 		}
 		
-		public SocketListener(InetSocketAddress inetSoc) throws CommunicationInitException {
+		SocketListener(InetSocketAddress inetSoc) throws CommunicationInitException
+		{
 			try {
 				serverSocket = new ServerSocket();
 				serverSocket.bind(inetSoc);
@@ -126,7 +136,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 						ActivityEvent.Type.STARTED, "Listening to incoming connections");
 				ActivityManager.getDefault().emitEvent(event);
 				
-				//
+				// accept incoming connections from other peers
 				acceptConnections();
 				
 				event = new ActivityEvent(SocketCommunicationProvider.this, 

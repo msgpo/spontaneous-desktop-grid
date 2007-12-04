@@ -41,11 +41,6 @@ class SocketPeer implements Activity
 		this.socketAddress = socketAddress;
 	}
 	
-	/*
-	 * (non-Javadoc)
-	 * 
-	 * @see ee.ut.f2f.comm.Peer#getID()
-	 */
 	public String getID()
 	{
 		String id = F2FComputingGUI.controller.getStunInfoTableModel().getByLocalIp(socketAddress.getAddress().getHostAddress()).getId();
@@ -53,9 +48,6 @@ class SocketPeer implements Activity
 		return id;
 	}
 
-	/* (non-Javadoc)
-	 * @see ee.ut.f2f.comm.Peer#sendMessage(ee.ut.f2f.comm.Message)
-	 */
 	public synchronized void sendMessage(Object message)
 			throws CommunicationFailedException
 	{
@@ -102,6 +94,8 @@ class SocketPeer implements Activity
 				try {
 					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
 							ActivityEvent.Type.STARTED, "start receiving messages"));
+					//TODO: exit this thread when the peer is not used any more + 
+					//      close used sockets
 					while(true)
 					{
 						try
@@ -110,19 +104,12 @@ class SocketPeer implements Activity
 							log.debug("\t\tReceived message from"
 									+ " '" + socketAddress + "'. Message: '" + message + "'.");
 							F2FComputing.messageRecieved(message, UUID.fromString(getID()));
-	//						TODO
-	//						for(CommunicationListener listener: layer.getListeners())
-	//						{
-	//							listener.messageRecieved(message, SocketPeer.this);
-	//						}
 						}
 						catch (ClassNotFoundException e)
 						{
 							log.debug("\t\tError reading object from '"+socketAddress+"'" + e);
 						}
 					}
-					//ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
-					//		ActivityEvent.Type.FINISHED, "end receiving messages"));
 				} catch (IOException e) {
 					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
 							ActivityEvent.Type.FAILED, e.toString()));
