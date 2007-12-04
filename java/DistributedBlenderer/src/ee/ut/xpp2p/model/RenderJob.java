@@ -79,9 +79,8 @@ public class RenderJob {
 		else if (this.outputFormat.equals("IRIS")){
 			this.extension = "rgb";
 		}
-		//FIXME: blender doesn't seem to recognize HAMK, but outputs an avi anyway
-		else if (this.outputFormat.equals("HAMK")){
-			this.extension = "avi";
+		else if (this.outputFormat.equals("HAMX")){
+			this.extension = "tga";
 		}
 		else if (this.outputFormat.equals("FTYPE")){
 			this.extension = "tga";

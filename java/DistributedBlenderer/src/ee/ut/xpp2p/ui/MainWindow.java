@@ -218,7 +218,7 @@ public class MainWindow extends JFrame {
 		filetypeChoice.add("AVIJPEG");
 		filetypeChoice.add("TGA");
 		filetypeChoice.add("IRIS");
-		filetypeChoice.add("HAMK");
+		filetypeChoice.add("HAMX");
 		filetypeChoice.add("FTYPE");
 		filetypeChoice.add("JPEG");
 		filetypeChoice.add("MOVIE");
