@@ -12,7 +12,7 @@
 		<property name="tmpBuildPath" value="${basedir}/_tmpBuild"/>
 
 		<!-- destination-jar -->
-		<property name="f2fJarPath" value="${scPath}/f2f.jar"/>
+		<property name="f2fJarPath" value="${scPath}/sc-bundles/f2f.jar"/>
 
 		<!-- sip-communicator-bin path -->
 		<property name="scBinPath" value="${scPath}/sip-communicator.bin"/>
@@ -51,7 +51,7 @@
 			<mkdir dir="${tmpBuildPath}/classes"/>
 			<javac
 				srcdir="${basedir}/src"
-				destdir="${tmpBuildPath}"
+				destdir="${tmpBuildPath}/classes"
 				fork="yes"
 				source="1.5"
 				target="1.5"
