@@ -37,6 +37,7 @@ import net.java.sip.communicator.service.protocol.event.MessageDeliveredEvent;
 import net.java.sip.communicator.service.protocol.event.MessageDeliveryFailedEvent;
 import net.java.sip.communicator.service.protocol.event.MessageListener;
 import net.java.sip.communicator.service.protocol.event.MessageReceivedEvent;
+import net.java.sip.communicator.service.protocol.event.EventFilter;
 import net.java.sip.communicator.service.contactlist.MetaContact;
 import net.java.sip.communicator.service.contactlist.MetaContactGroup;
 import net.java.sip.communicator.service.contactlist.MetaContactListService;
@@ -57,7 +58,9 @@ import org.osgi.framework.ServiceReference;
 public class SipIMCommunicationProvider 
 	implements 	CommunicationProvider,
 				ServiceListener,
-				ContactPresenceStatusListener, MessageListener
+				ContactPresenceStatusListener,
+				MessageListener,
+				EventFilter
 {	
 	/**
 	 * Name that identifies Sip communication layer.
@@ -341,7 +344,11 @@ public class SipIMCommunicationProvider
     	OperationSetBasicInstantMessaging opSetMessaging
     	= (OperationSetBasicInstantMessaging)provider
     		.getOperationSet(OperationSetBasicInstantMessaging.class);
-    	if(opSetMessaging != null) opSetMessaging.addMessageListener(this);
+    	if(opSetMessaging != null)
+    	{
+    		opSetMessaging.addMessageListener(this);
+    		opSetMessaging.addEventFilter(this);
+    	}
 
         //F2FDebug.println("\t\t ProtocolProvider added");
     }
@@ -361,7 +368,11 @@ public class SipIMCommunicationProvider
     	OperationSetBasicInstantMessaging opSetMessaging
     	= (OperationSetBasicInstantMessaging)provider
     		.getOperationSet(OperationSetBasicInstantMessaging.class);
-    	if(opSetMessaging != null) opSetMessaging.removeMessageListener(this);
+    	if(opSetMessaging != null)
+    	{
+    		opSetMessaging.removeMessageListener(this);
+    		opSetMessaging.removeEventFilter(this);
+    	}
 
         //F2FDebug.println("\t\t ProtocolProvider removed");
     }
@@ -477,7 +488,7 @@ public class SipIMCommunicationProvider
 			processF2FMessage(data, evt);
 		}
 	}
-	public static boolean isF2FMessage(EventObject evt)
+	public boolean filterEvent(EventObject evt)
 	{
 		String msg = null;
 		if (evt instanceof MessageDeliveredEvent)
