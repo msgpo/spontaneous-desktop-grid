@@ -36,11 +36,20 @@ Checkout sip-communicator from the SIPc SVN repository or download latest versio
 
 = F2F =
 
-== checkout and compile ==
+== checkout ==
 
  # checkout java/F2F from the [http://code.google.com/p/spontaneous-desktop-grid/source repository]
+
+== apply patch to SIPc project ==
+
+ # apply the patch file "Sip Communicator patch.txt" as a patch to SIPc project in Eclipse (project's context menu -> Team -> Apply patch)
+  ** order Eclipse to ignore first 4 pathname elements in the dialog (you will see the right place)
+ # build SIPc
+ 
+== compile ==
+
  # fix any errors
- # run ant with `create-plugin.xml make`
+ # run ant with `build.xml make`
 
 == configure and run ==
 
