@@ -38,18 +38,12 @@ public class F2FDebug
 		frame.setVisible(false);
 	}
 	
-	/**
-	 * @deprecated use {@link Logger#getLogger(Class)}
-	 */
 	private static F2FDebug getInstance()
 	{
 		if (debug == null) debug = new F2FDebug();
 		return debug;
 	}
 
-	/**
-	 * @deprecated use {@link Logger#debug(Object)}
-	 */
 	public static synchronized void println(String msg)
 	{
 		logger.debug(msg);

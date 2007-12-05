@@ -577,6 +577,11 @@ public class SipIMCommunicationProvider
 							// do an additional test
 							if (sipPeers.containsKey(evt.getSourceContact().getAddress()))
 								return;
+
+							// send F2F capability test message back
+							allowedContacts.add(evt.getSourceContact());
+							addF2FPeerIfNeeded(evt.getSourceContact());
+							
 							// add new peer
 							SipIMPeer peer = new SipIMPeer(evt.getSourceContact());
 							F2FTestMessage tmsg = (F2FTestMessage) message;
@@ -590,9 +595,6 @@ public class SipIMCommunicationProvider
 								}
 								idMap.get(tmsg.id).add(evt.getSourceContact().getAddress());
 							}
-							// send F2F capability test message back
-							allowedContacts.add(evt.getSourceContact());
-							addF2FPeerIfNeeded(evt.getSourceContact());
 						}
 					}
 					else F2FDebug.println("\t\t received a F2F message from unknown peer " + evt.getSourceContact().getAddress());
