@@ -7,6 +7,7 @@ import java.util.UUID;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
+import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 
 public class F2FPeer
@@ -81,9 +82,13 @@ public class F2FPeer
 		if(scp != null){
 				logger.debug("Using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]");
 				try{
-					scp.sendMessage(this.getID(), message);
-					logger.debug("Succesfully sent message, using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]");
-					return;
+					if(((F2FMessage) message).getType().equals(F2FMessage.Type.NAT)){
+						logger.debug("Message is type of NatMessage, sending through SipCommunication");
+					} else {
+						scp.sendMessage(this.getID(), message);
+						logger.debug("Succesfully sent message, using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]");
+						return;
+					}
 				} catch (CommunicationFailedException e){
 					logger.error("Unable to send message, using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]",e);
 					logger.error("Using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
