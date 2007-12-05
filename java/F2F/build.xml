@@ -1,0 +1,33 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<project default="make" name="F2F">
+	<target name="clean">
+		<delete file="../sip-communicator/sc-bundles/f2f.jar"/>
+		<delete>
+		    <fileset dir="build"/>
+		</delete>
+	</target>
+	<target name="make">
+		<delete dir="../sip-communicator/sip-communicator.bin"/>
+		<jar 
+			basedir="build/classes"
+			destfile="build/F2F.jar"
+		/>
+		<copy todir="build/lib">
+		    <fileset dir="lib"/>
+		</copy>
+		<jar 
+			basedir="build"
+			destfile="../sip-communicator/sc-bundles/f2f.jar"
+			manifest="META-INF/MANIFEST.MF"
+		/>
+		<copy todir="../sip-communicator" 
+			file="conf/F2FComputing.properties"/>
+		<!-- Does not work reliable, as it is started in the background 
+			<pde.exportPlugins destination="build" 
+			exportSource="false"
+			exportType="zip"
+			filename="../sip-communicator/sc-bundles/f2f.jar"
+			plugins="f2f_sc_plugin"
+			useJARFormat="true"/> -->
+	</target>
+</project>
