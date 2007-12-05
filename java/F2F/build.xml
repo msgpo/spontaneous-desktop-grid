@@ -1,33 +1,80 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <project default="make" name="F2F">
-	<target name="clean">
-		<delete file="../sip-communicator/sc-bundles/f2f.jar"/>
-		<delete>
-		    <fileset dir="build"/>
-		</delete>
-	</target>
-	<target name="make">
-		<delete dir="../sip-communicator/sip-communicator.bin"/>
-		<jar 
-			basedir="build/classes"
-			destfile="build/F2F.jar"
-		/>
-		<copy todir="build/lib">
-		    <fileset dir="lib"/>
-		</copy>
-		<jar 
-			basedir="build"
-			destfile="../sip-communicator/sc-bundles/f2f.jar"
-			manifest="META-INF/MANIFEST.MF"
-		/>
-		<copy todir="../sip-communicator" 
-			file="conf/F2FComputing.properties"/>
-		<!-- Does not work reliable, as it is started in the background 
-			<pde.exportPlugins destination="build" 
-			exportSource="false"
-			exportType="zip"
-			filename="../sip-communicator/sc-bundles/f2f.jar"
-			plugins="f2f_sc_plugin"
-			useJARFormat="true"/> -->
-	</target>
+
+	<!-- sip-communicator must have been built successfully -->
+	
+	<!-- Begin: Properties -->
+
+		<!-- Import the proerties file -->
+		<property file="build.xml.properties"/>
+	
+		<!-- create a tmp-name for temporary build-path -->
+		<property name="tmpBuildPath" value="${basedir}/_tmpBuild"/>
+
+		<!-- destination-jar -->
+		<property name="f2fJarPath" value="${scPath}/f2f.jar"/>
+
+		<!-- sip-communicator-bin path -->
+		<property name="scBinPath" value="${scPath}/sip-communicator.bin"/>
+
+		<!-- build the compile-classpath -->
+		<path id="task.classpath">
+			<fileset dir="${basedir}/lib">
+				<include name="**/*.jar"/>
+			</fileset>
+			<pathelement path="${scPath}/classes"/>
+			<pathelement path="${scPath}/lib/felix.jar"/>
+			<!-- <pathelement path="${f2f.framework}"/> -->
+		</path>
+
+	<!-- End: Properties -->
+
+
+	<!-- Begin: Targets -->
+	
+		<!-- clean everything which could be created by this project, also sc-bin -->	
+		<target name="clean">
+			<delete dir="${tmpBuildPath}" failonerror="no"/>
+			<delete file="${f2fJarPath}" failonerror="no"/>
+			<delete dir="${scBinPath}" failonerror="no"/>
+		</target>
+		
+		<!-- build the osgi-bundle -->	
+		<target name="make">
+			<!-- Cleanup - if remained from the previous builds. -->
+			<delete dir="${propsBuildDir}" failonerror="no"/>
+	
+			<!-- Cleanup - if remained from the previous builds. -->
+			<delete dir="${scBinPath}" failonerror="no"/>
+			
+			<!-- Create the temp dir and compile the source into it -->
+			<mkdir dir="${tmpBuildPath}/classes"/>
+			<javac
+				srcdir="${basedir}/src"
+				destdir="${tmpBuildPath}"
+				fork="yes"
+				source="1.5"
+				target="1.5"
+				>
+				<classpath refid="task.classpath"/>
+		  	</javac>
+	
+			<jar 
+				basedir="${tmpBuildPath}/classes"
+				destfile="${tmpBuildPath}/F2F.jar"
+			/>
+			<copy todir="${tmpBuildPath}/lib">
+			    <fileset dir="${basedir}/lib"/>
+			</copy>
+			<jar 
+				basedir="${tmpBuildPath}"
+				destfile="${f2fJarPath}"
+				manifest="${basedir}/META-INF/MANIFEST.MF"
+			/>
+			<copy todir="${scPath}" 
+				file="${basedir}/conf/F2FComputing.properties"/>
+		</target>
+	
+	<!-- End: Targets -->
+
 </project>
