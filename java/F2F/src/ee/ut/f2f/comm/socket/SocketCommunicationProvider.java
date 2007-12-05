@@ -5,6 +5,7 @@ package ee.ut.f2f.comm.socket;
 
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -156,7 +157,9 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 					// wait while someone tries to connect
 					Socket socket = serverSocket.accept();
 					ObjectInput oi = new CustomObjectInputStream(socket.getInputStream());
-					
+					ObjectOutputStream oo = new ObjectOutputStream(socket.getOutputStream());
+					log.debug("\t\tAccepted socket from IP: '"+socket.getInetAddress().getHostAddress()+"' port: "+ socket.getPort());
+					log.debug("\t\tBinded socket on local IP: '"+socket.getLocalAddress().getHostAddress()+"' port: "+ socket.getLocalPort());
 					// the first message has to be the ID of remote peer
 					String remoteID = (String)oi.readObject();
 					//TODO: inform Core that new peer is found
@@ -167,6 +170,8 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 					{
 						// start listening for messages from the peer
 						peer.setOi(oi);
+						peer.setOo(oo);
+						peer.setOutSocket(socket);
 						log.debug("\t\tAccepted remote connection from '"+remoteID+"'");
 					}
 					else
@@ -200,6 +205,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 				log.debug("Found destination SocketPeer by id [" + destinationPeer.toString() + "]");
 				sPeer.sendMessage(message);
 				log.debug("Sent message to SocketPeer [" + destinationPeer.toString() + "]");
+				return;
 			}
 		}
 		log.debug("No SocketPeers found by id [" + destinationPeer.toString() + "], nothing send");

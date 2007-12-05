@@ -58,6 +58,10 @@ class SocketPeer implements Activity
 			throw new CommunicationFailedException(e);
 		}
 	}
+	
+	public void setOo(ObjectOutputStream oo) {
+		this.oo = oo;
+	}
 
 	private ObjectOutput getOo() throws IOException 
 	{
@@ -69,6 +73,10 @@ class SocketPeer implements Activity
 			oo.writeObject(uid);
 		}
 		return oo;
+	}
+	
+	public void setOutSocket(Socket soc) {
+		outSocket = soc;
 	}
 	
 	private Socket getOutSocket() throws IOException 
