@@ -19,19 +19,6 @@ Ulrich's laptop will be used for showing the slides.
   * Introductionary talk - Andres A.
     * Explaining what is going to be demonstrated, etc
   * Demos of distributed processes
-    * F2F applications
-      * Using Blender to render an animation (to be found/created) with ~100 frames
-        * Case 1
-          * Using three computers
-          * Vladimir/Inspire starts an F2F chatb with ENIAC and Artjom
-          * Vladimir starts DistributedBlenderer in F2F
-          * Vladimir inserts the .blend file to be rendered
-          * Slave machines (Inspire, ENIAC and Artjom's computer) render the animation bits and send them back to the master, which joins them together
-          * The rendered animation (AVI) is shown in VLC player using the projector
-      * Computing Pi with the Monte Carlo method, using 100 billion points
-    * Connection
-      * Demonstrating TCP/IP communication if possible (otherwise using SIP IM channel)
-      * No UDP punching yet
     * Chat demonstration
       * Case 1 (MSN; Ethernet -> WiFi x 2)
         * Vladimir/Inspire initates chat with Artjom
@@ -60,10 +47,17 @@ Ulrich's laptop will be used for showing the slides.
       * Case 5 (multi-protocol)
         * Repeat some or all of the cases using Artjom's Jabber account instead.
     * Demos will be accompanied by explaining slides, graphs, etc.
-  * Proofs (showing that the system really works the way we're claiming)
-    * Showing logs and explaining
-      * SIP / Socket communication
-      * Firewall
+    * Between test cases, Artjom will show logs to prove that socket communication is working, etc.
+    * F2F applications
+      * Using Blender to render an animation (to be found/created) with ~100 frames
+        * Case 1
+          * Using three computers
+          * Vladimir/Inspire starts an F2F chat with ENIAC and Artjom
+          * Vladimir starts DistributedBlenderer in F2F
+          * Vladimir inserts the .blend file to be rendered
+          * Slave machines (Inspire, ENIAC and Artjom's computer) render the animation bits and send them back to the master, which joins them together
+          * The rendered animation (AVI) is shown in VLC player using the projector
+      * Computing Pi with the Monte Carlo method, using 100 billion points
 
 = To-do =
 
