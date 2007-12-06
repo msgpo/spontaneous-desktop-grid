@@ -66,6 +66,8 @@ public class F2FPeer
 		{
 			if (commProviders.contains(comm))
 				commProviders.remove(comm);
+			if (commProviders.size() == 1 && commProviders.contains(getSocketCommunicationProvider()))
+				commProviders.remove(getSocketCommunicationProvider());
 		}
 	}
 	public void sendMessage(Object message) throws CommunicationFailedException
