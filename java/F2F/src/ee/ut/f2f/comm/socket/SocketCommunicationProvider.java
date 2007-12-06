@@ -5,6 +5,7 @@ package ee.ut.f2f.comm.socket;
 
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
@@ -157,7 +158,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 					// wait while someone tries to connect
 					Socket socket = serverSocket.accept();
 					ObjectInput oi = new CustomObjectInputStream(socket.getInputStream());
-					ObjectOutputStream oo = new ObjectOutputStream(socket.getOutputStream());
+					ObjectOutput oo = new ObjectOutputStream(socket.getOutputStream());
 					log.debug("\t\tAccepted socket from IP: '"+socket.getInetAddress().getHostAddress()+"' port: "+ socket.getPort());
 					log.debug("\t\tBinded socket on local IP: '"+socket.getLocalAddress().getHostAddress()+"' port: "+ socket.getLocalPort());
 					// the first message has to be the ID of remote peer

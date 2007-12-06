@@ -5,6 +5,7 @@ package ee.ut.f2f.comm.socket;
 
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
@@ -53,13 +54,13 @@ class SocketPeer implements Activity
 	{
 		try {
 			getOo().writeObject(message);
-			log.debug("\t\tSent message '" + message + "' to '" + getID() + "'");
+			log.debug("\t\tSent message '" + message + "' to id [" + getID() + "] ip [" + outSocket.getInetAddress().getHostAddress() + ":" + outSocket.getPort() + "]");
 		} catch (IOException e) {
 			throw new CommunicationFailedException(e);
 		}
 	}
 	
-	public void setOo(ObjectOutputStream oo) {
+	public void setOo(ObjectOutput oo) {
 		this.oo = oo;
 	}
 
@@ -68,9 +69,12 @@ class SocketPeer implements Activity
 		if(oo == null)
 		{
 			oo = new ObjectOutputStream(getOutSocket().getOutputStream());
-			// Writing peer name into the outpustream for the other side to initialize the connection.
+			// Writing peer name into the output stream for the other side to initialize the connection.
 			String uid = layer.getLocalPeer().getID();
 			oo.writeObject(uid);
+			//Client starting listening server respond
+			oi = new ObjectInputStream(outSocket.getInputStream());
+			runSocketThread();
 		}
 		return oo;
 	}
@@ -102,6 +106,9 @@ class SocketPeer implements Activity
 				try {
 					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
 							ActivityEvent.Type.STARTED, "start receiving messages"));
+					log.debug(getActivityName() + " Starting listening to Peer id [" + getID() + "]");
+					log.debug(getActivityName() + " Remote socket [" + outSocket.getRemoteSocketAddress() + "]");
+					log.debug(getActivityName() + " Local Bind [" + outSocket.getLocalAddress().getHostAddress() + ":" + outSocket.getLocalPort() + "]");
 					//TODO: exit this thread when the peer is not used any more + 
 					//      close used sockets
 					while(true)
@@ -109,13 +116,14 @@ class SocketPeer implements Activity
 						try
 						{
 							Object message = oi.readObject();
-							log.debug("\t\tReceived message from"
-									+ " '" + socketAddress + "'. Message: '" + message + "'.");
+							log.debug("\t\tReceived message from id [" + getID() + "] ip [" +
+									 outSocket.getRemoteSocketAddress() + ":" + "]"  + "'. Message: '" + message + "'.");
 							F2FComputing.messageRecieved(message, UUID.fromString(getID()));
 						}
 						catch (ClassNotFoundException e)
 						{
-							log.debug("\t\tError reading object from '"+socketAddress+"'" + e);
+							log.debug("\t\tError reading object from id [" + getID() + "] ip [" +
+									 outSocket.getRemoteSocketAddress() + "]" + e);
 						}
 					}
 				} catch (IOException e) {
@@ -126,6 +134,8 @@ class SocketPeer implements Activity
 					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
 							ActivityEvent.Type.FAILED, e.toString()));
 					throw e;
+				} finally {
+					log.debug(getActivityName() + " Stopping listening to Peer id [" + getID() + "]");
 				}
 			}
 		}).start();
@@ -139,7 +149,7 @@ class SocketPeer implements Activity
 	public String getDisplayName() { return getID(); }
 
 	public String getActivityName() {
-		return "Peer "+socketAddress;
+		return "Socket Listening Thread, Peer id [" + getID() + "]";
 	}
 
 	public Activity getParentActivity() {
