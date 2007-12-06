@@ -42,7 +42,6 @@ public class SlaveBlenderer extends Task {
 					result.setEndFrame(receivedRenderTask.getEndFrame());
 					result.setStartFrame(receivedRenderTask.getStartFrame());
 					// FIXME Find output file via user interface or some other way
-					// FIXME Find file extension
 					String outputFile = receivedRenderTask.getOutputLocation()
 							+ "part" + receivedRenderTask.getStartFrame()
 							+ "-" + receivedRenderTask.getEndFrame() + "."
