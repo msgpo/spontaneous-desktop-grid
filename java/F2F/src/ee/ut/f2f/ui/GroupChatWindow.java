@@ -14,6 +14,7 @@ import java.util.Collection;
 import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
@@ -270,7 +271,12 @@ public class GroupChatWindow extends JFrame {
 			}
 		}
 		
-		new PeopleChooser(peopleList, this);
+		if(peopleList.size() > 0) {	
+			new PeopleChooser(peopleList, this);
+		} 
+		else {
+			JOptionPane.showMessageDialog(this, "There's no people in friendlist to add", "Can't add people", JOptionPane.WARNING_MESSAGE);
+		}
 	}
 	
 	private void removeButtonPressed() {
@@ -360,6 +366,10 @@ public class GroupChatWindow extends JFrame {
 						+ creator.getDisplayName() + "' failed with '"
 						+ cfe.getMessage() + "'");
 			}
+		}
+		
+		if (memberList.getSelectedIndices().length > 0) {
+			removeButton.setEnabled(true);
 		}
 		
 	}

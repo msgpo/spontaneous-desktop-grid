@@ -12,6 +12,8 @@ import javax.swing.JButton;
 import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JPanel;
+import javax.swing.JScrollPane;
+import javax.swing.ScrollPaneConstants;
 
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.model.FriendModel;
@@ -30,12 +32,19 @@ public class PeopleChooser extends JFrame {
 
 	public PeopleChooser(Collection<F2FPeer> friends, GroupChatWindow owner) {
 		this.owner = owner;
-		System.out.println("Heihoo");
+		this.setSize(new Dimension(200, 300));
+		this.setLocationRelativeTo(null);
+		
+		
 		friendModel = new FriendModel();
 		friendList = new JList(friendModel);
 		for (F2FPeer friend : friends) {
 			friendModel.add(friend);
 		}
+		JScrollPane listScroller = new JScrollPane(friendList);
+		listScroller.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		listScroller.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		
 
 		okButton = new JButton("OK");
 		okButton.addActionListener(new ActionListener() {
@@ -51,37 +60,36 @@ public class PeopleChooser extends JFrame {
 			}
 		});
 
-		this.setSize(new Dimension(400, 100));
-		JPanel panel = new JPanel();
-		this.setContentPane(panel);
-		panel.setLayout(new GridBagLayout());
+		JPanel contentPanel = new JPanel();
+		contentPanel.setLayout(new GridBagLayout());
 
-		System.out.println("bakaa");
 		GridBagConstraints c = new GridBagConstraints();
 
-		c.fill = GridBagConstraints.HORIZONTAL;
-		c.weighty = 1.0;
+		c.fill = GridBagConstraints.HORIZONTAL; 
 		c.gridx = 0;
 		c.gridy = 0;
-		c.gridheight = 2;
+		c.gridwidth = 2;
+		c.gridheight = 8;
+		
+		contentPanel.add(listScroller, c);
 
-		panel.add(friendList, c);
-
+		c.gridwidth = 1;
 		c.gridheight = 1;
-		c.weighty = 0.3;
-		c.gridx = 1;
-		c.gridy = 0;
+		c.gridx = 0;
+		c.gridy = 8;
 
-		panel.add(okButton, c);
+		contentPanel.add(okButton, c);
 
+		c.gridwidth = 1;
 		c.gridheight = 1;
-		c.weighty = 0.3;
 		c.gridx = 1;
-		c.gridy = 1;
+		c.gridy = 8;
 
-		panel.add(cancelButton, c);
+		contentPanel.add(cancelButton, c);
+		
+		this.setContentPane(contentPanel);
 		this.setVisible(true);
-		System.out.println("Jabba");
+		
 	}
 
 	private void onOk() {
