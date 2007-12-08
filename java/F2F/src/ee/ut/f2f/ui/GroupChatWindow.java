@@ -63,6 +63,7 @@ public class GroupChatWindow extends JFrame {
 		this.setSize(new Dimension(400, 300));
 		this.setLocationRelativeTo(null);
 		this.isCreator = isCreator;
+		this.setTitle("F2FChat");
 		
 		// This id should never contain strings or delimiters used in message structure. 
 		// Refer to MESSAGE_STRUCTURE
@@ -166,6 +167,7 @@ public class GroupChatWindow extends JFrame {
 		
 		c.fill = GridBagConstraints.HORIZONTAL;
 		c.weighty = 1.0;
+		c.weightx = 1.0;
 		c.gridx = 0;
 		c.gridy = 0;
 		c.gridheight = 4;
@@ -173,7 +175,6 @@ public class GroupChatWindow extends JFrame {
 		southPanel.add(typeAreaScrollPane, c);
 		
 		c.gridheight = 1;
-		c.weighty = 0.3;
 		c.gridx = 1;
 		c.gridy = 0;
 		southPanel.add(sendMessageButton, c);

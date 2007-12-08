@@ -9,7 +9,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import javax.swing.JButton;
-import javax.swing.JFrame;
+import javax.swing.JDialog;
 import javax.swing.JList;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
@@ -22,7 +22,7 @@ import ee.ut.f2f.ui.model.FriendModel;
  * @author Andres A.
  * @author Jaan Neljandik
  */
-public class PeopleChooser extends JFrame {
+public class PeopleChooser extends JDialog {
 	private static final long serialVersionUID = 1L;
 	private FriendModel friendModel;
 	private JList friendList;
@@ -32,9 +32,12 @@ public class PeopleChooser extends JFrame {
 
 	public PeopleChooser(Collection<F2FPeer> friends, GroupChatWindow owner) {
 		this.owner = owner;
-		this.setSize(new Dimension(200, 300));
+		this.setSize(new Dimension(150, 210));
 		this.setLocationRelativeTo(null);
-		
+		this.setResizable(false);
+		this.setTitle("Add");
+		this.setAlwaysOnTop(true);
+		this.setModal(true);
 		
 		friendModel = new FriendModel();
 		friendList = new JList(friendModel);
@@ -68,9 +71,10 @@ public class PeopleChooser extends JFrame {
 		c.fill = GridBagConstraints.HORIZONTAL; 
 		c.gridx = 0;
 		c.gridy = 0;
-		c.gridwidth = 2;
+		c.gridwidth = 2; 
 		c.gridheight = 8;
-		
+		c.weightx = 1.0;
+		c.weighty = 1.0;
 		contentPanel.add(listScroller, c);
 
 		c.gridwidth = 1;
@@ -94,7 +98,8 @@ public class PeopleChooser extends JFrame {
 
 	private void onOk() {
 		int[] selectedIndices = friendList.getSelectedIndices();
-
+		//TODO: Handle adding missing users
+		
 		if (selectedIndices.length != 0) {
 			Collection<F2FPeer> addedFriends = new ArrayList<F2FPeer>();
 			for (int index : selectedIndices) {

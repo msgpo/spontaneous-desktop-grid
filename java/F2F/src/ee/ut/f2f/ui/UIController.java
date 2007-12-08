@@ -109,8 +109,6 @@ public class UIController{
 		friendsPanel.setLayout(new BoxLayout(friendsPanel, BoxLayout.PAGE_AXIS));
 		friendsPanel.setBorder(BorderFactory.createTitledBorder("Friends"));
 		friendsPanel.setPreferredSize(new Dimension(200, 300+200));
-		//layout.putConstraint(SpringLayout.WEST, friendsPanel, 5, SpringLayout.WEST, mainPanel);
-		//layout.putConstraint(SpringLayout.NORTH, friendsPanel, 5, SpringLayout.NORTH, mainPanel);
 		mainPanel.add(friendsPanel, BorderLayout.WEST);
 		
 		friendModel = new FriendModel();
