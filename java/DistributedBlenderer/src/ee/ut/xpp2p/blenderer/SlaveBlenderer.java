@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
+import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.xpp2p.exception.NothingRenderedException;
@@ -55,6 +56,10 @@ public class SlaveBlenderer extends Task {
 					// TODO: Handle exception
 				} catch (IOException e) {
 					System.out.println(e.getMessage());
+					// TODO: Handle exception
+				}
+				catch (CommunicationFailedException cfe) {
+					System.out.println(cfe.getMessage());
 					// TODO: Handle exception
 				}
 			}

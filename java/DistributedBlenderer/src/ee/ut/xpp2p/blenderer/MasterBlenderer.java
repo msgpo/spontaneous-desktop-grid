@@ -8,6 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
@@ -172,8 +173,12 @@ public class MasterBlenderer extends Task {
 				task.setFileFormat(job.getOutputFormat());
 				task.setStartFrame(currentFrame);
 				task.setEndFrame(currentFrame + partLengths[i] - 1);
-
-				proxy.sendMessage(task);
+				try {
+					proxy.sendMessage(task);
+				} catch (CommunicationFailedException e) {
+					// TODO Auto-generated catch block
+					e.printStackTrace();
+				}
 
 				currentFrame += partLengths[i];
 				i++;
