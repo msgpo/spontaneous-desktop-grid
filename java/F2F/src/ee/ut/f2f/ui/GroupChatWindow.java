@@ -19,6 +19,8 @@ import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.ScrollPaneConstants;
+import javax.swing.event.ListSelectionEvent;
+import javax.swing.event.ListSelectionListener;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
@@ -45,6 +47,8 @@ public class GroupChatWindow extends JFrame {
 	private JPanel messagingPanel = null;
 	private JList memberList = null;
 
+	private JButton removeButton;
+	
 	private FriendModel memberModel;
 	private UIController mainWindow;
 	private JobSelector jobSelect;
@@ -54,7 +58,6 @@ public class GroupChatWindow extends JFrame {
 	private Collection<F2FPeer> selectedMembers = new ArrayList<F2FPeer>();
 	
 	public GroupChatWindow(Collection<F2FPeer> members, UIController mainWnd, String chatId, boolean isCreator){
-		
 		this.mainWindow = mainWnd;
 		this.setSize(new Dimension(400, 300));
 		this.setLocationRelativeTo(null);
@@ -106,10 +109,14 @@ public class GroupChatWindow extends JFrame {
 		memberModel = new FriendModel();
 		memberList = new JList(memberModel);
 		if (isCreator){
+			if(members.contains(F2FComputing.getLocalPeer())) {
+				members.remove(F2FComputing.getLocalPeer());
+			}
 			addMembers(members, true);		
 		}
 		
 		memberList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
+		memberList.addListSelectionListener(new MembersListListener());
 		memberList.setLayoutOrientation(JList.VERTICAL);
 		JScrollPane listScroller = new JScrollPane(memberList);
 		listScroller.setPreferredSize(new Dimension(100, 500));
@@ -132,12 +139,13 @@ public class GroupChatWindow extends JFrame {
 			}
 		});
 		
-		JButton removeButton = new JButton("Kick");
+		removeButton = new JButton("Kick");
 		removeButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				removeButtonPressed();
 			}
 		});
+		removeButton.setEnabled(false);
 		
 		JButton startJobButton  = new JButton("Job...");
 		startJobButton.addActionListener(new ActionListener() {
@@ -284,6 +292,7 @@ public class GroupChatWindow extends JFrame {
 		}
 		
 		selectedMembers.clear();	
+		removeButton.setEnabled(false);
 	}	
 	
 	private void sendButtonPressed() {
@@ -353,5 +362,30 @@ public class GroupChatWindow extends JFrame {
 			}
 		}
 		
+	}
+	
+	private class MembersListListener implements ListSelectionListener {
+		public void valueChanged(ListSelectionEvent listSelectionEvent) {
+		
+			// Return if this is one of multiple change events.
+			if (listSelectionEvent.getValueIsAdjusting())
+				return;
+			
+			// Process the event
+			selectedMembers.clear();
+			
+			for (int i : memberList.getSelectedIndices()) {
+				selectedMembers.add(memberModel.getElementAt(i));
+			}
+			
+			// Can't remove yourself
+			if(selectedMembers.size() == 0
+					|| (selectedMembers.contains(F2FComputing.getLocalPeer()))) {
+				removeButton.setEnabled(false);
+			}
+			else {
+				removeButton.setEnabled(true);
+			}
+		}
 	}
 }

@@ -128,6 +128,7 @@ public class UIController{
 				createChat(null, true);
 			}
 		});
+		createChatButton.setEnabled(false);
 		
 		friendsPanel.add(createChatButton);
 			
@@ -444,6 +445,16 @@ public class UIController{
 			// Process the event
 			selectFromPeers.clear();
 			selectFromPeers.addAll(getSelectedFriends());
+			
+			// Can't start chatting with just yourself
+			if (selectFromPeers.size() == 0
+					|| (selectFromPeers.size() == 1 && selectFromPeers
+							.contains(F2FComputing.getLocalPeer()))) {
+				createChatButton.setEnabled(false);
+			}
+			else {
+				createChatButton.setEnabled(true);
+			}
 		}
 	} // private class FriendsListListener
 	
