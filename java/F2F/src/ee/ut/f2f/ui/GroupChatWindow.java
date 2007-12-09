@@ -113,8 +113,10 @@ public class GroupChatWindow extends JFrame {
 		if (isCreator){
 			if(members.contains(F2FComputing.getLocalPeer())) {
 				members.remove(F2FComputing.getLocalPeer());
+				mainWnd.debug("Removed myself, members: " + members);
 			}
-			addMembers(members, true);		
+			memberModel.add(F2FComputing.getLocalPeer());
+			addMembers(members);		
 		}
 		
 		memberList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -241,11 +243,17 @@ public class GroupChatWindow extends JFrame {
 		//FIXME: Fix case when member has ; in his/her name (Also applies to chat message)
 		if (this.creator == null) {
 			this.creator = creator;
+			memberModel.add(creator);
 		} 
+		
+		mainWindow.debug("I got ctrl message: " + control);
 		
 		int separatorIndex = control.indexOf(";");
 		String operation = control.substring(0, separatorIndex);
 		String[] members = control.substring(separatorIndex + 1).split(";");
+		
+		mainWindow.debug("Operation: " + operation + ", members (without creator): " + members);
+		
 		if (operation.equals(CHAT_OPTYPE_ADD)) {
 			//Add people to chat
 			for (String member : members) {
@@ -263,6 +271,8 @@ public class GroupChatWindow extends JFrame {
 				}				
 			}
 		}
+		
+		mainWindow.debug("New membermodel is: " + memberModel.getPeers());
 	}
 	
 	private void addButtonPressed() {
@@ -301,10 +311,7 @@ public class GroupChatWindow extends JFrame {
 				selectedPeer.sendMessage(msg);
 			}
 			catch (CommunicationFailedException cfe) {
-				mainWindow.error("Sending message '"
-						+ typeArea.getText() + "' to the peer '"
-						+ selectedPeer.getDisplayName() + "' failed with '"
-						+ cfe.getMessage() + "'");
+				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
 			}
 		}
 		
@@ -316,7 +323,7 @@ public class GroupChatWindow extends JFrame {
 		String message =  CHAT_TYPE_MSG + ";" + chatId + ";" + from + ";" + msg;
 		
 		F2FMessage mess = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
-		
+		 
 		if (isCreator) {
 			//Send to everyone but self
 			for (F2FPeer peer : ((FriendModel)memberList.getModel()).getPeers()) {
@@ -325,10 +332,7 @@ public class GroupChatWindow extends JFrame {
 						peer.sendMessage(mess);
 					}
 					catch (CommunicationFailedException cfe) {
-						mainWindow.error("Sending message '"
-								+ typeArea.getText() + "' to the peer '"
-								+ peer.getDisplayName() + "' failed with '"
-								+ cfe.getMessage() + "'");
+						mainWindow.error("Sending message failed: "	+ cfe.getMessage());
 					}
 				}
 			}
@@ -339,10 +343,7 @@ public class GroupChatWindow extends JFrame {
 				creator.sendMessage(mess);
 			}
 			catch (CommunicationFailedException cfe) {
-				mainWindow.error("Sending message '"
-						+ typeArea.getText() + "' to the peer '"
-						+ creator.getDisplayName() + "' failed with '"
-						+ cfe.getMessage() + "'");
+				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
 			}
 		}
 	}
@@ -356,37 +357,58 @@ public class GroupChatWindow extends JFrame {
 		return chatId;
 	}
 	
-	public void addMembers(Collection<F2FPeer> members, boolean addSelf) {
-		//Message structure: ctrl;chatId;member;member;...
-		String message = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_ADD;
+	public void addMembers(Collection<F2FPeer> membersToAdd) {
+		mainWindow.debug("I want to add: " + membersToAdd);		
 		
-		if (addSelf) {
-			memberModel.add(F2FComputing.getLocalPeer());
-			message = message + ";" + F2FComputing.getLocalPeer().getDisplayName();
+		// Message structure: ctrl;chatId;+;member;member;...
+		String messageStruct = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_ADD;
+		String message;
+		
+		// Send new members to old members
+		for (F2FPeer member : memberModel.getPeers()) {
+			if(!member.getID().equals(F2FComputing.getLocalPeer().getID())) {
+				try	{
+					message = messageStruct;
+					for (F2FPeer memberToAdd : membersToAdd) {
+						message = message + ";" + memberToAdd.getDisplayName();
+					}	
+					
+					mainWindow.debug("Ctrl message is: " + message);		
+					member.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message));
+				}
+				catch (CommunicationFailedException cfe) {
+					mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+				}
+			}
 		}
 		
-		for (F2FPeer member : members) {
-			memberModel.add(member);
-			message = message + ";" + member.getDisplayName();
-		}
+		// Adds new members to my list
+		for (F2FPeer memberToAdd : membersToAdd) {
+			memberModel.add(memberToAdd);
+		}	
 		
-		F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
-		for (F2FPeer member : members) {
+		// Send memberlist to new members
+		for (F2FPeer memberToAdd : membersToAdd) {
 			try	{
-				member.sendMessage(msg);
+				message = messageStruct;
+				for (F2FPeer member : memberModel.getPeers()) {
+					if(!member.getID().equals(F2FComputing.getLocalPeer().getID()) && 
+							!member.getID().equals(memberToAdd.getID())) {
+						message = message + ";" + member.getDisplayName();
+					}
+				}	
+				
+				memberToAdd.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message));
 			}
 			catch (CommunicationFailedException cfe) {
-				mainWindow.error("Sending message '"
-						+ typeArea.getText() + "' to the peer '"
-						+ creator.getDisplayName() + "' failed with '"
-						+ cfe.getMessage() + "'");
+				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
 			}
-		}
+		}	
+		
 		
 		if (memberList.getSelectedIndices().length > 0) {
 			removeButton.setEnabled(true);
-		}
-		
+		}		
 	}
 	
 	private class MembersListListener implements ListSelectionListener {

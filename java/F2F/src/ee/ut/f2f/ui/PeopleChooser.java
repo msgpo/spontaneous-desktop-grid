@@ -106,7 +106,7 @@ public class PeopleChooser extends JDialog {
 				addedFriends.add(friendModel.getElementAt(index));
 			}
 
-			owner.addMembers(addedFriends, false);
+			owner.addMembers(addedFriends);
 		}
 		this.dispose();
 	}

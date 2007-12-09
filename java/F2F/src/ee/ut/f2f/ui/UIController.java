@@ -470,7 +470,9 @@ public class UIController{
 	
 	private GroupChatWindow createChat(String chatId, boolean isCreator){
 		GroupChatWindow chat = new GroupChatWindow(selectFromPeers, this, chatId, isCreator);
+		debug("I created chat, peers are: " + selectFromPeers);
 		chats.put(chat.getChatId(), chat);
+		debug("My chats are: " + chats);
 		
 		return chat;
 	}
