@@ -6,6 +6,9 @@
 //FIXME: if someone changes their display name, the update won't be propagated beyond chat host - 
 //other participants (who don't know the person changing their name) won't see new name.
 //TODO: abort jobs in progress if the chat is closed
+//FIXME: if creator shuts down (doesn't leave politely), creator reference will be invalid and
+//chat won't work anymore.
+//TODO: if chat bleeds empty, what should be done then?
 
 package ee.ut.f2f.ui;
 
