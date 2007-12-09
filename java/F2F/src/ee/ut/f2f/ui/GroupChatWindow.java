@@ -251,7 +251,7 @@ public class GroupChatWindow extends JFrame {
 			}
 		}
 		else {
-			String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM;
+			String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM + ";";
 			
 			try	{
 				creator.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage));
