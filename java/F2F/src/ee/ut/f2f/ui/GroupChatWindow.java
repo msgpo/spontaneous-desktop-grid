@@ -302,19 +302,15 @@ public class GroupChatWindow extends JFrame {
 		removeButton.setEnabled(false);
 	}	
 	
-	private void sendButtonPressed() {
-		//Message structure: msg;chatId;sender;text
-		String sender = F2FComputing.getLocalPeer().getDisplayName();
-		String text = typeArea.getText().trim();		
+	private void sendMessage(String msg) {
+		String message =  CHAT_TYPE_MSG + ";" + chatId + ";;" + msg;
 		
-		String message =  CHAT_TYPE_MSG + ";" + chatId + ";" + sender + ";" + text;
-		
-		F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
+		F2FMessage mess = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
 		
 		if (isCreator) {
 			for (F2FPeer peer : ((FriendModel)memberList.getModel()).getPeers()) {
 				try	{
-					peer.sendMessage(msg);
+					peer.sendMessage(mess);
 				}
 				catch (CommunicationFailedException cfe) {
 					mainWindow.error("Sending message '"
@@ -326,7 +322,7 @@ public class GroupChatWindow extends JFrame {
 		}
 		else {
 			try	{
-				creator.sendMessage(msg);
+				creator.sendMessage(mess);
 			}
 			catch (CommunicationFailedException cfe) {
 				mainWindow.error("Sending message '"
@@ -335,6 +331,10 @@ public class GroupChatWindow extends JFrame {
 						+ cfe.getMessage() + "'");
 			}
 		}
+	}
+	
+	private void sendButtonPressed() {
+		sendMessage(typeArea.getText().trim());
 		writeMessage(F2FComputing.getLocalPeer().getDisplayName(), typeArea.getText().trim());
 	}
 	
