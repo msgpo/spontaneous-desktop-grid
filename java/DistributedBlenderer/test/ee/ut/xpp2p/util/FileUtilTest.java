@@ -10,7 +10,7 @@ import junit.framework.TestCase;
 import ee.ut.xpp2p.model.RenderResult;
 
 /**
- * @author Jaan Neljandik
+ * @author Jaan Neljandik, Vladimir Ðkarupelov
  * @created 12.11.2007
  */
 public class FileUtilTest extends TestCase {
