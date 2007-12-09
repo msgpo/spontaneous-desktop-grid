@@ -53,12 +53,12 @@ public class FileUtilTest extends TestCase {
 		 * boolean fileDeleted = false; if ((new File(fileName)).exists()) while
 		 * (!fileDeleted) { fileDeleted = (new File(fileName)).delete(); }
 		 */
-		if ((new File(output1)).exists())
-			new File(output1).delete();
-		if ((new File(output2)).exists())
-			new File(output2).delete();
-		if ((new File(output3)).exists())
-			new File(output3).delete();
+		File test_output1 = new File(output1);
+		File test_output2 = new File(output1);
+		File test_output3 = new File(output1);
+		if(test_output1.exists()) test_output1.delete();
+		if(test_output2.exists()) test_output2.delete();
+		if(test_output3.exists()) test_output3.delete();
 	}
 
 	public void testLoadFile() {
