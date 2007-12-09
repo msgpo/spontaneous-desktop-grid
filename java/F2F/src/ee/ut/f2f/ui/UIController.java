@@ -475,6 +475,10 @@ public class UIController{
 		return chat;
 	}
 	
+	public void killChat(String key) {
+		chats.remove(key);
+	}
+	
 	public void chatMessageReceived(String message, F2FPeer sender) {
 		logger.info("Received: " + message + ", from: " + sender.getDisplayName());
 		
@@ -497,8 +501,8 @@ public class UIController{
 		}
 		else if (type.equals(GroupChatWindow.CHAT_TYPE_END)) {
 			// Removes you from chat
-			chats.remove(chatId);
 			chat.dispose();
+			killChat(chatId);
 		}
 	}
 }

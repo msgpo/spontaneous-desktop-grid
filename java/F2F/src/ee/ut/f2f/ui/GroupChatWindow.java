@@ -1,3 +1,12 @@
+//FIXME: if we begin kicking or adding people from/to the chat and any of those
+//people change their name at that moment, the operation will "miss".
+//To solve this, unique IDs must be created that make sense across "the system" -
+//something along the lines of chat initator creating these upon creating chat and adding people.
+//TODO: closing the chat window should abort all jobs associated with it.
+//FIXME: if someone changes their display name, the update won't be propagated beyond chat host - 
+//other participants (who don't know the person changing their name) won't see new name.
+//TODO: abort jobs in progress if the chat is closed
+
 package ee.ut.f2f.ui;
 
 import java.awt.BorderLayout;
@@ -8,6 +17,9 @@ import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
 import java.awt.event.KeyListener;
+import java.awt.event.WindowAdapter;
+import java.awt.event.WindowEvent;
+import java.awt.event.WindowListener;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -206,6 +218,51 @@ public class GroupChatWindow extends JFrame {
 		
 		this.setContentPane(messagingPanel);
 		this.setVisible(true);
+		
+		this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+		
+		WindowListener windowListener = new WindowAdapter() {
+			public void windowClosing(WindowEvent w) {
+				int response = JOptionPane.showConfirmDialog(null, "Closing the window will make you leave the chat. Continue?", "Confirm", JOptionPane.YES_NO_OPTION, JOptionPane.QUESTION_MESSAGE);
+				if(response == JOptionPane.YES_OPTION) {
+					onWindowClose();
+				}
+			}
+		};
+		
+		this.addWindowListener( windowListener );
+	}
+	
+	public void onWindowClose() {
+		if(isCreator) {
+			String kickMessage = CHAT_TYPE_END + ";" + chatId + ";" + CHAT_OPTYPE_REM;
+			
+			for (F2FPeer peer : memberModel.getPeers()) {
+				memberModel.remove(peer);
+				
+				try	{
+					if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())) {
+						peer.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, kickMessage));
+					}
+				}
+				catch (CommunicationFailedException cfe) {
+					mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+				}
+			}
+		}
+		else {
+			String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM;
+			
+			try	{
+				creator.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage));
+			}
+			catch (CommunicationFailedException cfe) {
+				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+			}
+		}
+		
+		mainWindow.killChat(chatId);
+		this.dispose();
 	}
 	
 	public void writeMessage(String from, String msg) {
@@ -246,11 +303,10 @@ public class GroupChatWindow extends JFrame {
 		}
 	}
 	
-	public void chatControlReceived(String control, F2FPeer creator) {
+	public void chatControlReceived(String control, F2FPeer src) {
 		//Message structure: operationType;member;member;member...
-		//FIXME: Fix case when member has ; in his/her name (Also applies to chat message)
-		if (this.creator == null) {
-			this.creator = creator;
+		if (this.creator == null && isCreator == false) {
+			this.creator = src;
 			memberModel.add(creator);
 		} 
 		
@@ -265,8 +321,27 @@ public class GroupChatWindow extends JFrame {
 					memberModel.add(new F2FPeer(member));
 				}
 			}
-			else if (operation.equals(CHAT_OPTYPE_REM)) {
-				//Remove people from chat
+		}
+		else if (operation.equals(CHAT_OPTYPE_REM)) {//Remove people from chat
+			if(isCreator) {
+				String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM + ";" + src.getDisplayName();
+				F2FMessage notifyMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage);
+				
+				for (F2FPeer peer : memberModel.getPeers()) {
+					try	{
+						if(!peer.getID().equals(F2FComputing.getLocalPeer().getID()) &&
+								!peer.getID().equals(src.getID())) { 
+							peer.sendMessage(notifyMsg);
+						}
+					}
+					catch (CommunicationFailedException cfe) {
+						mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+					}
+				}
+				
+				memberModel.remove(src);
+			}
+			else {
 				for (String member : members) {
 					for (F2FPeer peer : memberModel.getPeers()){
 						if (peer.getDisplayName().equals(member)) {
