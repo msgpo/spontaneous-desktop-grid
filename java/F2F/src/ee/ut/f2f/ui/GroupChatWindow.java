@@ -239,7 +239,7 @@ public class GroupChatWindow extends JFrame {
 		
 		// Forwards the message
 		if(isCreator) {
-			sendMessage(from, messageText);
+			sendMessage(from, messageText, sender);
 		}
 	}
 	
@@ -324,7 +324,7 @@ public class GroupChatWindow extends JFrame {
 		removeButton.setEnabled(false);
 	}	
 	
-	private void sendMessage(String from, String msg) {
+	private void sendMessage(String from, String msg, F2FPeer sender) {
 		String message =  CHAT_TYPE_MSG + ";" + chatId + ";" + from + ";" + msg;
 		
 		F2FMessage mess = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
@@ -332,7 +332,8 @@ public class GroupChatWindow extends JFrame {
 		if (isCreator) {
 			//Send to everyone but self
 			for (F2FPeer peer : ((FriendModel)memberList.getModel()).getPeers()) {
-				if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())) {
+				if(!peer.getID().equals(F2FComputing.getLocalPeer().getID()) && 
+						(sender == null || !peer.getID().equals(sender.getID()))) {
 					try	{
 						peer.sendMessage(mess);
 					}
@@ -354,7 +355,7 @@ public class GroupChatWindow extends JFrame {
 	}
 	
 	private void sendButtonPressed() {
-		sendMessage("", typeArea.getText().trim());
+		sendMessage("", typeArea.getText().trim(), null);
 		writeMessage(F2FComputing.getLocalPeer().getDisplayName(), typeArea.getText().trim());
 	}
 	
