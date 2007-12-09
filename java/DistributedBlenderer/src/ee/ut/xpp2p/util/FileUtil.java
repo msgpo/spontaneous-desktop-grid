@@ -86,23 +86,18 @@ public class FileUtil {
 	 *            list of rendered parts
 	 * @param fileName
 	 *            name of the file to compose
+	 * @return true if file is created, false otherwise
 	 */
-	public static void composeFile(List<RenderResult> partContents,
+	public static boolean composeFile(List<RenderResult> partContents,
 			String fileName) throws IOException {
 		Collections.sort(partContents);
-
-		File file = new File(fileName);
-		FileOutputStream stream = null;
-		try {
-			stream = new FileOutputStream(file);
-
-			for (RenderResult partContent : partContents) {
-				stream.write(partContent.getRenderedPart());
-			}
-			stream.flush();
-		} finally {
-			if (stream != null)
-				stream.close();
+		String[] inputFileNames = new String[partContents.size()];
+		for (int i = 0; i < partContents.size(); i++) {
+			byte[] partBytes = partContents.get(i).getRenderedPart();
+			String partName = partContents.get(i).getFileName();
+			File part = saveFile(partBytes, partName);
+			inputFileNames[i] = "file:/" + part.getAbsolutePath();
 		}
+		return Concat.concatinateVideoFiles( fileName, inputFileNames);
 	}
 }

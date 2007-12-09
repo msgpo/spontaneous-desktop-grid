@@ -9,6 +9,15 @@ public class RenderResult implements Comparable<RenderResult> {
 	private byte[] renderedPart;
 	private long startFrame;
 	private long endFrame;
+	private String fileName;
+
+	public String getFileName() {
+		return fileName;
+	}
+
+	public void setFileName(String fileName) {
+		this.fileName = fileName;
+	}
 
 	public byte[] getRenderedPart() {
 		return renderedPart;

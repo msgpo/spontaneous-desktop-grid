@@ -18,25 +18,47 @@ public class FileUtilTest extends TestCase {
 	private String part1;
 	private String part2;
 	private String part3;
-	private String fileName = "etc\\saveFile.txt";
+	private String file1;
+	private String file2;
+	private String file3;
+	private String output1;
+	private String output2;
+	private String output3;
+
+	private String fileName;
+	private String testFileName;
 
 	@Override
-	protected void setUp() throws Exception { 
+	protected void setUp() throws Exception {
 		part1 = "Some arts students or a small movie studio want to render a part of an animation \r\n"
 				+ "movie (compare for example Elephant's dream http://www.elephantsdream.org/). \r\n";
 		part2 = "To speed up this process they create in their instant messenger a chat group and \r\n"
 				+ "start the dynamic GRID to carry out the distributed rendering task. Extensions \r\n";
 		part3 = "to this scenarios will make use of rendering static scenes with povray \r\n"
 				+ "http://www.povray.org/ or support video or sound encoding.";
+		file1 = "etc/0001_0012.avi";
+		file2 = "etc/0013_0019.avi";
+		file3 = "etc/0020_0024.avi";
+		output1 = "etc/test_0001_0012.avi";
+		output2 = "etc/test_0013_0019.avi";
+		output3 = "etc/test_0020_0024.avi";
+		fileName = "etc\\victorDancing.avi";
+		testFileName = "etc\\0001_0024.avi";
 	}
 
 	@Override
 	protected void tearDown() throws Exception {
-		boolean fileDeleted = false;
-		if ((new File(fileName)).exists())
-			while (!fileDeleted) {
-				fileDeleted = (new File(fileName)).delete();
-			}
+		// TODO: uncomment when the file can be correctly played
+		/**
+		 * boolean fileDeleted = false; if ((new File(fileName)).exists()) while
+		 * (!fileDeleted) { fileDeleted = (new File(fileName)).delete(); }
+		 */
+		if ((new File(output1)).exists())
+			new File(output1).delete();
+		if ((new File(output2)).exists())
+			new File(output2).delete();
+		if ((new File(output3)).exists())
+			new File(output3).delete();
 	}
 
 	public void testLoadFile() {
@@ -76,49 +98,34 @@ public class FileUtilTest extends TestCase {
 
 	public void testComposeFile() {
 		try {
-			//Prepare data
+			// Prepare data
 			RenderResult result1 = new RenderResult();
 			RenderResult result2 = new RenderResult();
 			RenderResult result3 = new RenderResult();
 
-			result1.setRenderedPart(part1.getBytes());
-			result2.setRenderedPart(part2.getBytes());
-			result3.setRenderedPart(part3.getBytes());
+			result1.setRenderedPart(FileUtil.loadFile(file1));
+			result2.setRenderedPart(FileUtil.loadFile(file2));
+			result3.setRenderedPart(FileUtil.loadFile(file3));
 
 			result1.setStartFrame(0);
-			result1.setEndFrame(6);
-			result2.setStartFrame(7);
-			result2.setEndFrame(9);
-			result3.setStartFrame(10);
-			result3.setEndFrame(13);
+			result1.setEndFrame(12);
+			result1.setFileName(output1);
+			result2.setStartFrame(13);
+			result2.setEndFrame(19);
+			result2.setFileName(output2);
+			result3.setStartFrame(20);
+			result3.setEndFrame(24);
+			result3.setFileName(output3);
 
 			List<RenderResult> list = new ArrayList<RenderResult>();
 			list.add(result2);
 			list.add(result3);
 			list.add(result1);
 
-			//Execute
-			FileUtil.composeFile(list, fileName);
-			
-			//Assert
-			File file = new File(fileName);
-			FileInputStream stream = new FileInputStream(file);
-			assertTrue(file.exists());
+			// Execute
+			boolean fileCreated = FileUtil.composeFile(list, fileName);
+			assertTrue(fileCreated);
 
-			byte[] fileBytes = new byte[(int) file.length()];
-			int offset = 0;
-			int numRead = 0;
-
-			while (offset < fileBytes.length) {
-				numRead = stream.read(fileBytes, offset, fileBytes.length
-						- offset);
-				if (numRead >= 0)
-					offset += numRead;
-			}
-			String loadedText = new String(fileBytes, "UTF-8");
-			stream.close();
-
-			assertEquals(part1+part2+part3, loadedText);
 		} catch (IOException e) {
 			fail();
 		}

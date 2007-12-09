@@ -16,6 +16,10 @@ public class RenderTask {
 	private long endFrame;
 	private String extension;
 
+	public RenderTask(){
+		super();
+	}
+	
 	public byte[] getBlenderFile() {
 		return blenderFile;
 	}
