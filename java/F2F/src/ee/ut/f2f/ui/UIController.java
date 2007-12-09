@@ -476,7 +476,7 @@ public class UIController{
 	}
 	
 	public void chatMessageReceived(String message, F2FPeer sender) {
-		logger.debug("Received: " + message + ", from: " + sender.getDisplayName());
+		logger.info("Received: " + message + ", from: " + sender.getDisplayName());
 		
 		//Message structure: type;chatId;restOfMessage
 		String type = GroupChatWindow.findMsgType(message);

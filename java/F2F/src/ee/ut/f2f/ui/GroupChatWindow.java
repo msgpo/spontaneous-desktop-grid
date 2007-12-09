@@ -56,9 +56,9 @@ public class GroupChatWindow extends JFrame {
 	private JobSelector jobSelect;
 	private String chatId;
 	private boolean isCreator;
-	private F2FPeer creator;	
+	private F2FPeer creator;	 
 	private Collection<F2FPeer> selectedMembers = new ArrayList<F2FPeer>();
-	
+	 
 	public GroupChatWindow(Collection<F2FPeer> members, UIController mainWnd, String chatId, boolean isCreator){
 		this.mainWindow = mainWnd;
 		this.setSize(new Dimension(400, 300));
@@ -255,24 +255,26 @@ public class GroupChatWindow extends JFrame {
 		} 
 		
 		int separatorIndex = control.indexOf(";");
-		String operation = control.substring(0, separatorIndex);
-		String[] members = control.substring(separatorIndex + 1).split(";");
-		
-		if (operation.equals(CHAT_OPTYPE_ADD)) {
-			//Add people to chat
-			for (String member : members) {
-				memberModel.add(new F2FPeer(member));
+		if(separatorIndex != -1) {
+			String operation = control.substring(0, separatorIndex);
+			String[] members = control.substring(separatorIndex + 1).split(";");
+			
+			if (operation.equals(CHAT_OPTYPE_ADD)) {
+				//Add people to chat
+				for (String member : members) {
+					memberModel.add(new F2FPeer(member));
+				}
 			}
-		}
-		else if (operation.equals(CHAT_OPTYPE_REM)) {
-			//Remove people from chat
-			for (String member : members) {
-				for (F2FPeer peer : memberModel.getPeers()){
-					if (peer.getDisplayName().equals(member)) {
-						memberModel.remove(peer);
-						break;
-					}
-				}				
+			else if (operation.equals(CHAT_OPTYPE_REM)) {
+				//Remove people from chat
+				for (String member : members) {
+					for (F2FPeer peer : memberModel.getPeers()){
+						if (peer.getDisplayName().equals(member)) {
+							memberModel.remove(peer);
+							break;
+						}
+					}				
+				}
 			}
 		}
 	}
@@ -340,7 +342,7 @@ public class GroupChatWindow extends JFrame {
 	
 	private void sendMessage(String from, String msg, F2FPeer sender) {
 		String message =  CHAT_TYPE_MSG + ";" + chatId + ";" + from + ";" + msg;
-		
+		 
 		F2FMessage mess = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
 		 
 		if (isCreator) {
