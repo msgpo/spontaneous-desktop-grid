@@ -307,13 +307,27 @@ public class GroupChatWindow extends JFrame {
 	
 	private void removeButtonPressed() {
 		//Message structure: end;chatId
-		String message = CHAT_TYPE_END + ";" + chatId + ";" + CHAT_OPTYPE_REM;
-		F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
+		String kickMessage = CHAT_TYPE_END + ";" + chatId + ";" + CHAT_OPTYPE_REM;
+		F2FMessage kickMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, kickMessage);
+		String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM;
 		
+		// Send message to removed people
 		for (F2FPeer selectedPeer : selectedMembers) {
 			memberModel.remove(selectedPeer);
+			notifyMessage = notifyMessage + ";" + selectedPeer.getDisplayName();			
 			try	{
-				selectedPeer.sendMessage(msg);
+				selectedPeer.sendMessage(kickMsg);
+			}
+			catch (CommunicationFailedException cfe) {
+				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+			}
+		}		
+		
+		// Notify others
+		F2FMessage notifyMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage);
+		for (F2FPeer peer : memberModel.getPeers()) {
+			try	{
+				peer.sendMessage(notifyMsg);
 			}
 			catch (CommunicationFailedException cfe) {
 				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
@@ -321,7 +335,8 @@ public class GroupChatWindow extends JFrame {
 		}
 		
 		selectedMembers.clear();	
-		removeButton.setEnabled(false);
+		memberList.clearSelection();
+		removeButton.setEnabled(false);		
 	}	
 	
 	private void sendMessage(String from, String msg, F2FPeer sender) {
