@@ -24,21 +24,27 @@ public class SlaveBlenderer extends Task {
 	 * @see ee.ut.f2f.core.Task#runTask()
 	 */
 	public void runTask() {
+		System.out.println("runTask started!");
 		// Gets proxy of MasterRenderer
 		TaskProxy masterProxy = this.getTaskProxy(this.getJob()
 				.getMasterTaskID());
+		System.out.println("Line 31");
 		if (masterProxy == null)
 			throw new RuntimeException("Proxy of master task was not found!");
 
 		boolean taskReceived = false;
+		System.out.println("Line 36");
 		while (!taskReceived) {
+			System.out.println("Line 38");
 			RenderTask receivedRenderTask = (RenderTask) masterProxy
 					.receiveMessage();
+			System.out.println("Line 40");
 			if (receivedRenderTask != null) {
 				taskReceived = true;
 				try {
+					System.out.println("Line 40");
 					renderTask(receivedRenderTask);
-
+					System.out.println("Line 47");
 					RenderResult result = new RenderResult();
 					result.setEndFrame(receivedRenderTask.getEndFrame());
 					result.setStartFrame(receivedRenderTask.getStartFrame());
@@ -63,6 +69,7 @@ public class SlaveBlenderer extends Task {
 					// TODO: Handle exception
 				}
 			}
+			System.out.println("Line 72");
 		}
 	}
 
