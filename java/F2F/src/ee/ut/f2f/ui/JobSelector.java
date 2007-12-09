@@ -27,6 +27,7 @@ import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
+import ee.ut.f2f.ui.model.FriendModel;
 
 public class JobSelector extends JFrame {
 	private static final long serialVersionUID = 1L;
@@ -37,10 +38,12 @@ public class JobSelector extends JFrame {
 	private UIController mainWindow;
 	private File[] selectedFiles = null;
 	private JFrame thisRef;
+	private FriendModel members;
 	
-	public JobSelector(UIController wnd) {
+	public JobSelector(UIController wnd, FriendModel people) {
 		mainWindow = wnd;
 		thisRef = this;
+		members = people;
 		
 		this.setSize(new Dimension(560, 150));
 		this.setLocationRelativeTo(null);
@@ -149,7 +152,7 @@ public class JobSelector extends JFrame {
 					//for (File file: selectedFiles) jarFiles.add(new F2FJarFile(file.getAbsolutePath()));
 					String jobID;
 					try {
-						jobID = F2FComputing.createJob(jarFilesNames, tf2.getText(), mainWindow.getSelectedFriends()).getJobID();
+						jobID = F2FComputing.createJob(jarFilesNames, tf2.getText(), getMembers().getPeers()).getJobID();
 						mainWindow.info("Started job with ID: " + jobID);
 					} catch (F2FComputingException ex) {
 						mainWindow.error("Error with starting a job! " + ex);
@@ -199,6 +202,10 @@ public class JobSelector extends JFrame {
 		
 		this.setContentPane(mainPanel);
 		this.setVisible(true);
+	}
+	
+	public FriendModel getMembers() {
+		return members;
 	}
 	
 	private class JarFilter extends FileFilter {
