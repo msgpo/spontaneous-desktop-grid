@@ -326,7 +326,9 @@ public class GroupChatWindow extends JFrame {
 		F2FMessage notifyMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage);
 		for (F2FPeer peer : memberModel.getPeers()) {
 			try	{
-				peer.sendMessage(notifyMsg);
+				if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())) { 
+					peer.sendMessage(notifyMsg);
+				}
 			}
 			catch (CommunicationFailedException cfe) {
 				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
