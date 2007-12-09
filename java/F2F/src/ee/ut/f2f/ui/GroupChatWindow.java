@@ -208,7 +208,6 @@ public class GroupChatWindow extends JFrame {
 		if(msg.trim().length() > 0) {
 			receievedMessagesTextArea.append("\n");
 			receievedMessagesTextArea.append(from + ": " + msg);
-			typeArea.setText("");
 		}
 	} 
 	
@@ -372,6 +371,7 @@ public class GroupChatWindow extends JFrame {
 	private void sendButtonPressed() {
 		sendMessage("", typeArea.getText().trim(), null);
 		writeMessage(F2FComputing.getLocalPeer().getDisplayName(), typeArea.getText().trim());
+		typeArea.setText("");
 	}
 	
 	public String getChatId() {
