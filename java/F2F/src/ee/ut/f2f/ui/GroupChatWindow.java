@@ -110,13 +110,18 @@ public class GroupChatWindow extends JFrame {
 		
 		memberModel = new FriendModel();
 		memberList = new JList(memberModel);
+		
 		if (isCreator){
 			if(members.contains(F2FComputing.getLocalPeer())) {
 				members.remove(F2FComputing.getLocalPeer());
 				mainWnd.debug("Removed myself, members: " + members);
 			}
+			
 			memberModel.add(F2FComputing.getLocalPeer());
-			addMembers(members);		
+			addMembers(members);
+		}
+		else {
+			memberModel.add(F2FComputing.getLocalPeer());
 		}
 		
 		memberList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -384,11 +389,17 @@ public class GroupChatWindow extends JFrame {
 		
 		// Adds new members to my list
 		for (F2FPeer memberToAdd : membersToAdd) {
-			memberModel.add(memberToAdd);
+			if(!memberToAdd.getID().equals(F2FComputing.getLocalPeer().getID())) {
+				memberModel.add(memberToAdd);
+			}
 		}	
 		
 		// Send memberlist to new members
 		for (F2FPeer memberToAdd : membersToAdd) {
+			if(memberToAdd.getID().equals(F2FComputing.getLocalPeer().getID())) {
+				continue;
+			}
+			
 			try	{
 				message = messageStruct;
 				for (F2FPeer member : memberModel.getPeers()) {
