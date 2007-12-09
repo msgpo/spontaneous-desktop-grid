@@ -213,17 +213,27 @@ public class GroupChatWindow extends JFrame {
 		return message.split(";", 3)[1];
 	}
 	
-	public static String findMsg(String message) {
+	public static String findRestOfMsg(String message) {
 		return message.split(";", 3)[2];
 	}
 	
-	public void chatMessageReceived(String message) {
+	public void chatMessageReceived(String message, F2FPeer sender) {
 		//Message structure: sender;text
 		String[] msgParts = message.split(";", 2); 
-		writeMessage(msgParts[0], msgParts[1]);
+		
+		String from = msgParts[0];
+		String messageText = msgParts[1];
+		
+		if(from.length() == 0) {
+			from = sender.getDisplayName();			
+		}
+		
+		writeMessage(from, messageText);
+		
+		// Forwards the message
 		if(isCreator) {
-			//TODO: Send everyone but self
-		}  
+			sendMessage(from, messageText);
+		}
 	}
 	
 	public void chatControlReceived(String control, F2FPeer creator) {
@@ -302,25 +312,29 @@ public class GroupChatWindow extends JFrame {
 		removeButton.setEnabled(false);
 	}	
 	
-	private void sendMessage(String msg) {
-		String message =  CHAT_TYPE_MSG + ";" + chatId + ";;" + msg;
+	private void sendMessage(String from, String msg) {
+		String message =  CHAT_TYPE_MSG + ";" + chatId + ";" + from + ";" + msg;
 		
 		F2FMessage mess = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
 		
 		if (isCreator) {
+			//Send to everyone but self
 			for (F2FPeer peer : ((FriendModel)memberList.getModel()).getPeers()) {
-				try	{
-					peer.sendMessage(mess);
+				if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())) {
+					try	{
+						peer.sendMessage(mess);
+					}
+					catch (CommunicationFailedException cfe) {
+						mainWindow.error("Sending message '"
+								+ typeArea.getText() + "' to the peer '"
+								+ peer.getDisplayName() + "' failed with '"
+								+ cfe.getMessage() + "'");
+					}
 				}
-				catch (CommunicationFailedException cfe) {
-					mainWindow.error("Sending message '"
-							+ typeArea.getText() + "' to the peer '"
-							+ peer.getDisplayName() + "' failed with '"
-							+ cfe.getMessage() + "'");
-				}					
 			}
 		}
 		else {
+			// Send to creator
 			try	{
 				creator.sendMessage(mess);
 			}
@@ -334,7 +348,7 @@ public class GroupChatWindow extends JFrame {
 	}
 	
 	private void sendButtonPressed() {
-		sendMessage(typeArea.getText().trim());
+		sendMessage("", typeArea.getText().trim());
 		writeMessage(F2FComputing.getLocalPeer().getDisplayName(), typeArea.getText().trim());
 	}
 	

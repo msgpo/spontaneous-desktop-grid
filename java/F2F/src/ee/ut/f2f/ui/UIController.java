@@ -479,7 +479,7 @@ public class UIController{
 		//Message structure: type;chatId;restOfMessage
 		String type = GroupChatWindow.findMsgType(message);
 		String chatId = GroupChatWindow.findChatId(message);
-		message = GroupChatWindow.findMsg(message);
+		String restOfMessage = GroupChatWindow.findRestOfMsg(message);
 		
 		GroupChatWindow chat = chats.get(chatId);
 		if(chat==null) {
@@ -488,10 +488,10 @@ public class UIController{
 		}
 		
 		if (type.equals(GroupChatWindow.CHAT_TYPE_CTRL)) {
-			chat.chatControlReceived(message, sender);
+			chat.chatControlReceived(restOfMessage, sender);
 		}
 		else if (type.equals(GroupChatWindow.CHAT_TYPE_MSG)) {
-			chat.chatMessageReceived(message);
+			chat.chatMessageReceived(restOfMessage, sender);
 		}
 		else if (type.equals(GroupChatWindow.CHAT_TYPE_END)) {
 			// Removes you from chat
