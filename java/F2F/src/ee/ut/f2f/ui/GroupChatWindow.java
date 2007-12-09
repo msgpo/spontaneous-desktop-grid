@@ -42,11 +42,12 @@ public class GroupChatWindow extends JFrame {
 	public static final String CHAT_OPTYPE_ADD = "+"; 
 	public static final String CHAT_OPTYPE_REM = "-"; 
 	
-	private JTextArea typeArea = null;
-	private JTextArea receievedMessagesTextArea = null;
+	private JTextArea typeArea;
+	private JTextArea receievedMessagesTextArea;
+	private JScrollPane receievedMessagesTextAreaScrollPane;
 	
-	private JPanel messagingPanel = null;
-	private JList memberList = null;
+	private JPanel messagingPanel;
+	private JList memberList;
 
 	private JButton removeButton;
 	
@@ -76,8 +77,12 @@ public class GroupChatWindow extends JFrame {
 		
 		receievedMessagesTextArea = new JTextArea();
 		receievedMessagesTextArea.setEditable(false);
+		receievedMessagesTextArea.setLineWrap(true);
 		
-		JScrollPane receievedMessagesTextAreaScrollPane = new JScrollPane(receievedMessagesTextArea); 
+		receievedMessagesTextAreaScrollPane = new JScrollPane(receievedMessagesTextArea); 
+		receievedMessagesTextAreaScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
+		receievedMessagesTextAreaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
+		
 		typeArea = new JTextArea();
 		typeArea.addKeyListener(new KeyListener() {
 			boolean shiftDown = false;
@@ -114,7 +119,6 @@ public class GroupChatWindow extends JFrame {
 		if (isCreator){
 			if(members.contains(F2FComputing.getLocalPeer())) {
 				members.remove(F2FComputing.getLocalPeer());
-				mainWnd.debug("Removed myself, members: " + members);
 			}
 			
 			memberModel.add(F2FComputing.getLocalPeer());
@@ -250,13 +254,9 @@ public class GroupChatWindow extends JFrame {
 			memberModel.add(creator);
 		} 
 		
-		mainWindow.debug("I got ctrl message: " + control);
-		
 		int separatorIndex = control.indexOf(";");
 		String operation = control.substring(0, separatorIndex);
 		String[] members = control.substring(separatorIndex + 1).split(";");
-		
-		mainWindow.debug("Operation: " + operation + ", members (without creator): " + members);
 		
 		if (operation.equals(CHAT_OPTYPE_ADD)) {
 			//Add people to chat
@@ -275,8 +275,6 @@ public class GroupChatWindow extends JFrame {
 				}				
 			}
 		}
-		
-		mainWindow.debug("New membermodel is: " + memberModel.getPeers());
 	}
 	
 	private void addButtonPressed() {
@@ -381,7 +379,6 @@ public class GroupChatWindow extends JFrame {
 	}
 	
 	public void addMembers(Collection<F2FPeer> membersToAdd) {
-		mainWindow.debug("I want to add: " + membersToAdd);		
 		
 		// Message structure: ctrl;chatId;+;member;member;...
 		String messageStruct = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_ADD;
@@ -396,7 +393,6 @@ public class GroupChatWindow extends JFrame {
 						message = message + ";" + memberToAdd.getDisplayName();
 					}	
 					
-					mainWindow.debug("Ctrl message is: " + message);		
 					member.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message));
 				}
 				catch (CommunicationFailedException cfe) {

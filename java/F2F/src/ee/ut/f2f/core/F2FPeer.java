@@ -72,6 +72,7 @@ public class F2FPeer
 	}
 	public void sendMessage(Object message) throws CommunicationFailedException
 	{
+		logger.debug("Sending: " + ((F2FMessage)message).getData() + ", to: " + getDisplayName());
 		
 		//Loopback
 		if(this.id.equals(F2FComputing.getLocalPeer().getID()))

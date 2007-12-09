@@ -470,14 +470,14 @@ public class UIController{
 	
 	private GroupChatWindow createChat(String chatId, boolean isCreator){
 		GroupChatWindow chat = new GroupChatWindow(selectFromPeers, this, chatId, isCreator);
-		debug("I created chat, peers are: " + selectFromPeers);
 		chats.put(chat.getChatId(), chat);
-		debug("My chats are: " + chats);
 		
 		return chat;
 	}
 	
 	public void chatMessageReceived(String message, F2FPeer sender) {
+		logger.debug("Received: " + message + ", from: " + sender.getDisplayName());
+		
 		//Message structure: type;chatId;restOfMessage
 		String type = GroupChatWindow.findMsgType(message);
 		String chatId = GroupChatWindow.findChatId(message);
