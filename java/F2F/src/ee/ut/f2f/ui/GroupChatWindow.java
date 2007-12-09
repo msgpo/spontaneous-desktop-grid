@@ -269,6 +269,7 @@ public class GroupChatWindow extends JFrame {
 		if(msg.trim().length() > 0) {
 			receievedMessagesTextArea.append("\n");
 			receievedMessagesTextArea.append(from + ": " + msg);
+			receievedMessagesTextAreaScrollPane.getVerticalScrollBar().setValue(receievedMessagesTextAreaScrollPane.getVerticalScrollBar().getMaximum());
 		}
 	} 
 	
