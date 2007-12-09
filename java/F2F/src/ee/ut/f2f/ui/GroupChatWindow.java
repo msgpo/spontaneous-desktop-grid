@@ -31,6 +31,7 @@ import javax.swing.JFrame;
 import javax.swing.JList;
 import javax.swing.JOptionPane;
 import javax.swing.JPanel;
+import javax.swing.JScrollBar;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
@@ -270,9 +271,14 @@ public class GroupChatWindow extends JFrame {
 	
 	public void writeMessage(String from, String msg) {
 		if(msg.trim().length() > 0) {
-			receievedMessagesTextArea.append("\n");
-			receievedMessagesTextArea.append(from + ": " + msg);
-			receievedMessagesTextAreaScrollPane.getVerticalScrollBar().setValue(receievedMessagesTextAreaScrollPane.getVerticalScrollBar().getMaximum());
+			JScrollBar vbar = receievedMessagesTextAreaScrollPane.getVerticalScrollBar();
+			boolean scrollAtBottom = ((vbar.getValue() + vbar.getVisibleAmount()) == vbar.getMaximum());
+			
+			receievedMessagesTextArea.append(from + ": " + msg + "\n");
+			
+			if(scrollAtBottom) {
+				receievedMessagesTextArea.setCaretPosition(receievedMessagesTextArea.getDocument().getLength() );
+			}			
 		}
 	} 
 	
