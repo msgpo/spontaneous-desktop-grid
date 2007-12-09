@@ -321,37 +321,37 @@ public class GroupChatWindow extends JFrame {
 					memberModel.add(new F2FPeer(member));
 				}
 			}
-		}
-		else if (operation.equals(CHAT_OPTYPE_REM)) {//Remove people from chat
-			if(isCreator) {
-				String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM + ";" + src.getDisplayName();
-				F2FMessage notifyMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage);
-				
-				for (F2FPeer peer : memberModel.getPeers()) {
-					try	{
-						if(!peer.getID().equals(F2FComputing.getLocalPeer().getID()) &&
-								!peer.getID().equals(src.getID())) { 
-							peer.sendMessage(notifyMsg);
+			else if (operation.equals(CHAT_OPTYPE_REM)) {//Remove people from chat
+				if(isCreator) {
+					String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM + ";" + src.getDisplayName();
+					F2FMessage notifyMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage);
+					
+					for (F2FPeer peer : memberModel.getPeers()) {
+						try	{
+							if(!peer.getID().equals(F2FComputing.getLocalPeer().getID()) &&
+									!peer.getID().equals(src.getID())) { 
+								peer.sendMessage(notifyMsg);
+							}
+						}
+						catch (CommunicationFailedException cfe) {
+							mainWindow.error("Sending message failed: "	+ cfe.getMessage());
 						}
 					}
-					catch (CommunicationFailedException cfe) {
-						mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+					
+					memberModel.remove(src);
+				}
+				else {
+					for (String member : members) {
+						for (F2FPeer peer : memberModel.getPeers()){
+							if (peer.getDisplayName().equals(member)) {
+								memberModel.remove(peer);
+								break;
+							}
+						}				
 					}
 				}
-				
-				memberModel.remove(src);
 			}
-			else {
-				for (String member : members) {
-					for (F2FPeer peer : memberModel.getPeers()){
-						if (peer.getDisplayName().equals(member)) {
-							memberModel.remove(peer);
-							break;
-						}
-					}				
-				}
-			}
-		}
+		}		
 	}
 	
 	private void addButtonPressed() {
