@@ -49,14 +49,28 @@ public class FileUtil {
 	 *            byte array to save
 	 * @param fileName
 	 *            name of the file to save content to
+	 * @return created file
 	 */
-	public static void saveFile(byte[] fileContent, String fileName)
+	public static File saveFile(byte[] fileContent, String fileName)
 			throws IOException {
 		File file = new File(fileName);
-		FileOutputStream stream = new FileOutputStream(file);
-
-		stream.write(fileContent);
-		stream.flush();
+		if (!file.exists())
+			try {
+				file.createNewFile();
+			} catch (IOException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
+		FileOutputStream stream = null;
+		try {
+			stream = new FileOutputStream(file);
+			stream.write(fileContent);
+			stream.flush();
+			return file;
+		} finally {
+			if (stream != null)
+				stream.close();
+		}
 	}
 
 	/**
@@ -70,7 +84,7 @@ public class FileUtil {
 	public static void composeFile(List<RenderResult> partContents,
 			String fileName) throws IOException {
 		Collections.sort(partContents);
-		
+
 		File file = new File(fileName);
 		FileOutputStream stream = new FileOutputStream(file);
 

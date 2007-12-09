@@ -52,9 +52,7 @@ public class FileUtilTest extends TestCase {
 	public void testSaveFile() {
 		try {
 			byte[] textBytes = part1.getBytes();
-			FileUtil.saveFile(textBytes, fileName);
-
-			File file = new File(fileName);
+			File file = FileUtil.saveFile(textBytes, fileName);
 			FileInputStream stream = new FileInputStream(file);
 			assertTrue(file.exists());
 
@@ -69,7 +67,7 @@ public class FileUtilTest extends TestCase {
 					offset += numRead;
 			}
 			String loadedText = new String(fileBytes, "UTF-8");
-
+			stream.close();
 			assertEquals(part1, loadedText);
 		} catch (IOException e) {
 			fail();
@@ -118,6 +116,7 @@ public class FileUtilTest extends TestCase {
 					offset += numRead;
 			}
 			String loadedText = new String(fileBytes, "UTF-8");
+			stream.close();
 
 			assertEquals(part1+part2+part3, loadedText);
 		} catch (IOException e) {
