@@ -182,7 +182,7 @@ public class GroupChatWindow extends JFrame {
 				if(jobSelect != null) {
 					jobSelect.dispose();
 				}
-				jobSelect = new JobSelector(mainWindow);
+				jobSelect = new JobSelector(mainWindow, memberModel);
 			}
 		}); 
 		
