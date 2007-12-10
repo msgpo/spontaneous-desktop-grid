@@ -96,19 +96,19 @@ public class FileUtil {
 	public static boolean composeFile(List<RenderResult> partContents,
 			String outputLocation, String fileName) throws IOException {
 		Collections.sort(partContents);
-		String[] inputFileNames = new String[partContents.size()];
+		String[] inputFileURLs = new String[partContents.size()];
 		for (int i = 0; i < partContents.size(); i++) {
 			byte[] partBytes = partContents.get(i).getRenderedPart();
 			Properties props = System.getProperties();
 			String tempDir = props.getProperty("java.io.tmpdir");
 			String partName = tempDir + partContents.get(i).getFileName();
 			File part = saveFile(partBytes, partName);
-			inputFileNames[i] = URL_FILE_PREFIX + part.getAbsolutePath();
+			inputFileURLs[i] = URL_FILE_PREFIX + part.getAbsolutePath();
 		}
 		boolean filesConcatinated = Concat.concatinateVideoFiles(
-				URL_FILE_PREFIX + outputLocation + fileName, inputFileNames);
+				URL_FILE_PREFIX + outputLocation + fileName, inputFileURLs);
 		if (filesConcatinated)
-			deleteFiles(inputFileNames);
+			deleteFiles(inputFileURLs);
 		return filesConcatinated;
 	}
 
