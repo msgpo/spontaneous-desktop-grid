@@ -287,6 +287,7 @@ public class MainWindow extends JFrame {
 			renderButton = new Button();
 			renderButton.setBounds(new Rectangle(220, 231, 111, 23));
 			renderButton.setLabel("Start Rendering");
+			renderButton.setEnabled(false);
 			renderButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
 					renderButtonPressed();
@@ -324,7 +325,7 @@ public class MainWindow extends JFrame {
 	 * @throws InterruptedException
 	 */
 	private void inputFileButtonPressed() {
-		String inputFile = "D:\\Programming\\workspace\\DistributedBlenderer\\etc\\VictorDancing.blend";
+		String inputFile = BlenderFileChooser.openBlendFile();
 		if (inputFile != null) {
 			inputFileTextField.setText(inputFile);
 			class FrameHelper implements Runnable {
@@ -342,6 +343,7 @@ public class MainWindow extends JFrame {
 							jProgressBar.setStringPainted(false);
 							endFrameTextField.setText(String
 									.valueOf(frameCount));
+							renderButton.setEnabled(true);
 						}
 					});
 				}
