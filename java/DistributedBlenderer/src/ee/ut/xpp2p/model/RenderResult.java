@@ -1,11 +1,15 @@
 package ee.ut.xpp2p.model;
 
+import java.io.Serializable;
+
 /**
- * @author Jaan Neljandik
+ * @author Jaan Neljandik, Vladimir Ðkarupelov
  * @created 09.11.2007
  */
-public class RenderResult implements Comparable<RenderResult> {
+public class RenderResult implements Comparable<RenderResult>, Serializable {
 
+	private static final long serialVersionUID = -3646642611510621567L;
+	
 	private byte[] renderedPart;
 	private long startFrame;
 	private long endFrame;
