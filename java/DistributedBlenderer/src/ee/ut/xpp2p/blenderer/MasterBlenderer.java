@@ -7,6 +7,7 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
+import java.util.Properties;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputingException;
@@ -197,8 +198,6 @@ public class MasterBlenderer extends Task {
 				}
 				// FIXME: Adapt to lost friends
 			}
-
-			// FIXME: Find output file via user interface
 			String fileName = FileUtil.generateOutputFileName(getInputFile(), job.getExtension());
 			FileUtil.composeFile(results, job.getOutputLocation(), fileName);
 

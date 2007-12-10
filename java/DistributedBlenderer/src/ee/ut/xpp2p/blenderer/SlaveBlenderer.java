@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.util.Properties;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.Task;
@@ -19,6 +20,7 @@ import ee.ut.xpp2p.util.FileUtil;
  */
 public class SlaveBlenderer extends Task {
 
+	String tempDir;
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -29,17 +31,15 @@ public class SlaveBlenderer extends Task {
 		// Gets proxy of MasterRenderer
 		TaskProxy masterProxy = this.getTaskProxy(this.getJob()
 				.getMasterTaskID());
-		System.out.println("Line 31");
+		Properties props = System.getProperties();
+		tempDir = props.getProperty("java.io.tmpdir");
 		if (masterProxy == null)
 			throw new RuntimeException("Proxy of master task was not found!");
 
 		boolean taskReceived = false;
-		System.out.println("Line 36");
 		while (!taskReceived) {
-			System.out.println("Line 38");
 			RenderTask receivedRenderTask = (RenderTask) masterProxy
 					.receiveMessage();
-			System.out.println("Line 40");
 			if (receivedRenderTask != null) {
 				taskReceived = true;
 				try {
@@ -48,14 +48,12 @@ public class SlaveBlenderer extends Task {
 					result.setEndFrame(receivedRenderTask.getEndFrame());
 					result.setStartFrame(receivedRenderTask.getStartFrame());
 					String fileName = FileUtil.generateOutputFileName(receivedRenderTask.getStartFrame(), receivedRenderTask.getEndFrame(), receivedRenderTask.getExtension());
-					result.setFileName(fileName);
-					// FIXME Find output file via user interface or some other way
-					String outputFile = receivedRenderTask.getOutputLocation() + fileName;
-					System.out.println("Line 59");
+					result.setFileName(fileName);			
+					String outputFile = tempDir + fileName;
 					result.setRenderedPart(FileUtil.loadFile(outputFile));
-					System.out.println("Line 61");
 					masterProxy.sendMessage(result);
-					// FIXME Delete output file
+					//deletes rendered and sended part
+					FileUtil.deleteFiles(outputFile);
 					break;
 				} catch (NothingRenderedException e) {
 					System.out.println(e.getMessage());
@@ -88,7 +86,7 @@ public class SlaveBlenderer extends Task {
 			File file = FileUtil.saveFile(task.getBlenderFile(), task.getFileName());
 			System.out.println("Saved file: " + file);
 			String[] cmdarr = { "blender", "-b", task.getFileName(), "-o",
-					task.getOutputLocation(), "-F", task.getFileFormat(), "-s",
+					tempDir, "-F", task.getFileFormat(), "-s",
 					String.valueOf(task.getStartFrame()), "-e",
 					String.valueOf(task.getEndFrame()), "-a", "-x", "1" };
 			System.out.println("Arguments: ");
