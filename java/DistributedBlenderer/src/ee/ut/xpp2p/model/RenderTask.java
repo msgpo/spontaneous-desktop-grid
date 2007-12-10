@@ -1,13 +1,17 @@
 package ee.ut.xpp2p.model;
 
+import java.io.Serializable;
+
 /**
  * Class that represents one rendering task
  * 
- * @author Jaan Neljandik
+ * @author Jaan Neljandik, Vladimir Ðkarupelov
  * @created 20.10.2007
  */
-public class RenderTask {
+public class RenderTask implements Serializable {
 
+	private static final long serialVersionUID = 2366016649166254834L;
+	
 	private String fileName;
 	private byte[] blenderFile;
 	private String outputLocation;
@@ -16,10 +20,10 @@ public class RenderTask {
 	private long endFrame;
 	private String extension;
 
-	public RenderTask(){
+	public RenderTask() {
 		super();
 	}
-	
+
 	public byte[] getBlenderFile() {
 		return blenderFile;
 	}
@@ -68,48 +72,37 @@ public class RenderTask {
 	public void setFileName(String fileName) {
 		this.fileName = fileName;
 	}
-	
+
 	public String getExtension() {
 		return extension;
 	}
-	
+
 	private void setExtension() {
-		if (this.fileFormat.equals("AVIJPEG")){
+		if (this.fileFormat.equals("AVIJPEG")) {
 			this.extension = "avi";
-		}
-		else if (this.fileFormat.equals("TGA")){
+		} else if (this.fileFormat.equals("TGA")) {
 			this.extension = "tga";
-		}
-		else if (this.fileFormat.equals("IRIS")){
+		} else if (this.fileFormat.equals("IRIS")) {
 			this.extension = "rgb";
-		}
-		else if (this.fileFormat.equals("HAMX")){
+		} else if (this.fileFormat.equals("HAMX")) {
 			this.extension = "tga";
-		}
-		else if (this.fileFormat.equals("FTYPE")){
+		} else if (this.fileFormat.equals("FTYPE")) {
 			this.extension = "tga";
-		}
-		else if (this.fileFormat.equals("JPEG")){
+		} else if (this.fileFormat.equals("JPEG")) {
 			this.extension = "jpg";
-		}
-		else if (this.fileFormat.equals("MOVIE")){
+		} else if (this.fileFormat.equals("MOVIE")) {
 			this.extension = "avi";
-		}
-		else if (this.fileFormat.equals("IRIZ")){
+		} else if (this.fileFormat.equals("IRIZ")) {
 			this.extension = "rgb";
-		}
-		else if (this.fileFormat.equals("RAWTGA")){
+		} else if (this.fileFormat.equals("RAWTGA")) {
 			this.extension = "tga";
-		}
-		else if (this.fileFormat.equals("AVIRAW")){
+		} else if (this.fileFormat.equals("AVIRAW")) {
 			this.extension = "avi";
-		}
-		else if (this.fileFormat.equals("PNG")){
+		} else if (this.fileFormat.equals("PNG")) {
 			this.extension = "png";
-		}
-		else if (this.fileFormat.equals("BMP")){
+		} else if (this.fileFormat.equals("BMP")) {
 			this.extension = "bmp";
 		}
-		//TODO: FRAMESERVER format seems to take forever to start rendering
+		// TODO: FRAMESERVER format seems to take forever to start rendering
 	}
 }
