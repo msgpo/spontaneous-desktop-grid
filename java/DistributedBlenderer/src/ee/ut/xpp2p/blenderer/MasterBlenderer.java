@@ -26,6 +26,7 @@ import ee.ut.xpp2p.util.FileUtil;
  */
 public class MasterBlenderer extends Task {
 
+	private String inputFile;
 	/**
 	 * Executable
 	 * @param args
@@ -54,7 +55,7 @@ public class MasterBlenderer extends Task {
 	 * @return number of frames in given file
 	 */
 	public long countFrames(String inputFile) {
-
+		setInputFile(inputFile);
 		String[] cmdarr = { "blender", "-b", inputFile, "-o", "frameCount",
 				"-F", "AVIJPEG", "-a", "-x", "1" };
 		try {
@@ -198,7 +199,7 @@ public class MasterBlenderer extends Task {
 			}
 
 			// FIXME: Find output file via user interface
-			String fileName = FileUtil.generateOutputFileName(job.getStartFrame(), job.getEndFrame(), job.getExtension());
+			String fileName = FileUtil.generateOutputFileName(getInputFile(), job.getExtension());
 			FileUtil.composeFile(results, job.getOutputLocation(), fileName);
 
 			long end = System.currentTimeMillis();
@@ -211,8 +212,15 @@ public class MasterBlenderer extends Task {
 			System.out.println(e.getMessage());
 			// TODO: Handle exception
 		}
+	}
 
-		// XXX: Exit
-		System.exit(0);
+
+	public String getInputFile() {
+		return inputFile;
+	}
+
+
+	public void setInputFile(String inputFile) {
+		this.inputFile = inputFile;
 	}
 }

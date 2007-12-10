@@ -7,7 +7,7 @@ import javax.swing.JFrame;
 /**
  * File selection dialogs
  * 
- * @author Madis, Andres, Jaan Neljandik
+ * @author Madis, Andres, Jaan Neljandik, Vladimir Ðkarupelov
  */
 public class BlenderFileChooser {
 
@@ -37,7 +37,7 @@ public class BlenderFileChooser {
 
 		int returnVal = fc.showDialog(new JFrame(), "Select output location");
 		if (returnVal == JFileChooser.APPROVE_OPTION)
-			return fc.getSelectedFile().getAbsoluteFile().toString() + "/";
+			return fc.getSelectedFile().getAbsoluteFile().toString();
 
 		return null;
 	}

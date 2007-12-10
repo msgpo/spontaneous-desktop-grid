@@ -8,6 +8,7 @@ import java.util.Collections;
 import java.util.List;
 
 import ee.ut.xpp2p.model.RenderResult;
+import ee.ut.xpp2p.ui.BlenderFileFilter;
 
 /**
  * Class that handles file operations
@@ -16,6 +17,8 @@ import ee.ut.xpp2p.model.RenderResult;
  * @created 09.11.2007
  */
 public class FileUtil {
+
+	private final static String URL_FILE_PREFIX = "file:/";
 
 	/**
 	 * Loads file contents into byte array
@@ -94,13 +97,23 @@ public class FileUtil {
 		String[] inputFileNames = new String[partContents.size()];
 		for (int i = 0; i < partContents.size(); i++) {
 			byte[] partBytes = partContents.get(i).getRenderedPart();
-			String partName = outputLocation + partContents.get(i).getFileName();
+			String partName = outputLocation
+					+ partContents.get(i).getFileName();
 			File part = saveFile(partBytes, partName);
-			inputFileNames[i] = "file:/" + part.getAbsolutePath();
+			inputFileNames[i] = URL_FILE_PREFIX + part.getAbsolutePath();
 		}
-		return Concat.concatinateVideoFiles(outputLocation + fileName, inputFileNames);
+		return Concat.concatinateVideoFiles(URL_FILE_PREFIX + outputLocation
+				+ fileName, inputFileNames);
 	}
 
+	/**
+	 * Method returns the same name as blender generates
+	 * 
+	 * @param startFrame
+	 * @param endFrame
+	 * @param extension file extension
+	 * @return file name
+	 */
 	// FIXME: Need to be controlelled for frames > 9999 in blender
 	public static String generateOutputFileName(long startFrame, long endFrame,
 			String extension) {
@@ -116,4 +129,21 @@ public class FileUtil {
 		return num;
 	}
 
+	/**
+	 * Returns filename by blender file name + extension
+	 * 
+	 * @param inputBlenderFile Blender file
+	 * @param extension file Extension
+	 * @return filename by input blender file name + extension
+	 */
+	public static String generateOutputFileName(String inputBlenderFile,
+			String extension) {
+		inputBlenderFile = new File(inputBlenderFile).getName();
+		if (inputBlenderFile.toLowerCase().endsWith(
+				BlenderFileFilter.BLENDER_EXTENSION))
+			inputBlenderFile = inputBlenderFile.substring(0, inputBlenderFile
+					.length()
+					- BlenderFileFilter.BLENDER_EXTENSION.length() - 1);
+		return inputBlenderFile + "." + extension;
+	}
 }
