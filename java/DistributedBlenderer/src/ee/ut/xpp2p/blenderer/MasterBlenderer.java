@@ -22,7 +22,7 @@ import ee.ut.xpp2p.util.FileUtil;
 /**
  * Command line communicator between Java and Blender
  * 
- * @author Andres, Madis, Jaan Neljandik
+ * @author Andres, Madis, Jaan Neljandik, Vladimir Ðkarupelov
  */
 public class MasterBlenderer extends Task {
 
@@ -143,7 +143,7 @@ public class MasterBlenderer extends Task {
 			long start = System.currentTimeMillis();
 
 			// submit slave tasks
-			this.getJob().submitTasks(RenderTask.class.getName(),
+			this.getJob().submitTasks(SlaveBlenderer.class.getName(),
 					this.getJob().getPeers().size(), this.getJob().getPeers());
 
 			// get IDs of all the tasks that have been created
@@ -198,9 +198,8 @@ public class MasterBlenderer extends Task {
 			}
 
 			// FIXME: Find output file via user interface
-			String outputFile = job.getOutputLocation() + job.getStartFrame()
-					+ "-" + job.getEndFrame() + "." + job.getExtension();
-			FileUtil.composeFile(results, outputFile);
+			String fileName = FileUtil.generateOutputFileName(job.getStartFrame(), job.getEndFrame(), job.getExtension());
+			FileUtil.composeFile(results, job.getOutputLocation(), fileName);
 
 			long end = System.currentTimeMillis();
 			System.out.println("Took " + (end - start) / 1000 + "s");

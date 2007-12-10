@@ -89,15 +89,31 @@ public class FileUtil {
 	 * @return true if file is created, false otherwise
 	 */
 	public static boolean composeFile(List<RenderResult> partContents,
-			String fileName) throws IOException {
+			String outputLocation, String fileName) throws IOException {
 		Collections.sort(partContents);
 		String[] inputFileNames = new String[partContents.size()];
 		for (int i = 0; i < partContents.size(); i++) {
 			byte[] partBytes = partContents.get(i).getRenderedPart();
-			String partName = partContents.get(i).getFileName();
+			String partName = outputLocation + partContents.get(i).getFileName();
 			File part = saveFile(partBytes, partName);
 			inputFileNames[i] = "file:/" + part.getAbsolutePath();
 		}
-		return Concat.concatinateVideoFiles( fileName, inputFileNames);
+		return Concat.concatinateVideoFiles(outputLocation + fileName, inputFileNames);
 	}
+
+	// FIXME: Need to be controlelled for frames > 9999 in blender
+	public static String generateOutputFileName(long startFrame, long endFrame,
+			String extension) {
+		String start = numberEnlarger(String.valueOf(startFrame));
+		String end = numberEnlarger(String.valueOf(endFrame));
+		return start + "_" + end + "." + extension;
+	}
+
+	private static String numberEnlarger(String num) {
+		while (num.length() < 4) {
+			num = "0" + num;
+		}
+		return num;
+	}
+
 }

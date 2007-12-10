@@ -1,6 +1,7 @@
 package ee.ut.xpp2p.blenderer;
 
 import java.io.BufferedReader;
+import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
 
@@ -13,7 +14,7 @@ import ee.ut.xpp2p.model.RenderTask;
 import ee.ut.xpp2p.util.FileUtil;
 
 /**
- * @author Jaan Neljandik
+ * @author Jaan Neljandik, Vladimir Ðkarupelov
  * @created 05.11.2007
  */
 public class SlaveBlenderer extends Task {
@@ -42,18 +43,17 @@ public class SlaveBlenderer extends Task {
 			if (receivedRenderTask != null) {
 				taskReceived = true;
 				try {
-					System.out.println("Line 40");
 					renderTask(receivedRenderTask);
-					System.out.println("Line 47");
 					RenderResult result = new RenderResult();
 					result.setEndFrame(receivedRenderTask.getEndFrame());
 					result.setStartFrame(receivedRenderTask.getStartFrame());
+					String fileName = FileUtil.generateOutputFileName(receivedRenderTask.getStartFrame(), receivedRenderTask.getEndFrame(), receivedRenderTask.getExtension());
+					result.setFileName(fileName);
 					// FIXME Find output file via user interface or some other way
-					String outputFile = receivedRenderTask.getOutputLocation()
-							+ "part" + receivedRenderTask.getStartFrame()
-							+ "-" + receivedRenderTask.getEndFrame() + "."
-							+ receivedRenderTask.getExtension();
+					String outputFile = receivedRenderTask.getOutputLocation() + fileName;
+					System.out.println("Line 59");
 					result.setRenderedPart(FileUtil.loadFile(outputFile));
+					System.out.println("Line 61");
 					masterProxy.sendMessage(result);
 					// FIXME Delete output file
 					break;
@@ -84,20 +84,24 @@ public class SlaveBlenderer extends Task {
 	 */
 	public void renderTask(RenderTask task) throws NothingRenderedException {
 		try {
-			FileUtil.saveFile(task.getBlenderFile(), task.getFileName());
-
+			System.out.println("Filename = " + task.getFileName());
+			File file = FileUtil.saveFile(task.getBlenderFile(), task.getFileName());
+			System.out.println("Saved file: " + file);
 			String[] cmdarr = { "blender", "-b", task.getFileName(), "-o",
 					task.getOutputLocation(), "-F", task.getFileFormat(), "-s",
 					String.valueOf(task.getStartFrame()), "-e",
 					String.valueOf(task.getEndFrame()), "-a", "-x", "1" };
+			System.out.println("Arguments: ");
+			for(int i = 0; i < cmdarr.length; i++ ) System.out.println(cmdarr[i]);
 			Process proc = Runtime.getRuntime().exec(cmdarr);
 			BufferedReader br = new BufferedReader(new InputStreamReader(proc
 					.getInputStream()));
 
 			String line;
 			boolean anythingRendered = false;
-
+			System.out.println("Buffered reader: ");
 			while ((line = br.readLine()) != null) {
+				System.out.println(line);
 				if (line.startsWith("'blender' is not recognized")
 						|| line.indexOf("blender") != -1
 						&& line.indexOf("not found") != -1)

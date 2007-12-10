@@ -123,7 +123,7 @@ public class FileUtilTest extends TestCase {
 			list.add(result1);
 
 			// Execute
-			boolean fileCreated = FileUtil.composeFile(list, fileName);
+			boolean fileCreated = FileUtil.composeFile(list,"", fileName);
 			assertTrue(fileCreated);
 
 		} catch (IOException e) {
