@@ -43,8 +43,8 @@ Checkout sip-communicator from the SIPc SVN repository or download latest versio
 == apply patch to SIPc project ==
 
  # apply the patch file "Sip Communicator patch.txt" as a patch to SIPc project in Eclipse (project's context menu -> Team -> Apply patch)
-  ** order Eclipse to ignore first 4 pathname *sometimes this are only 3, see that th e number of exclamation marks are minimal -> one) elements in the dialog (you will see the right place)
   ** check the box against `EventFilter.java` (so that this file will be created)
+     * I didn't see any checkbox there, but it worked anyway if I left it as it was. - Andres K
  # build SIPc
  
 == compile ==
