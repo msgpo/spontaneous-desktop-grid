@@ -20,7 +20,7 @@ Checkout sip-communicator from the SIPc SVN repository or download latest versio
    # checkout trunk (may take up to 10 minutes)
      * it is suggested you rename it to 'sip-communicator'
  * *or* download latest version
-   # the last nightly build works fine
+   # the latest nightly build works fine
 
 == Configure and compile ==
 
