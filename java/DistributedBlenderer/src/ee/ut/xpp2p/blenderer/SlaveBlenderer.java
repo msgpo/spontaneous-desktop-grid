@@ -82,8 +82,11 @@ public class SlaveBlenderer extends Task {
 	 */
 	public void renderTask(RenderTask task) throws NothingRenderedException {
 		try {
-			System.out.println("Filename = " + task.getFileName());
-			File file = FileUtil.saveFile(task.getBlenderFile(), task.getFileName());
+			File blenderFile = new File(task.getFileName());
+			String blenderFileName = blenderFile.getName();
+			String fullBlenderFileName = tempDir + blenderFileName;
+			System.out.println("Filename = " + fullBlenderFileName);
+			File file = FileUtil.saveFile(task.getBlenderFile(), fullBlenderFileName);
 			System.out.println("Saved file: " + file);
 			String[] cmdarr = { "blender", "-b", task.getFileName(), "-o",
 					tempDir, "-F", task.getFileFormat(), "-s",
