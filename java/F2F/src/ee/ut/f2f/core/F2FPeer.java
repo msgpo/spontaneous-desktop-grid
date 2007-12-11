@@ -81,7 +81,7 @@ public class F2FPeer
 			F2FComputing.messageRecieved(message, this.getID());			
 			return;
 		}
-		
+		/*
 		SocketCommunicationProvider scp = getSocketCommunicationProvider();
 		if(scp != null){
 				logger.debug("Using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]");
@@ -100,7 +100,7 @@ public class F2FPeer
 		} else {
 			logger.error("SocketCommunicationProvider is null, using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
 		}
-		
+		*/
 		for (CommunicationProvider commProvider: commProviders)
 		{
 			try
