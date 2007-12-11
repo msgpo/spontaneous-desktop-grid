@@ -1,7 +1,7 @@
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java
+Index: src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(working copy)
+--- src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(revision 3289)
++++ src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(working copy)
 @@ -102,4 +102,20 @@
       * <tt>false</tt> otherwise.
       */
@@ -23,10 +23,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/serv
 +     */
 +    public void removeEventFilter(EventFilter filter);
  }
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/service/protocol/event/EventFilter.java
+Index: src/net/java/sip/communicator/service/protocol/event/EventFilter.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/service/protocol/event/EventFilter.java	(revision 0)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/service/protocol/event/EventFilter.java	(revision 0)
+--- src/net/java/sip/communicator/service/protocol/event/EventFilter.java	(revision 0)
++++ src/net/java/sip/communicator/service/protocol/event/EventFilter.java	(revision 0)
 @@ -0,0 +1,27 @@
 +/*
 + * SIP Communicator, the OpenSource Java VoIP and Instant Messaging client.
@@ -55,10 +55,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/serv
 +     */
 +    public boolean filterEvent(EventObject msg);
 +}
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(working copy)
 @@ -47,6 +47,11 @@
      private Vector messageListeners = new Vector();
  
@@ -129,10 +129,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +        }	
 +	}
  }
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(working copy)
 @@ -289,4 +289,14 @@
          else
             return false;
@@ -148,10 +148,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +		
 +	}
  }
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(working copy)
 @@ -69,6 +69,11 @@
      private Vector messageListeners = new Vector();
  
@@ -222,10 +222,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +        }	
 +	}
  }
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(working copy)
 @@ -453,4 +453,13 @@
         }
      }
@@ -240,10 +240,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +		
 +	}
  }
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java
+Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(working copy)
 @@ -187,4 +187,14 @@
              listener.messageReceived(msgReceivedEvt);
          }
@@ -260,10 +260,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +	}
  }
 \ No newline at end of file
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
 @@ -10,6 +10,7 @@
  import java.net.*;
  import java.text.*;
@@ -343,10 +343,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +	}
  }
  
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(working copy)
 @@ -46,6 +46,11 @@
      private Vector messageListeners = new Vector();
  
@@ -417,10 +417,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +        }	
 +	}
  }
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(working copy)
 @@ -400,5 +400,15 @@
      {
          return false;
@@ -437,10 +437,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +	}
      
  }
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(working copy)
 @@ -36,6 +36,11 @@
      private Vector messageListeners = new Vector();
  
@@ -513,10 +513,10 @@ Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl
 +        }	
 +	}
  }
-Index: C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java
+Index: src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java
 ===================================================================
---- C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(revision 3289)
-+++ C:/_ISIKLIK/workspace/sip-communicator/src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(working copy)
+--- src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(revision 3289)
++++ src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(working copy)
 @@ -282,4 +282,14 @@
          else
             return false;
