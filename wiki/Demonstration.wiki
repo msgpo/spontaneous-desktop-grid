@@ -71,8 +71,9 @@ Ulrich's laptop will be used for showing the slides.
   * Practice your part and make sure you understand exactly what you're supposed to do and when.
 *Andres A*
   * The "What is P2P and F2F" part for the introduction.
-*Artjon*
+*Artjom*
   * Use computer names instead of A, B, C on the NAT traversal graph.
+  * Fix the...  something about TCP.
 *Jaan*
   * Graph about multi-protocol chat
   * Change words on slides: Server -> Master, Client -> Slave, forward -> relay
