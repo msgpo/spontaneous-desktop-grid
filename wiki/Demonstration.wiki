@@ -9,7 +9,7 @@
     * using MSN account voviss@gmail.com
   * Artjom
     * WiFi connection
-    * using MSN account artjom85@ut.ee or one of Artjom's Jabber accounts for multi-protocol tests
+    * using Jabber account
 
 Ulrich's laptop will be used for showing the slides.
 
@@ -20,7 +20,7 @@ Ulrich's laptop will be used for showing the slides.
     * Explaining what is going to be demonstrated, etc
   * Demos of distributed processes
     * Chat demonstration
-      * Case 1 (MSN; Ethernet -> WiFi x 2)
+      * Case 1 (Ethernet -> WiFi x 2)
         * Vladimir/Inspire initates chat with Artjom
         * Vladimir/Inspire adds Vladimir/ENIAC to the chat
         * Message sending is tested by everyone
@@ -28,24 +28,22 @@ Ulrich's laptop will be used for showing the slides.
         * Artjom verifies that he's been notified of this and can no longer communicate from that window
         * Vladimir/ENIAC verifies that Artjom no longer shows up in the participants list
         * The remaining computers test sending messages and verify that Artjom receives nothing
-      * Case 2 (MSN; WiFi -> Ethernet)
+      * Case 2 (WiFi -> Ethernet)
         * Artjom initiates chat with Vladimir/Inspire
         * Message sending is tested both ways
         * Vladimir/ENIAC leaves chat
         * Artjom verifies that he can no longer send messages to Vladimir/ENIAC from that window
-      * Case 3 (MSN; WiFi -> WiFi)
+      * Case 3 (WiFi -> WiFi)
         * Artjom initiates chat with Vladimir/ENIAC
         * Message sending is tested both ways
         * Artjom ends the chat
         * Vladimir/ENIAC verifies that he can no longer send messages to Artjom from that window
-      * Case 4 (MSN; WiFi -> WiFi & Ethernet)
+      * Case 4 (WiFi -> WiFi & Ethernet)
         * Artjom initiates chat with Vladimir/ENIAC
         * Artjom adds Vladimir/Inspire to the chat
         * Message sending is tested by everyone
         * Vladimir/ENIAC leaves the chat
         * The remaining computers test sending messages and verify that Vladimir/ENIAC receives nothing
-      * Case 5 (multi-protocol)
-        * Repeat some or all of the cases using Artjom's Jabber account instead.
     * Demos will be accompanied by explaining slides, graphs, etc.
     * Between test cases, Artjom will show logs to prove that socket communication is working, etc.
     * F2F applications
@@ -70,5 +68,4 @@ Ulrich's laptop will be used for showing the slides.
 *Jaan*
   * Slides about chat
 *Jürmo*
-  * Slides about Blender
   * Find an appropriate .blend file to be rendered (At least 100 frames)
