@@ -1,5 +1,7 @@
 package ee.ut.f2f.util.nat.traversal.test;
 
+import ee.ut.f2f.util.nat.traversal.ConnectionManager;
+import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 import junit.framework.TestCase;
 
 public class ConnectionManagerTest extends TestCase{
@@ -47,11 +49,23 @@ public class ConnectionManagerTest extends TestCase{
 	}
 	*/
 	
-	/*
+	
 	public void testLoadProperties(){
-		cm.run();
+		ConnectionManager cm = null;
+		try{
+			cm = new ConnectionManager("conf/nat-traversal.properties");
+		} catch (ConnectionManagerException e){
+			e.printStackTrace();
+			fail();
+		}
+		assertNotNull(cm);
+		assertNotNull(cm.getStunServers());
+		assertTrue(cm.getStunServers().size() != 0);
+		System.out.println ("Stun servers: [" + cm.getStunServers() + "]");
+		assertTrue(cm.getScPort() != -1);
+		System.out.println ("Socket communication port: [" + cm.getScPort() + "]");
 	}
-	*/
+	
 	/*
 	public void testgetStunInfoData(){
 		try {

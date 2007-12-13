@@ -96,9 +96,9 @@ public class F2FComputingGUI {
 								if (!peersF2F.contains(peer)){
 									friendModel.remove(peer);
 									//Remove SocketPeer form socketCommunication layer
-									natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().removeFriend(peer.getID().toString());
+									//natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().removeFriend(peer.getID().toString());
 									//Remove also NAT Traversal Stun info
-									F2FComputingGUI.controller.getStunInfoTableModel().remove(peer.getID().toString());
+									//F2FComputingGUI.controller.getStunInfoTableModel().remove(peer.getID().toString());
 								}
 							}
 							// then check if someone has to be added

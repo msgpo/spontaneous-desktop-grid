@@ -8,9 +8,9 @@
 	<classpathentry kind="lib" path="lib/commons-codec-1.3.jar"/>
 	<classpathentry kind="lib" path="/sip-communicator/lib/felix.jar"/>
 	<classpathentry kind="lib" path="lib/swingx-0.9.1.jar" sourcepath="/home/olegus/uni/f2f/swingx-src/src/java"/>
-	<classpathentry kind="lib" path="lib/spring-core.jar"/>
 	<classpathentry kind="con" path="org.eclipse.pde.core.requiredPlugins"/>
 	<classpathentry kind="lib" path="/sip-communicator/lib/bundle/junit.jar"/>
 	<classpathentry kind="lib" path="lib/jstun-0.6.1.jar"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>

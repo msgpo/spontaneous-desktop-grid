@@ -1,5 +1,8 @@
 package ee.ut.f2f.util.nat.traversal;
 
+import java.io.BufferedReader;
+import java.io.FileNotFoundException;
+import java.io.FileReader;
 import java.io.IOException;
 import java.net.Inet6Address;
 import java.net.InetAddress;
@@ -9,12 +12,9 @@ import java.net.UnknownHostException;
 import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Enumeration;
+import java.util.Hashtable;
 import java.util.List;
-import java.util.Properties;
-
-import org.springframework.core.io.FileSystemResource;
-import org.springframework.core.io.Resource;
-import org.springframework.core.io.support.PropertiesLoaderUtils;
+import java.util.Map;
 
 import de.javawi.jstun.test.DiscoveryTest;
 
@@ -77,20 +77,42 @@ public class ConnectionManager {
 	}
 	
 	private void loadProperties(String propertiesFilePath) throws ConnectionManagerException{
-		Resource fs = new FileSystemResource(propertiesFilePath);
-		Properties props = null;
-		try {
-			log.info("Loading properties from [" + fs.getFile().getAbsolutePath() + "]");
-			props = PropertiesLoaderUtils.loadProperties(fs);
-		} catch (IOException e) {
-			throw new ConnectionManagerException("Unable to read properties form the file [" + propertiesFilePath + "]");
+		Map<String, String> props = new Hashtable<String, String>();
+		BufferedReader buf = null;
+		
+		try{
+			buf = new BufferedReader(new FileReader(propertiesFilePath));
+		} catch (FileNotFoundException e){
+			log.error("Properties file [" + propertiesFilePath + "] not found", e);
+			throw new ConnectionManagerException("Properties file [" + propertiesFilePath + "] not found",e);
+		}
+		
+		//read properties file
+		try{
+			while(buf.ready()){
+				String temp = buf.readLine();
+				if(temp.startsWith("#")) continue;
+				String [] entry = temp.split("=");
+				if(entry == null || entry.length == 0) continue;
+				if(entry[0] == null || entry[0].equals("")) continue;
+				if(entry[1] == null || entry[1].equals("")) continue;
+				props.put(entry[0], entry[1]);
+			}
+		} catch (IOException e){
+			log.error("Unable to load properties from file [" + propertiesFilePath + "]", e);
+			throw new ConnectionManagerException("Unable to load properties from file [" + propertiesFilePath + "]",e);
+		}
+		
+		log.debug("Properies list size [" + props.size() + "]");
+		for(String key : props.keySet()){
+			log.debug("Property [" + key + "=" + props.get(key) + "]");
 		}
 		//load stun servers from properties
-		String[] stunServers = props.getProperty("stunServers").split(",");
+		String[] stunServers = props.get("stunServers").split(",");
 		if (stunServers == null || stunServers.length == 0) throw new ConnectionManagerException("No addresses specified in properties file");
 		this.stunServers = Arrays.asList(stunServers);
 		
-		this.scPort = Integer.parseInt(props.getProperty("socketCommunicationPort"));
+		this.scPort = Integer.parseInt(props.get("socketCommunicationPort"));
 		
 		//load another properties
 	}
@@ -111,10 +133,10 @@ public class ConnectionManager {
 		
 		List<InetAddress> localIps = new ArrayList<InetAddress>();
 		//Get Local Ip's
-		try {
+		//try {
 			while (interfaces.hasMoreElements()) {
 				NetworkInterface inet = interfaces.nextElement();
-				if (inet.isUp() && !inet.isVirtual()) {
+				//if (inet.isUp() && !inet.isVirtual()) {
 					Enumeration<InetAddress> ips = inet.getInetAddresses();
 					while(ips.hasMoreElements()){
 						InetAddress ip = ips.nextElement();
@@ -124,15 +146,17 @@ public class ConnectionManager {
 							localIps.add(ip);
 						}
 					}
-				}
+				//}
 			}
+		/*
 		} catch (SocketException e) {
 			ConnectionManagerException ex = new ConnectionManagerException("Could not access the Network Interface",e);
 			log.error(ex.getLocalizedMessage(),e);
 			throw ex;
 		} finally {
+		*/
 			if(localIps == null || localIps.isEmpty()) throw new ConnectionManagerException("Could not get the local ip addresses");
-		}
+		//}
 		return localIps;
 	}
 	

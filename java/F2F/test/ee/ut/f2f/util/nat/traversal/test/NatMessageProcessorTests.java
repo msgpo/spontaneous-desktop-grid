@@ -1,12 +1,10 @@
 package ee.ut.f2f.util.nat.traversal.test;
 
 import ee.ut.f2f.util.nat.traversal.NatMessage;
-import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
-import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
 import junit.framework.TestCase;
 
 /**
- * @author admin
+ * 
  *
  */
 public class NatMessageProcessorTests extends TestCase {
@@ -29,15 +27,8 @@ public class NatMessageProcessorTests extends TestCase {
 	
 
 	public void testProcessMessage(){
-		String encoded = null;
 		try {
-			encoded = "/NAT>/" + nmsg.encode();
-		} catch (NatMessageException e) {
-			// TODO Auto-generated catch block
-			e.printStackTrace();
-		}
-		try {
-			//NatMessageProcessor.processIncomingNatMessage(encoded);
+			//NatMessageProcessor.processIncomingNatMessage(nmsg);
 		} catch (Exception e) {
 			e.printStackTrace();
 			fail();
@@ -47,38 +38,4 @@ public class NatMessageProcessorTests extends TestCase {
 	public void testSendMessage(){
 		
 	}
-	/*
-	public void test1ParseParams(){
-		try{
-			assertEquals("6001",(String) (proc.parseParams("ip=192&port=777&com=6001")).get("com"));
-		} catch (InfoMessageParseException e){
-			
-		}
-	}
-	
-	public void test2ParseParams(){
-		try{
-			proc.parseParams("com=192&port=777&com=6001");
-			fail();
-		} catch (InfoMessageParseException e){
-			assertTrue(e.getMessage(), true);
-		}
-	}
-	
-	public void test3ParseParams(){
-		try{
-			assertNull(proc.parseParams("sss=192&port=777&fff=6001").get("com"));
-		} catch (InfoMessageParseException e){
-			fail(e.getMessage());
-		}
-	}
-	
-	public void test4ParseParams(){
-		try{
-			assertNull(proc.parseParams("sss=192&port=777&fff=").get("com"));
-		} catch (InfoMessageParseException e){
-			
-		}
-		}
-	*/
 }

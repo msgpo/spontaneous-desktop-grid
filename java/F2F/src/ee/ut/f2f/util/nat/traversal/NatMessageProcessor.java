@@ -5,7 +5,6 @@ import java.util.Collection;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
 import ee.ut.f2f.util.nat.traversal.threads.NatMessageSender;
 
 public class NatMessageProcessor {
@@ -16,29 +15,6 @@ public class NatMessageProcessor {
 	
 	public NatMessageProcessor(ConnectionManager cm){
 		this.cm = cm;
-	}
-	
-	@Deprecated
-	public void processIncomingNatMessage(String encodedMessage){
-		log.debug("Received NAT encoded message, length [" + encodedMessage.length() + "]");
-		
-		//remove /NAT>/ prefix
-		encodedMessage = (encodedMessage.startsWith("/NAT>/")) ? encodedMessage.substring(6) : encodedMessage;
-		NatMessage nmsg = null;
-		if (encodedMessage != null && !"".equals(encodedMessage)){
-			try{
-				nmsg = new NatMessage(encodedMessage);
-			} catch (NatMessageException e) {
-				log.error("Error parsing message [" + encodedMessage + "]", e);
-				e.printStackTrace();
-				//@TODO: report failure, request resend
-			}
-		} else {
-			log.debug("Discarding empty NAT message");
-		}
-
-		processMessage(nmsg);
-
 	}
 	
 	public void processIncomingNatMessage(NatMessage nmsg){
@@ -79,10 +55,11 @@ public class NatMessageProcessor {
 				   	//TODO Analyze received StunInfo (is in the same local network ?)
 
 				   	//Add to socket communication layer
-				   	cm.addToSocketCommunicationProvider(sinf);
+				   	//cm.addToSocketCommunicationProvider(sinf);
 				}
 				else {
 					//Update
+					/*
 					log.debug(sinf.getId() + " StunInfo with id [" + sinf.getId() + "] allready exist in StunInfoTable");
 					log.debug("Replacing StunInfo id [" + sinf.getId() + "]");
 					F2FComputingGUI.controller.getStunInfoTableModel().remove(sinf.getId());
@@ -90,6 +67,7 @@ public class NatMessageProcessor {
 					log.debug("Updating SocketPeer in SocketCommunication Provider by id [" + sinf.getId() + "]");
 					cm.getSocketCommunicationProvider().removeFriend(sinf.getId());
 					cm.getSocketCommunicationProvider().addFriend(sinf.getLocalIp(), cm.getScPort());
+					*/
 				}
 				break;
 			}

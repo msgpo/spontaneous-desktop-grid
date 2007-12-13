@@ -1,16 +1,6 @@
 package ee.ut.f2f.util.nat.traversal;
 
-import java.io.ByteArrayInputStream;
-import java.io.ByteArrayOutputStream;
-import java.io.IOException;
-import java.io.ObjectInputStream;
-import java.io.ObjectOutputStream;
 import java.io.Serializable;
-
-import ee.ut.f2f.util.nat.traversal.exceptions.NatMessageException;
-
-import sun.misc.UUDecoder;
-import sun.misc.UUEncoder;
 
 public class NatMessage implements Serializable{
 
@@ -41,16 +31,6 @@ public class NatMessage implements Serializable{
 		this.from = from;
 		this.type = type;
 		this.content = content;
-	}
-	
-	@Deprecated
-	public NatMessage (String encoded) throws NatMessageException{
-		NatMessage temp = decode(encoded);
-		this.to = temp.getTo();
-		this.from = temp.getFrom();
-		this.content = temp.getContent();
-		this.type = temp.getType();
-		temp = null;
 	}
 
 	public String getTo() {
@@ -94,47 +74,5 @@ public class NatMessage implements Serializable{
 		if(getContent() != null) sbuf.append(getContent().toString());
 		else sbuf.append("null");
 		return "[" + sbuf.toString() + "]";
-	}
-	
-	public String encode() throws NatMessageException {
-		return encode(this);
-	}
-	
-	@Deprecated
-	static String encode(NatMessage nmsg) throws NatMessageException{
-		String encoded = null;
-		UUEncoder uenc = new UUEncoder();
-		
-		ByteArrayOutputStream baos = new ByteArrayOutputStream();
-		try{
-			ObjectOutputStream oos = new ObjectOutputStream(baos);
-			oos.writeObject(nmsg);
-			byte[] bytes = new byte[0];
-			bytes = baos.toByteArray();
-			encoded = uenc.encodeBuffer(bytes);
-			oos.close();
-			baos.close();
-		} catch (IOException e){
-			throw new NatMessageException("Unable to encode message", e);
-		}
-		return encoded;
-	}
-	
-	@Deprecated
-	static NatMessage decode(String encoded) throws NatMessageException{
-		NatMessage nmsg = null;
-		UUDecoder udec = new UUDecoder();
-		try{
-			byte[] bytes = udec.decodeBuffer(encoded);
-			ObjectInputStream ois = new ObjectInputStream(new ByteArrayInputStream(bytes));
-			nmsg = (NatMessage) ois.readObject();
-			ois.close();
-		} catch (IOException e){
-			throw new NatMessageException("Unable to decode message", e);
-		} catch (ClassNotFoundException e){
-			throw new NatMessageException("Unable to decode message", e);
-		}
-		return nmsg;
-	}
-	
+	}	
 }
