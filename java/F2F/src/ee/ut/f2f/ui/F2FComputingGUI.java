@@ -10,15 +10,22 @@ import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.nat.traversal.ConnectionManager;
 import ee.ut.f2f.util.nat.traversal.NatMessage;
 import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
 import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 
 public class F2FComputingGUI {
+	
+	final private static Logger log = Logger.getLogger(F2FComputingGUI.class);
+	
 	public static UIController controller;
 	//temporary for testing purposes
 	public static NatMessageProcessor natMessageProcessor;
+	
+	private static Thread upThread;
+	private static boolean threadAsleep = false;
 	/**
 	 * Different Print streams for different log4j appenders. This could be done better (?)
 	 */
@@ -56,10 +63,16 @@ public class F2FComputingGUI {
 			}
 		});
 	}
+	
+	public static void forceSynchronization(){
+		if(upThread != null && threadAsleep){
+			upThread.interrupt();
+		}
+	}
 
 	private static void runF2F()
 	{
-		Thread updatePeersThread = 
+		upThread = 
 			new Thread(new Runnable()
 			{
 				public void run()
@@ -94,11 +107,14 @@ public class F2FComputingGUI {
 							for (F2FPeer peer: peersGUI)
 							{
 								if (!peersF2F.contains(peer)){
-									friendModel.remove(peer);
 									//Remove SocketPeer form socketCommunication layer
-									//natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().removeFriend(peer.getID().toString());
+									natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().removeFriend(peer.getID().toString());
+									//Remove socket communication provider from F2FPeer
+									peer.removeCommProvider(natMessageProcessor.getConnectionManager().getSocketCommunicationProvider());
 									//Remove also NAT Traversal Stun info
 									F2FComputingGUI.controller.getStunInfoTableModel().remove(peer.getID().toString());
+									//remove F2F peer from list
+									friendModel.remove(peer);
 								}
 							}
 							// then check if someone has to be added
@@ -106,22 +122,30 @@ public class F2FComputingGUI {
 							{
 								if (!peersGUI.contains(peer)){
 									friendModel.add(peer);
-									//NAT Traversal automatic stun info request for new client
-									String localId = F2FComputing.getLocalPeer().getID().toString();
-									if(!localId.equals(peer.getID().toString())){
-										NatMessage nmsg = new NatMessage(localId, peer.getID().toString(),NatMessage.COMMAND_GET_STUN_INFO,null);
-										natMessageProcessor.sendNatMessage(nmsg);
+									if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())){
+										//Peer  should also add me to his list
+										//Check if peer added me to the list
+										NatMessage nmsg = new NatMessage(F2FComputing.getLocalPeer().getID().toString(),
+																	 peer.getID().toString(),
+																	 NatMessage.COMMAND_IS_F2FPEER_IN_LIST,
+																	 null);
+										F2FComputingGUI.natMessageProcessor.sendNatMessage(nmsg);
 									}
 								}
 							}
+							threadAsleep = true;
 							Thread.sleep(1000);
-						} catch (Exception e) {
+						} catch (InterruptedException e) {
+							threadAsleep = false;
+							log.debug("Synchrnization thread : interrupted sleep");
+						} catch (Exception e){
 							F2FDebug.println(e.toString());
 						}
+						threadAsleep = false;
 					}
 				}
 			});
-		updatePeersThread.start();
+		upThread.start();
 	}
 
 	static class FilteredStream extends FilterOutputStream {

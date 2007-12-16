@@ -49,7 +49,11 @@ public class F2FMessage implements Serializable
 		/**
 		 * A Nat/Traversal message
 		 */
-		NAT
+		NAT,
+		/**
+		 * A TCP/Tests
+		 */
+		TCP
 	}
 
 	public F2FMessage(Type type, String jobID, String receiverTaskID,

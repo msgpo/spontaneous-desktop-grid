@@ -28,6 +28,7 @@ import ee.ut.f2f.util.nat.traversal.exceptions.NetworkDiscoveryException;
 import ee.ut.f2f.util.nat.traversal.exceptions.NetworkInterfaceNotFoundException;
 import ee.ut.f2f.util.nat.traversal.threads.SocketCommunicationInitiator;
 import ee.ut.f2f.util.nat.traversal.threads.StunInfoClient;
+import ee.ut.f2f.util.nat.traversal.threads.TCPTester;
 
 public class ConnectionManager {
 	
@@ -43,6 +44,9 @@ public class ConnectionManager {
 	
 	//SocketCommunication listener port
 	private int scPort = -1;
+	
+	//TCP Tester Threads
+	private List<TCPTester> tcpTesters = new ArrayList<TCPTester>();
 	
 	public ConnectionManager(String propertiesFilePath) throws ConnectionManagerException{
 		loadProperties(propertiesFilePath);
@@ -295,5 +299,26 @@ public class ConnectionManager {
 			   	}
 			}
 		}).start();
+	}
+	
+	public void initiateTCPTester(String peerId){
+		if(getTCPTester(peerId) != null){
+			log.debug("TCPTester [" + peerId + "] allready initialized");
+			log.debug(getTCPTester(peerId));
+		} else {
+			TCPTester tt = new TCPTester(peerId);
+			tt.start();
+			tcpTesters.add(tt);
+		}
+	}
+	
+	public TCPTester getTCPTester(String peerId){
+		for(TCPTester tt : tcpTesters){
+			if(tt.getPeerId().equals(peerId)){
+				return tt;
+			}
+		}
+		log.debug("No TCP testers found by id [" + peerId + "], return null");
+		return null;
 	}
 }

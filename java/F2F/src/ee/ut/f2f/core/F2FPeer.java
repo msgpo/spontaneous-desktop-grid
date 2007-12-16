@@ -7,6 +7,8 @@ import java.util.UUID;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
+import ee.ut.f2f.ui.F2FComputingGUI;
+import ee.ut.f2f.ui.model.StunInfoTableItem;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -60,12 +62,16 @@ public class F2FPeer
 				commProviders.add(comm);
 		}
 	}
-	void removeCommProvider(CommunicationProvider comm)
+	public void removeCommProvider(CommunicationProvider comm)
 	{
 		synchronized (commProviders)
 		{
-			if (commProviders.contains(comm))
+			if (commProviders.contains(comm)){
 				commProviders.remove(comm);
+				logger.debug("Removed CommunicationProvider [" + comm + "] from F2FPeer [" + this.getID().toString() + "]");
+			} else {
+				logger.debug("CommunicationProvider [" + comm + "] not found in list, nothing removed");
+			}
 			if (commProviders.size() == 1 && commProviders.contains(getSocketCommunicationProvider()))
 				commProviders.remove(getSocketCommunicationProvider());
 		}
@@ -81,9 +87,12 @@ public class F2FPeer
 			F2FComputing.messageRecieved(message, this.getID());			
 			return;
 		}
-		/*
-		SocketCommunicationProvider scp = getSocketCommunicationProvider();
-		if(scp != null){
+		
+		StunInfoTableItem sinft = (StunInfoTableItem)F2FComputingGUI.controller.getStunInfoTableModel().get(this.getID().toString());
+		if (sinft != null && sinft.isTcpConnectivityTested() && sinft.canConnectViaTCP()){
+			logger.debug("F2FPeer [" + getID().toString() + "] tcp tested [" + sinft.isTcpConnectivityTested() + "] can use tcp [" + sinft.canConnectViaTCP() + "]");
+			SocketCommunicationProvider scp = getSocketCommunicationProvider();
+			if(scp != null){
 				logger.debug("Using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]");
 				try{
 					if(((F2FMessage) message).getType().equals(F2FMessage.Type.NAT)){
@@ -95,12 +104,18 @@ public class F2FPeer
 					}
 				} catch (CommunicationFailedException e){
 					logger.error("Unable to send message, using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]",e);
-					logger.error("Using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
+					if (((F2FMessage) message).getType().equals(F2FMessage.Type.TCP)){
+						logger.error("Failed testing TCP connectivity with F2FPeer [" + this.getID() + "]");
+						return;
+					} else {
+						logger.error("Using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
+					}
 				}
-		} else {
-			logger.error("SocketCommunicationProvider is null, using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
+			} else {
+				logger.error("SocketCommunicationProvider is null, using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
+			}
 		}
-		*/
+		
 		for (CommunicationProvider commProvider: commProviders)
 		{
 			try
@@ -131,5 +146,19 @@ public class F2FPeer
 			}
 		}
 		return null;
+	}
+	
+	public boolean removeCommunicationProvider(CommunicationProvider communicationProvider){
+		if (communicationProvider == null) throw new NullPointerException("CommunicationProvider is null");
+		if(commProviders.contains(communicationProvider)){
+				try{
+					return commProviders.remove(communicationProvider);
+				} finally {
+					logger.debug("Removed CommunicationProvider [" + communicationProvider + "] from F2FPeer [" + this.getID().toString() + "]");
+				}
+		} else {
+			logger.debug("CommunicationProvider [" + communicationProvider + "] not found in list, nothing removed");
+			return false;
+		}
 	}
 }

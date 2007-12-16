@@ -15,11 +15,16 @@ public class NatMessage implements Serializable{
 	//COMMANDS
 	public static final int COMMAND_GET_STUN_INFO = 601;
 	public static final int COMMAND_TRY_CONNECT_TO = 602;
+	public static final int COMMAND_IS_TCP_TESTER_ALIVE = 603;
+	public static final int COMMAND_IS_F2FPEER_IN_LIST = 604;
+	
 	//REPORTS
 	public static final int REPORT_STUN_INFO = 61;
 	public static final int REPORT_BROKEN_MESSAGE = 60;
 	public static final int REPORT_UNABLE_TO_CONNECT_TO = 62;
 	public static final int REPORT_SUCCESS_TO_CONNECT_TO = 63;
+	public static final int REPORT_F2FPEER_IS_IN_LIST = 64;
+	public static final int REPORT_F2FPEER_IS_NOT_IN_LIST = 65;
 	
 	/**
 	 * @param type

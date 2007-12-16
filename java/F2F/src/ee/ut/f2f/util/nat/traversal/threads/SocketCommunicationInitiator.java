@@ -51,7 +51,7 @@ public class SocketCommunicationInitiator extends Thread implements Activity{
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 			return;
 		}
-		log.error(getActivityName() + " thread : Stopping ...");
+		log.debug(getActivityName() + " thread : Stopping ...");
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FINISHED));
 	}
 
