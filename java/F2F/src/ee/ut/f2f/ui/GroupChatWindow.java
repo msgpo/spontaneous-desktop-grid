@@ -100,15 +100,22 @@ public class GroupChatWindow extends JFrame {
 		receievedMessagesTextAreaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
 		typeArea = new JTextArea();
-		typeArea.addKeyListener(new KeyListener() {
+		typeArea.addKeyListener(new KeyListener() { 
 			boolean shiftDown = false;
 			
 			public void keyPressed(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_SHIFT) {
 					shiftDown = true;
 				}
+				else if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					e.consume();
+				}
 			}
-			public void keyTyped(KeyEvent e) {}
+			public void keyTyped(KeyEvent e) {
+				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
+					e.consume();
+				}
+			}
 			public void keyReleased(KeyEvent e) {
 				if (e.getKeyCode() == KeyEvent.VK_ENTER) {
 					if(!shiftDown) {
