@@ -24,7 +24,5 @@ public class TCPTests extends TestCase {
 		System.out.println(test);
 		Thread.sleep(15000);
 		System.out.println(test);
-		test.peerReported(new Integer(TCPTester.TCP_TESTER_ALIVE));
-		System.out.println(test);
 	}
 }

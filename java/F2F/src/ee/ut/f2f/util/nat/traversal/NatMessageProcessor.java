@@ -57,6 +57,11 @@ public class NatMessageProcessor {
 					log.debug("F2FPeer [" + nmsg.getFrom() + "] is not in F2FList");
 				}
 				break;
+			} 
+			case NatMessage.COMMAND_TRY_CONNECT_TO : {
+				log.debug("Received command [tryConnectTo] from peer [" + nmsg.getFrom() + "]");
+				cm.getTCPTester(nmsg.getFrom()).tryConnectTo((Integer) nmsg.getContent());
+				break;
 			}
 			
 			//REPORT CASES

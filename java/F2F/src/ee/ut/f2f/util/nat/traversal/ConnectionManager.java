@@ -302,9 +302,14 @@ public class ConnectionManager {
 	}
 	
 	public void initiateTCPTester(String peerId){
-		if(getTCPTester(peerId) != null){
+		TCPTester tester = getTCPTester(peerId);
+		if(tester != null){
 			log.debug("TCPTester [" + peerId + "] allready initialized");
-			log.debug(getTCPTester(peerId));
+			log.debug(tester);
+			if (tester.getStatus() > -1){
+				log.debug("Restarting TCPTester");
+				tester.start();
+			}
 		} else {
 			TCPTester tt = new TCPTester(peerId);
 			tt.start();

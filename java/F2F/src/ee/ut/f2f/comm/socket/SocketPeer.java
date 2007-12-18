@@ -18,7 +18,9 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.ui.F2FComputingGUI;
+import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
+import ee.ut.f2f.util.nat.traversal.threads.TCPTester;
 
 class SocketPeer implements Activity
 {
@@ -118,7 +120,15 @@ class SocketPeer implements Activity
 							Object message = oi.readObject();
 							log.debug("\t\tReceived message from id [" + getID() + "] ip [" +
 									 outSocket.getRemoteSocketAddress() + ":" + "]"  + "'. Message: '" + message + "'.");
-							F2FComputing.messageRecieved(message, UUID.fromString(getID()));
+							if(message instanceof F2FMessage && ((F2FMessage) message).getType().equals(F2FMessage.Type.TCP)){
+								log.debug("Message Type TCP Test forwarding to TCPTester");
+								TCPTester tester = F2FComputingGUI.natMessageProcessor.getConnectionManager().getTCPTester(getID().toString());
+								if (tester != null){
+									tester.receivedTCPTest(((F2FMessage) message).getData());
+								}
+							} else {
+								F2FComputing.messageRecieved(message, UUID.fromString(getID()));
+							}
 						}
 						catch (ClassNotFoundException e)
 						{

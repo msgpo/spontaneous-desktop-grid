@@ -131,4 +131,15 @@ public class StunInfoTableModel extends AbstractTableModel {
 		
 		return null;
 	}
+	public boolean update(StunInfoTableItem sinft){
+		for (StunInfoTableItem sinfItem : stunInfoList){
+			if (sinfItem.getId().equals(sinft.getId())){
+				stunInfoList.remove(sinfItem);
+				stunInfoList.add(sinft);
+				fireTableDataChanged();
+				return true;
+			}
+		}
+		return false;
+	}
 }

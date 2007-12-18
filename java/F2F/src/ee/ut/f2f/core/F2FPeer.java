@@ -88,6 +88,7 @@ public class F2FPeer
 			return;
 		}
 		
+		//Sending Other Messages
 		StunInfoTableItem sinft = (StunInfoTableItem)F2FComputingGUI.controller.getStunInfoTableModel().get(this.getID().toString());
 		if (sinft != null && sinft.isTcpConnectivityTested() && sinft.canConnectViaTCP()){
 			logger.debug("F2FPeer [" + getID().toString() + "] tcp tested [" + sinft.isTcpConnectivityTested() + "] can use tcp [" + sinft.canConnectViaTCP() + "]");
@@ -103,16 +104,10 @@ public class F2FPeer
 						return;
 					}
 				} catch (CommunicationFailedException e){
-					logger.error("Unable to send message, using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]",e);
-					if (((F2FMessage) message).getType().equals(F2FMessage.Type.TCP)){
-						logger.error("Failed testing TCP connectivity with F2FPeer [" + this.getID() + "]");
-						return;
-					} else {
-						logger.error("Using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
-					}
+					logger.error("Unable to send message using SocketCommunicationProvider for F2FPeer [" + this.getID() + "]",e);
 				}
 			} else {
-				logger.error("SocketCommunicationProvider is null, using SipCommunicationProvider for F2FPeer [" + this.getID() + "]");
+				logger.error("SocketCommunicationProvider is null, for F2FPeer [" + this.getID() + "]");
 			}
 		}
 		
