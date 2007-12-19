@@ -15,6 +15,6 @@ public class F2FMultiAccountID
      */
     F2FMultiAccountID(String id)
     {
-        super(id, new Hashtable(), ProtocolNames.F2F, ProtocolNames.F2F);
+        super(id, new Hashtable(), F2FMultiProtocolProviderFactory.F2F_MULTI_PROTOCOL_NAME, F2FMultiProtocolProviderFactory.F2F_MULTI_PROTOCOL_NAME);
     }
 }

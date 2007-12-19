@@ -16,6 +16,7 @@ import net.java.sip.communicator.service.protocol.ProtocolProviderService;
 public class F2FMultiProtocolProviderFactory
 	extends ProtocolProviderFactory
 {
+	public final static String F2F_MULTI_PROTOCOL_NAME = "F2F";
 	/**
      * The table that we store our accounts in.
      */

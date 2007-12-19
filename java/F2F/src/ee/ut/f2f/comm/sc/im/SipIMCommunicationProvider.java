@@ -105,7 +105,7 @@ public class SipIMCommunicationProvider
 
         // create F2F multi chat protocol provider and register it for SIP Communicator 
         Hashtable<String, String> hashtable = new Hashtable<String, String>();
-        hashtable.put(ProtocolProviderFactory.PROTOCOL, ProtocolNames.F2F);
+        hashtable.put(ProtocolProviderFactory.PROTOCOL, F2FMultiProtocolProviderFactory.F2F_MULTI_PROTOCOL_NAME);
         F2FMultiProtocolProviderFactory f2fProviderFactory = new F2FMultiProtocolProviderFactory(this);
         bc.registerService(
                     ProtocolProviderFactory.class.getName(),

@@ -532,18 +532,3 @@ Index: src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicIn
 +		
 +	}
  }
-Index: src/net/java/sip/communicator/service/protocol/ProtocolNames.java
-===================================================================
---- src/net/java/sip/communicator/service/protocol/ProtocolNames.java	(revision 3320)
-+++ src/net/java/sip/communicator/service/protocol/ProtocolNames.java	(working copy)
-@@ -74,5 +74,10 @@
-      * The RSS protocol.
-      */
-     public static final String RSS = "RSS"; 
-+    
-+    /**
-+     * The F2F multi-protocol.
-+     */
-+    public static final String F2F = "F2F"; 
- 
- }

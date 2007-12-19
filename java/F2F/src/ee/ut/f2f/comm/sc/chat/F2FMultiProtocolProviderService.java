@@ -12,7 +12,6 @@ import net.java.sip.communicator.service.protocol.AccountID;
 import net.java.sip.communicator.service.protocol.OperationSet;
 import net.java.sip.communicator.service.protocol.OperationSetMultiUserChat;
 import net.java.sip.communicator.service.protocol.ProtocolIcon;
-import net.java.sip.communicator.service.protocol.ProtocolNames;
 import net.java.sip.communicator.service.protocol.ProtocolProviderService;
 import net.java.sip.communicator.service.protocol.RegistrationState;
 import net.java.sip.communicator.service.protocol.SecurityAuthority;
@@ -108,7 +107,7 @@ public class F2FMultiProtocolProviderService
      */
     public String getProtocolName()
     {
-        return ProtocolNames.F2F;
+        return F2FMultiProtocolProviderFactory.F2F_MULTI_PROTOCOL_NAME;
     }
 
     /**
