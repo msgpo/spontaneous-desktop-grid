@@ -21,6 +21,7 @@ import ee.ut.f2f.comm.CommunicationException;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.comm.sc.chat.F2FMultiProtocolProviderFactory;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
@@ -89,6 +90,8 @@ public class SipIMCommunicationProvider
 	}
 	
 	private BundleContext bundleContext = null;
+	public BundleContext getBundleContext() { return bundleContext; }
+	
 	private SipIMCommunicationProvider(BundleContext bc) throws CommunicationException
 	{
 		sipPeers = new Hashtable<String, UUIDSipPeer>();
@@ -99,16 +102,19 @@ public class SipIMCommunicationProvider
 		// init Sip
 		//F2FDebug.println("\t\tInitializing SIP communication layer ...");
 		this.bundleContext = bc;
-		// add our button to SipCommunicator meta contact context menu 
-		ServiceReference uiServiceRef = bc.getServiceReference(UIService.class.getName());
-		UIService uiService = (UIService) bc.getService(uiServiceRef);       
-	    if(uiService.isContainerSupported(UIService.CONTAINER_CONTACT_RIGHT_BUTTON_MENU))
-	    {   
-	    	uiService.addComponent(
-	            UIService.CONTAINER_CONTACT_RIGHT_BUTTON_MENU,
-	            new SipIMContactF2FMenuItem());
-	    }
-	
+
+        // create F2F multi chat protocol provider and register it for SIP Communicator 
+        Hashtable<String, String> hashtable = new Hashtable<String, String>();
+        hashtable.put(ProtocolProviderFactory.PROTOCOL, ProtocolNames.F2F);
+        F2FMultiProtocolProviderFactory f2fProviderFactory = new F2FMultiProtocolProviderFactory(this);
+        bc.registerService(
+                    ProtocolProviderFactory.class.getName(),
+                    f2fProviderFactory,
+                    hashtable);
+		
+		// add our button to SipCommunicator contact context menu
+		addContactMenuButton();
+		
 		// get the protocols that peer has account in
 		ServiceReference[] protocolProviderRefs = null;
 		try
@@ -121,7 +127,7 @@ public class SipIMCommunicationProvider
 			// this shouldn't happen since we're providing no parameter string
 			// but let's log just in case.
 			F2FDebug.println("\t\tError while retrieving service refs" + ex);
-			return;
+			throw new CommunicationInitException("Error while retrieving service refs!", ex);
 		}
 		
 		// listen for contacts presence status changes
@@ -143,6 +149,56 @@ public class SipIMCommunicationProvider
 		}
 	}
 	
+	private void addContactMenuButton()
+	{
+		new Thread(new Runnable()
+		{
+			public void run()
+			{
+				while (true)
+				{
+					try
+					{
+						ServiceReference uiServiceRef = SipIMCommunicationProvider.this.bundleContext.getServiceReference(UIService.class.getName());
+						if (uiServiceRef == null)
+						{
+							Thread.sleep(1000);
+							continue;
+						}
+						UIService uiService = (UIService) SipIMCommunicationProvider.this.bundleContext.getService(uiServiceRef);
+						if (uiService == null)
+						{
+							Thread.sleep(1000);
+							continue;
+						}
+					    if(uiService.isContainerSupported(UIService.CONTAINER_CONTACT_RIGHT_BUTTON_MENU))
+					    	uiService.addComponent(
+					    		UIService.CONTAINER_CONTACT_RIGHT_BUTTON_MENU,
+					    		new SipIMContactF2FMenuItem());
+					    return;
+					}
+					catch (IllegalStateException e)
+					{
+						F2FDebug.println(e.toString());
+						return;
+					}
+					catch (InterruptedException e1)
+					{
+						continue;
+					}
+					catch (Exception e)
+					{
+						e.printStackTrace();
+						try {
+							Thread.sleep(1000);
+						} catch (InterruptedException e1) {}
+						continue;
+					}
+				}
+			}
+		}).start();
+	}
+
 	private MetaContactListService metaCListService = null;
 	private MetaContactListService getMetaContactListService()
 	{
@@ -162,7 +218,50 @@ public class SipIMCommunicationProvider
 	{
 		return SIP_LAYER_ID;
 	}
-
+	
+	public boolean isKnownContact(Contact contact)
+	{
+		return sipPeers.containsKey(contact.getAddress());
+	}
+	
+	public UUID getF2FPeerID(Contact contact)
+	{
+		if (isKnownContact(contact))
+			return sipPeers.get(contact.getAddress()).id;
+		return null;
+	}
+	
+	private Contact findContact(String userAddress, MetaContact metaContact)
+	{
+		Iterator it = metaContact.getContacts();
+		while (it.hasNext())
+		{
+			Contact contact = (Contact)it.next(); 
+			if (contact.getAddress().equals(userAddress))
+				return contact;
+		}
+		return null;
+	}
+	private Contact findContact(String userAddress, MetaContactGroup group)
+	{
+		Contact contact = null;
+		// search among the meta contacts
+		Iterator it = group.getChildContacts();
+		while (it.hasNext() && contact == null)
+			contact = findContact(userAddress, (MetaContact)it.next());
+		if (contact != null) return contact;
+		// search in sub-groups
+		it = group.getSubgroups();
+		while (it.hasNext() && contact == null)
+			contact = findContact(userAddress, (MetaContactGroup)it.next());
+		return contact;
+	}
+	public Contact findContact(String userAddress)
+	{
+		if (getMetaContactListService() == null) return null;
+		return findContact(userAddress, getMetaContactListService().getRoot());
+	}
+	
 	private Collection<Contact> allowedContacts = null;
 	void makeF2FTest(MetaContact metaContact)
 	{
@@ -170,11 +269,18 @@ public class SipIMCommunicationProvider
 		while (contacts.hasNext())
 		{
 			Contact contact = (Contact)contacts.next();
-			if (sipPeers.containsKey(contact.getAddress())) continue;
+			if (isKnownContact(contact)) continue;
 			allowedContacts.add(contact);
 			addF2FPeerIfNeeded(contact);
 		}
 	}
+	public void makeF2FTest(Contact contact)
+	{
+		if (isKnownContact(contact)) return;
+		allowedContacts.add(contact);
+		addF2FPeerIfNeeded(contact);
+	}
+	
 	private void addF2FPeerIfNeeded(final Contact contact)
 	{
 		// check for F2F-capability only for online contacts
@@ -184,8 +290,6 @@ public class SipIMCommunicationProvider
 		if (!allowedContacts.contains(contact)) return;
 		
 		// send F2F-capability test message		  
-		OperationSetBasicInstantMessaging im = (OperationSetBasicInstantMessaging) contact.getProtocolProvider()
-		.getOperationSet(OperationSetBasicInstantMessaging.class);
 		try 
 		{
 			sendIMmessage(contact, new F2FTestMessage(F2FComputing.getLocalPeer().getID()));

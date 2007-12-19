@@ -15,6 +15,7 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.comm.sc.chat.F2FMultiChatListener;
 import ee.ut.f2f.core.activity.CPURequests;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
@@ -57,6 +58,13 @@ public class F2FComputing
 	 * Collection of remote peers that are known.
 	 */
 	static Map<UUID, F2FPeer> peers = null;
+	
+	static Collection<F2FMultiChatListener> chatListeners = new ArrayList<F2FMultiChatListener>();
+	public static void addChatListener(F2FMultiChatListener listener)
+	{
+		if (!chatListeners.contains(listener))
+			chatListeners.add(listener);
+	}
 	
 	private static boolean isInitialized() { return localPeer != null; } 
 	/**
@@ -337,15 +345,20 @@ public class F2FComputing
 	 * This method is mainly ment for GUI to show available peers.
 	 * 
 	 * @return All peers that are known through communication layers.
-	 * @throws CommunicationFailedException
 	 */
 	public static Collection<F2FPeer> getPeers()
-			throws CommunicationFailedException
 	{
 		if (!isInitialized()) return null;
 		return peers.values();
 	}
 
+	public static F2FPeer getPeer(UUID id)
+	{
+		if (!isInitialized()) return null;
+		if (!peers.containsKey(id)) return null;
+		return peers.get(id);
+	}
+	
 	public static void peerContacted(UUID peerID, String displayName, CommunicationProvider comm)
 	{
 		if (!isInitialized()) return;
@@ -551,6 +564,11 @@ public class F2FComputing
 			} else {
 				logger.debug("Received F2FMessage type:NAT, but not instance of NatMessage");
 			}
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.MULTI_CHAT)
+		{
+			for (F2FMultiChatListener listener: chatListeners)
+				listener.receivedF2FMultiChatMessage(f2fMessage.getData());
 		}
 	}
 	

@@ -19,6 +19,7 @@ Import-Package: javax.crypto,
  javax.swing.table,
  javax.swing.text,
  javax.swing.tree,
+ javax.imageio,
  net.java.sip.communicator.service.contactlist,
  net.java.sip.communicator.service.contactlist.event,
  net.java.sip.communicator.service.gui,
@@ -34,4 +35,3 @@ Bundle-ClassPath: lib/bcprov-jdk14.jar,
  lib/jstun-0.6.1.jar,
  lib/swingx-0.9.1.jar,
  F2F.jar
-Export-Package: ee.ut.f2f.comm.sc.im

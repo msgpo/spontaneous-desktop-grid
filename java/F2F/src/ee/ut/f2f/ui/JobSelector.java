@@ -24,36 +24,71 @@ import javax.swing.filechooser.FileFilter;
 
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.ui.model.FriendModel;
+import ee.ut.f2f.util.F2FDebug;
 
-public class JobSelector extends JFrame {
+public class JobSelector extends JFrame
+{
 	private static final long serialVersionUID = 1L;
 	
 	private JTextField tf1 = null;
 	private JTextField tf2 = null;
-	private JPanel mainPanel;
-	private UIController mainWindow;
+	private JPanel mainPanel = null;
+	private UIController mainWindow = null;
 	private File[] selectedFiles = null;
-	private JFrame thisRef;
-	private FriendModel members;
+	private SpringLayout bottomPanelLayout = null;
+	private JButton btnCompute = null;
 	
+	private FriendModel members = null;
+	Collection<F2FPeer> friends = null;
+	
+	private Collection<F2FPeer> getF2FPeers()
+	{
+		if (friends != null)
+			return friends;
+		return members.getPeers();
+	}
+
+	public JobSelector(Collection<F2FPeer> friends)
+	{
+		this.friends = friends;
+
+		startInit();
+		initFileChooser();
+		initCompute();
+		endInit();
+	}
+
 	public JobSelector(UIController wnd, FriendModel people) {
 		mainWindow = wnd;
-		thisRef = this;
 		members = people;
 		
+		startInit();
+		initFileChooser();
+		initCompute();
+		initStats();
+		endInit();
+	}
+	
+	private void startInit()
+	{
 		this.setSize(new Dimension(560, 150));
 		this.setLocationRelativeTo(null);
 		this.setTitle("Pick a .JAR");
 		this.setResizable(false);
 		
-		SpringLayout bottomPanelLayout = new SpringLayout();
+		bottomPanelLayout = new SpringLayout();
 		mainPanel = new JPanel(bottomPanelLayout);
 		mainPanel.setSize(new Dimension(560, 150));
 		
+	}
+	
+	private void initFileChooser()
+	{
 		JLabel label1 = new JLabel("Choose file:");
 		bottomPanelLayout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.NORTH, mainPanel);
 		bottomPanelLayout.putConstraint(SpringLayout.WEST, label1, 0, SpringLayout.WEST, mainPanel);
@@ -81,7 +116,7 @@ public class JobSelector extends JFrame {
 				FileFilter filter = new JarFilter();
 				fc.setFileFilter(filter);
 				fc.setMultiSelectionEnabled(true);
-				int returnVal = fc.showOpenDialog(thisRef);
+				int returnVal = fc.showOpenDialog(JobSelector.this);
 				if (returnVal == JFileChooser.APPROVE_OPTION)
 				{
 					File[] files = fc.getSelectedFiles();
@@ -131,19 +166,22 @@ public class JobSelector extends JFrame {
 		bottomPanelLayout.putConstraint(SpringLayout.NORTH, tf2, 5, SpringLayout.SOUTH, tf1);
 		bottomPanelLayout.putConstraint(SpringLayout.WEST, tf2, 0, SpringLayout.WEST, tf1);
 		mainPanel.add(tf2);
+	}
+	
+	private void initCompute()
+	{
+		btnCompute = new JButton("Compute");
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, btnCompute, 5, SpringLayout.SOUTH, tf2);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, btnCompute, 0, SpringLayout.WEST, tf2);
+		mainPanel.add(btnCompute);
 		
-		JButton button2 = new JButton("Compute");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button2, 5, SpringLayout.SOUTH, tf2);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, button2, 0, SpringLayout.WEST, tf2);
-		mainPanel.add(button2);
-		
-		button2.addActionListener(new ActionListener() {
+		btnCompute.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (tf1.getText().length() == 0) {
-					mainWindow.error("no jar-files name was specified");
+					error("no jar-files name was specified");
 				}
 				else if (tf2.getText().length() == 0) {
-					mainWindow.error("master task name was not specified");
+					error("master task name was not specified");
 				}
 				else {
 					Collection<String> jarFilesNames = new ArrayList<String>();
@@ -152,18 +190,25 @@ public class JobSelector extends JFrame {
 					//for (File file: selectedFiles) jarFiles.add(new F2FJarFile(file.getAbsolutePath()));
 					String jobID;
 					try {
-						jobID = F2FComputing.createJob(jarFilesNames, tf2.getText(), getMembers().getPeers()).getJobID();
-						mainWindow.info("Started job with ID: " + jobID);
+						jobID = F2FComputing.createJob(jarFilesNames, tf2.getText(), getF2FPeers()).getJobID();
+						info("Started job with ID: " + jobID);
 					} catch (F2FComputingException ex) {
-						mainWindow.error("Error with starting a job! " + ex);
+						error("Error with starting a job! " + ex);
 					}
 				}
 			}
 		});
 		
+		// bottomPanel constraints (constraint SOUTH of the bottom panel to the last button)
+		bottomPanelLayout.putConstraint(SpringLayout.SOUTH, mainPanel, 5, SpringLayout.SOUTH, btnCompute);
+	}
+	
+	private void initStats()
+	{
+		
 		JButton button3 = new JButton("Show stats");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button3, 0, SpringLayout.NORTH, button2);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, button3, 10, SpringLayout.EAST, button2);
+		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button3, 0, SpringLayout.NORTH, btnCompute);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, button3, 10, SpringLayout.EAST, btnCompute);
 		mainPanel.add(button3);
 		
 		button3.addActionListener(new ActionListener()
@@ -175,37 +220,53 @@ public class JobSelector extends JFrame {
 				while (jobIterator.hasNext())
 				{
 					Job job = jobIterator.next();
-					mainWindow.info(job.getJobID());
+					info(job.getJobID());
 					Collection<Task> tasks = job.getTasks();
 					Iterator<Task> taskIterator = tasks.iterator();
 					while (taskIterator.hasNext())
 					{
 						Task task = taskIterator.next();
-						mainWindow.info("\tTask " + task.getTaskID());
-						mainWindow.info("\t\tstate: java.lang.Thread.State." + task.getState());
+						info("\tTask " + task.getTaskID());
+						info("\t\tstate: java.lang.Thread.State." + task.getState());
 						if (task.getException() != null)
-							mainWindow.info("\t\texception: " + task.getException() + task.getException().getMessage());
+							info("\t\texception: " + task.getException() + task.getException().getMessage());
 						Collection<TaskProxy> proxies = task.getTaskProxies();
 						Iterator<TaskProxy> proxyIterator = proxies.iterator();
 						while (proxyIterator.hasNext())
 						{
 							TaskProxy proxy = proxyIterator.next();
-							mainWindow.info("\t\tTask " + proxy.getRemoteTaskID() + " message queue size: " + proxy.getMessageCount());
+							info("\t\tTask " + proxy.getRemoteTaskID() + " message queue size: " + proxy.getMessageCount());
 						}
 					}
 				}
 			}
 		});
-		
-		// bottomPanel constraints (constraint SOUTH of the bottom panel to the last button)
-		bottomPanelLayout.putConstraint(SpringLayout.SOUTH, mainPanel, 5, SpringLayout.SOUTH, button2);
-		
+	}
+	
+	private void endInit()
+	{
 		this.setContentPane(mainPanel);
 		this.setVisible(true);
 	}
 	
-	public FriendModel getMembers() {
-		return members;
+	private void error(String msg)
+	{
+		if (mainWindow != null)
+			mainWindow.error(msg);
+		else
+		{
+			F2FDebug.println(msg);
+		}
+	}
+	
+	private void info(String msg)
+	{
+		if (mainWindow != null)
+			mainWindow.info(msg);
+		else
+		{
+			F2FDebug.println(msg);
+		}
 	}
 	
 	private class JarFilter extends FileFilter {

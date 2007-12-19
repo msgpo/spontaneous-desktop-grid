@@ -59,6 +59,11 @@
 				<classpath refid="task.classpath"/>
 		  	</javac>
 	
+			<!-- Include the source code in the jar -->
+			<!--copy todir="${tmpBuildPath}/classes">
+			    <fileset dir="${basedir}/src"/>
+			</copy-->
+				
 			<jar 
 				basedir="${tmpBuildPath}/classes"
 				destfile="${tmpBuildPath}/F2F.jar"
@@ -73,6 +78,9 @@
 			/>
 			<copy todir="${scPath}" 
 				file="${basedir}/conf/F2FComputing.properties"/>
+		</target>
+	
+		<target name="rebuild" depends="clean, make" >
 		</target>
 	
 	<!-- End: Targets -->

@@ -4,6 +4,7 @@ import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
 import ee.ut.f2f.comm.sc.im.SipIMCommunicationProvider;
+import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.ui.F2FComputingGUI;
 
 public class Activator implements BundleActivator {
@@ -12,9 +13,15 @@ public class Activator implements BundleActivator {
 	 * (non-Javadoc)
 	 * @see org.osgi.framework.BundleActivator#start(org.osgi.framework.BundleContext)
 	 */
-	public void start(BundleContext context) throws Exception {
+	public void start(BundleContext context) throws Exception
+	{
 		System.out.println("f2f-plugin: Start F2F SC-plugin");
+
+		// init F2F framework
+		F2FComputing.initiateF2FComputing();
+		// init SIP Communicator stuff
 		SipIMCommunicationProvider.initiateSipIMCommunicationProvider(context);
+		// init GUI
 		F2FComputingGUI.main(new String[]{});
 	}
 	
