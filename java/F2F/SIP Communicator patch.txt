@@ -1,6 +1,6 @@
 Index: src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java
 ===================================================================
---- src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(revision 3289)
+--- src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(revision 3320)
 +++ src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(working copy)
 @@ -102,4 +102,20 @@
       * <tt>false</tt> otherwise.
@@ -8,7 +8,7 @@ Index: src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMe
      public boolean isContentTypeSupported(String contentType);
 +
 +    /**
-+     * Registeres a <tt>EventFilter</tt> with this operation set so that 
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to register.
@@ -16,7 +16,7 @@ Index: src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMe
 +    public void addEventFilter(EventFilter filter);
 +
 +    /**
-+     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
 +     * if a event should be filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to unregister.
@@ -27,7 +27,8 @@ Index: src/net/java/sip/communicator/service/protocol/event/EventFilter.java
 ===================================================================
 --- src/net/java/sip/communicator/service/protocol/event/EventFilter.java	(revision 0)
 +++ src/net/java/sip/communicator/service/protocol/event/EventFilter.java	(revision 0)
-@@ -0,0 +1,27 @@
+@@ -0,0 +1,28 @@
++/*
 +/*
 + * SIP Communicator, the OpenSource Java VoIP and Instant Messaging client.
 + *
@@ -39,16 +40,16 @@ Index: src/net/java/sip/communicator/service/protocol/event/EventFilter.java
 +import java.util.*;
 +
 +/**
-+ * A event filter that decides if a event should be filtered out or not.
++ * An event filter that decides if an event should be filtered out or not.
 + * For instance, maybe some type of received messages should not be 
-+ * shown in chat window.
++ * shown in the chat windows.
 + *
 + * @author Keio Kraaner
 + */
 +public interface EventFilter
 +{
 +    /**
-+     * Checks if a event should be filtered out or processed.
++     * Checks if an event should be filtered out or processed.
 +     * 
 +     * @param msg The event that should be checked
 +     * @return TRUE if the event was filtered out, otherwise FALSE.
@@ -57,7 +58,7 @@ Index: src/net/java/sip/communicator/service/protocol/event/EventFilter.java
 +}
 Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(revision 3289)
+--- src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(revision 3320)
 +++ src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(working copy)
 @@ -47,6 +47,11 @@
      private Vector messageListeners = new Vector();
@@ -99,7 +100,7 @@ Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstan
      }
 +
 +    /**
-+     * Registeres a <tt>EventFilter</tt> with this operation set so that 
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to register.
@@ -116,8 +117,8 @@ Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstan
 +	}
 +
 +    /**
-+     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
-+     * if a event should be filtered out.
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to unregister.
 +     */
@@ -129,28 +130,9 @@ Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstan
 +        }	
 +	}
  }
-Index: src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(revision 3289)
-+++ src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(working copy)
-@@ -289,4 +289,14 @@
-         else
-            return false;
-     }
-+
-+	public void addEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-+
-+	public void removeEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
- }
 Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(revision 3289)
+--- src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(revision 3320)
 +++ src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(working copy)
 @@ -69,6 +69,11 @@
      private Vector messageListeners = new Vector();
@@ -192,7 +174,7 @@ Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInsta
      }
 +
 +    /**
-+     * Registeres a <tt>EventFilter</tt> with this operation set so that 
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to register.
@@ -209,8 +191,8 @@ Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInsta
 +	}
 +
 +    /**
-+     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
-+     * if a event should be filtered out.
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to unregister.
 +     */
@@ -222,9 +204,28 @@ Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInsta
 +        }	
 +	}
  }
+Index: src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(revision 3320)
++++ src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(working copy)
+@@ -289,4 +289,14 @@
+         else
+            return false;
+     }
++
++	public void addEventFilter(EventFilter filter) {
++		// TODO Auto-generated method stub
++		
++	}
++
++	public void removeEventFilter(EventFilter filter) {
++		// TODO Auto-generated method stub
++		
++	}
+ }
 Index: src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(revision 3289)
+--- src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(revision 3320)
 +++ src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(working copy)
 @@ -453,4 +453,13 @@
         }
@@ -242,7 +243,7 @@ Index: src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantM
  }
 Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(revision 3289)
+--- src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(revision 3320)
 +++ src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(working copy)
 @@ -187,4 +187,14 @@
              listener.messageReceived(msgReceivedEvt);
@@ -262,7 +263,7 @@ Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessagin
 \ No newline at end of file
 Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3289)
+--- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3320)
 +++ src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
 @@ -10,6 +10,7 @@
  import java.net.*;
@@ -312,7 +313,7 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
      }
 +
 +    /**
-+     * Registeres a <tt>EventFilter</tt> with this operation set so that 
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to register.
@@ -329,8 +330,8 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
 +	}
 +
 +    /**
-+     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
-+     * if a event should be filtered out.
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to unregister.
 +     */
@@ -345,7 +346,7 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
  
 Index: src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(revision 3289)
+--- src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(revision 3320)
 +++ src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(working copy)
 @@ -46,6 +46,11 @@
      private Vector messageListeners = new Vector();
@@ -387,7 +388,7 @@ Index: src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantM
      }
 +
 +    /**
-+     * Registeres a <tt>EventFilter</tt> with this operation set so that 
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to register.
@@ -404,8 +405,8 @@ Index: src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantM
 +	}
 +
 +    /**
-+     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
-+     * if a event should be filtered out.
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to unregister.
 +     */
@@ -417,29 +418,9 @@ Index: src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantM
 +        }	
 +	}
  }
-Index: src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(revision 3289)
-+++ src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(working copy)
-@@ -400,5 +400,15 @@
-     {
-         return false;
-     }
-+
-+	public void addEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-+
-+	public void removeEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-     
- }
 Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(revision 3289)
+--- src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(revision 3320)
 +++ src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(working copy)
 @@ -36,6 +36,11 @@
      private Vector messageListeners = new Vector();
@@ -483,7 +464,7 @@ Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantM
 +    }
 +
 +    /**
-+     * Registeres a <tt>EventFilter</tt> with this operation set so that 
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to register.
@@ -500,8 +481,8 @@ Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantM
 +	}
 +
 +    /**
-+     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
-+     * if a event should be filtered out.
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to unregister.
 +     */
@@ -513,9 +494,29 @@ Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantM
 +        }	
 +	}
  }
+Index: src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(revision 3320)
++++ src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(working copy)
+@@ -400,5 +400,15 @@
+     {
+         return false;
+     }
++
++	public void addEventFilter(EventFilter filter) {
++		// TODO Auto-generated method stub
++		
++	}
++
++	public void removeEventFilter(EventFilter filter) {
++		// TODO Auto-generated method stub
++		
++	}
+     
+ }
 Index: src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(revision 3289)
+--- src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(revision 3320)
 +++ src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(working copy)
 @@ -282,4 +282,14 @@
          else
