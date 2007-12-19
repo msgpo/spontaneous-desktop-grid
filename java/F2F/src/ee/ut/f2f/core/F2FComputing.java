@@ -270,6 +270,7 @@ public class F2FComputing
 				job.addWorkingPeer(peer);
 			}
 		}
+		//TODO: send jobs and task in parallel
 		F2FMessage messageJob = 
 			new F2FMessage(F2FMessage.Type.JOB, null, null, null, job);
 		for (F2FPeer peer: newPeers)
