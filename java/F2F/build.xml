@@ -59,10 +59,10 @@
 				<classpath refid="task.classpath"/>
 		  	</javac>
 	
-			<!-- Include the source code in the jar -->
-			<!--copy todir="${tmpBuildPath}/classes">
+			<!-- Include the source code in the jar (HACK! this includes also a picture!) -->
+			<copy todir="${tmpBuildPath}/classes">
 			    <fileset dir="${basedir}/src"/>
-			</copy-->
+			</copy>
 				
 			<jar 
 				basedir="${tmpBuildPath}/classes"
