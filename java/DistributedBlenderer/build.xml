@@ -41,9 +41,9 @@
 		</copy>
 		
 		<!-- Copy also the libs into temp dir -->
-		<copy todir="${propsBuildDir}">
+		<!--copy todir="${propsBuildDir}">
 			<fileset dir="${basedir}/lib"/>
-		</copy>
+		</copy-->
 		
 		<!-- Package the task. -->	<jar
 			update="yes"

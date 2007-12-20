@@ -1,5 +1,7 @@
 package ee.ut.xpp2p.model;
 
+import java.io.File;
+
 /**
  * Class that represents one rendering job
  * 
@@ -33,6 +35,10 @@ public class RenderJob {
 
 	public void setOutputLocation(String outputLocation) {
 		this.outputLocation = outputLocation;
+		if (!this.outputLocation.endsWith(File.separator))
+		{
+			this.outputLocation += File.separator;
+		}
 	}
 
 	public String getOutputFormat() {

@@ -14,7 +14,7 @@ import ee.ut.xpp2p.ui.BlenderFileFilter;
 /**
  * Class that handles file operations
  * 
- * @author Jaan Neljandik, Vladimir Ðkarupelov
+ * @author Jaan Neljandik, Vladimir ï¿½karupelov
  * @created 09.11.2007
  */
 public class FileUtil {
@@ -101,6 +101,10 @@ public class FileUtil {
 			byte[] partBytes = partContents.get(i).getRenderedPart();
 			Properties props = System.getProperties();
 			String tempDir = props.getProperty("java.io.tmpdir");
+			if (!tempDir.endsWith(File.separator))
+			{
+				tempDir += File.separator;
+			}
 			String partName = tempDir + partContents.get(i).getFileName();
 			File part = saveFile(partBytes, partName);
 			inputFileURLs[i] = URL_FILE_PREFIX + part.getAbsolutePath();
