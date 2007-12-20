@@ -772,7 +772,7 @@ public class SipIMCommunicationProvider
 				Message message = im.createMessage(F2F_TAG_START+Util.encode(data)+F2F_TAG_END);
 				im.sendInstantMessage(contact, message);
 				sentData = sentData + data.length - 1;
-				F2FDebug.println("\t\t\t sent " + sentData);
+				//F2FDebug.println("\t\t\t sent " + sentData);
 				// give IM channel some time to send the data
 				// MSN connection is closed if too much data is pushed too fast
 				Thread.sleep(sleepTime);
