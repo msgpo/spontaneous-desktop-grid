@@ -30,6 +30,7 @@
 			fork="yes"
 			source="1.5"
 			target="1.5"
+			debug="yes"
 			>
 			<classpath refid="task.classpath"/>
 	  	</javac>

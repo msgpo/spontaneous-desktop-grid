@@ -9,7 +9,6 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
-import java.beans.PropertyChangeEvent;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -300,7 +299,7 @@ public class MainWindow extends JFrame {
 	private void renderButtonPressed() {
 		if (inputChecker.validate(this)) {
 			RenderJob job = new RenderJob();
-			job.setInputFile(inputFileTextField.getText());
+			job.setInputFileName(inputFileTextField.getText());
 			job.setOutputLocation(outputLocTextField.getText());
 			job.setOutputFormat(filetypeChoice.getSelectedItem());
 			job.setStartFrame(Long.parseLong(startFrameTextField.getText()));

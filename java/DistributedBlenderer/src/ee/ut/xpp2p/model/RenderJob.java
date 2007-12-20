@@ -16,11 +16,14 @@ public class RenderJob {
 	private int participants;
 	private String extension;
 
-	public String getInputFile() {
+	/**
+	 * Returns the absolute pathname.
+	 */
+	public String getInputFileName() {
 		return inputFile;
 	}
 
-	public void setInputFile(String inputFile) {
+	public void setInputFileName(String inputFile) {
 		this.inputFile = inputFile;
 	}
 

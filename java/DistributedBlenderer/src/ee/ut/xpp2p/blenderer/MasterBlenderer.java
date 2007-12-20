@@ -7,7 +7,6 @@ import java.io.InputStreamReader;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
-import java.util.Properties;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputingException;
@@ -129,8 +128,6 @@ public class MasterBlenderer extends Task {
 			}
 		}
 
-		System.out.println(System.getProperty("user.dir"));
-
 		return partLengths;
 	}
 
@@ -140,39 +137,41 @@ public class MasterBlenderer extends Task {
 	 * @param job
 	 *            job to render
 	 */
-	public void renderJob(RenderJob job) {
-		try {
+	public void renderJob(final RenderJob job) {
+		new Thread() { public void run() {
+			try {
 			long start = System.currentTimeMillis();
 
 			// submit slave tasks
-			this.getJob().submitTasks(SlaveBlenderer.class.getName(),
-					this.getJob().getPeers().size(), this.getJob().getPeers());
+			getJob().submitTasks(SlaveBlenderer.class.getName(),
+					getJob().getPeers().size(), getJob().getPeers());
 
 			// get IDs of all the tasks that have been created
-			Collection<String> taskIDs = this.getJob().getTaskIDs();
+			Collection<String> taskIDs = getJob().getTaskIDs();
 
 			// get proxies of slave tasks
 			Collection<TaskProxy> slaveProxies = new ArrayList<TaskProxy>();
 			for (String taskID : taskIDs) {
 				// do not get proxy of master task
-				if (taskID == this.getTaskID())
+				if (taskID == getTaskID())
 					continue;
-				TaskProxy proxy = this.getTaskProxy(taskID);
+				TaskProxy proxy = getTaskProxy(taskID);
 				if (proxy != null)
 					slaveProxies.add(proxy);
 			}
 
 			long[] partLengths = splitTask(job.getStartFrame(), job
-					.getEndFrame(), this.getJob().getPeers().size());
+					.getEndFrame(), getJob().getPeers().size());
 			long currentFrame = job.getStartFrame();
 			int i = 0;
-			for (TaskProxy proxy : slaveProxies) {
-				RenderTask task = new RenderTask();
-
-				task.setFileName(job.getInputFile());
-				task.setBlenderFile(FileUtil.loadFile(job.getInputFile()));
-				task.setOutputLocation(job.getOutputLocation());
-				task.setFileFormat(job.getOutputFormat());
+			byte[] input = FileUtil.loadFile(job.getInputFileName());
+			String inputFileName = new File(job.getInputFileName()).getName();
+			RenderTask task = new RenderTask();
+			task.setFileName(inputFileName);
+			task.setBlenderFile(input);
+			task.setFileFormat(job.getOutputFormat());
+			for (TaskProxy proxy : slaveProxies)
+			{
 				task.setStartFrame(currentFrame);
 				task.setEndFrame(currentFrame + partLengths[i] - 1);
 				try {
@@ -196,6 +195,11 @@ public class MasterBlenderer extends Task {
 						results.add((RenderResult) proxy.receiveMessage());
 					}
 				}
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
+					e.printStackTrace();
+				}
 				// FIXME: Adapt to lost friends
 			}
 			String fileName = FileUtil.generateOutputFileName(getInputFile(), job.getExtension());
@@ -203,14 +207,14 @@ public class MasterBlenderer extends Task {
 
 			long end = System.currentTimeMillis();
 			System.out.println("Took " + (end - start) / 1000 + "s");
-
-		} catch (F2FComputingException e) {
-			System.out.println(e.getMessage());
-			// TODO: Handle exception
-		} catch (IOException e) {
-			System.out.println(e.getMessage());
-			// TODO: Handle exception
-		}
+			} catch (F2FComputingException e) {
+				e.printStackTrace();
+				// TODO: Handle exception
+			} catch (IOException e) {
+				e.printStackTrace();
+				// TODO: Handle exception
+			}
+		}}.start();
 	}
 
 

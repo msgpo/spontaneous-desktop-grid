@@ -32,14 +32,6 @@ public class RenderTask implements Serializable {
 		this.blenderFile = blenderFile;
 	}
 
-	public String getOutputLocation() {
-		return outputLocation;
-	}
-
-	public void setOutputLocation(String outputLocation) {
-		this.outputLocation = outputLocation;
-	}
-
 	public String getFileFormat() {
 		return fileFormat;
 	}

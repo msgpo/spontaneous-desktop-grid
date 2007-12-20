@@ -3,7 +3,9 @@
 	<classpathentry kind="src" path="src"/>
 	<classpathentry kind="src" path="test"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.launching.JRE_CONTAINER"/>
-	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/4"/>
 	<classpathentry combineaccessrules="false" kind="src" path="/F2F"/>
+	<classpathentry combineaccessrules="false" kind="src" path="/sip-communicator"/>
+	<classpathentry kind="lib" path="lib/jmf.jar"/>
 	<classpathentry kind="output" path="bin"/>
 </classpath>

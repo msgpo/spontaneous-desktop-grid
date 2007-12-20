@@ -93,7 +93,7 @@ public class MasterBlendererTest extends TestCase {
 	public void testRenderJob() {
 		//FIXME: Adapt to new filename in renderJob
 		RenderJob job = new RenderJob();
-		job.setInputFile("etc\\VictorDancing.blend");
+		job.setInputFileName("etc\\VictorDancing.blend");
 		job.setOutputLocation("etc\\");
 		job.setOutputFormat("AVIJPEG");
 		job.setStartFrame(10);

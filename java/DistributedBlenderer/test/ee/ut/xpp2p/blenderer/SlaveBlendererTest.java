@@ -23,7 +23,6 @@ public class SlaveBlendererTest extends TestCase {
 	public void testRenderTask() throws Exception {
 		RenderTask task = new RenderTask();
 		task.setFileName("etc\\VictorDancingTest.blend");
-		task.setOutputLocation("etc\\");
 		task.setFileFormat("AVIJPEG");
 		task.setStartFrame(10);
 		
