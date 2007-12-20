@@ -33,6 +33,10 @@ public class SlaveBlenderer extends Task {
 				.getMasterTaskID());
 		Properties props = System.getProperties();
 		tempDir = props.getProperty("java.io.tmpdir");
+		if (!tempDir.endsWith(File.separator))
+		{
+			tempDir += File.separator;
+		}
 		if (masterProxy == null)
 			throw new RuntimeException("Proxy of master task was not found!");
 
@@ -49,7 +53,7 @@ public class SlaveBlenderer extends Task {
 					result.setStartFrame(receivedRenderTask.getStartFrame());
 					String fileName = FileUtil.generateOutputFileName(receivedRenderTask.getStartFrame(), receivedRenderTask.getEndFrame(), receivedRenderTask.getExtension());
 					result.setFileName(fileName);			
-					String outputFile = tempDir + File.separator + fileName;
+					String outputFile = tempDir + fileName;
 					result.setRenderedPart(FileUtil.loadFile(outputFile));
 					masterProxy.sendMessage(result);
 					//deletes rendered and sended part
@@ -84,12 +88,12 @@ public class SlaveBlenderer extends Task {
 		try {
 			File blenderFile = new File(task.getFileName());
 			String blenderFileName = blenderFile.getName();
-			String fullBlenderFileName = tempDir + File.separator + blenderFileName;
+			String fullBlenderFileName = tempDir + blenderFileName;
 			System.out.println("Filename = " + fullBlenderFileName);
 			File file = FileUtil.saveFile(task.getBlenderFile(), fullBlenderFileName);
 			System.out.println("Saved file: " + file);
 			String[] cmdarr = { "blender", "-b", fullBlenderFileName, "-o",
-					tempDir + File.separator, "-F", task.getFileFormat(), "-s",
+					tempDir, "-F", task.getFileFormat(), "-s",
 					String.valueOf(task.getStartFrame()), "-e",
 					String.valueOf(task.getEndFrame()), "-a", "-x", "1" };
 			System.out.println("Arguments: ");
