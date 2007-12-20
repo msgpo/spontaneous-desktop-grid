@@ -3,7 +3,6 @@ package ee.ut.xpp2p.blenderer;
 import java.io.File;
 
 import junit.framework.TestCase;
-import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.xpp2p.blenderer.MasterBlenderer;
 import ee.ut.xpp2p.model.RenderJob;
