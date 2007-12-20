@@ -22,11 +22,11 @@ public class SlaveBlendererTest extends TestCase {
 	 */
 	public void testRenderTask() throws Exception {
 		RenderTask task = new RenderTask();
-		task.setFileName("etc\\VictorDancingTest.blend");
+		task.setFileName("VictorDancingTest.blend");
 		task.setFileFormat("AVIJPEG");
 		task.setStartFrame(10);
 		
-		InputStream is = new FileInputStream("etc\\VictorDancing.blend");
+		InputStream is = new FileInputStream("etc"+ File.separator +"VictorDancing.blend");
 		byte[] fileBytes = new byte[is.available()];
 		
 		is.read(fileBytes);
@@ -38,10 +38,15 @@ public class SlaveBlendererTest extends TestCase {
 			slave.renderTask(task);
 		}
 		catch(NothingRenderedException e) {
-			System.out.println(e);
+			e.printStackTrace();
 		}
 
-		File output = new File("etc\\0010_0013.avi");
+		String tempDir = System.getProperty("java.io.tmpdir");
+		if (!tempDir.endsWith(File.separator))
+		{
+			tempDir += File.separator;
+		}
+		File output = new File(tempDir +"0010_0013.avi");
 		assertTrue(output.exists());
 		output.delete();
 	}

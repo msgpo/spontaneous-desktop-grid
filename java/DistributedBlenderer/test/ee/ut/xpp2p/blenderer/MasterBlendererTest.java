@@ -3,6 +3,8 @@ package ee.ut.xpp2p.blenderer;
 import java.io.File;
 
 import junit.framework.TestCase;
+import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.xpp2p.blenderer.MasterBlenderer;
 import ee.ut.xpp2p.model.RenderJob;
 
@@ -89,12 +91,13 @@ public class MasterBlendererTest extends TestCase {
 
 	/**
 	 * Tests job rendering
+	 * @throws F2FComputingException 
 	 */
-	public void testRenderJob() {
+	public void testRenderJob() throws F2FComputingException {
 		//FIXME: Adapt to new filename in renderJob
 		RenderJob job = new RenderJob();
-		job.setInputFileName("etc\\VictorDancing.blend");
-		job.setOutputLocation("etc\\");
+		job.setInputFileName("etc"+File.separator+"VictorDancing.blend");
+		job.setOutputLocation("etc"+File.separator);
 		job.setOutputFormat("AVIJPEG");
 		job.setStartFrame(10);
 		job.setEndFrame(14);
@@ -117,7 +120,7 @@ public class MasterBlendererTest extends TestCase {
 	 */
 	public void testCountFrames() {
 		long frames = new MasterBlenderer()
-				.countFrames("etc\\VictorDancing.blend");
+				.countFrames("etc"+File.separator+"VictorDancing.blend");
 
 		assertEquals(frames, 24L);
 	}

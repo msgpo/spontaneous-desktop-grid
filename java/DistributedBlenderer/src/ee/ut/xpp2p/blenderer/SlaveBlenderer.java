@@ -20,7 +20,7 @@ import ee.ut.xpp2p.util.FileUtil;
  */
 public class SlaveBlenderer extends Task {
 
-	String tempDir;
+	String tempDir = null;
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -88,6 +88,15 @@ public class SlaveBlenderer extends Task {
 		try {
 			File blenderFile = new File(task.getFileName());
 			String blenderFileName = blenderFile.getName();
+			if (tempDir == null)
+			{
+				Properties props = System.getProperties();
+				tempDir = props.getProperty("java.io.tmpdir");
+				if (!tempDir.endsWith(File.separator))
+				{
+					tempDir += File.separator;
+				}
+			}
 			String fullBlenderFileName = tempDir + blenderFileName;
 			System.out.println("Filename = " + fullBlenderFileName);
 			File file = FileUtil.saveFile(task.getBlenderFile(), fullBlenderFileName);

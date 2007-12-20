@@ -21,6 +21,7 @@ public class FileUtilTest extends TestCase {
 	private String file1;
 	private String file2;
 	private String file3;
+	private String dir;
 	private String output1;
 	private String output2;
 	private String output3;
@@ -36,14 +37,15 @@ public class FileUtilTest extends TestCase {
 				+ "start the dynamic GRID to carry out the distributed rendering task. Extensions \r\n";
 		part3 = "to this scenarios will make use of rendering static scenes with povray \r\n"
 				+ "http://www.povray.org/ or support video or sound encoding.";
-		file1 = "etc/0001_0012.avi";
-		file2 = "etc/0013_0019.avi";
-		file3 = "etc/0020_0024.avi";
-		output1 = "etc/test_0001_0012.avi";
-		output2 = "etc/test_0013_0019.avi";
-		output3 = "etc/test_0020_0024.avi";
-		fileName = "etc\\victorDancing.avi";
-		testFileName = "etc\\0001_0024.avi";
+		dir = "etc"+ File.separator;
+		file1 = "0001_0012.avi";
+		file2 = "0013_0019.avi";
+		file3 = "0020_0024.avi";
+		output1 = "test_0001_0012.avi";
+		output2 = "test_0013_0019.avi";
+		output3 = "test_0020_0024.avi";
+		fileName = "victorDancing.avi";
+		testFileName = "0001_0024.avi";
 	}
 
 	@Override
@@ -54,8 +56,8 @@ public class FileUtilTest extends TestCase {
 		 * (!fileDeleted) { fileDeleted = (new File(fileName)).delete(); }
 		 */
 		File test_output1 = new File(output1);
-		File test_output2 = new File(output1);
-		File test_output3 = new File(output1);
+		File test_output2 = new File(output2);
+		File test_output3 = new File(output3);
 		if(test_output1.exists()) test_output1.delete();
 		if(test_output2.exists()) test_output2.delete();
 		if(test_output3.exists()) test_output3.delete();
@@ -63,7 +65,7 @@ public class FileUtilTest extends TestCase {
 
 	public void testLoadFile() {
 		try {
-			byte[] loadedBytes = FileUtil.loadFile("etc\\scenario part 1.txt");
+			byte[] loadedBytes = FileUtil.loadFile(dir + "scenario part 1.txt");
 			String loadedString = new String(loadedBytes, "utf-8");
 			assertEquals(part1, loadedString);
 		} catch (IOException e) {
@@ -74,7 +76,7 @@ public class FileUtilTest extends TestCase {
 	public void testSaveFile() {
 		try {
 			byte[] textBytes = part1.getBytes();
-			File file = FileUtil.saveFile(textBytes, fileName);
+			File file = FileUtil.saveFile(textBytes, dir + fileName);
 			FileInputStream stream = new FileInputStream(file);
 			assertTrue(file.exists());
 
@@ -103,9 +105,9 @@ public class FileUtilTest extends TestCase {
 			RenderResult result2 = new RenderResult();
 			RenderResult result3 = new RenderResult();
 
-			result1.setRenderedPart(FileUtil.loadFile(file1));
-			result2.setRenderedPart(FileUtil.loadFile(file2));
-			result3.setRenderedPart(FileUtil.loadFile(file3));
+			result1.setRenderedPart(FileUtil.loadFile(dir + file1));
+			result2.setRenderedPart(FileUtil.loadFile(dir + file2));
+			result3.setRenderedPart(FileUtil.loadFile(dir + file3));
 
 			result1.setStartFrame(0);
 			result1.setEndFrame(12);
@@ -123,10 +125,11 @@ public class FileUtilTest extends TestCase {
 			list.add(result1);
 
 			// Execute
-			boolean fileCreated = FileUtil.composeFile(list,"", fileName);
+			boolean fileCreated = FileUtil.composeFile(list,"", dir + fileName);
 			assertTrue(fileCreated);
 
 		} catch (IOException e) {
+			e.printStackTrace();
 			fail();
 		}
 	}
