@@ -714,7 +714,7 @@ public class SipIMCommunicationProvider
 	}
 	
 	private static final int MAX_MSG_LENGTH_MSN = 1050 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
-	private static final int SLEEP_TIME_MSN = 75; // How long to wait between sending messages
+	private static final int SLEEP_TIME_MSN = 200; // How long to wait between sending messages
 	private static final int MAX_MSG_LENGTH_JABBER = Integer.MAX_VALUE;
 	private static final int SLEEP_TIME_JABBER = 0;
 	// seems that icq buffers messages
@@ -772,7 +772,7 @@ public class SipIMCommunicationProvider
 				Message message = im.createMessage(F2F_TAG_START+Util.encode(data)+F2F_TAG_END);
 				im.sendInstantMessage(contact, message);
 				sentData = sentData + data.length - 1;
-				//F2FDebug.println("\t\t\t sent " + sentData);
+				F2FDebug.println("\t\t\t sent " + sentData);
 				// give IM channel some time to send the data
 				// MSN connection is closed if too much data is pushed too fast
 				Thread.sleep(sleepTime);
