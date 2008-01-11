@@ -1,7 +1,6 @@
 package ee.ut.f2f.core;
 
 import java.util.ArrayList;
-import java.util.Collection;
 import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
@@ -53,41 +52,58 @@ public class F2FPeer
 		return commProviders.size() > 0;
 	}
 	
-	private Collection<CommunicationProvider> commProviders = null;
-	public void addCommProvider(CommunicationProvider comm)
+	private ArrayList<CommunicationProvider> commProviders = null;
+	/**
+	 * 
+	 * @param comm The provider to add
+	 * @return The place in queue where the new provider was added, or -1 if already present
+	 * or -2 if comm is null.
+	 */
+	int addCommProvider(CommunicationProvider comm)
 	{
+		if (comm == null) return -2;
 		synchronized (commProviders)
 		{
 			if (!commProviders.contains(comm))
-				commProviders.add(comm);
+			{
+				int place = 0;
+				for (; place < commProviders.size(); place++)
+					if (commProviders.get(place).getWeight() <= comm.getWeight()) break;
+				commProviders.add(place, comm);
+				return place;
+			}
+			return -1;
 		}
 	}
-	public void removeCommProvider(CommunicationProvider comm)
+	void removeCommProvider(CommunicationProvider comm)
 	{
 		synchronized (commProviders)
 		{
-			if (commProviders.contains(comm)){
+			if (commProviders.contains(comm))
+			{
 				commProviders.remove(comm);
-				logger.debug("Removed CommunicationProvider [" + comm + "] from F2FPeer [" + this.getID().toString() + "]");
+				//logger.debug("Removed CommunicationProvider [" + comm + "] from F2FPeer [" + this.getID().toString() + "]");
 			} else {
-				logger.debug("CommunicationProvider [" + comm + "] not found in list, nothing removed");
+				//logger.debug("CommunicationProvider [" + comm + "] not found in list, nothing removed");
 			}
-			if (commProviders.size() == 1 && commProviders.contains(getSocketCommunicationProvider()))
-				commProviders.remove(getSocketCommunicationProvider());
+			//TODO: remove, if it is not needed
+			//if (commProviders.size() == 1 && commProviders.contains(getSocketCommunicationProvider()))
+			//	commProviders.remove(getSocketCommunicationProvider());
 		}
 	}
 	public void sendMessage(Object message) throws CommunicationFailedException
 	{
 		logger.info("Send message: " + ((F2FMessage)message).getData() + ", to: " + getDisplayName());
 		
-		//Loopback
-		if(this.id.equals(F2FComputing.getLocalPeer().getID()))
+		// Loopback
+		if (this.id.equals(F2FComputing.getLocalPeer().getID()))
 		{
 			logger.debug("Sending F2FMessage to MYSELF - loopback");
 			F2FComputing.messageRecieved(message, this.getID());			
 			return;
 		}
 		
+		/*TODO: remove
 		//Sending Other Messages
 		StunInfoTableItem sinft = (StunInfoTableItem)F2FComputingGUI.controller.getStunInfoTableModel().get(this.getID().toString());
 		if (sinft != null && sinft.isTcpConnectivityTested() && sinft.canConnectViaTCP()){
@@ -110,16 +126,18 @@ public class F2FPeer
 				logger.error("SocketCommunicationProvider is null, for F2FPeer [" + this.getID() + "]");
 			}
 		}
+		*/
 		
-		for (CommunicationProvider commProvider: commProviders)
+		// try to send the message to the receiver
+		// use high-weight comm providers before low-weight ones
+		for (int i = 0; i < commProviders.size(); i++)
 		{
+			CommunicationProvider commProvider = commProviders.get(i);
 			try
 			{	
-				if(!(commProvider instanceof SocketCommunicationProvider)){	
-					logger.debug("Using SipCommucationProvider sending F2FMessage to [" + this.getID().toString() + "]");
-					commProvider.sendMessage(id, message);
-					logger.debug("Message successfully sent using SipCommunicationProvider");
-				}
+				//logger.debug("Using SipCommucationProvider sending F2FMessage to [" + this.getID().toString() + "]");
+				commProvider.sendMessage(id, message);
+				//logger.debug("Message successfully sent using SipCommunicationProvider");
 			}
 			catch (Exception e)
 			{
@@ -133,7 +151,7 @@ public class F2FPeer
 		// throw an exception if message is not sent
 		throw new CommunicationFailedException();
 	}
-	
+	/*TODO: remove
 	private SocketCommunicationProvider getSocketCommunicationProvider(){
 		for(CommunicationProvider commProv : commProviders){
 			if (commProv instanceof SocketCommunicationProvider){
@@ -142,18 +160,5 @@ public class F2FPeer
 		}
 		return null;
 	}
-	
-	public boolean removeCommunicationProvider(CommunicationProvider communicationProvider){
-		if (communicationProvider == null) throw new NullPointerException("CommunicationProvider is null");
-		if(commProviders.contains(communicationProvider)){
-				try{
-					return commProviders.remove(communicationProvider);
-				} finally {
-					logger.debug("Removed CommunicationProvider [" + communicationProvider + "] from F2FPeer [" + this.getID().toString() + "]");
-				}
-		} else {
-			logger.debug("CommunicationProvider [" + communicationProvider + "] not found in list, nothing removed");
-			return false;
-		}
-	}
+	*/
 }

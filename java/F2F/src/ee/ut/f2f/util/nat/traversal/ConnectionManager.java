@@ -290,6 +290,8 @@ public class ConnectionManager {
 			   	getSocketCommunicationProvider().addFriend(sinf.getLocalIp(), getScPort());
 			   	
 			   	//Add socket communication layer to F2FPeer
+			   	/*TODO: remove, this addition must be done from socket comm provider 
+			   	 * and via F2FComputing.peerContacted() method 
 			   	F2FPeer f2fpeer = F2FComputingGUI.controller.getFriendModel().getF2FPeerById(sinf.getId());
 			   	if(f2fpeer != null){
 			   		log.debug("Adding SocketCommunicationProvider to F2Fpeer by id [" + sinf.getId() + "]");
@@ -297,6 +299,7 @@ public class ConnectionManager {
 			   	} else {
 			   		log.error("No F2FPeers found by id [" + sinf.getId() + "]");
 			   	}
+			   	*/
 			}
 		}).start();
 	}

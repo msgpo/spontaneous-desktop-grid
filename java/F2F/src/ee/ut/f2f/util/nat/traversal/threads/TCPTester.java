@@ -46,9 +46,12 @@ public class TCPTester extends Thread implements Activity{
 		scp = F2FComputingGUI.natMessageProcessor.getConnectionManager().getSocketCommunicationProvider();
 		scp.removeFriend(peerId);
 		scp.addFriend(sinf.getLocalIp(), connectTo);
+		/*TODO: remove, this is not the place where this should be done and
+		 * comm provider may only be added to a peer via F2FComputing.peerContacted() method
 		F2FPeer f2fpeer = F2FComputingGUI.controller.getFriendModel().getF2FPeerById(peerId);
 		f2fpeer.removeCommProvider(scp);
 		f2fpeer.addCommProvider(scp);
+		*/
 	}	
 	
 	

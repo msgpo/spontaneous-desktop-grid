@@ -865,6 +865,11 @@ public class SipIMCommunicationProvider
 		}
 		throw new CommunicationFailedException();
 	}
+
+	public int getWeight()
+	{
+		return CommunicationProvider.IM_COMM_WEIGHT;
+	}
 }
 
 class UUIDSipPeer

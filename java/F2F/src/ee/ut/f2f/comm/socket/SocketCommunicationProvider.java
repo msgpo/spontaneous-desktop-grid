@@ -219,4 +219,9 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 	public Activity getParentActivity() {
 		return null;
 	}
+
+	public int getWeight()
+	{
+		return CommunicationProvider.SOCKET_COMM_WEIGHT;
+	}
 }

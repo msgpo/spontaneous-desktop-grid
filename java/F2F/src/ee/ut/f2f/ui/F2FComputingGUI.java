@@ -106,13 +106,16 @@ public class F2FComputingGUI {
 							// at first check if someone has to be removed
 							for (F2FPeer peer: peersGUI)
 							{
-								if (!peersF2F.contains(peer)){
+								if (!peersF2F.contains(peer))
+								{
+									/*TODO: remove
 									//Remove SocketPeer form socketCommunication layer
 									natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().removeFriend(peer.getID().toString());
 									//Remove socket communication provider from F2FPeer
 									peer.removeCommProvider(natMessageProcessor.getConnectionManager().getSocketCommunicationProvider());
 									//Remove also NAT Traversal Stun info
 									F2FComputingGUI.controller.getStunInfoTableModel().remove(peer.getID().toString());
+									*/
 									//remove F2F peer from list
 									friendModel.remove(peer);
 								}
