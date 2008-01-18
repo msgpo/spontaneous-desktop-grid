@@ -18,9 +18,7 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.ui.F2FComputingGUI;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.nat.traversal.threads.TCPTester;
 
 class SocketPeer implements Activity
 {

@@ -167,7 +167,7 @@ public class F2FPeer
 		// after a remote peer has sent its STUN info
 		
 			// test if TCP connection can be made
-			//initiateTCPTester();
+			initiateTCPTester();
 		}
 	}
 	
