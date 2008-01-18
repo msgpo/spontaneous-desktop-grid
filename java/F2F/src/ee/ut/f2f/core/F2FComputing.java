@@ -20,7 +20,7 @@ import ee.ut.f2f.core.activity.CPURequests;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.nat.traversal.NatMessage;
+import ee.ut.f2f.util.stun.StunInfo;
 
 /**
  * This is the core class of F2F framework. It provides methods to create new
@@ -62,8 +62,11 @@ public class F2FComputing
 	static Collection<F2FMultiChatListener> chatListeners = new ArrayList<F2FMultiChatListener>();
 	public static void addChatListener(F2FMultiChatListener listener)
 	{
-		if (!chatListeners.contains(listener))
-			chatListeners.add(listener);
+		synchronized (chatListeners)
+		{
+			if (!chatListeners.contains(listener))
+				chatListeners.add(listener);
+		}
 	}
 	
 	private static boolean isInitialized() { return localPeer != null; } 
@@ -75,6 +78,7 @@ public class F2FComputing
 	private F2FComputing(java.io.File rootDir)
 	{
 		localPeer = new F2FPeer("me (localhost)");
+		localPeer.updateSTUNInfo();
 		logger.debug("\tlocal F2FPeer ID is " + localPeer.getID());
 		peers = new HashMap<UUID, F2FPeer>();
 		peers.put(localPeer.getID(), localPeer);
@@ -369,8 +373,9 @@ public class F2FComputing
 			peer = peers.get(peerID);
 			if (peer == null)
 			{
-				peer = new F2FPeer(peerID, displayName);
+				peer = new F2FPeer(peerID, displayName, comm);
 				peers.put(peerID, peer);
+				return;
 			}
 		}
 		peer.addCommProvider(comm);
@@ -432,6 +437,7 @@ public class F2FComputing
 			return;
 		}
 		F2FMessage f2fMessage = (F2FMessage) message;
+		// JOB/TASK START
 		if (f2fMessage.getType() == F2FMessage.Type.REQUEST_FOR_CPU)
 		{
 			try
@@ -496,6 +502,7 @@ public class F2FComputing
 			job.addTaskDescriptions(taskDescriptions);
 			startJobTasks(job);
 		}
+		// MESSAGES TO TASKS
 		else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
 		{
 			if(logger.isTraceEnabled()) {
@@ -552,24 +559,30 @@ public class F2FComputing
 				logger.error("couldn't send the message to the route target", e);
 			}
 		}
+		// CHAT
 		else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
 		{	 
 			F2FComputingGUI.controller.chatMessageReceived((String)f2fMessage.getData(), sender);
 		}
-		else if (f2fMessage.getType() == F2FMessage.Type.NAT){
-			Object data = f2fMessage.getData();
-			if (data instanceof NatMessage){
-				NatMessage nmsg = (NatMessage) data;
-				logger.debug("Received NAT message, size [" + nmsg + "], forwarding to NatMessageProcessor");
-				F2FComputingGUI.natMessageProcessor.processIncomingNatMessage(nmsg);
-			} else {
-				logger.debug("Received F2FMessage type:NAT, but not instance of NatMessage");
-			}
-		}
+		// SC MULTI CHAT
 		else if (f2fMessage.getType() == F2FMessage.Type.MULTI_CHAT)
 		{
 			for (F2FMultiChatListener listener: chatListeners)
 				listener.receivedF2FMultiChatMessage(f2fMessage.getData());
+		}
+		// STUN
+		else if (f2fMessage.getType() == F2FMessage.Type.GET_STUN_INFO)
+		{
+			getLocalPeer().reportSTUNInfo(sender);
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.REPORT_STUN_INFO)
+		{
+			sender.setSTUNInfo((StunInfo)f2fMessage.getData());
+		}
+		// TCP
+		else if (f2fMessage.getType() == F2FMessage.Type.TRY_CONNECT_TO)
+		{
+			sender.getTCPTester().tryConnectTo((Integer)f2fMessage.getData());
 		}
 	}
 	

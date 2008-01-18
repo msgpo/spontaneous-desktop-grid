@@ -3,7 +3,6 @@ package ee.ut.f2f.comm.sc.chat;
 import java.util.Hashtable;
 
 import net.java.sip.communicator.service.protocol.AccountID;
-import net.java.sip.communicator.service.protocol.ProtocolNames;
 
 public class F2FMultiAccountID
     extends AccountID

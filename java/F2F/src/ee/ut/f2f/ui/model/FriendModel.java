@@ -4,6 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashSet;
 import java.util.List;
+import java.util.UUID;
 
 import javax.swing.AbstractListModel;
 
@@ -46,9 +47,9 @@ public class FriendModel extends AbstractListModel
 	}
 	public Collection<F2FPeer> getPeers() { return new HashSet<F2FPeer>(friends); }
 	
-	public F2FPeer getF2FPeerById(String id){
+	public F2FPeer getF2FPeerById(UUID id){
 		for(F2FPeer f2fpeer : friends){
-			if(f2fpeer.getID().toString().equals(id)){
+			if(f2fpeer.getID().equals(id)){
 				return f2fpeer;
 			}
 		}

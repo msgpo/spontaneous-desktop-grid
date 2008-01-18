@@ -48,7 +48,6 @@ import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.nat.traversal.NatMessage;
 
 public class UIController{
 	private static final Logger logger = Logger.getLogger(UIController.class);	
@@ -177,18 +176,13 @@ public class UIController{
 		
 		initButton = new JButton("Refresh stun info");
 		initButton.addActionListener(
-				new ActionListener(){
-					public void actionPerformed(ActionEvent e) {
-						String localId = F2FComputing.getLocalPeer().getID().toString();
-						String id = ((F2FPeer)friendsList.getSelectedValue()).getID().toString();
-						F2FComputingGUI.controller.getStunInfoTableModel().remove(id);
-						if(id.equals(localId)){
-							F2FComputingGUI.natMessageProcessor.getConnectionManager().refreshLocalStunInfo();
-						} else {
-							NatMessage nmsg = new NatMessage(localId,id,NatMessage.COMMAND_GET_STUN_INFO,null);
-							F2FComputingGUI.natMessageProcessor.sendNatMessage(nmsg);
-						}
-						
+				new ActionListener()
+				{
+					public void actionPerformed(ActionEvent e)
+					{
+						F2FPeer peer = (F2FPeer)friendsList.getSelectedValue();
+						if (peer != null)
+							peer.updateSTUNInfo();
 					}
 				}
 		);

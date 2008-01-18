@@ -11,18 +11,12 @@ import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.nat.traversal.ConnectionManager;
-import ee.ut.f2f.util.nat.traversal.NatMessage;
-import ee.ut.f2f.util.nat.traversal.NatMessageProcessor;
-import ee.ut.f2f.util.nat.traversal.exceptions.ConnectionManagerException;
 
 public class F2FComputingGUI {
 	
 	final private static Logger log = Logger.getLogger(F2FComputingGUI.class);
 	
 	public static UIController controller;
-	//temporary for testing purposes
-	public static NatMessageProcessor natMessageProcessor;
 	
 	private static Thread upThread;
 	private static boolean threadAsleep = false;
@@ -78,12 +72,6 @@ public class F2FComputingGUI {
 				public void run()
 				{
 					controller = new UIController("GUI");
-					try{
-						natMessageProcessor = new NatMessageProcessor(new ConnectionManager("../F2F/conf/nat-traversal.properties"));
-					} catch (ConnectionManagerException e){
-						controller.writeNatLog(e.getMessage() + "\nUnable to get NatMessageProcessor instance ...");
-						return;
-					}
 					try {
 						F2FComputing.initiateF2FComputing();
 					} catch (F2FComputingException e) {
@@ -92,12 +80,11 @@ public class F2FComputingGUI {
 					}
 					FriendModel friendModel = controller.getFriendModel();
 					
+					/*TODO: remove, this is done after the local peer is created automatically
 					//NAT Traversal stun info request for yourself
 					natMessageProcessor.getConnectionManager().refreshLocalStunInfo();
-					
-					//Init the SocketCommunicationProvider
-					natMessageProcessor.getConnectionManager().initiateSocketCommunicationProvider();
-					
+					*/
+										
 					while (true)
 					{
 						try {
@@ -125,6 +112,7 @@ public class F2FComputingGUI {
 							{
 								if (!peersGUI.contains(peer)){
 									friendModel.add(peer);
+									/*TODO: remove, why this is needed?
 									if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())){
 										//Peer  should also add me to his list
 										//Check if peer added me to the list
@@ -134,6 +122,7 @@ public class F2FComputingGUI {
 																	 null);
 										F2FComputingGUI.natMessageProcessor.sendNatMessage(nmsg);
 									}
+									*/
 								}
 							}
 							threadAsleep = true;

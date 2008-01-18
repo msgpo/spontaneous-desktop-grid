@@ -5,7 +5,7 @@ import java.util.List;
 
 import javax.swing.table.AbstractTableModel;
 
-import ee.ut.f2f.util.nat.traversal.StunInfo;
+import ee.ut.f2f.util.stun.StunInfo;
 
 public class StunInfoTableModel extends AbstractTableModel {
 

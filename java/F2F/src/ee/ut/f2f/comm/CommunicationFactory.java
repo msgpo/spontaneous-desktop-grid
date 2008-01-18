@@ -9,8 +9,6 @@ import java.util.Collection;
 import java.util.Properties;
 
 import ee.ut.f2f.comm.sc.im.SipIMCommunicationProvider;
-import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
-import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.logging.Logger;
 
 /**
@@ -80,7 +78,7 @@ public class CommunicationFactory
 		Properties propsFromFile = new Properties();
 		FileInputStream fis = null;
 		try
-		{  
+		{
 			fis = new FileInputStream(new File(propertiesFileLocation));
 			propsFromFile.load(fis); 
 		}

@@ -1,6 +1,6 @@
 package ee.ut.f2f.ui.model;
 
-import ee.ut.f2f.util.nat.traversal.StunInfo;
+import ee.ut.f2f.util.stun.StunInfo;
 
 public class StunInfoTableItem extends StunInfo {
 
@@ -47,7 +47,7 @@ public class StunInfoTableItem extends StunInfo {
 		this.setBlockedUDP(sinf.isBlockedUDP());
 		this.setFullCone(sinf.isFullCone());
 		this.setId(sinf.getId());
-		this.setLocalIp(sinf.getLocalIp());
+		this.setLocalIP(sinf.getLocalIp());
 		this.setOpenAccess(sinf.isOpenAccess());
 		this.setPortRestrictedCone(sinf.isPortRestrictedCone());
 		this.setPublicIp(sinf.getPublicIp());

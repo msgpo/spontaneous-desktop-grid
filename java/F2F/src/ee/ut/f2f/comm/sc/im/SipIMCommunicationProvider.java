@@ -695,9 +695,10 @@ public class SipIMCommunicationProvider
 								if (!idMap.containsKey(tmsg.id))
 								{
 									idMap.put(tmsg.id, new ArrayList<String>());
+									idMap.get(tmsg.id).add(evt.getSourceContact().getAddress());
 									F2FComputing.peerContacted(tmsg.id, evt.getSourceContact().getDisplayName(), this);
 								}
-								idMap.get(tmsg.id).add(evt.getSourceContact().getAddress());
+								else idMap.get(tmsg.id).add(evt.getSourceContact().getAddress());
 							}
 						}
 					}

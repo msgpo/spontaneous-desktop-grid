@@ -57,7 +57,19 @@ public class F2FMessage implements Serializable
 		/**
 		 * A TCP/Tests
 		 */
-		TCP
+		TCP,
+		/**
+		 * Ask for STUN info
+		 */
+		GET_STUN_INFO,
+		/**
+		 * Ask for STUN info
+		 */
+		REPORT_STUN_INFO,
+		/**
+		 * Ask a remote peer to send something over TCP
+		 */
+		TRY_CONNECT_TO
 	}
 
 	public F2FMessage(Type type, String jobID, String receiverTaskID,

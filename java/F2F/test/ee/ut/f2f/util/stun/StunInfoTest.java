@@ -1,10 +1,10 @@
-package ee.ut.f2f.util.nat.traversal.test;
+package ee.ut.f2f.util.stun;
 
 import java.net.InetAddress;
 
 import de.javawi.jstun.test.DiscoveryTest;
 import junit.framework.TestCase;
-import ee.ut.f2f.util.nat.traversal.StunInfo;
+import ee.ut.f2f.util.stun.StunInfo;
 
 public class StunInfoTest extends TestCase{
 
@@ -14,10 +14,10 @@ public class StunInfoTest extends TestCase{
 		try {
 			DiscoveryTest diTest = new DiscoveryTest(InetAddress.getByName("192.168.10.187"),"stun.xten.net",3478);
 			sinf = new StunInfo(diTest.test());
-			sinf.setLocalIp("192.168.10.187");
+			sinf.setLocalIP("192.168.10.187");
 		} catch (Exception e1) {
-			fail();
 			e1.printStackTrace();
+			fail();
 		}
 		
 		assertNotNull(sinf);

@@ -120,6 +120,7 @@ class SocketPeer implements Activity
 							Object message = oi.readObject();
 							log.debug("\t\tReceived message from id [" + getID() + "] ip [" +
 									 outSocket.getRemoteSocketAddress() + ":" + "]"  + "'. Message: '" + message + "'.");
+							/*TODO: remove, this should not be done here
 							if(message instanceof F2FMessage && ((F2FMessage) message).getType().equals(F2FMessage.Type.TCP)){
 								log.debug("Message Type TCP Test forwarding to TCPTester");
 								TCPTester tester = F2FComputingGUI.natMessageProcessor.getConnectionManager().getTCPTester(getID().toString());
@@ -127,8 +128,9 @@ class SocketPeer implements Activity
 									tester.receivedTCPTest(((F2FMessage) message).getData());
 								}
 							} else {
+							*/
 								F2FComputing.messageRecieved(message, UUID.fromString(getID()));
-							}
+							//}
 						}
 						catch (ClassNotFoundException e)
 						{

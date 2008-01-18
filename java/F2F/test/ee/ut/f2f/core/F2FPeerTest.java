@@ -11,16 +11,15 @@ public class F2FPeerTest extends TestCase {
 
 	public void testAddCommProvider()
 	{
-		F2FPeer peer = new F2FPeer(UUID.randomUUID(), "");
 		TestCommProvider prov1 = new TestCommProvider(1);
 		TestCommProvider prov2 = new TestCommProvider(2);
 		TestCommProvider prov3 = new TestCommProvider(3);
 		TestCommProvider prov4 = new TestCommProvider(4);
 		TestCommProvider prov5 = new TestCommProvider(5);
 		TestCommProvider prov6 = new TestCommProvider(6);
-		int res = peer.addCommProvider(prov2);
-		assertEquals(res, 0);
-		res = peer.addCommProvider(prov5);
+
+		F2FPeer peer = new F2FPeer(UUID.randomUUID(), "", prov2);
+		int res = peer.addCommProvider(prov5);
 		assertEquals(res, 0);
 		res = peer.addCommProvider(prov4);
 		assertEquals(res, 1);

@@ -7,6 +7,7 @@ import java.io.IOException;
 import java.io.ObjectInput;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
+import java.net.BindException;
 import java.net.InetSocketAddress;
 import java.net.ServerSocket;
 import java.net.Socket;
@@ -49,9 +50,14 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 				peers.add(new SocketPeer(this, friend));
 			}
 		}
-		this.localPeer = new SocketPeer(this, localPeerAddr);
+		
+		// init local server socket (actual PORT is set there)
+		SocketListener socketListener = new SocketListener(localPeerAddr);
+		// init local socket peer
+		localPeer = new SocketPeer(this, new InetSocketAddress(socketListener.serverSocket.getInetAddress(), socketListener.serverSocket.getLocalPort()));
+		
 		//TODO: kill this thread if the communication provider is deleted/not used any more
-		new Thread(new SocketListener(this.localPeer.socketAddress)).start();
+		new Thread(socketListener).start();
 	}
 
 	public void addFriend(InetSocketAddress friend){
@@ -106,28 +112,31 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		 */
 		private ServerSocket serverSocket;
 		
-		SocketListener(int port) throws CommunicationInitException
+		SocketListener(InetSocketAddress inetSoc) throws CommunicationInitException
 		{
 			try
 			{
-				serverSocket = new ServerSocket(port);
+				serverSocket = new ServerSocket();
+				for (int i = 1; i < 11; i++)
+				{
+					try
+					{
+						serverSocket.bind(inetSoc);
+						break;
+					}
+					catch (BindException e)
+					{
+						log.warn("Unable to bind ServerSocket to  local [" + inetSoc.getAddress().getHostAddress() + ":" + inetSoc.getPort() + "]");
+						if (i == 10) throw e;
+						inetSoc = new InetSocketAddress(inetSoc.getAddress(), inetSoc.getPort() + i);
+					}
+				}
 			}
 			catch (IOException e)
 			{
-				throw new CommunicationInitException("Could not create server socket! ", e);
-			}
-		}
-		
-		SocketListener(InetSocketAddress inetSoc) throws CommunicationInitException
-		{
-			try {
-				serverSocket = new ServerSocket();
-				serverSocket.bind(inetSoc);
-			} catch (IOException e) {
 				log.error("Unable to bind ServerSocket to  local [" + inetSoc.getAddress().getHostAddress() + ":" + inetSoc.getPort() + "]" , e);
-				throw new CommunicationInitException("Could not create server socket! ", e);
+				throw new CommunicationInitException("SocketComm: Could not create server socket! " + e.getMessage(), e);
 			}
-			
 		}
 		
 		public void run()
@@ -152,9 +161,12 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 			}
 		}
 
-		private void acceptConnections() {
-			while(true) {
-				try {
+		private void acceptConnections()
+		{
+			while(true)
+			{
+				try
+				{
 					// wait while someone tries to connect
 					Socket socket = serverSocket.accept();
 					ObjectInput oi = new CustomObjectInputStream(socket.getInputStream());
@@ -181,7 +193,9 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 						socket.close();
 						log.debug("\t\tUID '"+remoteID+"' is unknown. Closed the connection.");
 					}
-				} catch (Exception e) {
+				}
+				catch (Exception e)
+				{
 					log.debug("\t\tProblems creating the socket communication: " + e);
 					e.printStackTrace();
 				}
@@ -213,7 +227,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 	}
 
 	public String getActivityName() {
-		return "Socket communication";
+		return "Socket communication [" + localPeer.socketAddress.getAddress().getHostAddress() + ":" + localPeer.socketAddress.getPort() + "]";
 	}
 
 	public Activity getParentActivity() {

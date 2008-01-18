@@ -1,4 +1,4 @@
-package ee.ut.f2f.util.nat.traversal;
+package ee.ut.f2f.util.stun;
 
 import java.io.Serializable;
 
@@ -115,7 +115,7 @@ public class StunInfo implements Serializable{
 		return localIp;
 	}
 
-	public void setLocalIp(String localIp) {
+	public void setLocalIP(String localIp) {
 		this.localIp = localIp;
 	}
 
