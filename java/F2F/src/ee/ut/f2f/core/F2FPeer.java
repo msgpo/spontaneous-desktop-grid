@@ -36,6 +36,7 @@ public class F2FPeer
 		this.id = UUID.randomUUID();
 		this.displayName = displayName;
 		reportSTUNPeers = new ArrayList<F2FPeer>();
+		tcpTestPeers = new ArrayList<F2FPeer>();
 	}
 	
 	/**
@@ -156,6 +157,14 @@ public class F2FPeer
 				reportSTUNPeers.clear();
 			}
 			
+			// start the TCP tests if needed
+			synchronized (tcpTestPeers)
+			{
+				for (F2FPeer peer: tcpTestPeers)
+					initiateTCPTester(peer);
+				tcpTestPeers.clear();
+			}
+			
 			// init SocketComm provider according to the STUN info
 			initSocketCommProvider(this.stunInfo);
 		}
@@ -166,27 +175,44 @@ public class F2FPeer
 		// init the processes that have to be done
 		// after a remote peer has sent its STUN info
 		
-			// test if TCP connection can be made
-			initiateTCPTester();
+			synchronized (F2FComputing.getLocalPeer().tcpTestPeers)
+			{
+				// test if TCP connection can be made ...
+				if (F2FComputing.getLocalPeer().getSTUNInfo() != null)
+					initiateTCPTester(this);
+				else // ... or schedule it for later
+					F2FComputing.getLocalPeer().tcpTestPeers.add(this);
+			}
 		}
 	}
 	
 	private TCPTester tcpTester = null;
 	TCPTester getTCPTester() { return tcpTester; }
-	private void initiateTCPTester()
+	private static void initiateTCPTester(F2FPeer peer)
 	{
-		if(tcpTester != null)
+		if(peer.tcpTester != null)
 		{
-			logger.debug("TCPTester [" + stunInfo.getId() + "] allready initialized");
-			logger.debug(tcpTester);
-			if (tcpTester.getStatus() > -1){
-				logger.debug("Restarting TCPTester");
-				tcpTester.start();
+			logger.debug("TCPTester [" + peer.stunInfo.getId() + "] allready initialized");
+			logger.debug(peer.tcpTester);
+			// wait until the previous test has ended
+			while (true)
+			{
+				if (peer.tcpTester.isAlive())
+				{
+					try
+					{
+						peer.tcpTester.join();
+						break;
+					}
+					catch (InterruptedException e)
+					{
+						e.printStackTrace();
+					}
+				}
 			}
-		} else {
-			tcpTester = new TCPTester(this);
-			tcpTester.start();
 		}
+		else peer.tcpTester = new TCPTester(peer);
+		peer.tcpTester.start();
 	}
 	
 	public void updateSTUNInfo()
@@ -223,8 +249,9 @@ public class F2FPeer
 			}
 		}
 	}
-	
+
 	private ArrayList<F2FPeer> reportSTUNPeers = null;
+	private ArrayList<F2FPeer> tcpTestPeers = null;
 	void reportSTUNInfo(F2FPeer remotePeer)
 	{
 		if(!F2FComputing.getLocalPeer().equals(this)) return;

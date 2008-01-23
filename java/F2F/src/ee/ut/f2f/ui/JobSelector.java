@@ -14,6 +14,7 @@ import java.util.jar.JarFile;
 import java.util.jar.Manifest;
 
 import javax.swing.JButton;
+import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -45,6 +46,8 @@ public class JobSelector extends JFrame
 	
 	private FriendModel members = null;
 	Collection<F2FPeer> friends = null;
+
+	private JCheckBox btnSlave;
 	
 	private Collection<F2FPeer> getF2FPeers()
 	{
@@ -60,6 +63,7 @@ public class JobSelector extends JFrame
 		startInit();
 		initFileChooser();
 		initCompute();
+		initSlave();
 		endInit();
 	}
 
@@ -78,7 +82,7 @@ public class JobSelector extends JFrame
 	{
 		this.setSize(new Dimension(560, 150));
 		this.setLocationRelativeTo(null);
-		this.setTitle("Pick a .JAR");
+		this.setTitle("Start a F2F application");
 		this.setResizable(false);
 		
 		bottomPanelLayout = new SpringLayout();
@@ -89,7 +93,7 @@ public class JobSelector extends JFrame
 	
 	private void initFileChooser()
 	{
-		JLabel label1 = new JLabel("Choose file:");
+		JLabel label1 = new JLabel("Choose jar(s) and specify the Master class");
 		bottomPanelLayout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.NORTH, mainPanel);
 		bottomPanelLayout.putConstraint(SpringLayout.WEST, label1, 0, SpringLayout.WEST, mainPanel);
 		mainPanel.add(label1);
@@ -201,6 +205,15 @@ public class JobSelector extends JFrame
 		
 		// bottomPanel constraints (constraint SOUTH of the bottom panel to the last button)
 		bottomPanelLayout.putConstraint(SpringLayout.SOUTH, mainPanel, 5, SpringLayout.SOUTH, btnCompute);
+	}
+
+	private void initSlave()
+	{
+	    btnSlave = new JCheckBox("Participate as a Slave");
+	    bottomPanelLayout.putConstraint(SpringLayout.NORTH, btnSlave, 0, SpringLayout.NORTH, btnCompute);
+		bottomPanelLayout.putConstraint(SpringLayout.WEST, btnSlave, 10, SpringLayout.EAST, btnCompute);
+		btnSlave.setSelected(false);
+	    mainPanel.add(btnSlave);
 	}
 	
 	private void initStats()

@@ -35,19 +35,28 @@ public class ActivityManager {
 	/**
 	 * @param event
 	 */
-	public void emitEvent(ActivityEvent event) {
-		if(logger.isTraceEnabled()) {
-			logger.trace("Activity event "+event+" emitted.");
+	public void emitEvent(ActivityEvent event)
+	{
+		try
+		{
+			if(logger.isTraceEnabled()) {
+				logger.trace("Activity event "+event+" emitted.");
+			}
+			Set<ActivityListener> typeListeners = listeners.get(event.getType());
+			
+			if (typeListeners == null) return;
+			for(ActivityListener listener: typeListeners) {
+				try {
+					listener.activityEvent(event);
+				} catch (Throwable e) {
+					logger.warn("Error in activity event notification.", e);
+				}			
+			}
 		}
-		Set<ActivityListener> typeListeners = listeners.get(event.getType());
-		
-		if (typeListeners == null) return;
-		for(ActivityListener listener: typeListeners) {
-			try {
-				listener.activityEvent(event);
-			} catch (Throwable e) {
-				logger.warn("Error in activity event notification.", e);
-			}			
+		catch (Exception e)
+		{
+			e.printStackTrace();
+			logger.warn(e.getMessage());
 		}
 	}
 

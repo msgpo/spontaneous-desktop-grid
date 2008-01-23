@@ -11,6 +11,7 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.ui.model.StunInfoTableItem;
+import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -19,27 +20,31 @@ public class TCPTester extends Thread implements Activity{
 	final private static Logger log = Logger.getLogger(TCPTester.class);
 	
 	//statuses
-	final private static int THREAD_INIT = 29;
-	final private static int THREAD_STARTED = 30;
-	final private static int CONNECTION_FAILURE = 31;
-	final private static int AWAITING_ORDERS = 32;
-	final private static int TRYING_TO_CONNECT = 33;
-	final private static int LISTENING_CONNECTIONS = 34;
-	final private static int UNABLE_TO_CONNECT = 35;
-	final private static int CONNECTED = 36;
-	final private static int ACCEPTED_CONNECTION = 37;
-	final private static int THREAD_STOPPED = 0;
+	private enum Status
+	{
+		CONNECTION_FAILURE,
+		AWAITING_ORDERS,
+		TRYING_TO_CONNECT,
+		LISTENING_CONNECTIONS,
+		UNABLE_TO_CONNECT,
+		CONNECTED,
+		ACCEPTED_CONNECTION,
+	}
 	
-	private int status = -1;
+	private Status status = null;
 	private int connectTo = F2FPeer.DEFAULT_SOCKET_COMMUNICATION_PORT;
 	private SocketCommunicationProvider scp = null;
 	private F2FPeer remotePeer = null;
 	
+	/**
+	 * Constructs new TCP connection tester thread.
+	 * 
+	 * @param peer The remote peer where to connect.
+	 */
 	public TCPTester(F2FPeer peer)
 	{
 		super("TCPTester [" + peer.getID() + "]");
 		remotePeer = peer;
-		status = THREAD_INIT;
 		//scp = F2FComputingGUI.natMessageProcessor.getConnectionManager().getSocketCommunicationProvider();
 		//scp.removeFriend(peer.getID());
 		//scp.addFriend(peer.getSTUNInfo().getLocalIp(), connectTo);
@@ -53,7 +58,7 @@ public class TCPTester extends Thread implements Activity{
 		
 	public void tryConnectTo(Integer port)
 	{
-		if(status == AWAITING_ORDERS)
+		if(status == Status.AWAITING_ORDERS)
 		{
 			if(port != null && port.intValue() > 0)
 			{
@@ -69,11 +74,11 @@ public class TCPTester extends Thread implements Activity{
 	
 	public void receivedTCPTest(Object obj)
 	{
-		if (status == LISTENING_CONNECTIONS)
+		if (status == Status.LISTENING_CONNECTIONS)
 		{
 			this.interrupt();
 		}
-		else if (status == ACCEPTED_CONNECTION || status == CONNECTED)
+		else if (status == Status.ACCEPTED_CONNECTION || status == Status.CONNECTED)
 		{
 			int n = ((Integer) obj).intValue();
 			
@@ -103,20 +108,23 @@ public class TCPTester extends Thread implements Activity{
 	
 	public void run()
 	{
-		status = THREAD_STARTED;
+		try
+		{
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
 		log.debug(getActivityName() + "started");
 		
-		// check local STUN info
+		// check local STUN info (the test thread should not start before it is known)
 		if(F2FComputing.getLocalPeer().getSTUNInfo() == null)
 		{
-			log.error(this + " local STUN info is null, stopping TCPTester");
-			status = THREAD_STOPPED;
+			status = Status.CONNECTION_FAILURE;
+			log.error("local STUN info is null, stopping TCP test thread");
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED));
 			return;
 		}
 		
-		status = AWAITING_ORDERS;
+		// exchange the port number that has to be used
+		
+		status = Status.AWAITING_ORDERS;
 		try
 		{
 			Random rnd = new Random();
@@ -127,7 +135,7 @@ public class TCPTester extends Thread implements Activity{
 		catch (InterruptedException e)
 		{
 			// the other peer sent COMMAND_TRY_CONNECT_TO 
-			status = TRYING_TO_CONNECT;
+			status = Status.TRYING_TO_CONNECT;
 			log.debug(getActivityName() + " received command tryConnectTo [" + remotePeer.getSTUNInfo().getLocalIp() + ":" + connectTo + "]");
 			
 			//scp.removeFriend(stunInfo.getId());
@@ -135,29 +143,29 @@ public class TCPTester extends Thread implements Activity{
 			try
 			{
 				scp.sendMessage(remotePeer.getID(), new F2FMessage(F2FMessage.Type.TCP,null,null,null,null));
-				status = CONNECTED;
+				status = Status.CONNECTED;
 				log.debug(getActivityName() + " Connected To [" + remotePeer.getSTUNInfo().getLocalIp() + ":" + connectTo + "]");
 			}
 			catch (CommunicationFailedException ex)
 			{
 				log.error(getActivityName() + " unable to Connect To [" + remotePeer.getSTUNInfo().getLocalIp() + ":" + connectTo + "]", ex);
-				status = UNABLE_TO_CONNECT;
+				status = Status.UNABLE_TO_CONNECT;
 			}
 		}
 		
-		if (status == CONNECTED)
+		if (status == Status.CONNECTED)
 		{
 			ping(1);
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FINISHED));
 		}
 		else
 		{
-			if (status == AWAITING_ORDERS) 
+			if (status == Status.AWAITING_ORDERS) 
 				log.debug(getActivityName() + " AWAITING_ORDERS timeout, send tryConnectTo command ");
-			if (status == UNABLE_TO_CONNECT) 
+			if (status == Status.UNABLE_TO_CONNECT) 
 				log.debug(getActivityName() + " UNABLE_TO_CONNECT, sending tryConnectTo command ");
 			
-			status = LISTENING_CONNECTIONS;
+			status = Status.LISTENING_CONNECTIONS;
 			log.debug(getActivityName() + " send COMMAND_TRY_CONNECT_TO");
 			F2FMessage msg = 
 				new F2FMessage(F2FMessage.Type.TRY_CONNECT_TO,
@@ -172,25 +180,31 @@ public class TCPTester extends Thread implements Activity{
 			catch (CommunicationFailedException e)
 			{
 				log.debug(this + " IM connection to remote peer was lost");
-				status = THREAD_STOPPED;
+				status = Status.CONNECTION_FAILURE;
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED));
 				return;
 			}
 
-			status = LISTENING_CONNECTIONS;
+			status = Status.LISTENING_CONNECTIONS;
 			try
 			{
 				Thread.sleep(120 * 1000);
 			}
 			catch (InterruptedException ex)
 			{
-				status = ACCEPTED_CONNECTION;
+				status = Status.ACCEPTED_CONNECTION;
 				log.debug(getActivityName() + " accepted connection from peer [" + remotePeer.getID()  + "]");
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FINISHED));
 				return;
 			}
 			
 			log.debug(getActivityName() + " LISTENING_CONNECTIONS, no connections");
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED));
+		}
+		}
+		catch (Exception e)
+		{
+			log.error(getActivityName() + " error: " + e.getMessage());
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED));
 		}
 	}
@@ -211,14 +225,6 @@ public class TCPTester extends Thread implements Activity{
 			F2FComputingGUI.controller.getStunInfoTableModel().update(sinft);
 		}
 	}
-		
-	public String getPeerId(){
-		return remotePeer.getID().toString();
-	}
-	
-	public int getStatus(){
-		return status;
-	}
 	
 	public String getActivityName() {
 		return this.getName() + " thread ";
@@ -228,21 +234,22 @@ public class TCPTester extends Thread implements Activity{
 		return null;
 	}
 	
-	public String toString(){
-		return getActivityName() + "status [" + toString(this.status) + "]";
+	public String toString()
+	{
+		return getActivityName() + "status [" + toString(status) + "]";
 	}
 	
-	private String toString(int code){
-		switch(status) {
-		case THREAD_STARTED : return "Thread started";
-		case THREAD_STOPPED : return "Thread stopped";
+	private String toString(Status status)
+	{
+		switch(status)
+		{
 		case CONNECTION_FAILURE : return "Connection Failure";
 		case TRYING_TO_CONNECT : return "Trying connect to";
 		case LISTENING_CONNECTIONS : return "Listening Connections";
 		case CONNECTED : return "Connected";
 		case ACCEPTED_CONNECTION : return "Accepted connection";
 		case UNABLE_TO_CONNECT : return "Unable to connect";
-		default : return "Unknown: " + status;
-	}
+		default : return "Unknown status: " + status;
+		}
 	}
 }
