@@ -77,15 +77,15 @@ public class F2FComputing
 	 */
 	private F2FComputing(java.io.File rootDir)
 	{
-		localPeer = new F2FPeer("me (localhost)");
-		localPeer.updateSTUNInfo();
-		logger.debug("\tlocal F2FPeer ID is " + localPeer.getID());
-		peers = new HashMap<UUID, F2FPeer>();
-		peers.put(localPeer.getID(), localPeer);
-		jobs = new HashMap<String, Job>();
-		//CommunicationFactory.getInitializedCommunicationProviders();
 		rootDirectory = rootDir;
 		rootDirectory.mkdir();
+		jobs = new HashMap<String, Job>();
+		peers = new HashMap<UUID, F2FPeer>();
+		localPeer = new F2FPeer("me (localhost)");
+		logger.debug("\tlocal F2FPeer ID is " + localPeer.getID());
+		peers.put(localPeer.getID(), localPeer);
+		localPeer.updateLocalIPInfo();
+		//CommunicationFactory.getInitializedCommunicationProviders();
 	}
 
 	/**
@@ -377,8 +377,8 @@ public class F2FComputing
 				peers.put(peerID, peer);
 				return;
 			}
+			peer.addCommProvider(comm);
 		}
-		peer.addCommProvider(comm);
 	}
 
 	public static void peerUnContacted(UUID peerID, CommunicationProvider comm)
@@ -580,9 +580,9 @@ public class F2FComputing
 			sender.setSTUNInfo((StunInfo)f2fMessage.getData());
 		}
 		// TCP
-		else if (f2fMessage.getType() == F2FMessage.Type.TRY_CONNECT_TO)
+		else if (f2fMessage.getType() == F2FMessage.Type.TCP_TEST)
 		{
-			sender.getTCPTester().tryConnectTo((Integer)f2fMessage.getData());
+			sender.getTCPTester().receivedTCPTestMessage(f2fMessage.getData());
 		}
 	}
 	

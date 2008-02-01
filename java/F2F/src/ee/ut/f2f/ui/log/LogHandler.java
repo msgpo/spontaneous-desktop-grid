@@ -18,18 +18,26 @@ public class LogHandler extends Handler {
 	
 	private static LogHandler instance;
 	
-	public static LogHandler getInstance() {
-		if(instance!=null)
-			return instance;
-		
-		Logger rootLogger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getParent();
-		Handler handlers[] = rootLogger.getHandlers();
-		for(Handler handler: handlers) {
-			if(handler instanceof LogHandler)
-				return (LogHandler) handler;
+	public static LogHandler getInstance()
+	{
+		if (instance == null)
+		{
+			synchronized(LogHandler.class)
+			{
+				if (instance == null)
+				{
+					Logger rootLogger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getParent();
+					Handler handlers[] = rootLogger.getHandlers();
+					for(Handler handler: handlers)
+					{
+						if(handler instanceof LogHandler)
+							return (LogHandler) handler;
+					}
+					
+					instance = new LogHandler();
+				}
+			}
 		}
-		
-		instance = new LogHandler();
 		return instance;
 	}
 	

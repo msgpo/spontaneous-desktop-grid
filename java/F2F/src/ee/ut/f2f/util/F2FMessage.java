@@ -51,13 +51,9 @@ public class F2FMessage implements Serializable
 		 */
 		MULTI_CHAT,
 		/**
-		 * A Nat/Traversal message
-		 */
-		NAT,
-		/**
 		 * A TCP/Tests
 		 */
-		TCP,
+		TCP_TEST,
 		/**
 		 * Ask for STUN info
 		 */
@@ -65,11 +61,7 @@ public class F2FMessage implements Serializable
 		/**
 		 * Ask for STUN info
 		 */
-		REPORT_STUN_INFO,
-		/**
-		 * Ask a remote peer to send something over TCP
-		 */
-		TRY_CONNECT_TO
+		REPORT_STUN_INFO
 	}
 
 	public F2FMessage(Type type, String jobID, String receiverTaskID,

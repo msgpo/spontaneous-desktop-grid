@@ -61,7 +61,9 @@ class SipIMChatF2FButton
 				Collection<F2FPeer> peers = new ArrayList<F2FPeer>();
 				for (F2FMultiChatRoomMember chatMember: room.getMembers())
 				{
+					// do not include the local peer in the peers
 					if (chatMember.getContact() == null) continue;
+					
 					F2FPeer peer = F2FComputing.getPeer(multiUserChat.getProtocolProvider().getSipCommProvider().getF2FPeerID(chatMember.getContact()));
 					if (peer == null) continue;
 					peers.add(peer);

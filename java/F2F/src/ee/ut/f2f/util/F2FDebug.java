@@ -40,7 +40,14 @@ public class F2FDebug
 	
 	private static F2FDebug getInstance()
 	{
-		if (debug == null) debug = new F2FDebug();
+		if (debug == null)
+		{
+			synchronized (F2FDebug.class)
+			{
+				if (debug == null)
+					debug = new F2FDebug();
+			}
+		}
 		return debug;
 	}
 

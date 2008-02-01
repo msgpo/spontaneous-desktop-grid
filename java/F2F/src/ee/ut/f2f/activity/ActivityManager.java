@@ -29,7 +29,8 @@ public class ActivityManager {
 	
 	private HashMap<Enum, Set<ActivityListener>> listeners = new HashMap<Enum, Set<ActivityListener>>();
 	
-	public ActivityManager() {
+	private ActivityManager()
+	{
 	}
 	
 	/**
@@ -92,9 +93,15 @@ public class ActivityManager {
 		}
 	}
 
-	public static ActivityManager getDefault() {
-		if(defaultActivityManager == null) {
-			defaultActivityManager = new ActivityManager();
+	public static ActivityManager getDefault()
+	{
+		if(defaultActivityManager == null)
+		{
+			synchronized (ActivityManager.class)
+			{
+				if(defaultActivityManager == null)
+					defaultActivityManager = new ActivityManager();
+			}
 		}
 		return defaultActivityManager;
 	}

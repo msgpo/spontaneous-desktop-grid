@@ -16,6 +16,7 @@ public class F2FMultiChatRoomMember
     private Contact contact = null;
     Contact getContact() { return contact; }
     
+    //TODO add reference to corresponding F2F peer
     public F2FMultiChatRoomMember(Contact contact, ChatRoom chatRoom, 
         ChatRoomMemberRole role)
     {

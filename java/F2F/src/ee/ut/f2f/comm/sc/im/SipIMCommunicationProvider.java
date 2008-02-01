@@ -4,19 +4,13 @@
 package ee.ut.f2f.comm.sc.im;
 
 import java.io.Serializable;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Enumeration;
 import java.util.EventObject;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.UUID;
 
-import de.javawi.jstun.test.DiscoveryInfo;
-import de.javawi.jstun.test.DiscoveryTest;
 import ee.ut.f2f.comm.CommunicationException;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
@@ -25,6 +19,7 @@ import ee.ut.f2f.comm.sc.chat.F2FMultiProtocolProviderFactory;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
+import ee.ut.f2f.util.logging.Logger;
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.Message;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
@@ -62,7 +57,8 @@ public class SipIMCommunicationProvider
 				ContactPresenceStatusListener,
 				MessageListener,
 				EventFilter
-{	
+{
+	private static final Logger logger = Logger.getLogger(SipIMCommunicationProvider.class);
 	/**
 	 * Name that identifies Sip communication layer.
 	 */
@@ -82,11 +78,14 @@ public class SipIMCommunicationProvider
 	
 	public static SipIMCommunicationProvider initiateSipIMCommunicationProvider(BundleContext bc) throws CommunicationException
 	{
-		if (siplayer!=null) 
-			throw new CommunicationInitException("SIP layer already initiated, initiateSipCommunicationProvider() was called more than once!");		
+		if (siplayer != null) return siplayer;		
 		
-		// Create the F2F layer
-		return (siplayer = new SipIMCommunicationProvider(bc));
+		synchronized (SipIMCommunicationProvider.class)
+		{
+			if (siplayer != null) return siplayer;
+			// Create the F2F layer
+			return (siplayer = new SipIMCommunicationProvider(bc));
+		}
 	}
 	
 	private BundleContext bundleContext = null;
@@ -783,45 +782,8 @@ public class SipIMCommunicationProvider
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			F2FDebug.println("\t\t ERROR while sending a message to contact " + contact.getDisplayName());
+			logger.error("SIP IM: erro while sending a message to contact " + contact.getDisplayName());
 			throw new CommunicationFailedException(e);
-		}
-	}
-	
-	public static void jstunTest()
-	{
-		final String SIP_STUN_SERVER_NAME = "iphone-stun.freenet.de";
-		final int SIP_STUN_SERVER_PORT = 3478;
-		// start for NAT/firewall traversal
-		Enumeration<NetworkInterface> ifaces;
-		try 
-		{
-			ifaces = NetworkInterface.getNetworkInterfaces();
-		}
-		catch (SocketException e)
-		{
-			e.printStackTrace();
-			return;
-		}
-		while (ifaces.hasMoreElements())
-		{
-			NetworkInterface iface = ifaces.nextElement();
-			Enumeration<InetAddress> iaddresses = iface.getInetAddresses();
-			while (iaddresses.hasMoreElements())
-			{
-				InetAddress iaddress = iaddresses.nextElement();
-				if (!iaddress.isLoopbackAddress() && !iaddress.isLinkLocalAddress()) {
-					DiscoveryTest test = new DiscoveryTest(iaddress, SIP_STUN_SERVER_NAME, SIP_STUN_SERVER_PORT);
-					DiscoveryInfo di = null;
-					try {
-						di = test.test();
-					} catch (Exception e) {
-						e.printStackTrace();
-						continue;
-					}
-					if (di != null) F2FDebug.println(di.toString()); 
-				}
-			}
 		}
 	}
 

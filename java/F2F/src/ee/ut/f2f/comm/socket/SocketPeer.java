@@ -5,7 +5,6 @@ package ee.ut.f2f.comm.socket;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
@@ -17,7 +16,7 @@ import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.ui.F2FComputingGUI;
+import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.logging.Logger;
 
 class SocketPeer implements Activity
@@ -35,32 +34,31 @@ class SocketPeer implements Activity
 	private Socket outSocket;
 	private ObjectOutput oo;
 	private ObjectInput oi;
+	private UUID id;
 	
-	SocketPeer(SocketCommunicationProvider layer, InetSocketAddress socketAddress)
+	SocketPeer(UUID id, SocketCommunicationProvider layer, InetSocketAddress socketAddress, boolean bIntroduce) throws IOException
 	{
+		this.id = id;
 		this.layer = layer;
 		this.socketAddress = socketAddress;
-	}
-	
-	public String getID()
-	{
-		String id = F2FComputingGUI.controller.getStunInfoTableModel().getByLocalIp(socketAddress.getAddress().getHostAddress()).getId();
-		if (id == null) throw new NullPointerException("No F2FPeer id found by ip in StunInfoTableModel");
-		return id;
+		if (bIntroduce) getOo();
 	}
 
 	public synchronized void sendMessage(Object message)
 			throws CommunicationFailedException
 	{
-		try {
+		try
+		{
 			getOo().writeObject(message);
-			log.debug("\t\tSent message '" + message + "' to id [" + getID() + "] ip [" + outSocket.getInetAddress().getHostAddress() + ":" + outSocket.getPort() + "]");
-		} catch (IOException e) {
+		}
+		catch (IOException e)
+		{
 			throw new CommunicationFailedException(e);
 		}
 	}
 	
-	public void setOo(ObjectOutput oo) {
+	void setOo(ObjectOutput oo)
+	{
 		this.oo = oo;
 	}
 
@@ -69,18 +67,14 @@ class SocketPeer implements Activity
 		if(oo == null)
 		{
 			oo = new ObjectOutputStream(getOutSocket().getOutputStream());
-			// Writing peer name into the output stream for the other side to initialize the connection.
-			String uid = layer.getLocalPeer().getID();
+			// Writing peer ID into the output stream for the other side to initialize the connection.
+			UUID uid = F2FComputing.getLocalPeer().getID();
 			oo.writeObject(uid);
 			//Client starting listening server respond
-			oi = new ObjectInputStream(outSocket.getInputStream());
+			oi = new CustomObjectInputStream(outSocket.getInputStream());
 			runSocketThread();
 		}
 		return oo;
-	}
-	
-	public void setOutSocket(Socket soc) {
-		outSocket = soc;
 	}
 	
 	private Socket getOutSocket() throws IOException 
@@ -106,9 +100,8 @@ class SocketPeer implements Activity
 				try {
 					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
 							ActivityEvent.Type.STARTED, "start receiving messages"));
-					log.debug(getActivityName() + " Starting listening to Peer id [" + getID() + "]");
-					log.debug(getActivityName() + " Remote socket [" + outSocket.getRemoteSocketAddress() + "]");
-					log.debug(getActivityName() + " Local Bind [" + outSocket.getLocalAddress().getHostAddress() + ":" + outSocket.getLocalPort() + "]");
+					//log.debug(getActivityName() + " Remote socket [" + outSocket.getRemoteSocketAddress() + "]");
+					//log.debug(getActivityName() + " Local Bind [" + outSocket.getLocalAddress().getHostAddress() + ":" + outSocket.getLocalPort() + "]");
 					//TODO: exit this thread when the peer is not used any more + 
 					//      close used sockets
 					while(true)
@@ -116,23 +109,13 @@ class SocketPeer implements Activity
 						try
 						{
 							Object message = oi.readObject();
-							log.debug("\t\tReceived message from id [" + getID() + "] ip [" +
-									 outSocket.getRemoteSocketAddress() + ":" + "]"  + "'. Message: '" + message + "'.");
-							/*TODO: remove, this should not be done here
-							if(message instanceof F2FMessage && ((F2FMessage) message).getType().equals(F2FMessage.Type.TCP)){
-								log.debug("Message Type TCP Test forwarding to TCPTester");
-								TCPTester tester = F2FComputingGUI.natMessageProcessor.getConnectionManager().getTCPTester(getID().toString());
-								if (tester != null){
-									tester.receivedTCPTest(((F2FMessage) message).getData());
-								}
-							} else {
-							*/
-								F2FComputing.messageRecieved(message, UUID.fromString(getID()));
-							//}
+							//log.debug("\t\tReceived message from id [" + getID() + "] ip [" +
+							//		 outSocket.getRemoteSocketAddress() + ":" + "]"  + "'. Message: '" + message + "'.");
+							F2FComputing.messageRecieved(message, id);
 						}
 						catch (ClassNotFoundException e)
 						{
-							log.debug("\t\tError reading object from id [" + getID() + "] ip [" +
+							log.debug("\t\tError reading object from id [" + id + "] ip [" +
 									 outSocket.getRemoteSocketAddress() + "]" + e);
 						}
 					}
@@ -145,7 +128,7 @@ class SocketPeer implements Activity
 							ActivityEvent.Type.FAILED, e.toString()));
 					throw e;
 				} finally {
-					log.debug(getActivityName() + " Stopping listening to Peer id [" + getID() + "]");
+					log.debug(getActivityName() + " Stopping listening to Peer id [" + id + "]");
 				}
 			}
 		}).start();
@@ -153,16 +136,16 @@ class SocketPeer implements Activity
 	
 	public String toString() 
 	{
-		return getID();
+		return id.toString();
 	}
 
-	public String getDisplayName() { return getID(); }
-
-	public String getActivityName() {
-		return "Socket Listening Thread, Peer id [" + getID() + "]";
+	public String getActivityName()
+	{
+		return "TCP Listening Thread, Peer id [" + id + "]";
 	}
 
-	public Activity getParentActivity() {
+	public Activity getParentActivity()
+	{
 		return layer;
 	}
 }

@@ -2,13 +2,9 @@ package ee.ut.f2f.util.stun;
 
 import java.io.BufferedReader;
 import java.io.FileReader;
-import java.net.Inet6Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.net.SocketException;
-import java.util.ArrayList;
 import java.util.Arrays;
-import java.util.Enumeration;
 import java.util.Hashtable;
 import java.util.List;
 import java.util.Map;
@@ -74,31 +70,6 @@ public class StunInfoClient
 		
 		new StunInfoUpdateThread().start();
 	}
-	
-	private List<InetAddress> getLocalIPs() throws SocketException
-	{
-		// get the network interfaces
-		Enumeration<NetworkInterface> interfaces = NetworkInterface.getNetworkInterfaces();
-		
-		// get local IP's
-		List<InetAddress> localIPs = new ArrayList<InetAddress>();
-		while (interfaces.hasMoreElements())
-		{
-			NetworkInterface inet = interfaces.nextElement();
-			Enumeration<InetAddress> ips = inet.getInetAddresses();
-			while(ips.hasMoreElements())
-			{
-				InetAddress ip = ips.nextElement();
-				if( !ip.isLinkLocalAddress() && !ip.isLoopbackAddress() )
-				{
-					if(ip instanceof Inet6Address)
-						continue;
-					localIPs.add(ip);
-				}
-			}
-		}
-		return localIPs;
-	}
 
 	/**
 	 * Controls if host can be reached from specific local ip
@@ -126,66 +97,71 @@ public class StunInfoClient
 	{
 		private StunInfoUpdateThread()
 		{
-			super("StunInfoUpdateThread");
 		}
 		
 		public void run()
 		{
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
+			
+			if (F2FComputing.getLocalPeer() == null)
+			{
+				log.warn("STUN test can not be run if local F2FPeer is null");
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
+				return;
+			}
+			List<InetAddress> localIPs = F2FComputing.getLocalPeer().getLocalIPs();
+			if (localIPs == null || localIPs.isEmpty())
+			{
+				log.warn("STUN test can not be run if local F2FPeer has no IPs");
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
+				return;
+			}
 
 			StunInfo stunInfo = null;
-			try
+			log.info("Found total [" + stunServers.size() + "] STUN server addresses in the properties file");
+			log.info("Found total [" + localIPs.size() + "] active local IPs");
+			
+			for(String stunServer : stunServers)
 			{
-    			List<InetAddress> localIPs = getLocalIPs();
-    			log.info("Found total [" + stunServers.size() + "] STUN server addresses in the properties file");
-    			log.info("Found total [" + localIPs.size() + "] active local IPs");
-    			
-    			for(String stunServer : stunServers)
-    			{
-    				String address = null;
-    				int port = -1;
-    				if(stunServer.split(":").length >= 2)
-    				{
-    					address = stunServer.split(":")[0];
-    					port = Integer.parseInt(stunServer.split(":")[1]);
-    				}
-    				else
-    				{
-    					address = stunServer;
-    					port = STUN_SERVER_DEFAULT_PORT;
-    				}
-    				for(InetAddress ip : localIPs)
-    				{
-    					if(isReachable(ip, address))
-    					{
-    						DiscoveryTest diTest = new DiscoveryTest(ip, address, port);
-							try
-							{
-								log.info("Discovering network from local ip [" + ip.getHostAddress() + "]");
-								log.info("Using StunServer [" + address + ":" + port + "]");
-								stunInfo = new StunInfo(diTest.test());
-								stunInfo.setLocalIP(ip.getHostAddress());
-								stunInfo.setId(F2FComputing.getLocalPeer().getID().toString());
-								log.info("Getting STUN info succeeded!");
-								F2FComputing.getLocalPeer().setSTUNInfo(stunInfo);
-								break;
-							}
-							catch (Exception e)
-							{
-								log.error("Error discovering network, using stun server [" + address + ":" + port + "] from localIp [" + ip.getHostAddress() + "]", e);
-							}
-    					}
-    					else
-    					{
-    						//log.debug("Stun server [" + address + ":" + port + "] is unreachable from localIp [" + ip.getHostAddress() + "], trying next ip");
-    					}
-    				}
-    				if (stunInfo != null) break;
-    			}
-			}
-			catch (SocketException e)
-			{
-				log.debug(e.getMessage());
+				String address = null;
+				int port = -1;
+				if(stunServer.split(":").length >= 2)
+				{
+					address = stunServer.split(":")[0];
+					port = Integer.parseInt(stunServer.split(":")[1]);
+				}
+				else
+				{
+					address = stunServer;
+					port = STUN_SERVER_DEFAULT_PORT;
+				}
+				for(InetAddress ip : localIPs)
+				{
+					if(isReachable(ip, address))
+					{
+						DiscoveryTest diTest = new DiscoveryTest(ip, address, port);
+						try
+						{
+							log.info("Discovering network from local ip [" + ip.getHostAddress() + "]");
+							log.info("Using StunServer [" + address + ":" + port + "]");
+							stunInfo = new StunInfo(diTest.test());
+							stunInfo.setLocalIP(ip.getHostAddress());
+							stunInfo.setId(F2FComputing.getLocalPeer().getID().toString());
+							log.info("Getting STUN info succeeded!");
+							F2FComputing.getLocalPeer().setSTUNInfo(stunInfo);
+							break;
+						}
+						catch (Exception e)
+						{
+							log.error("Error discovering network, using stun server [" + address + ":" + port + "] from localIp [" + ip.getHostAddress() + "]", e);
+						}
+					}
+					else
+					{
+						//log.debug("Stun server [" + address + ":" + port + "] is unreachable from localIp [" + ip.getHostAddress() + "], trying next ip");
+					}
+				}
+				if (stunInfo != null) break;
 			}
 			
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FINISHED));
@@ -197,7 +173,7 @@ public class StunInfoClient
 
 		public String getActivityName()
 		{
-			return this.getName() + " id [" + this.getId() + "]";
+			return "StunInfoUpdateThread";
 		}
 
 		public Activity getParentActivity() {

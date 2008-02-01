@@ -1,16 +1,20 @@
 package ee.ut.f2f.core;
 
-import java.net.InetSocketAddress;
+import java.net.Inet4Address;
+import java.net.InetAddress;
+import java.net.NetworkInterface;
+import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Enumeration;
+import java.util.List;
 import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
-import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
+import ee.ut.f2f.comm.socket.SocketCommInitiator;
+import ee.ut.f2f.comm.socket.TCPTester;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.nat.traversal.threads.TCPTester;
 import ee.ut.f2f.util.stun.StunInfo;
 import ee.ut.f2f.util.stun.StunInfoClient;
 
@@ -36,7 +40,6 @@ public class F2FPeer
 		this.id = UUID.randomUUID();
 		this.displayName = displayName;
 		reportSTUNPeers = new ArrayList<F2FPeer>();
-		tcpTestPeers = new ArrayList<F2FPeer>();
 	}
 	
 	/**
@@ -51,6 +54,7 @@ public class F2FPeer
 		this.commProviders = new ArrayList<CommunicationProvider>();
 		addCommProvider(provider);
 		updateSTUNInfo();
+		initiateTCPTester();
 	}
 	
 	boolean isContactable()
@@ -125,6 +129,7 @@ public class F2FPeer
 			catch (Exception e)
 			{
 				logger.warn("Error sending message to "+id+" through "+commProvider);
+				e.printStackTrace();
 				// try again with different communication provider
 				continue;
 			}
@@ -156,63 +161,74 @@ public class F2FPeer
 					reportSTUNInfo(peer);
 				reportSTUNPeers.clear();
 			}
-			
-			// start the TCP tests if needed
-			synchronized (tcpTestPeers)
-			{
-				for (F2FPeer peer: tcpTestPeers)
-					initiateTCPTester(peer);
-				tcpTestPeers.clear();
-			}
-			
-			// init SocketComm provider according to the STUN info
-			initSocketCommProvider(this.stunInfo);
 		}
 		else
 		{
 			logger.info("received STUN info from " + this.displayName);
-			logger.info(stunInf.toString());
 		// init the processes that have to be done
 		// after a remote peer has sent its STUN info
 		
-			synchronized (F2FComputing.getLocalPeer().tcpTestPeers)
-			{
-				// test if TCP connection can be made ...
-				if (F2FComputing.getLocalPeer().getSTUNInfo() != null)
-					initiateTCPTester(this);
-				else // ... or schedule it for later
-					F2FComputing.getLocalPeer().tcpTestPeers.add(this);
-			}
+			
 		}
 	}
 	
 	private TCPTester tcpTester = null;
-	TCPTester getTCPTester() { return tcpTester; }
-	private static void initiateTCPTester(F2FPeer peer)
+	TCPTester getTCPTester()
 	{
-		if(peer.tcpTester != null)
+		if (tcpTester != null) return tcpTester;
+		synchronized(this)
 		{
-			logger.debug("TCPTester [" + peer.stunInfo.getId() + "] allready initialized");
-			logger.debug(peer.tcpTester);
-			// wait until the previous test has ended
-			while (true)
+			if (tcpTester != null) return tcpTester;
+			tcpTester = new TCPTester(this);
+		}
+		return tcpTester;
+	}
+	public void initiateTCPTester()
+	{
+		TCPTester tcpTester = getTCPTester();
+		if (tcpTester.isAlive())
+			return;
+		tcpTester.start();
+	}
+	
+	private List<InetAddress> localIPs = null;
+	public List<InetAddress> getLocalIPs() { return localIPs; }
+	void updateLocalIPInfo()
+	{
+		localIPs = new ArrayList<InetAddress>();
+		// get the network interfaces
+		Enumeration<NetworkInterface> interfaces;
+		try
+		{
+			interfaces = NetworkInterface.getNetworkInterfaces();
+		}
+		catch (SocketException e)
+		{
+			e.printStackTrace();
+			logger.debug(e.getMessage());
+			return;
+		}
+		
+		// get local IP's
+		while (interfaces.hasMoreElements())
+		{
+			NetworkInterface inet = interfaces.nextElement();
+			Enumeration<InetAddress> ips = inet.getInetAddresses();
+			while(ips.hasMoreElements())
 			{
-				if (peer.tcpTester.isAlive())
+				InetAddress ip = ips.nextElement();
+				if( !ip.isLinkLocalAddress() && !ip.isLoopbackAddress() )
 				{
-					try
-					{
-						peer.tcpTester.join();
-						break;
-					}
-					catch (InterruptedException e)
-					{
-						e.printStackTrace();
-					}
+					if(ip instanceof Inet4Address) localIPs.add(ip);
 				}
 			}
 		}
-		else peer.tcpTester = new TCPTester(peer);
-		peer.tcpTester.start();
+		
+		// start a SocketComm provider on each local IP
+		new SocketCommInitiator().start();
+		
+		// start STUN info update thread
+		updateSTUNInfo();
 	}
 	
 	public void updateSTUNInfo()
@@ -251,7 +267,6 @@ public class F2FPeer
 	}
 
 	private ArrayList<F2FPeer> reportSTUNPeers = null;
-	private ArrayList<F2FPeer> tcpTestPeers = null;
 	void reportSTUNInfo(F2FPeer remotePeer)
 	{
 		if(!F2FComputing.getLocalPeer().equals(this)) return;
@@ -274,20 +289,6 @@ public class F2FPeer
 			{
 				reportSTUNPeers.add(remotePeer);
 			}
-		}
-	}
-	
-	final public static int DEFAULT_SOCKET_COMMUNICATION_PORT = 13000;
-	private void initSocketCommProvider(StunInfo stunInfo)
-	{
-		InetSocketAddress inetSoc = new InetSocketAddress(stunInfo.getLocalIp(), DEFAULT_SOCKET_COMMUNICATION_PORT);
-		try
-		{
-			new SocketCommunicationProvider(inetSoc, null);
-		}
-		catch (CommunicationInitException e)
-		{
-			logger.debug(e.getMessage());
 		}
 	}
 }

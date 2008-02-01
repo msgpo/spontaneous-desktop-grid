@@ -15,14 +15,12 @@ public class Activator implements BundleActivator {
 	 */
 	public void start(BundleContext context) throws Exception
 	{
-		System.out.println("f2f-plugin: Start F2F SC-plugin");
-
+		// init GUI
+		F2FComputingGUI.main(new String[]{});
 		// init F2F framework
 		F2FComputing.initiateF2FComputing();
 		// init SIP Communicator stuff
 		SipIMCommunicationProvider.initiateSipIMCommunicationProvider(context);
-		// init GUI
-		F2FComputingGUI.main(new String[]{});
 	}
 	
 	/*
