@@ -73,7 +73,10 @@ class CPURequests extends Thread implements Activity
 			
 			try
 			{
-				reservedPeers.wait(REQUEST_FOR_CPUS_TIMEOUT);
+				synchronized(reservedPeers)
+				{
+					reservedPeers.wait(REQUEST_FOR_CPUS_TIMEOUT);
+				}
 			}
 			catch (InterruptedException e)
 			{// timeout

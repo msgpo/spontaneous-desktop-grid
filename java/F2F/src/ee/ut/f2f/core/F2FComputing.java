@@ -128,6 +128,8 @@ public class F2FComputing
 	 */
 	public static Job createJob(Collection<String> jarFilesNames, String masterTaskClassName, Collection<F2FPeer> peers) throws F2FComputingException
 	{
+		try
+		{
 		if (!isInitialized()) return null;
 		// create a job
 		String jobID = newJobID();
@@ -160,6 +162,13 @@ public class F2FComputing
 			logger.error("Error starting a master task: "+masterTaskDescription + e, e);
 		}
 		return job;
+		}
+		catch (Exception e)
+		{
+			logger.error("Error starting a job: " + e, e);
+			e.printStackTrace();
+			throw new RuntimeException(e);
+		}
 	}
 
 	/**
