@@ -94,7 +94,7 @@ public class Job implements Serializable, Activity
 		if (!workingPeers.contains(peer)) workingPeers.add(peer);
 	}
 
-	private CPURequests cpuRequests = null;
+	private transient CPURequests cpuRequests = null;
 	CPURequests getCPURequests() { return cpuRequests; }
 	
 	/**
