@@ -257,28 +257,41 @@ public class F2FComputing
 				job.addWorkingPeer(peer);
 			}
 		}
-		//TODO: send jobs and task in parallel
-		F2FMessage messageJob = 
+		
+		final F2FMessage messageJob = 
 			new F2FMessage(F2FMessage.Type.JOB, null, null, null, job);
-		for (F2FPeer peer: newPeers)
+		for (final F2FPeer peer: newPeers)
 		{
-			try {
-				peer.sendMessage(messageJob);
-			} catch (CommunicationFailedException e) {
-				logger.error("Error sending the job to a peer. " + e, e);
-			}
+			new Thread()
+			{
+				public void run()
+				{
+					try {
+						peer.sendMessage(messageJob);
+					} catch (CommunicationFailedException e) {
+						logger.error("Error sending the job to a peer. " + e, e);
+					}
+				}
+			}.start();
 		}
 		// ... notify other peers about additional tasks
-		F2FMessage messageTasks = 
+		final F2FMessage messageTasks = 
 			new F2FMessage(F2FMessage.Type.TASKS, job.getJobID(), null, null, newTaskDescriptions);
-		for (F2FPeer peer: job.getWorkingPeers())
+		for (final F2FPeer peer: job.getWorkingPeers())
 		{
 			if (newPeers.contains(peer)) continue;
-			try {
-				peer.sendMessage(messageTasks);
-			} catch (CommunicationFailedException e) {
-				logger.error("Error sending new tasks to a peer. " + e, e);
-			}
+			
+			new Thread()
+			{
+				public void run()
+				{
+					try {
+						peer.sendMessage(messageTasks);
+					} catch (CommunicationFailedException e) {
+						logger.error("Error sending new tasks to a peer. " + e, e);
+					}
+				}
+			}.start();
 		}
 	}
 
