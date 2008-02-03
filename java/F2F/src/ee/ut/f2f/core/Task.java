@@ -112,7 +112,7 @@ public abstract class Task extends Thread implements Activity
 	}
 
 	public Activity getParentActivity() {
-		return getJob().getJobActivity();
+		return getJob();
 	}
 	
 	

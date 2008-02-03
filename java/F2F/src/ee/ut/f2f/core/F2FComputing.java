@@ -10,13 +10,10 @@ import java.util.UUID;
 
 import javax.swing.JOptionPane;
 
-import ee.ut.f2f.activity.ActivityEvent;
-import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.comm.sc.chat.F2FMultiChatListener;
-import ee.ut.f2f.core.activity.CPURequests;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
@@ -49,8 +46,6 @@ public class F2FComputing
 	 * The parent directory for all job directories.
 	 */
 	private static java.io.File rootDirectory = null;
-
-	private static CPURequests cpuRequests;
 	
 	private static F2FPeer localPeer = null;
 	public static F2FPeer getLocalPeer() {return localPeer;}
@@ -138,9 +133,6 @@ public class F2FComputing
 		logger.info("Created new job with ID: " + jobID);
 		// add job to jobs map
 		jobs.put(jobID, job);
-		ActivityManager.getDefault().emitEvent(
-				new ActivityEvent(job.getJobActivity(),
-						ActivityEvent.Type.STARTED, "Job created"));
 		
 		// set the master task ID of the job
 		String masterTaskID = job.newTaskId();
@@ -219,35 +211,12 @@ public class F2FComputing
 		{
 			throw new F2FComputingException("Could not initialize task " + className, e);
 		}
-
-		cpuRequests = new CPURequests(jobID, peers, taskCount);
 		
-		try {
-			// ask peers for CPU power
-			cpuRequests.makeRequests();
-			
-			// wait for answers
-			cpuRequests.waitForResponses();
-		
-			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FINISHED,
-					"Reserved:"+cpuRequests.getReservedPeers().size()+" peer(s); " +
-							"busy:"+cpuRequests.getBusyPeers().size()+ " peer(s)");
-			ActivityManager.getDefault().emitEvent(event);
-		} catch (RuntimeException e) {
-			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FAILED,
-					e.toString());
-			ActivityManager.getDefault().emitEvent(event);
-			throw e;
-		} catch (F2FComputingException e) {
-			ActivityEvent event = new ActivityEvent(cpuRequests, ActivityEvent.Type.FAILED,
-					e.toString());
-			ActivityManager.getDefault().emitEvent(event);
-			throw e;
-		}
+		// wait for answers
+		Iterator<F2FPeer> reservedPeersIterator = job.getCPURequests().waitForResponses(taskCount, peers);
 		
 		// now we know in which peers new tasks should be started
 		F2FPeer[] peersToBeUsed = new F2FPeer[taskCount];
-		Iterator<F2FPeer> reservedPeersIterator = cpuRequests.getReservedPeers().iterator();
 		for (int i = 0; i < taskCount; i++) peersToBeUsed[i] = reservedPeersIterator.next();
 		
 		// create descriptions of new tasks and add them to the job
@@ -297,8 +266,6 @@ public class F2FComputing
 				logger.error("Error sending new tasks to a peer. " + e, e);
 			}
 		}
-				
-		cpuRequests.getReservedPeers().remove(jobID);
 	}
 
 	/**
@@ -440,29 +407,23 @@ public class F2FComputing
 		// JOB/TASK START
 		if (f2fMessage.getType() == F2FMessage.Type.REQUEST_FOR_CPU)
 		{
-			try
-			{
-				logger.debug("got REQUEST_FOR_CPU. answer it with RESPONSE_FOR_CPU");
-				F2FMessage responseMessage = 
-					new F2FMessage(
-						F2FMessage.Type.RESPONSE_FOR_CPU, 
-						f2fMessage.getJobID(), null, null,
-						askForCPU(sender));
-				sender.sendMessage(responseMessage);
-			}
-			catch (CommunicationFailedException e)
-			{
-				e.printStackTrace();
-			}
+			askForCPU(sender, f2fMessage.getJobID());
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.RESPONSE_FOR_CPU)
 		{
-			if (cpuRequests != null
-					&& f2fMessage.getJobID().equals(cpuRequests.getJobID())) {
-				cpuRequests.responseReceived(f2fMessage, sender);
-			} else {
-				logger.warn("Received unexpected 'CPU request' response");
+			Job job = getJob(f2fMessage.getJobID());
+			if (job == null)
+			{
+				logger.error("Received RESPONSE_FOR_CPU for unknown job");
+				return;
 			}
+			CPURequests requests = job.getCPURequests(); 
+			if (requests == null)
+			{
+				logger.error("Received RESPONSE_FOR_CPU but requester is null");
+				return;
+			}
+			requests.responseReceived(f2fMessage, sender);
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.JOB)
 		{
@@ -477,11 +438,7 @@ public class F2FComputing
 			try
 			{
 				job.initialize(rootDirectory);
-				jobs.put(job.getJobID(), job);
-				ActivityManager.getDefault().emitEvent(
-						new ActivityEvent(job.getJobActivity(),
-								ActivityEvent.Type.STARTED, "Job created"));				
-				
+				jobs.put(job.getJobID(), job);				
 				startJobTasks(job);
 			}
 			catch (F2FComputingException e)
@@ -592,23 +549,47 @@ public class F2FComputing
 		logger.info((allow ? "Allow" : "Do not allow") + " all my friends to use my PC by default");
 		allowAllFriendsToUseMyPC = allow;
 	}
-	private static Boolean askForCPU(F2FPeer peer)
+	private static void askForCPU(final F2FPeer peer, final String jobID)
 	{
-		// do not ask the permission from ourselves
-		if (peer.equals(localPeer)) return Boolean.TRUE;
-		
-		// check if all friends are allowed to use this PC
-		if (allowAllFriendsToUseMyPC) return Boolean.TRUE;
-	
-		// ask the owner
-		int n = JOptionPane.showConfirmDialog(
-                null, "Do you allow " + peer.getDisplayName() + " to use your PC?",
-                "F2FComputing", JOptionPane.YES_NO_OPTION);
-		if (n == JOptionPane.YES_OPTION) return Boolean.TRUE;
-		
-		// TODO: 
-		//?   1) add a checkbox to the dialog that user would not be asked again later at all (allow all)
-		//?   2) add a checkbox that the specified friend is always trusted
-		return Boolean.FALSE;
+		new Thread()
+		{
+			public void run()
+			{
+				logger.debug("got REQUEST_FOR_CPU");
+				Boolean response = null;
+				// do not ask the permission from ourselves
+				if (peer.equals(localPeer)) response = true;
+				
+				// check if all friends are allowed to use this PC
+				else if (allowAllFriendsToUseMyPC) response = true;
+			
+				// ask the owner
+				else
+				{
+					int n = JOptionPane.showConfirmDialog(
+			                null, "Do you allow " + peer.getDisplayName() + " to use your PC?",
+			                "F2FComputing", JOptionPane.YES_NO_OPTION);
+					if (n == JOptionPane.YES_OPTION) response = true;
+					else response = false;
+					// TODO: 
+					//?   1) add a checkbox to the dialog that user would not be asked again later at all (allow all)
+					//?   2) add a checkbox that the specified friend is always trusted
+				}
+
+				F2FMessage responseMessage = 
+					new F2FMessage(
+						F2FMessage.Type.RESPONSE_FOR_CPU, 
+						jobID, null, null,
+						response);
+				try
+				{
+					peer.sendMessage(responseMessage);
+				}
+				catch (CommunicationFailedException e)
+				{
+					e.printStackTrace();
+				}
+			}
+		}.start();
 	}
 }
