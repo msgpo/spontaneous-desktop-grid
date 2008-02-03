@@ -10,6 +10,8 @@ import java.util.UUID;
 
 import javax.swing.JOptionPane;
 
+import ee.ut.f2f.activity.ActivityEvent;
+import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
@@ -212,6 +214,9 @@ public class F2FComputing
 			throw new F2FComputingException("Could not initialize task " + className, e);
 		}
 		
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(job, ActivityEvent.Type.CHANGED, 
+				"add " + taskCount + " tasks of " + className));
+	
 		// wait for answers
 		Iterator<F2FPeer> reservedPeersIterator = job.getCPURequests().waitForResponses(taskCount, peers);
 		

@@ -85,7 +85,8 @@ class CPURequests extends Thread implements Activity
 
 	void responseReceived(F2FMessage f2fMessage, F2FPeer sender)
 	{
-		if((Boolean) f2fMessage.getData())
+		Boolean response = (Boolean)f2fMessage.getData(); 
+		if(response)
 		{
 			synchronized(reservedPeers)
 			{
@@ -93,6 +94,9 @@ class CPURequests extends Thread implements Activity
 				reservedPeers.notifyAll();
 			}
 		}
+
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.CHANGED, 
+				"peer " + sender.getDisplayName() + " responded " + response));
 	}
 	
 	/* (non-Javadoc)
