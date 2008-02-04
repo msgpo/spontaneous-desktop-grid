@@ -13,7 +13,7 @@ import ee.ut.f2f.util.logging.Logger;
 
 public class F2FProperties
 {
-	public static final String F2F_PROPS_FILE_LOCATION 	= "ee.ut.f2f.F2F_PROPS_FILE_LOCATION";
+	public static final String F2F_PROPERTIES_FILE 	= "ee.ut.f2f.F2F_PROPERTIES_FILE";
 	final private static Logger log = Logger.getLogger(F2FProperties.class);
 	
 	private static final String PROPERTIES_FILE_DEFAULT_NAME = "F2FComputing.properties";
@@ -55,16 +55,10 @@ public class F2FProperties
 		
 		// get the location of the properties file
 		// at first check whether user has specified a custom name in the system properties
-		String propertiesFileLocation = System.getProperty(F2F_PROPS_FILE_LOCATION);
+		String propertiesFileLocation = System.getProperty(F2F_PROPERTIES_FILE);
 		if (propertiesFileLocation == null || propertiesFileLocation.trim().length() == 0)
 		{
 			propertiesFileLocation = PROPERTIES_FILE_DEFAULT_NAME;
-		}
-		else
-		{
-			if (!propertiesFileLocation.endsWith(File.separator))
-				propertiesFileLocation += File.separator;
-			propertiesFileLocation += PROPERTIES_FILE_DEFAULT_NAME;
 		}
 		
 		// Parse the properties file and fill the gaps.
