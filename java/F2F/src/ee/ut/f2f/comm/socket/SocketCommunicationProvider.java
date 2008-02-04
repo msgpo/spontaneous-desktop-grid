@@ -5,6 +5,7 @@ package ee.ut.f2f.comm.socket;
 
 import java.io.IOException;
 import java.io.ObjectInput;
+import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.BindException;
@@ -57,14 +58,6 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 				peers.add(new SocketPeer(this, friend));
 			}
 		}
-		
-		// init local server socket (actual PORT is set there)
-		SocketListener socketListener = new SocketListener(localPeerAddr);
-		// init local socket peer
-		localPeer = new SocketPeer(this, new InetSocketAddress(socketListener.serverSocket.getInetAddress(), socketListener.serverSocket.getLocalPort()));
-		
-		//TODO: kill this thread if the communication provider is deleted/not used any more
-		new Thread(socketListener).start();
 	}*/
 
 	public void addFriend(UUID id, InetSocketAddress friend, boolean bIntroduce) throws IOException
@@ -199,7 +192,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 					peer.setOo(oo);
 					peer.setOi(oi);
 					peers.put(remoteID, peer);
-					F2FComputing.peerContacted(remoteID, remoteID.toString(), SocketCommunicationProvider.this);
+					F2FComputing.peerContacted(remoteID, socket.getInetAddress().getHostAddress()+":"+ socket.getPort(), SocketCommunicationProvider.this);
 					log.debug("\t\tAccepted remote connection from '"+remoteID+"'");
 				}
 				catch (Exception e)
@@ -265,5 +258,49 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		
 		//TODO: kill this thread if the communication provider is deleted/not used any more
 		new Thread(socketListener).start();
+	}
+
+	
+	private void addFriend(final InetSocketAddress address)
+	{
+		new Thread()
+		{
+			public void run()
+			{
+				try
+				{
+					Socket socket = new Socket(address.getAddress(), address.getPort());
+					ObjectOutput oo = new ObjectOutputStream(socket.getOutputStream());
+					ObjectInput oi = new ObjectInputStream(socket.getInputStream());
+					// send local peer's ID
+					oo.writeObject(F2FComputing.getLocalPeer().getID());
+					UUID remoteID = (UUID)oi.readObject();
+					if (peers.containsKey(remoteID))
+					{
+						oi.close();
+						oo.close();
+						socket.close();
+						log.warn("socket peer is already known");
+						return;
+					}
+					SocketPeer peer = new SocketPeer(remoteID, SocketCommunicationProvider.this, null, false);
+					// start listening for messages from the peer
+					peer.setOo(oo);
+					peer.setOi(oi);
+					peers.put(remoteID, peer);
+					F2FComputing.peerContacted(remoteID, address.getAddress().getHostAddress() +":"+ address.getPort(), SocketCommunicationProvider.this);
+					log.debug("Accepted remote connection from '"+remoteID+"'");
+				}
+				catch (Exception e)
+				{
+					log.warn("could not find Socket peer at " + address.getAddress().getHostAddress() +":"+ address.getPort());
+				}
+			}
+		}.start();
+	}
+	public void addFriends(Collection<InetSocketAddress> friends)
+	{
+		for (InetSocketAddress address: friends)
+			addFriend(address);
 	}
 }

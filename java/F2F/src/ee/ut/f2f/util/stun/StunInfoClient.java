@@ -1,19 +1,15 @@
 package ee.ut.f2f.util.stun;
 
-import java.io.BufferedReader;
-import java.io.FileReader;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
-import java.util.Arrays;
-import java.util.Hashtable;
-import java.util.List;
-import java.util.Map;
+import java.util.Collection;
 
 import de.javawi.jstun.test.DiscoveryTest;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.logging.Logger;
 
 public class StunInfoClient
@@ -21,42 +17,8 @@ public class StunInfoClient
 	final private static Logger log = Logger.getLogger(StunInfoClient.class);
 	final private int STUN_SERVER_DEFAULT_PORT = 3478;
 	
-	public StunInfoClient() throws Exception
+	public StunInfoClient()
 	{
-		loadProperties("../F2F/conf/nat-traversal.properties");
-	}
-	
-	private List<String> stunServers = null;//SocketCommunication listener port
-	private void loadProperties(String propertiesFilePath) throws Exception
-	{
-		// read in the properties file
-		Map<String, String> props = new Hashtable<String, String>();
-		BufferedReader buf = new BufferedReader(new FileReader(propertiesFilePath));
-		while(buf.ready())
-		{
-			String temp = buf.readLine();
-			if(temp.startsWith("#")) continue;
-			String [] entry = temp.split("=");
-			if(entry == null || entry.length == 0) continue;
-			if(entry[0] == null || entry[0].equals("")) continue;
-			if(entry[1] == null || entry[1].equals("")) continue;
-			props.put(entry[0], entry[1]);
-		}
-		
-		log.debug("Properies list size [" + props.size() + "]");
-		for(String key : props.keySet())
-		{
-			log.debug("Property [" + key + "=" + props.get(key) + "]");
-		}
-		
-		// load stun servers from the properties
-		String[] stunServers = props.get("stunServers").split(",");
-		if (stunServers == null || stunServers.length == 0)
-			throw new Exception("No STUN servers specified in properties file!");
-		
-		this.stunServers = Arrays.asList(stunServers);
-		
-		//load another properties
 	}
 	
 	private Boolean updateInProgress = false;
@@ -109,10 +71,17 @@ public class StunInfoClient
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 				return;
 			}
-			List<InetAddress> localIPs = F2FComputing.getLocalPeer().getLocalIPs();
+			Collection<InetAddress> localIPs = F2FComputing.getLocalPeer().getLocalIPs();
 			if (localIPs == null || localIPs.isEmpty())
 			{
 				log.warn("STUN test can not be run if local F2FPeer has no IPs");
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
+				return;
+			}
+			Collection<String> stunServers = F2FProperties.getF2FProperties().getSTUNProperties().stunServers;
+			if (stunServers == null || stunServers.size() == 0)
+			{
+				log.warn("STUN test can not be run if no STUN server specified in properties file");
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 				return;
 			}

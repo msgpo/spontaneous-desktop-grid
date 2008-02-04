@@ -11,13 +11,12 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
+import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.logging.Logger;
 
 public class SocketCommInitiator extends Thread implements Activity
 {
 	private final static Logger log = Logger.getLogger(SocketCommInitiator.class);
-	
-	public final static int DEFAULT_SOCKET_COMMUNICATION_PORT = 13000;
 	
 	public SocketCommInitiator()
 	{
@@ -79,7 +78,7 @@ public class SocketCommInitiator extends Thread implements Activity
 		public void run()
 		{
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
-			InetSocketAddress inetSoc = new InetSocketAddress(address, DEFAULT_SOCKET_COMMUNICATION_PORT);
+			InetSocketAddress inetSoc = new InetSocketAddress(address, F2FProperties.getF2FProperties().getCommLayerProperties().iSocketCommunicationDefaultPort);
 			try
 			{
 				SocketCommunicationProvider.getInstance().addServerSocket(inetSoc);

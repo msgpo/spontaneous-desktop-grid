@@ -5,8 +5,8 @@ import java.net.InetAddress;
 import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.ArrayList;
+import java.util.Collection;
 import java.util.Enumeration;
-import java.util.List;
 import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
@@ -191,8 +191,8 @@ public class F2FPeer
 		tcpTester.start();
 	}
 	
-	private List<InetAddress> localIPs = null;
-	public List<InetAddress> getLocalIPs() { return localIPs; }
+	private Collection<InetAddress> localIPs = null;
+	public Collection<InetAddress> getLocalIPs() { return localIPs; }
 	void updateLocalIPInfo()
 	{
 		localIPs = new ArrayList<InetAddress>();
