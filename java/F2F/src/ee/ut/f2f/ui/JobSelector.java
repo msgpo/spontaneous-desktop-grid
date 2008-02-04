@@ -47,13 +47,19 @@ public class JobSelector extends JFrame
 	private FriendModel members = null;
 	Collection<F2FPeer> friends = null;
 
-	private JCheckBox btnSlave;
+	private JCheckBox btnSlave = null;
 	
 	private Collection<F2FPeer> getF2FPeers()
 	{
+		Collection<F2FPeer> peers = null;
 		if (friends != null)
-			return friends;
-		return members.getPeers();
+			peers = friends;
+		else peers = members.getPeers();
+		
+		if (btnSlave != null && btnSlave.isSelected() && !peers.contains(F2FComputing.getLocalPeer()))
+			peers.add(F2FComputing.getLocalPeer());
+		
+		return peers;
 	}
 
 	public JobSelector(Collection<F2FPeer> friends)
