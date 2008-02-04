@@ -305,7 +305,7 @@ public class F2FComputing
 				try
 				{
 					thread.join();
-					continue;
+					break;
 				} catch (InterruptedException e) {}
 			}
 		}
