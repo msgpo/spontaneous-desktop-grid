@@ -63,4 +63,5 @@ Checkout sip-communicator from the SIPc SVN repository or download latest versio
 -Dnet.java.sip.communicator.SC_HOME_DIR_LOCATION=../F2F/sip-communicator-profiles
 -Dnet.java.sip.communicator.SC_HOME_DIR_NAME=01
 -Djava.library.path=lib/native/linux
+-Dee.ut.f2f.F2F_PROPS_FILE_LOCATION=../F2F/conf
 }}}
