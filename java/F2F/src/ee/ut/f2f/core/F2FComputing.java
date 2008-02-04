@@ -258,21 +258,24 @@ public class F2FComputing
 			}
 		}
 		
+		Collection<Thread> threads = new ArrayList<Thread>();
 		final F2FMessage messageJob = 
 			new F2FMessage(F2FMessage.Type.JOB, null, null, null, job);
 		for (final F2FPeer peer: newPeers)
 		{
-			new Thread()
-			{
-				public void run()
+			Thread thread = new Thread()
 				{
-					try {
-						peer.sendMessage(messageJob);
-					} catch (CommunicationFailedException e) {
-						logger.error("Error sending the job to a peer. " + e, e);
+					public void run()
+					{
+						try {
+							peer.sendMessage(messageJob);
+						} catch (CommunicationFailedException e) {
+							logger.error("Error sending the job to a peer. " + e, e);
+						}
 					}
-				}
-			}.start();
+				};
+			threads.add(thread);
+			thread.start();
 		}
 		// ... notify other peers about additional tasks
 		final F2FMessage messageTasks = 
@@ -281,17 +284,30 @@ public class F2FComputing
 		{
 			if (newPeers.contains(peer)) continue;
 			
-			new Thread()
-			{
-				public void run()
+			Thread thread = new Thread()
 				{
-					try {
-						peer.sendMessage(messageTasks);
-					} catch (CommunicationFailedException e) {
-						logger.error("Error sending new tasks to a peer. " + e, e);
+					public void run()
+					{
+						try {
+							peer.sendMessage(messageTasks);
+						} catch (CommunicationFailedException e) {
+							logger.error("Error sending new tasks to a peer. " + e, e);
+						}
 					}
-				}
-			}.start();
+				};
+			threads.add(thread);
+			thread.start();
+		}
+		for (Thread thread: threads)
+		{
+			while (true)
+			{
+				try
+				{
+					thread.join();
+					continue;
+				} catch (InterruptedException e) {}
+			}
 		}
 	}
 
