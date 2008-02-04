@@ -1,9 +1,8 @@
-package f2f_sc_plugin;
+package ee.ut.f2f.comm.sc.im;
 
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
-import ee.ut.f2f.comm.sc.im.SipIMCommunicationProvider;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.ui.F2FComputingGUI;
 
