@@ -224,7 +224,7 @@ public class F2FComputing
 		}
 		
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(job, ActivityEvent.Type.CHANGED, 
-				"add " + taskCount + " tasks of " + className));
+				"submitting " + taskCount + " tasks of " + className));
 	
 		// wait for answers
 		Iterator<F2FPeer> reservedPeersIterator = job.getCPURequests().waitForResponses(taskCount, peers);
@@ -309,6 +309,9 @@ public class F2FComputing
 				} catch (InterruptedException e) {}
 			}
 		}
+		
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(job, ActivityEvent.Type.CHANGED, 
+				"tasks submitted"));
 	}
 
 	/**
