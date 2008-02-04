@@ -4,7 +4,7 @@ Bundle-Name: F2f_sc_plugin Plug-in
 Bundle-Description: Enables F2FComputing framework to use SIP contacts.
 Bundle-SymbolicName: f2f_sc_plugin
 Bundle-Version: 1.0.0
-Bundle-Activator: f2f_sc_plugin.Activator
+Bundle-Activator: ee.ut.f2f.comm.sc.im.Activator
 Bundle-Vendor: ulno.net
 Bundle-Localization: plugin
 Import-Package: javax.crypto,
