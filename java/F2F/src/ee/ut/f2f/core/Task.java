@@ -100,7 +100,7 @@ public abstract class Task extends Thread implements Activity
 		}
 		// if this is the Master task, the Job has finished
 		if (getTaskID().equals(getJob().getMasterTaskID()))
-			manager.emitEvent(new ActivityEvent(getJob(), ActivityEvent.Type.FINISHED));
+			manager.emitEvent(new ActivityEvent(getJob(), ActivityEvent.Type.FINISHED, "Job finished"));
 	}
 
 	/**
