@@ -116,6 +116,9 @@ public class Job implements Serializable, Activity
 				jarFiles.add(new F2FJarFile(fileName.trim()));
 		this.peers = peers;
 		initialize(rootDirectory);
+		ActivityManager.getDefault().emitEvent(
+				new ActivityEvent(this,
+						ActivityEvent.Type.STARTED, "Job created"));
 
 		cpuRequests = new CPURequests(this, peers);
 		cpuRequests.start();
@@ -170,9 +173,6 @@ public class Job implements Serializable, Activity
 		{
 			throw new F2FComputingException("Could not initialize a job! Error creating class loader. ", e);
 		}
-		ActivityManager.getDefault().emitEvent(
-				new ActivityEvent(this,
-						ActivityEvent.Type.STARTED, "Job created"));
 	}
 
 	/**

@@ -39,7 +39,7 @@ public abstract class Task extends Thread implements Activity
 	/**
 	 * Exception that was thrown during task's execution.
 	 */
-	private Exception exception;
+	private Exception exception = null;
 	public Exception getException() { return exception; }
 	
 	/**
@@ -94,10 +94,13 @@ public abstract class Task extends Thread implements Activity
 		}
 		catch (Exception e)
 		{
-			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
+			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED, "error: "+ e.getMessage()));
 			exception = e;
 			logger.error(this.taskDescription+" exited with error", e);
 		}
+		// if this is the Master task, the Job has finished
+		if (getTaskID().equals(getJob().getMasterTaskID()))
+			manager.emitEvent(new ActivityEvent(getJob(), ActivityEvent.Type.FINISHED));
 	}
 
 	/**

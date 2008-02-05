@@ -484,7 +484,10 @@ public class F2FComputing
 			try
 			{
 				job.initialize(rootDirectory);
-				jobs.put(job.getJobID(), job);				
+				jobs.put(job.getJobID(), job);
+				ActivityManager.getDefault().emitEvent(
+						new ActivityEvent(job,
+								ActivityEvent.Type.CHANGED, "Job received"));				
 				startJobTasks(job);
 			}
 			catch (F2FComputingException e)
