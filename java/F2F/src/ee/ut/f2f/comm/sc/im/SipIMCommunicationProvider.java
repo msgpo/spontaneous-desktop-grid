@@ -83,7 +83,6 @@ public class SipIMCommunicationProvider
 		synchronized (SipIMCommunicationProvider.class)
 		{
 			if (siplayer != null) return siplayer;
-			// Create the F2F layer
 			return (siplayer = new SipIMCommunicationProvider(bc));
 		}
 	}
