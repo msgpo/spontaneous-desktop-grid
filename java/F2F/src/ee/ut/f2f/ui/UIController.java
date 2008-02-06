@@ -43,6 +43,7 @@ import ee.ut.f2f.ui.model.ActivityInfoSelectionListener;
 import ee.ut.f2f.ui.model.ActivityInfoTableModel;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.logging.Logger;
 
 public class UIController{
@@ -244,7 +245,7 @@ public class UIController{
 		fileMenu.add(exitMenuItem);
 
 		optionsMenu = new JMenu("Options");
-		allowCPUMenuItem = new JCheckBoxMenuItem("Allow All Friends To Use My PC", false);
+		allowCPUMenuItem = new JCheckBoxMenuItem("Allow All Friends To Use My PC", F2FProperties.getF2FProperties().getAllowCPU());
 		F2FComputing.allowAllFriendsToUseMyPC(allowCPUMenuItem.getState());
 		optionsMenu.add(allowCPUMenuItem);
 		allowCPUMenuItem.addActionListener(new ActionListener()

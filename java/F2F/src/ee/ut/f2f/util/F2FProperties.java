@@ -40,6 +40,9 @@ public class F2FProperties
 	private STUNProperties stunProperties = null;
 	public STUNProperties getSTUNProperties() { return stunProperties; }
 	
+	private boolean bAllowCPU = false;
+	public boolean getAllowCPU() { return bAllowCPU; }
+	
 	private F2FProperties()
 	{
 		readProps();
@@ -83,6 +86,7 @@ public class F2FProperties
 		
 		// Read the properties if they exist.
 		if (propsFromFile == null) return;
+		bAllowCPU = Boolean.parseBoolean(propsFromFile.getProperty("allowFriendsToUseMyCPU", "false"));
 		commLayerProperties.bInitSkype = Boolean.parseBoolean(propsFromFile.getProperty("skype"));
 		commLayerProperties.bInitSocket = Boolean.parseBoolean(propsFromFile.getProperty("socket"));
 		commLayerProperties.iSocketCommunicationDefaultPort = Integer.parseInt(propsFromFile.getProperty("socketCommunicationDefaultPort", ""+DEFAULT_SOCKET_COMMUNICATION_PORT));
