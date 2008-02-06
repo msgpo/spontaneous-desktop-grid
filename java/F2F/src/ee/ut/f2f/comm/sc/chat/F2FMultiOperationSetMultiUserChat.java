@@ -445,6 +445,7 @@ public class F2FMultiOperationSetMultiUserChat
     {
     	if (contact == null) return;
     	F2FPeer peer = F2FComputing.getPeer(provider.getSipCommProvider().getF2FPeerID(contact));
+    	if (peer == null) return;
     	F2FMessage message = new F2FMessage(F2FMessage.Type.MULTI_CHAT, null, null, null, msg);
     	peer.sendMessage(message);
     }
