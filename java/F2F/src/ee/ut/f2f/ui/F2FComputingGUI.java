@@ -3,13 +3,9 @@ package ee.ut.f2f.ui;
 import java.io.FilterOutputStream;
 import java.io.IOException;
 import java.io.OutputStream;
-import java.util.Collection;
 
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FComputingException;
-import ee.ut.f2f.core.F2FPeer;
-import ee.ut.f2f.ui.model.FriendModel;
-import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.logging.Logger;
 
 public class F2FComputingGUI {
@@ -18,8 +14,6 @@ public class F2FComputingGUI {
 	
 	public static UIController controller;
 	
-	private static Thread upThread;
-	private static boolean threadAsleep = false;
 	/**
 	 * Different Print streams for different log4j appenders. This could be done better (?)
 	 */
@@ -57,87 +51,23 @@ public class F2FComputingGUI {
 			}
 		});
 	}
-	
-	public static void forceSynchronization(){
-		if(upThread != null && threadAsleep){
-			upThread.interrupt();
-		}
-	}
 
 	private static void runF2F()
 	{
-		upThread = 
-			new Thread(new Runnable()
+		new Thread(new Runnable()
+		{
+			public void run()
 			{
-				public void run()
-				{
-					controller = new UIController("GUI");
-					try {
-						F2FComputing.initiateF2FComputing();
-					} catch (F2FComputingException e) {
-						log.error(e.toString());
-						return;
-					}
-					FriendModel friendModel = controller.getFriendModel();
-					
-					/*TODO: remove, this is done after the local peer is created automatically
-					//NAT Traversal stun info request for yourself
-					natMessageProcessor.getConnectionManager().refreshLocalStunInfo();
-					*/
-										
-					while (true)
-					{
-						try {
-							Collection<F2FPeer> peersF2F = F2FComputing.getPeers();
-							Collection<F2FPeer> peersGUI = friendModel.getPeers();
-							// at first check if someone has to be removed
-							for (F2FPeer peer: peersGUI)
-							{
-								if (!peersF2F.contains(peer))
-								{
-									/*TODO: remove
-									//Remove SocketPeer form socketCommunication layer
-									natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().removeFriend(peer.getID().toString());
-									//Remove socket communication provider from F2FPeer
-									peer.removeCommProvider(natMessageProcessor.getConnectionManager().getSocketCommunicationProvider());
-									//Remove also NAT Traversal Stun info
-									F2FComputingGUI.controller.getStunInfoTableModel().remove(peer.getID().toString());
-									*/
-									//remove F2F peer from list
-									friendModel.remove(peer);
-								}
-							}
-							// then check if someone has to be added
-							for (F2FPeer peer: peersF2F)
-							{
-								if (!peersGUI.contains(peer)){
-									friendModel.add(peer);
-									/*TODO: remove, why this is needed?
-									if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())){
-										//Peer  should also add me to his list
-										//Check if peer added me to the list
-										NatMessage nmsg = new NatMessage(F2FComputing.getLocalPeer().getID().toString(),
-																	 peer.getID().toString(),
-																	 NatMessage.COMMAND_IS_F2FPEER_IN_LIST,
-																	 null);
-										F2FComputingGUI.natMessageProcessor.sendNatMessage(nmsg);
-									}
-									*/
-								}
-							}
-							threadAsleep = true;
-							Thread.sleep(1000);
-						} catch (InterruptedException e) {
-							threadAsleep = false;
-							log.debug("Synchrnization thread : interrupted sleep");
-						} catch (Exception e){
-							F2FDebug.println(e.toString());
-						}
-						threadAsleep = false;
-					}
+				controller = new UIController("F2FComputing GUI");
+				try {
+					F2FComputing.initiateF2FComputing();
+				} catch (F2FComputingException e) {
+					log.error(e.toString());
+					e.printStackTrace();
+					return;
 				}
-			});
-		upThread.start();
+			}
+		}).start();
 	}
 
 	static class FilteredStream extends FilterOutputStream {

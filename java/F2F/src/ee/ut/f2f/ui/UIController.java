@@ -35,6 +35,7 @@ import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
+import ee.ut.f2f.core.F2FPeerPresenceListener;
 import ee.ut.f2f.ui.log.LogHandler;
 import ee.ut.f2f.ui.log.LogHighlighter;
 import ee.ut.f2f.ui.log.LogTableModel;
@@ -46,7 +47,8 @@ import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.logging.Logger;
 
-public class UIController{
+public class UIController implements F2FPeerPresenceListener
+{
 	private static final Logger logger = Logger.getLogger(UIController.class);	
 	
 	private JFrame frame = null;
@@ -93,7 +95,7 @@ public class UIController{
 	
 	public UIController(String title)
 	{		
-		frame = new JFrame("F2FComputing - " + title);
+		frame = new JFrame(title);
 		
 		mainPanel = new JPanel(new BorderLayout());
 		frame.setContentPane(mainPanel);
@@ -303,6 +305,16 @@ public class UIController{
 			}
 		});
 		
+		F2FComputing.addPeerPresenceListener(this);
+		synchronized (friendModel)
+		{
+			Collection<F2FPeer> peersGUI = friendModel.getPeers();
+			Collection<F2FPeer> peersF2F = F2FComputing.getPeers();
+			for (F2FPeer peer: peersF2F)
+				if (!peersGUI.contains(peer))
+					friendModel.add(peer);
+		}
+		
 		frame.setVisible(true);
 	}
 
@@ -441,6 +453,23 @@ public class UIController{
 			// Removes you from chat
 			chat.dispose();
 			killChat(chatId);
+		}
+	}
+
+	public void peerContacted(F2FPeer peer)
+	{
+		synchronized (friendModel)
+		{
+			if (!friendModel.getPeers().contains(peer))
+				friendModel.add(peer);
+		}
+	}
+
+	public void peerUnContacted(F2FPeer peer)
+	{
+		synchronized (friendModel)
+		{
+			friendModel.remove(peer);
 		}
 	}
 }

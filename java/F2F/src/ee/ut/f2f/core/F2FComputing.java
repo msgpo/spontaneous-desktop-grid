@@ -377,6 +377,24 @@ public class F2FComputing
 		return peers.get(id);
 	}
 	
+	private static ArrayList<F2FPeerPresenceListener> peerListeners = new ArrayList<F2FPeerPresenceListener>();
+	public static void addPeerPresenceListener(F2FPeerPresenceListener listener)
+	{
+		synchronized (peerListeners)
+		{
+			if (!peerListeners.contains(listener))
+				peerListeners.add(listener);
+		}
+	}	
+	public static void removePeerPresenceListener(F2FPeerPresenceListener listener)
+	{
+		synchronized (peerListeners)
+		{
+			if (peerListeners.contains(listener))
+				peerListeners.remove(listener);
+		}
+	}
+	
 	public static void peerContacted(UUID peerID, String displayName, CommunicationProvider comm)
 	{
 		if (!isInitialized()) return;
@@ -388,6 +406,11 @@ public class F2FComputing
 			{
 				peer = new F2FPeer(peerID, displayName, comm);
 				peers.put(peerID, peer);
+				synchronized (peerListeners)
+				{
+					for (F2FPeerPresenceListener listener: peerListeners)
+						listener.peerContacted(peer);
+				}
 				return;
 			}
 			peer.addCommProvider(comm);
@@ -404,6 +427,11 @@ public class F2FComputing
 		synchronized (peers)
 		{
 			peers.remove(peerID);
+			synchronized (peerListeners)
+			{
+				for (F2FPeerPresenceListener listener: peerListeners)
+					listener.peerUnContacted(peer);
+			}
 		}
 	}
 	
