@@ -109,6 +109,6 @@ public class SocketCommInitiator extends Thread implements Activity
 	}
 	public Activity getParentActivity()
 	{
-		return null;
+		return SocketCommunicationProvider.getInstance();
 	}
 }
