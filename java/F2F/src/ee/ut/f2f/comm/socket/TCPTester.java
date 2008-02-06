@@ -83,6 +83,7 @@ public class TCPTester extends Thread implements Activity
 		}
 		catch (Exception e)
 		{
+			e.printStackTrace();
 			log.error(getActivityName() + " error: " + e.getMessage());
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "error: " + e.getMessage()));
 		}
