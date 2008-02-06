@@ -145,6 +145,7 @@ public class TCPTester extends Thread implements Activity
 		// and a random number that will be used to select the final connection if
 		// if both sides made a successful test
 		Integer localResult;// 0 means that test(s) failed
+		Random random = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis());
 		for (int r = 0; ; r++)//this is repeated until peers generate different random numbers
 		{
 			//if (r == 0) localResult = 5;
@@ -152,7 +153,6 @@ public class TCPTester extends Thread implements Activity
 			//{
 			if (usedAddress != null)
 			{
-				Random random = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits());
 				localResult = random.nextInt();
 				while (localResult.intValue() == 0)
 					localResult = random.nextInt();

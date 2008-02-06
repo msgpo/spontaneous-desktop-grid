@@ -9,6 +9,7 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.net.SocketException;
 import java.util.UUID;
 
 import ee.ut.f2f.activity.Activity;
@@ -24,10 +25,10 @@ class SocketPeer implements Activity
 	final private static Logger log = Logger.getLogger(SocketPeer.class);
 	
 	
-	private SocketCommunicationProvider layer;
+	private SocketCommunicationProvider scProvider;
 	public SocketCommunicationProvider getCommunicationLayer()
 	{
-		return this.layer;
+		return this.scProvider;
 	}
 	
 	protected InetSocketAddress socketAddress;
@@ -39,7 +40,7 @@ class SocketPeer implements Activity
 	SocketPeer(UUID id, SocketCommunicationProvider layer, InetSocketAddress socketAddress, boolean bIntroduce) throws IOException
 	{
 		this.id = id;
-		this.layer = layer;
+		this.scProvider = layer;
 		this.socketAddress = socketAddress;
 		if (bIntroduce) getOo();
 	}
@@ -97,7 +98,8 @@ class SocketPeer implements Activity
 		{
 			public void run()
 			{
-				try {
+				try
+				{
 					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
 							ActivityEvent.Type.STARTED, "start receiving messages"));
 					//log.debug(getActivityName() + " Remote socket [" + outSocket.getRemoteSocketAddress() + "]");
@@ -115,20 +117,41 @@ class SocketPeer implements Activity
 						}
 						catch (ClassNotFoundException e)
 						{
-							log.debug("\t\tError reading object from id [" + id + "] ip [" +
+							log.debug("Error reading object from id [" + id + "] ip [" +
 									 outSocket.getRemoteSocketAddress() + "]" + e);
 						}
 					}
-				} catch (IOException e) {
+				}
+				catch (SocketException e)
+				{
+					if (e.getMessage().equals("Connection reset"))
+					{
+						ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+								ActivityEvent.Type.FINISHED, "remote peer closed connection"));
+					}
+					else
+					{
+						ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+								ActivityEvent.Type.FAILED, e.toString()));
+						throw new RuntimeException(e);
+					}
+				}
+				catch (IOException e)
+				{
 					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
 							ActivityEvent.Type.FAILED, e.toString()));
 					throw new RuntimeException(e);
-				} catch (RuntimeException e) {
+				}
+				catch (RuntimeException e)
+				{
 					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
 							ActivityEvent.Type.FAILED, e.toString()));
 					throw e;
-				} finally {
+				}
+				finally
+				{
 					log.debug(getActivityName() + " Stopping listening to Peer id [" + id + "]");
+					F2FComputing.peerUnContacted(id, scProvider);
 				}
 			}
 		}).start();
@@ -146,6 +169,6 @@ class SocketPeer implements Activity
 
 	public Activity getParentActivity()
 	{
-		return layer;
+		return scProvider;
 	}
 }
