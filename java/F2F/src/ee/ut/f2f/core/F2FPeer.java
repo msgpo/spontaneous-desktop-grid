@@ -137,7 +137,7 @@ public class F2FPeer
 			return;
 		}
 		// throw an exception if message is not sent
-		throw new CommunicationFailedException();
+		throw new CommunicationFailedException("peer " + getDisplayName() + " is not reachable");
 	}
 	
 	private StunInfoClient stunInfoClient = null;
