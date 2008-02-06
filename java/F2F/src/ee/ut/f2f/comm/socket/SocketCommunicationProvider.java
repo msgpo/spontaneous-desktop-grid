@@ -48,25 +48,25 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		ActivityEvent event = new ActivityEvent(this, ActivityEvent.Type.STARTED);
 		ActivityManager.getDefault().emitEvent(event);
 	}
-	/*public SocketCommunicationProvider(InetSocketAddress localPeerAddr, Collection<InetSocketAddress> friends) throws CommunicationInitException
-	{
-		// Create the list of friend-nodes only when passed. 
-		if (friends!=null)
-		{
-			for (InetSocketAddress friend: friends)
-			{
-				peers.add(new SocketPeer(this, friend));
-			}
-		}
-	}*/
 
 	public void addFriend(UUID id, InetSocketAddress friend, boolean bIntroduce) throws IOException
 	{
-		if(!peers.containsKey(id))
+		if (peers.containsKey(id)) return;
+		synchronized (peers)
 		{
+			if (peers.containsKey(id)) return;
 			SocketPeer peer = new SocketPeer(id, this, friend, bIntroduce);
 			peers.put(id, peer);
 			F2FComputing.peerContacted(id, id.toString(), this);
+		}
+	}
+	void removeFriend(UUID id)
+	{
+		synchronized (peers)
+		{
+			if (!peers.containsKey(id)) return;
+			peers.remove(id);
+			F2FComputing.peerUnContacted(id, this);
 		}
 	}
 	
@@ -75,8 +75,11 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 	 */
 	public SocketPeer findPeerByID(UUID id)
 	{
-		if (peers.containsKey(id))
-			return peers.get(id);
+		synchronized (peers)
+		{
+			if (peers.containsKey(id))
+				return peers.get(id);
+		}
 		return null;
 	}
 
@@ -179,21 +182,24 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 					}
 					// the first message has to be the ID of remote peer
 					UUID remoteID = (UUID)message;
-					if (peers.containsKey(remoteID))
+					synchronized (peers)
 					{
-						oi.close();
-						oo.close();
-						socket.close();
-						log.warn("socket peer is already known");
-						continue;
+						if (peers.containsKey(remoteID))
+						{
+							oi.close();
+							oo.close();
+							socket.close();
+							log.warn("socket peer is already known");
+							continue;
+						}
+						SocketPeer peer = new SocketPeer(remoteID, SocketCommunicationProvider.this, null, false);
+						// start listening for messages from the peer
+						peer.setOo(oo);
+						peer.setOi(oi);
+						peers.put(remoteID, peer);
+						F2FComputing.peerContacted(remoteID, socket.getInetAddress().getHostAddress()+":"+ socket.getPort(), SocketCommunicationProvider.this);
+						log.debug("Accepted TCP connection from '"+socket.getInetAddress().getHostAddress()+":"+ socket.getPort()+"'");
 					}
-					SocketPeer peer = new SocketPeer(remoteID, SocketCommunicationProvider.this, null, false);
-					// start listening for messages from the peer
-					peer.setOo(oo);
-					peer.setOi(oi);
-					peers.put(remoteID, peer);
-					F2FComputing.peerContacted(remoteID, socket.getInetAddress().getHostAddress()+":"+ socket.getPort(), SocketCommunicationProvider.this);
-					log.debug("\t\tAccepted remote connection from '"+remoteID+"'");
 				}
 				catch (Exception e)
 				{
@@ -216,9 +222,14 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 
 	public void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException
 	{
-		if (!peers.containsKey(destinationPeer))
-			throw new CommunicationFailedException("socket peer wasn't found");
-		peers.get(destinationPeer).sendMessage(message);
+		SocketPeer peer = null;
+		synchronized (peers)
+		{
+			peer = peers.get(destinationPeer);
+		}
+		if (peer == null)
+			throw new CommunicationFailedException("socket peer wasn't found - id: " + destinationPeer);
+		peer.sendMessage(message);
 	}
 
 	public String getActivityName()
@@ -256,7 +267,6 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		SocketListener socketListener = new SocketListener(inetSoc);
 		serverSockets.add(socketListener.socketAddress);
 		
-		//TODO: kill this thread if the communication provider is deleted/not used any more
 		new Thread(socketListener).start();
 	}
 
@@ -275,21 +285,24 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 					// send local peer's ID
 					oo.writeObject(F2FComputing.getLocalPeer().getID());
 					UUID remoteID = (UUID)oi.readObject();
-					if (peers.containsKey(remoteID))
+					synchronized (peers)
 					{
-						oi.close();
-						oo.close();
-						socket.close();
-						log.warn("socket peer is already known");
-						return;
+						if (peers.containsKey(remoteID))
+						{
+							oi.close();
+							oo.close();
+							socket.close();
+							log.warn("socket peer is already known");
+							return;
+						}
+						SocketPeer peer = new SocketPeer(remoteID, SocketCommunicationProvider.this, null, false);
+						// start listening for messages from the peer
+						peer.setOo(oo);
+						peer.setOi(oi);
+						peers.put(remoteID, peer);
+						F2FComputing.peerContacted(remoteID, address.getAddress().getHostAddress() +":"+ address.getPort(), SocketCommunicationProvider.this);
+						log.debug("Accepted remote connection from '"+remoteID+"'");
 					}
-					SocketPeer peer = new SocketPeer(remoteID, SocketCommunicationProvider.this, null, false);
-					// start listening for messages from the peer
-					peer.setOo(oo);
-					peer.setOi(oi);
-					peers.put(remoteID, peer);
-					F2FComputing.peerContacted(remoteID, address.getAddress().getHostAddress() +":"+ address.getPort(), SocketCommunicationProvider.this);
-					log.debug("Accepted remote connection from '"+remoteID+"'");
 				}
 				catch (Exception e)
 				{

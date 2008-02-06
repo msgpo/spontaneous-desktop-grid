@@ -25,17 +25,17 @@ class SocketPeer implements Activity
 	final private static Logger log = Logger.getLogger(SocketPeer.class);
 	
 	
-	private SocketCommunicationProvider scProvider;
+	private SocketCommunicationProvider scProvider = null;
 	public SocketCommunicationProvider getCommunicationLayer()
 	{
 		return this.scProvider;
 	}
 	
-	protected InetSocketAddress socketAddress;
-	private Socket outSocket;
-	private ObjectOutput oo;
-	private ObjectInput oi;
-	private UUID id;
+	protected InetSocketAddress socketAddress = null;
+	private Socket outSocket = null;
+	private ObjectOutput oo = null;
+	private ObjectInput oi = null;
+	private UUID id = null;
 	
 	SocketPeer(UUID id, SocketCommunicationProvider layer, InetSocketAddress socketAddress, boolean bIntroduce) throws IOException
 	{
@@ -104,8 +104,6 @@ class SocketPeer implements Activity
 							ActivityEvent.Type.STARTED, "start receiving messages"));
 					//log.debug(getActivityName() + " Remote socket [" + outSocket.getRemoteSocketAddress() + "]");
 					//log.debug(getActivityName() + " Local Bind [" + outSocket.getLocalAddress().getHostAddress() + ":" + outSocket.getLocalPort() + "]");
-					//TODO: exit this thread when the peer is not used any more + 
-					//      close used sockets
 					while(true)
 					{
 						try
@@ -150,8 +148,17 @@ class SocketPeer implements Activity
 				}
 				finally
 				{
+					try
+					{
+						if (oi != null) oi.close();
+						oi = null;
+						if (oo != null) oo.close();
+						oo = null;
+						if (outSocket != null) outSocket.close();
+						outSocket = null;
+					} catch (Exception e) {}
 					log.debug(getActivityName() + " Stopping listening to Peer id [" + id + "]");
-					F2FComputing.peerUnContacted(id, scProvider);
+					scProvider.removeFriend(id);
 				}
 			}
 		}).start();
