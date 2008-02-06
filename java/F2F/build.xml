@@ -53,6 +53,7 @@
 				srcdir="${basedir}/src"
 				destdir="${tmpBuildPath}/classes"
 				fork="yes"
+				debug="true"
 				source="1.5"
 				target="1.5"
 				>
