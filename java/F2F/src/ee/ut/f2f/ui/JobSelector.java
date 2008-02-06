@@ -30,16 +30,16 @@ import ee.ut.f2f.core.Job;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.ui.model.FriendModel;
-import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.logging.Logger;
 
 public class JobSelector extends JFrame
 {
+	private static final Logger logger = Logger.getLogger(JobSelector.class);
 	private static final long serialVersionUID = 1L;
 	
 	private JTextField tf1 = null;
 	private JTextField tf2 = null;
 	private JPanel mainPanel = null;
-	private UIController mainWindow = null;
 	private File[] selectedFiles = null;
 	private SpringLayout bottomPanelLayout = null;
 	private JButton btnCompute = null;
@@ -73,8 +73,8 @@ public class JobSelector extends JFrame
 		endInit();
 	}
 
-	public JobSelector(UIController wnd, FriendModel people) {
-		mainWindow = wnd;
+	public JobSelector(FriendModel people)
+	{
 		members = people;
 		
 		startInit();
@@ -188,10 +188,10 @@ public class JobSelector extends JFrame
 		btnCompute.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				if (tf1.getText().length() == 0) {
-					error("no jar-files name was specified");
+					logger.error("no jar-files name was specified");
 				}
 				else if (tf2.getText().length() == 0) {
-					error("master task name was not specified");
+					logger.error("master task name was not specified");
 				}
 				else {
 					Collection<String> jarFilesNames = new ArrayList<String>();
@@ -201,9 +201,9 @@ public class JobSelector extends JFrame
 					String jobID;
 					try {
 						jobID = F2FComputing.createJob(jarFilesNames, tf2.getText(), getF2FPeers()).getJobID();
-						info("Started job with ID: " + jobID);
+						logger.info("Started job with ID: " + jobID);
 					} catch (F2FComputingException ex) {
-						error("Error with starting a job! " + ex);
+						logger.error("Error with starting a job! " + ex);
 					}
 				}
 			}
@@ -239,22 +239,22 @@ public class JobSelector extends JFrame
 				while (jobIterator.hasNext())
 				{
 					Job job = jobIterator.next();
-					info(job.getJobID());
+					logger.info(job.getJobID());
 					Collection<Task> tasks = job.getTasks();
 					Iterator<Task> taskIterator = tasks.iterator();
 					while (taskIterator.hasNext())
 					{
 						Task task = taskIterator.next();
-						info("\tTask " + task.getTaskID());
-						info("\t\tstate: java.lang.Thread.State." + task.getState());
+						logger.info("\tTask " + task.getTaskID());
+						logger.info("\t\tstate: java.lang.Thread.State." + task.getState());
 						if (task.getException() != null)
-							info("\t\texception: " + task.getException() + task.getException().getMessage());
+							logger.info("\t\texception: " + task.getException() + task.getException().getMessage());
 						Collection<TaskProxy> proxies = task.getTaskProxies();
 						Iterator<TaskProxy> proxyIterator = proxies.iterator();
 						while (proxyIterator.hasNext())
 						{
 							TaskProxy proxy = proxyIterator.next();
-							info("\t\tTask " + proxy.getRemoteTaskID() + " message queue size: " + proxy.getMessageCount());
+							logger.info("\t\tTask " + proxy.getRemoteTaskID() + " message queue size: " + proxy.getMessageCount());
 						}
 					}
 				}
@@ -268,7 +268,7 @@ public class JobSelector extends JFrame
 		this.setVisible(true);
 	}
 	
-	private void error(String msg)
+	/*private void error(String msg)
 	{
 		if (mainWindow != null)
 			mainWindow.error(msg);
@@ -286,7 +286,7 @@ public class JobSelector extends JFrame
 		{
 			F2FDebug.println(msg);
 		}
-	}
+	}*/
 	
 	private class JarFilter extends FileFilter {
 

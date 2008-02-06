@@ -3,7 +3,6 @@ package ee.ut.f2f.ui;
 import java.awt.BorderLayout;
 import java.awt.Color;
 import java.awt.Dimension;
-import java.awt.FlowLayout;
 import java.awt.GridLayout;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
@@ -24,8 +23,6 @@ import javax.swing.JMenuItem;
 import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTabbedPane;
-import javax.swing.JTable;
-import javax.swing.JTextArea;
 import javax.swing.ListSelectionModel;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
@@ -45,7 +42,6 @@ import ee.ut.f2f.ui.model.ActivityInfoNewRowsPredicate;
 import ee.ut.f2f.ui.model.ActivityInfoSelectionListener;
 import ee.ut.f2f.ui.model.ActivityInfoTableModel;
 import ee.ut.f2f.ui.model.FriendModel;
-import ee.ut.f2f.ui.model.StunInfoTableModel;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -57,37 +53,37 @@ public class UIController{
 	private JPanel friendsPanel = null;
 	private JList friendsList = null;
 	private FriendModel friendModel = null;
-	private JTextArea console = null;
+	//private JTextArea console = null;
 	
 	private JButton createChatButton;
-	
+	/*
 	//NAT/Traversal panel
 	private JPanel traversalPanel = null;
 	private JTable stunInfoTable = null;
 	private StunInfoTableModel stunInfoTableModel = null;
 	private JTextArea natLogArea = null;
 	private JButton initButton = null;	
-	
+	*/
 	private JMenu optionsMenu;
 	private JMenuBar generalMenuBar = null;
 	private JMenu fileMenu = null;
 	private JMenu viewMenu = null;
-	private JMenu helpMenu = null;
+	//private JMenu helpMenu = null;
 	private JCheckBoxMenuItem allowCPUMenuItem;
 	
-	private JCheckBoxMenuItem showDebugMenuItem = null;
-	private JCheckBoxMenuItem showInfoMenuItem = null;
-	private JCheckBoxMenuItem showErrorMenuItem = null;
-	private JCheckBoxMenuItem autoScrollMenuItem = null;
+	//private JCheckBoxMenuItem showDebugMenuItem = null;
+	//private JCheckBoxMenuItem showInfoMenuItem = null;
+	//private JCheckBoxMenuItem showErrorMenuItem = null;
+	//private JCheckBoxMenuItem autoScrollMenuItem = null;
 	private JMenuItem showDebugWindowMenuItem = null;
 	private JMenuItem exitMenuItem = null;
 	
 	private Map<String, GroupChatWindow> chats = new HashMap<String, GroupChatWindow>();
 	
-	private boolean showDebug = true;
-	private boolean showInfo = true;
-	private boolean showError = true;
-	private boolean autoscroll = true;
+	//private boolean showDebug = true;
+	//private boolean showInfo = true;
+	//private boolean showError = true;
+	//private boolean autoscroll = true;
 	
 	/**
 	 *  The peers from whom the computation peers will be selected.
@@ -97,7 +93,7 @@ public class UIController{
 	public UIController(String title)
 	{		
 		frame = new JFrame("F2FComputing - " + title);
-		//SpringLayout layout = new SpringLayout();
+		
 		mainPanel = new JPanel(new BorderLayout());
 		frame.setContentPane(mainPanel);
 		frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
@@ -138,12 +134,14 @@ public class UIController{
 		mainPanel.add(consolePanel);
 		
 		JTabbedPane tabs = new JTabbedPane(JTabbedPane.TOP);
-		console = new JTextArea();
-		JScrollPane consoleScroller = new JScrollPane(console);
+		
+		//console = new JTextArea();
+		//JScrollPane consoleScroller = new JScrollPane(console);
 
-		tabs.addTab("Information", consoleScroller);
+		//tabs.addTab("Information", consoleScroller);
 		consolePanel.add(tabs);
 		
+		/*///////////////////////////
 		//NAT/Traversal Panel
 		
 		traversalPanel = new JPanel();
@@ -186,62 +184,6 @@ public class UIController{
 					}
 				}
 		);
-		/*
-		JButton testButton = new JButton("ADD TO SC");
-		testButton.addActionListener(
-				new ActionListener(){
-					public void actionPerformed(ActionEvent e) {
-						String localId = F2FComputing.getLocalPeer().getID().toString();
-						Collection<F2FPeer> f2fpeers = getSelectedFriends();
-						
-						for (F2FPeer f2fpeer : f2fpeers){
-							if(!f2fpeer.getID().toString().equals(localId)){
-								SocketCommunicationProvider sc = F2FComputingGUI.natMessageProcessor.getConnectionManager().getSocketCommunicationProvider();
-								f2fpeer.addCommProvider(sc);
-								StunInfo sinf = stunInfoTableModel.get(f2fpeer.getID().toString());
-								if(sinf == null){
-									writeNatLog("\n StunInfo null for id [" + f2fpeer.getID().toString() + "]");
-									return;
-								}
-								int port = F2FComputingGUI.natMessageProcessor.getConnectionManager().getScPort();
-								InetSocketAddress inetSoc = new InetSocketAddress(sinf.getLocalIp(),port);
-								if(inetSoc == null){
-									writeNatLog("\n InetSoc null for id [" + f2fpeer.getID().toString() + "]");
-									return;
-								}
-								F2FComputingGUI.natMessageProcessor.getConnectionManager().getSocketCommunicationProvider().addFriend(inetSoc);
-								return;
-							} else {
-								writeNatLog("\nlocalID = RemoteId");
-								return;
-							}
-						}
-					}
-				}
-		);
-		
-		JButton testButton2 = new JButton("TEST SC");
-		testButton2.addActionListener(
-				new ActionListener(){
-					public void actionPerformed(ActionEvent e) {
-						String localId = F2FComputing.getLocalPeer().getID().toString();
-						Collection<F2FPeer> f2fpeers = getSelectedFriends();
-						for (F2FPeer f2fpeer : f2fpeers){
-							if(!f2fpeer.getID().toString().equals(localId)){
-								F2FMessage msg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, "SC TEST1");
-								try {
-									f2fpeer.sendMessage(msg);
-									return;
-								} catch (CommunicationFailedException e1) {
-									e1.printStackTrace();
-									return;
-								}
-							}
-						}
-					}
-				}
-		);
-		*/
 		JPanel natButtonPanel = new JPanel(new FlowLayout());
 		natButtonPanel.add(initButton);
 		//natButtonPanel.add(testButton);
@@ -253,6 +195,7 @@ public class UIController{
 		tabs.add("NAT Traversal", traversalPanel);
 		
 		//End of traversal panel
+		/////////////////////////////*/
 		
 		// Activity model
 		ActivityInfoTableModel activityInfoTableModel = new ActivityInfoTableModel();
@@ -286,18 +229,18 @@ public class UIController{
 		fileMenu = new JMenu("File");
 		exitMenuItem = new JMenuItem("Exit");
 		viewMenu = new JMenu("View");
-		showDebugMenuItem = new JCheckBoxMenuItem("Show debug messages", true);
-		showInfoMenuItem = new JCheckBoxMenuItem("Show info messages", true);
-		showErrorMenuItem = new JCheckBoxMenuItem("Show error messages", true);
-		autoScrollMenuItem = new JCheckBoxMenuItem("AutoScroll console", true);
+		//showDebugMenuItem = new JCheckBoxMenuItem("Show debug messages", true);
+		//showInfoMenuItem = new JCheckBoxMenuItem("Show info messages", true);
+		//showErrorMenuItem = new JCheckBoxMenuItem("Show error messages", true);
+		//autoScrollMenuItem = new JCheckBoxMenuItem("AutoScroll console", true);
 		showDebugWindowMenuItem = new JMenuItem("Show Debug window");
 		
 		viewMenu.add(showDebugWindowMenuItem);
-		viewMenu.add(showDebugMenuItem);
-		viewMenu.add(showInfoMenuItem);
-		viewMenu.add(showErrorMenuItem);
+		//viewMenu.add(showDebugMenuItem);
+		//viewMenu.add(showInfoMenuItem);
+		//viewMenu.add(showErrorMenuItem);
 		viewMenu.addSeparator();
-		viewMenu.add(autoScrollMenuItem);
+		//viewMenu.add(autoScrollMenuItem);
 		fileMenu.add(exitMenuItem);
 
 		optionsMenu = new JMenu("Options");
@@ -312,12 +255,12 @@ public class UIController{
 			}
 		});
 		
-		helpMenu = new JMenu("Help");
+		//helpMenu = new JMenu("Help");
 
 		generalMenuBar.add(fileMenu);
 		generalMenuBar.add(viewMenu);
 		generalMenuBar.add(optionsMenu);
-		generalMenuBar.add(helpMenu);
+		//generalMenuBar.add(helpMenu);
 		
 		exitMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -326,7 +269,7 @@ public class UIController{
 			}
 		});
 		
-		showDebugMenuItem.addActionListener(new ActionListener() {
+		/*showDebugMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
 				showDebug = showDebugMenuItem.isSelected();
 			}
@@ -351,7 +294,7 @@ public class UIController{
 					console.setCaretPosition(console.getText().length()-1);
 				}
 			}
-		});
+		});*/
 		
 		showDebugWindowMenuItem.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -370,33 +313,33 @@ public class UIController{
 	 * Prints info message to the console window
 	 * @param msg
 	 */
-	public void info(String msg) {
+	/*public void info(String msg) {
 		if(showInfo) {
 			console("INFO", msg);
 		}
-	}
+	}*/
 
 	/**
 	 * Prints error message to the console window
 	 * @param msg
 	 */
-	public void error(String msg) {
+	/*public void error(String msg) {
 		if(showError) {
 			console("ERROR", msg);
 		}
-	}
+	}*/
 	
 	/**
 	 * Prints debug message to the console window
 	 * @param msg
 	 */
-	public void debug(String msg) {
+	/*public void debug(String msg) {
 		if(showDebug) {
 			console("DEBUG", msg);
 		}
-	}
+	}*/
 	
-	private void console(String prefix, String msg) {
+	/*private void console(String prefix, String msg) {
 		console.append(prefix+": "+msg);
 		if (!msg.endsWith(String.valueOf('\n'))) {
 			console.append(String.valueOf('\n'));
@@ -404,7 +347,7 @@ public class UIController{
 		if (autoscroll) {
 			console.setCaretPosition(console.getText().length());
 		}
-	}
+	}*/
 	
 	/**
 	 * @return the collection of peers selected from the friends list.
@@ -449,7 +392,7 @@ public class UIController{
 			}
 		}
 	} // private class FriendsListListener
-	
+	/*
 	public void writeNatLog(String msg){
 		natLogArea.setText(natLogArea.getText() + "\n" + msg); 
 	}
@@ -461,7 +404,7 @@ public class UIController{
 	public void setStunInfoTableModel(StunInfoTableModel stunInfoTableModel) {
 		this.stunInfoTableModel = stunInfoTableModel;
 	}
-	
+	*/
 	private GroupChatWindow createChat(String chatId, boolean isCreator){
 		GroupChatWindow chat = new GroupChatWindow(selectFromPeers, this, chatId, isCreator);
 		chats.put(chat.getChatId(), chat);

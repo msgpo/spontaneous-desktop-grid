@@ -75,7 +75,7 @@ public class F2FComputingGUI {
 					try {
 						F2FComputing.initiateF2FComputing();
 					} catch (F2FComputingException e) {
-						controller.error(e.toString());
+						log.error(e.toString());
 						return;
 					}
 					FriendModel friendModel = controller.getFriendModel();
@@ -154,9 +154,7 @@ public class F2FComputingGUI {
         }
         
         private void writeOut(String msg) {
-            if(controller!=null) {
-            	controller.debug(msg);
-            }
+            log.debug(msg);
         }
    	}
 }

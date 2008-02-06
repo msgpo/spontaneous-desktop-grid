@@ -44,12 +44,14 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.model.FriendModel;
 import ee.ut.f2f.util.F2FMessage;
+import ee.ut.f2f.util.logging.Logger;
 
 /**
  * @author Jaan Neljandik
  * @created 19.11.2007
  */
 public class GroupChatWindow extends JFrame {
+	private static final Logger logger = Logger.getLogger(GroupChatWindow.class);
 	private static final long serialVersionUID = 1L;
 	
 	public static final String CHAT_TYPE_MSG = "msg"; 
@@ -189,7 +191,7 @@ public class GroupChatWindow extends JFrame {
 				if(jobSelect != null) {
 					jobSelect.dispose();
 				}
-				jobSelect = new JobSelector(mainWindow, memberModel);
+				jobSelect = new JobSelector(memberModel);
 			}
 		}); 
 		
@@ -257,7 +259,7 @@ public class GroupChatWindow extends JFrame {
 					}
 				}
 				catch (CommunicationFailedException cfe) {
-					mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+					logger.error("Sending message failed: "	+ cfe.getMessage());
 				}
 			}
 		}
@@ -268,7 +270,7 @@ public class GroupChatWindow extends JFrame {
 				creator.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage));
 			}
 			catch (CommunicationFailedException cfe) {
-				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+				logger.error("Sending message failed: "	+ cfe.getMessage());
 			}
 		}
 		
@@ -351,7 +353,7 @@ public class GroupChatWindow extends JFrame {
 							}
 						}
 						catch (CommunicationFailedException cfe) {
-							mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+							logger.error("Sending message failed: "	+ cfe.getMessage());
 						}
 					}
 					
@@ -410,7 +412,7 @@ public class GroupChatWindow extends JFrame {
 				selectedPeer.sendMessage(kickMsg);
 			}
 			catch (CommunicationFailedException cfe) {
-				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+				logger.error("Sending message failed: "	+ cfe.getMessage());
 			}
 		}		
 		
@@ -423,7 +425,7 @@ public class GroupChatWindow extends JFrame {
 				}
 			}
 			catch (CommunicationFailedException cfe) {
-				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+				logger.error("Sending message failed: "	+ cfe.getMessage());
 			}
 		}
 		
@@ -446,7 +448,7 @@ public class GroupChatWindow extends JFrame {
 						peer.sendMessage(mess);
 					}
 					catch (CommunicationFailedException cfe) {
-						mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+						logger.error("Sending message failed: "	+ cfe.getMessage());
 					}
 				}
 			}
@@ -457,7 +459,7 @@ public class GroupChatWindow extends JFrame {
 				creator.sendMessage(mess);
 			}
 			catch (CommunicationFailedException cfe) {
-				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+				logger.error("Sending message failed: "	+ cfe.getMessage());
 			}
 		}
 	}
@@ -490,7 +492,7 @@ public class GroupChatWindow extends JFrame {
 					member.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message));
 				}
 				catch (CommunicationFailedException cfe) {
-					mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+					logger.error("Sending message failed: "	+ cfe.getMessage());
 				}
 			}
 		}
@@ -520,7 +522,7 @@ public class GroupChatWindow extends JFrame {
 				memberToAdd.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message));
 			}
 			catch (CommunicationFailedException cfe) {
-				mainWindow.error("Sending message failed: "	+ cfe.getMessage());
+				logger.error("Sending message failed: "	+ cfe.getMessage());
 			}
 		}	
 		
