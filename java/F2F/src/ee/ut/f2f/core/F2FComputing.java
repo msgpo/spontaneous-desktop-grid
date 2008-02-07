@@ -377,8 +377,8 @@ public class F2FComputing
 		return peers.get(id);
 	}
 	
-	private static ArrayList<F2FPeerPresenceListener> peerListeners = new ArrayList<F2FPeerPresenceListener>();
-	public static void addPeerPresenceListener(F2FPeerPresenceListener listener)
+	private static ArrayList<PeerPresenceListener> peerListeners = new ArrayList<PeerPresenceListener>();
+	public static void addPeerPresenceListener(PeerPresenceListener listener)
 	{
 		synchronized (peerListeners)
 		{
@@ -386,7 +386,7 @@ public class F2FComputing
 				peerListeners.add(listener);
 		}
 	}	
-	public static void removePeerPresenceListener(F2FPeerPresenceListener listener)
+	public static void removePeerPresenceListener(PeerPresenceListener listener)
 	{
 		synchronized (peerListeners)
 		{
@@ -408,7 +408,7 @@ public class F2FComputing
 				peers.put(peerID, peer);
 				synchronized (peerListeners)
 				{
-					for (F2FPeerPresenceListener listener: peerListeners)
+					for (PeerPresenceListener listener: peerListeners)
 						listener.peerContacted(peer);
 				}
 				return;
@@ -429,7 +429,7 @@ public class F2FComputing
 			peers.remove(peerID);
 			synchronized (peerListeners)
 			{
-				for (F2FPeerPresenceListener listener: peerListeners)
+				for (PeerPresenceListener listener: peerListeners)
 					listener.peerUnContacted(peer);
 			}
 		}

@@ -35,7 +35,7 @@ import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
-import ee.ut.f2f.core.F2FPeerPresenceListener;
+import ee.ut.f2f.core.PeerPresenceListener;
 import ee.ut.f2f.ui.log.LogHandler;
 import ee.ut.f2f.ui.log.LogHighlighter;
 import ee.ut.f2f.ui.log.LogTableModel;
@@ -47,7 +47,7 @@ import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.logging.Logger;
 
-public class UIController implements F2FPeerPresenceListener
+public class UIController implements PeerPresenceListener
 {
 	private static final Logger logger = Logger.getLogger(UIController.class);	
 	
