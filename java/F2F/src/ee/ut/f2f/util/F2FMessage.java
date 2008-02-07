@@ -43,10 +43,6 @@ public class F2FMessage implements Serializable
 		 */
 		ROUTE,
 		/**
-		 * A TCP/Tests
-		 */
-		TCP_TEST,
-		/**
 		 * Ask for STUN info
 		 */
 		GET_STUN_INFO,

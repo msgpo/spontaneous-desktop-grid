@@ -640,11 +640,6 @@ public class F2FComputing
 			{
 				sender.setSTUNInfo((StunInfo)f2fMessage.getData());
 			}
-			// TCP
-			else if (f2fMessage.getType() == F2FMessage.Type.TCP_TEST)
-			{
-				sender.getTCPTester().receivedTCPTestMessage(f2fMessage.getData());
-			}
 		}
 		
 		private void askForCPU(final F2FPeer peer, final String jobID)

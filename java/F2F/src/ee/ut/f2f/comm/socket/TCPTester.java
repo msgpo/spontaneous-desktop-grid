@@ -17,18 +17,18 @@ import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.F2FMessageListener;
 import ee.ut.f2f.core.F2FPeer;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 
-public class TCPTester extends Thread implements Activity
-{
-	
+public class TCPTester extends Thread implements Activity, F2FMessageListener
+{	
 	final private static Logger log = Logger.getLogger(TCPTester.class);
 	
 	//statuses
 	private enum Status
 	{
+		INIT,
 		WAITING_SOCKET_ADDRESSES,
 		GOT_SOCKET_ADDRESSES,
 		GOT_RESULT
@@ -46,27 +46,48 @@ public class TCPTester extends Thread implements Activity
 	{
 		super("TCPTester [" + peer.getDisplayName() + "]");
 		remotePeer = peer;
-		status = Status.WAITING_SOCKET_ADDRESSES;
+		status = Status.INIT;
 	}
 
 	private Collection<InetSocketAddress> remoteServerSockets = null; 
 	private Integer remoteResult = null;
-	@SuppressWarnings("unchecked")
-	public void receivedTCPTestMessage(Object obj)
+	public void messageReceived(Object message, F2FPeer sender)
 	{
-		if (status == Status.WAITING_SOCKET_ADDRESSES)
+		if (sender.equals(remotePeer))
 		{
-			remoteServerSockets = (Collection<InetSocketAddress>)obj; 
-			status = Status.GOT_SOCKET_ADDRESSES;
+			if (message instanceof TCPTestMessage)
+				receivedTCPTestMessage((TCPTestMessage)message);
+			else
+				log.warn("TCPTester.messageRecieved() handles only TCPTestMessage");
+		}
+	}
+	@SuppressWarnings("unchecked")
+	public void receivedTCPTestMessage(TCPTestMessage msg)
+	{
+		if (status == Status.INIT)
+		{
+			if (msg.type == TCPTestMessage.Type.INIT);
+				status = Status.WAITING_SOCKET_ADDRESSES;
+		}
+		else if (status == Status.WAITING_SOCKET_ADDRESSES)
+		{
+			if (msg.type == TCPTestMessage.Type.ADDRESSES)
+			{
+				remoteServerSockets = msg.addresses; 
+				status = Status.GOT_SOCKET_ADDRESSES;
+			}
 		}
 		else if (status == Status.GOT_SOCKET_ADDRESSES)
 		{
-			remoteResult = (Integer)obj; 
-			status = Status.GOT_RESULT;
+			if (msg.type == TCPTestMessage.Type.RESULT)
+			{
+				remoteResult = msg.result; 
+				status = Status.GOT_RESULT;
+			}
 		}
-		else
+		else if (msg.type != TCPTestMessage.Type.INIT)
 		{	
-			log.error("receivedTCPTestMessage("+ obj +") at illegal moment: " + toString());
+			log.error("receivedTCPTestMessage() at illegal moment: " + toString());
 		}
 	}
 
@@ -76,6 +97,7 @@ public class TCPTester extends Thread implements Activity
 		// do not start TCP tests before SocketComm providers are initialized
 		if (!SocketCommInitiator.isInitialized()) return;
 		
+		F2FComputing.addMessageListener(TCPTestMessage.class, this);
 		// just for information catch any exceptions that may occur
 		try
 		{			
@@ -87,6 +109,7 @@ public class TCPTester extends Thread implements Activity
 			log.warn(getActivityName() + e.getMessage());
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, e.getMessage()));
 		}
+		F2FComputing.removeMessageListener(TCPTestMessage.class, this);
 	}
 	
 	private void testProcess() throws CommunicationFailedException, IOException
@@ -94,9 +117,40 @@ public class TCPTester extends Thread implements Activity
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
 		log.debug(getActivityName() + "started");
 		
+		// make sure that other peer has started the test too
+		new Thread()
+		{
+			public void run()
+			{
+				while (true)
+				{
+					try {
+						remotePeer.sendMessage(new TCPTestMessage());
+						Thread.sleep(1000);
+					} catch (Exception e) {}
+					if (status != Status.INIT) return;
+				}
+			}
+		}.start();
+		for (int i = 0; i < 60; i++)
+		{
+			if (status == Status.GOT_SOCKET_ADDRESSES) break;
+			try
+			{
+				Thread.sleep(500);
+			}
+			catch (InterruptedException e) {}
+		}
+		if (status != Status.GOT_SOCKET_ADDRESSES)
+		{
+			log.error("timeout while waiting for remote socket addresses");
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for remote socket addresses"));
+			return;
+		}
+		
 		// exchange the server sockets that peers are listening on
-		remotePeer.sendMessage(new F2FMessage(F2FMessage.Type.TCP_TEST, null, null, null,
-				SocketCommunicationProvider.getInstance().getServerSocketAddresses()));
+		remotePeer.sendMessage(
+			new TCPTestMessage(SocketCommunicationProvider.getInstance().getServerSocketAddresses()));
 		// wait at most 30 seconds for remote addresses
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting for addresses"));
 		for (int i = 0; i < 60; i++)
@@ -160,8 +214,7 @@ public class TCPTester extends Thread implements Activity
 			} else localResult = 0;
 			//}//test case
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "local result is " + localResult));
-			remotePeer.sendMessage(new F2FMessage(F2FMessage.Type.TCP_TEST, null, null, null,
-					localResult));
+			remotePeer.sendMessage(new TCPTestMessage(localResult));
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting remote result"));
 			for (int i = 0; i < 60; i++)
 			{
@@ -226,6 +279,7 @@ public class TCPTester extends Thread implements Activity
 	{
 		switch(status)
 		{
+		case INIT : return "initialized";
 		case WAITING_SOCKET_ADDRESSES : return "waiting addresses";
 		case GOT_SOCKET_ADDRESSES : return "got addresses";
 		case GOT_RESULT: return "got result";
@@ -296,6 +350,36 @@ public class TCPTester extends Thread implements Activity
 		{
 			return TCPTester.this;
 		}
+	}
+}
+
+class TCPTestMessage implements Serializable
+{
+	private static final long serialVersionUID = 1739475405217757980L;
+	enum Type
+	{
+		INIT,
+		ADDRESSES,
+		RESULT
+	}
+	
+	Type type = null;
+	TCPTestMessage()
+	{
+		type = Type.INIT;
+	}
+	
+	Collection<InetSocketAddress> addresses = null;
+	TCPTestMessage(Collection<InetSocketAddress> addresses)
+	{
+		type = Type.ADDRESSES;
+		this.addresses = addresses;
+	}
+	Integer result = null;
+	TCPTestMessage(Integer result)
+	{
+		type = Type.RESULT;
+		this.result = result;
 	}
 }
 
