@@ -21,8 +21,8 @@ import ee.ut.f2f.core.F2FMessageListener;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.util.logging.Logger;
 
-public class TCPTester extends Thread implements Activity, F2FMessageListener
-{	
+class TCPTester extends Thread implements Activity, F2FMessageListener
+{
 	final private static Logger log = Logger.getLogger(TCPTester.class);
 	
 	//statuses
@@ -42,7 +42,7 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 	 * 
 	 * @param peer The remote peer where to connect.
 	 */
-	public TCPTester(F2FPeer peer)
+	TCPTester(F2FPeer peer)
 	{
 		super("TCPTester [" + peer.getDisplayName() + "]");
 		remotePeer = peer;
@@ -61,8 +61,8 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 				log.warn("TCPTester.messageRecieved() handles only TCPTestMessage");
 		}
 	}
-	@SuppressWarnings("unchecked")
-	public void receivedTCPTestMessage(TCPTestMessage msg)
+	
+	private void receivedTCPTestMessage(TCPTestMessage msg)
 	{
 		if (status == Status.INIT)
 		{
