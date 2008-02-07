@@ -146,6 +146,8 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 		{
 			log.error("timeout while waiting for init from remote TCP test thread");
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for init from remote TCP test thread"));
+			// stop INIT sender
+			status = null;
 			return;
 		}
 		
