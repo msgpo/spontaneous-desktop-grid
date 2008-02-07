@@ -9,7 +9,6 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
-import java.net.SocketException;
 import java.util.UUID;
 
 import ee.ut.f2f.activity.Activity;
@@ -120,46 +119,23 @@ class SocketPeer implements Activity
 						}
 					}
 				}
-				catch (SocketException e)
+				catch (Exception e)
 				{
-					if (e.getMessage().equals("Connection reset"))
-					{
-						ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
-								ActivityEvent.Type.FINISHED, "remote peer closed connection"));
-					}
-					else
-					{
-						ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
-								ActivityEvent.Type.FAILED, e.toString()));
-						throw new RuntimeException(e);
-					}
+					e.printStackTrace();
 				}
-				catch (IOException e)
+				try
 				{
-					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
-							ActivityEvent.Type.FAILED, e.toString()));
-					throw new RuntimeException(e);
-				}
-				catch (RuntimeException e)
-				{
-					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
-							ActivityEvent.Type.FAILED, e.toString()));
-					throw e;
-				}
-				finally
-				{
-					try
-					{
-						if (oi != null) oi.close();
-						oi = null;
-						if (oo != null) oo.close();
-						oo = null;
-						if (outSocket != null) outSocket.close();
-						outSocket = null;
-					} catch (Exception e) {}
-					log.debug(getActivityName() + " Stopping listening to Peer id [" + id + "]");
-					scProvider.removeFriend(id);
-				}
+					if (oi != null) oi.close();
+					oi = null;
+					if (oo != null) oo.close();
+					oo = null;
+					if (outSocket != null) outSocket.close();
+					outSocket = null;
+				} catch (Exception e) {}
+				log.debug("Stopping listening to Peer id [" + id + "]");
+				scProvider.removeFriend(id);
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+						ActivityEvent.Type.FINISHED, "connection closed"));
 			}
 		}).start();
 	}
