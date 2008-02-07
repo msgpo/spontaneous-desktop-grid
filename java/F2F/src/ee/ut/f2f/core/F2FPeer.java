@@ -13,7 +13,6 @@ import java.util.UUID;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.comm.socket.SocketCommInitiator;
-import ee.ut.f2f.comm.socket.TCPTester;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.stun.StunInfo;
 import ee.ut.f2f.util.stun.StunInfoClient;
@@ -56,7 +55,6 @@ public class F2FPeer
 		addCommProvider(provider);
 		F2FComputing.addMessageListener(StunMessage.class, new StunMessageHandler());
 		updateSTUNInfo();
-		initiateTCPTester();
 	}
 	
 	boolean isContactable()
@@ -173,28 +171,9 @@ public class F2FPeer
 			
 		}
 	}
-	
-	private TCPTester tcpTester = null;
-	TCPTester getTCPTester()
-	{
-		if (tcpTester != null) return tcpTester;
-		synchronized(this)
-		{
-			if (tcpTester != null) return tcpTester;
-			tcpTester = new TCPTester(this);
-		}
-		return tcpTester;
-	}
-	public void initiateTCPTester()
-	{
-		TCPTester tcpTester = getTCPTester();
-		if (tcpTester.isAlive())
-			return;
-		tcpTester.start();
-	}
-	
+		
 	private Collection<InetAddress> localIPs = null;
-	public Collection<InetAddress> getLocalIPs() { return localIPs; }
+	public Collection<InetAddress> getLocalAddresses() { return localIPs; }
 	void updateLocalIPInfo()
 	{
 		localIPs = new ArrayList<InetAddress>();

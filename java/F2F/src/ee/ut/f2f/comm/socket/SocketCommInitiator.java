@@ -3,6 +3,7 @@ package ee.ut.f2f.comm.socket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
+import java.util.HashMap;
 import java.util.List;
 
 import ee.ut.f2f.activity.Activity;
@@ -11,10 +12,11 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
+import ee.ut.f2f.core.PeerPresenceListener;
 import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.logging.Logger;
 
-public class SocketCommInitiator extends Thread implements Activity
+public class SocketCommInitiator extends Thread implements Activity, PeerPresenceListener
 {
 	private final static Logger log = Logger.getLogger(SocketCommInitiator.class);
 	
@@ -38,7 +40,7 @@ public class SocketCommInitiator extends Thread implements Activity
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
 		// start a thread that initializes each network interface
 		List<Thread> initThreads = new ArrayList<Thread>();
-		for (InetAddress address: F2FComputing.getLocalPeer().getLocalIPs())
+		for (InetAddress address: F2FComputing.getLocalPeer().getLocalAddresses())
 		{
 			Thread thread = new SocketCommProviderInitThread(address);
 			initThreads.add(thread);
@@ -62,7 +64,7 @@ public class SocketCommInitiator extends Thread implements Activity
 		for (F2FPeer peer: F2FComputing.getPeers())
 		{
 			if (F2FComputing.getLocalPeer().equals(peer)) continue;
-			peer.initiateTCPTester();
+			peerContacted(peer);
 		}
 	}
 	
@@ -110,5 +112,30 @@ public class SocketCommInitiator extends Thread implements Activity
 	public Activity getParentActivity()
 	{
 		return SocketCommunicationProvider.getInstance();
+	}
+
+	HashMap<F2FPeer, TCPTester> tcpTesters = new HashMap<F2FPeer, TCPTester>();
+	public void peerContacted(F2FPeer peer)
+	{
+		// do not start TCP tests before local IP info is resolved and
+		// server socket(s) started
+		if (!isInitialized()) return;
+		
+		if (tcpTesters.containsKey(peer)) return;
+		synchronized (tcpTesters)
+		{
+			if (tcpTesters.containsKey(peer)) return;
+			TCPTester test = new TCPTester(peer);
+			tcpTesters.put(peer, test);
+			test.start();
+		}
+	}
+
+	public void peerUnContacted(F2FPeer peer)
+	{
+		synchronized (tcpTesters)
+		{
+			tcpTesters.remove(peer);
+		}
 	}
 }

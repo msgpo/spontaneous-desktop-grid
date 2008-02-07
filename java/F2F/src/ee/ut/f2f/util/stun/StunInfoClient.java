@@ -71,7 +71,7 @@ public class StunInfoClient
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 				return;
 			}
-			Collection<InetAddress> localIPs = F2FComputing.getLocalPeer().getLocalIPs();
+			Collection<InetAddress> localIPs = F2FComputing.getLocalPeer().getLocalAddresses();
 			if (localIPs == null || localIPs.isEmpty())
 			{
 				log.warn("STUN test can not be run if local F2FPeer has no IPs");
