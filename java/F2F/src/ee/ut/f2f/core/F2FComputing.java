@@ -15,9 +15,7 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.stun.StunInfo;
 
 /**
  * This is the core class of F2F framework. It provides methods to create new
@@ -630,15 +628,6 @@ public class F2FComputing
 				{
 					log.error("couldn't send the message to the route target", e);
 				}
-			}
-			// STUN
-			else if (f2fMessage.getType() == F2FMessage.Type.GET_STUN_INFO)
-			{
-				getLocalPeer().reportSTUNInfo(sender);
-			}
-			else if (f2fMessage.getType() == F2FMessage.Type.REPORT_STUN_INFO)
-			{
-				sender.setSTUNInfo((StunInfo)f2fMessage.getData());
 			}
 		}
 		

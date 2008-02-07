@@ -5,7 +5,6 @@ import java.util.concurrent.ConcurrentLinkedQueue;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FPeer;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 
 /**

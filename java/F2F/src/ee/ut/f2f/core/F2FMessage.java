@@ -1,14 +1,14 @@
-package ee.ut.f2f.util;
+package ee.ut.f2f.core;
 
 import java.io.IOException;
 import java.io.Serializable;
 
+import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.logging.Logger;
 
-
-@SuppressWarnings("serial")
-public class F2FMessage implements Serializable
+class F2FMessage implements Serializable
 {
+	private static final long serialVersionUID = 3696207524297521656L;
 	private static final Logger logger = Logger.getLogger(F2FMessage.class);
 	
 	/**
@@ -41,15 +41,7 @@ public class F2FMessage implements Serializable
 		 * master tasks receive such messages and forward them to final
 		 * destination nodes.
 		 */
-		ROUTE,
-		/**
-		 * Ask for STUN info
-		 */
-		GET_STUN_INFO,
-		/**
-		 * Ask for STUN info
-		 */
-		REPORT_STUN_INFO
+		ROUTE
 	}
 
 	public F2FMessage(Type type, String jobID, String receiverTaskID,

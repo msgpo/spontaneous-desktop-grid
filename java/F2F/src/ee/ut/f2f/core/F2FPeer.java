@@ -13,7 +13,6 @@ import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.comm.socket.SocketCommInitiator;
 import ee.ut.f2f.comm.socket.TCPTester;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.stun.StunInfo;
 import ee.ut.f2f.util.stun.StunInfoClient;
@@ -40,6 +39,7 @@ public class F2FPeer
 		this.id = UUID.randomUUID();
 		this.displayName = displayName;
 		reportSTUNPeers = new ArrayList<F2FPeer>();
+		F2FComputing.addMessageListener(StunMessage.class, new StunMessageHandler());
 	}
 	
 	/**
@@ -53,6 +53,7 @@ public class F2FPeer
 		this.displayName = displayName;
 		this.commProviders = new ArrayList<CommunicationProvider>();
 		addCommProvider(provider);
+		F2FComputing.addMessageListener(StunMessage.class, new StunMessageHandler());
 		updateSTUNInfo();
 		initiateTCPTester();
 	}
@@ -254,10 +255,9 @@ public class F2FPeer
 		// ... or ask update for a remote peer's STUN info 
 		else
 		{
-			F2FMessage msg = new F2FMessage(F2FMessage.Type.GET_STUN_INFO, null, null, null, null);
 			try
 			{
-				sendMessage(msg);
+				sendMessage(new StunMessage());
 			}
 			catch (CommunicationFailedException e)
 			{
@@ -267,20 +267,19 @@ public class F2FPeer
 	}
 
 	private ArrayList<F2FPeer> reportSTUNPeers = null;
-	void reportSTUNInfo(F2FPeer remotePeer)
+	private void reportSTUNInfo(F2FPeer remotePeer)
 	{
 		if(!F2FComputing.getLocalPeer().equals(this)) return;
 		
 		if (stunInfo != null)
 		{
-			F2FMessage msg = new F2FMessage(F2FMessage.Type.REPORT_STUN_INFO, null, null, null, stunInfo);
 			try
 			{
-				remotePeer.sendMessage(msg);
+				remotePeer.sendMessage(new StunMessage(stunInfo));
 			}
 			catch (CommunicationFailedException e)
 			{
-				logger.error("could not send REPORT_STUN_INFO to " + remotePeer.getDisplayName());
+				logger.warn("could not send REPORT_STUN_INFO to " + remotePeer.getDisplayName());
 			}
 		}
 		else
@@ -290,5 +289,46 @@ public class F2FPeer
 				reportSTUNPeers.add(remotePeer);
 			}
 		}
+	}
+
+	private class StunMessageHandler implements F2FMessageListener
+	{
+		public void messageReceived(Object message, F2FPeer sender)
+		{
+			if (message instanceof StunMessage)
+			{
+				StunMessage msg = (StunMessage) message;
+				if (msg.type == StunMessage.Type.GET && F2FPeer.this.equals(F2FComputing.getLocalPeer()))
+				{
+					reportSTUNInfo(sender);
+				}
+				else if (msg.type == StunMessage.Type.REPORT && F2FPeer.this.equals(sender))
+				{
+					sender.setSTUNInfo(msg.stunInfo);
+				}
+			}
+			else logger.warn("StunMessageHandler.messageRecieved() handles only StunMessage");
+		}
+	}
+}
+
+class StunMessage
+{
+	enum Type
+	{
+		GET,
+		REPORT
+	}
+
+	Type type = null;
+	StunMessage()
+	{
+		type = Type.GET;
+	}
+	StunInfo stunInfo = null;
+	StunMessage(StunInfo stunInfo)
+	{
+		type = Type.REPORT;
+		this.stunInfo = stunInfo;
 	}
 }
