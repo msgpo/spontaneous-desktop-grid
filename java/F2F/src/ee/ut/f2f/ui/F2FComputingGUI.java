@@ -54,10 +54,10 @@ public class F2FComputingGUI {
 
 	private static void runF2F()
 	{
-		new Thread(new Runnable()
-		{
-			public void run()
-			{
+		//new Thread(new Runnable()
+		//{
+			//public void run()
+			//{
 				controller = new UIController("F2FComputing GUI");
 				try {
 					F2FComputing.initiateF2FComputing();
@@ -66,8 +66,8 @@ public class F2FComputingGUI {
 					e.printStackTrace();
 					return;
 				}
-			}
-		}).start();
+			//}
+		//}).start();
 	}
 
 	static class FilteredStream extends FilterOutputStream {
