@@ -511,7 +511,7 @@ public class F2FComputing
 			if (message instanceof F2FMessage);
 			else 
 			{
-				log.warn("messageRecieved() handles only F2FMessages!");
+				log.warn("F2FMessageHandler.messageRecieved() handles only F2FMessages");
 				return;
 			}
 			F2FMessage f2fMessage = (F2FMessage) message;

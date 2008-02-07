@@ -431,9 +431,17 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 		chats.remove(key);
 	}
 	
-	public void messageReceived(Object msg, F2FPeer sender) {
-		String message = (String) msg;
-		logger.info("Received: " + message + ", from: " + sender.getDisplayName());
+	public void messageReceived(Object msg, F2FPeer sender)
+	{
+		if (msg instanceof ChatMessage);
+		else
+		{
+			logger.warn("UIController.messageRecieved() handles only ChatMessage");
+			return;
+		}
+		ChatMessage chatMsg = (ChatMessage) msg;
+		String message = chatMsg.msg;
+		//logger.info("Received: " + message + ", from: " + sender.getDisplayName());
 		
 		//Message structure: type;chatId;restOfMessage
 		String type = GroupChatWindow.findMsgType(message);

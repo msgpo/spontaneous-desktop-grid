@@ -13,6 +13,7 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.F2FMessageListener;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.logging.Logger;
 
 import net.java.sip.communicator.service.gui.UIService;
 import net.java.sip.communicator.service.protocol.ChatRoom;
@@ -35,6 +36,7 @@ import net.java.sip.communicator.service.protocol.event.LocalUserChatRoomPresenc
 public class F2FMultiOperationSetMultiUserChat
 	implements OperationSetMultiUserChat, F2FMessageListener
 {
+	private static final Logger logger = Logger.getLogger(F2FMultiOperationSetMultiUserChat.class);
 	private static final String OWNER_CONTACT_ADDRESS = "F2FMulti Owner Contact Address";
     /**
      * The protocol provider service implementation.
@@ -484,7 +486,7 @@ public class F2FMultiOperationSetMultiUserChat
 		}
 		else
 		{
-			F2FDebug.println("received a MULTI chat message that is not F2FMultiMessage: " + message);
+			logger.warn("F2FMultiOperationSetMultiUserChat.messageRecieved() handles only F2FMultiChatMessage");
 		}
 	}
 
