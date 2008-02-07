@@ -781,7 +781,7 @@ public class SipIMCommunicationProvider
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			logger.error("SIP IM: erro while sending a message to contact " + contact.getDisplayName());
+			logger.error("SIP IM: error while sending a message to contact " + contact.getDisplayName());
 			throw new CommunicationFailedException(e);
 		}
 	}
