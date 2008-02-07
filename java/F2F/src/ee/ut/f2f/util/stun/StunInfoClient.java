@@ -10,6 +10,7 @@ import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.F2FProperties;
+import ee.ut.f2f.util.LocalAddresses;
 import ee.ut.f2f.util.logging.Logger;
 
 public class StunInfoClient
@@ -71,7 +72,7 @@ public class StunInfoClient
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 				return;
 			}
-			Collection<InetAddress> localIPs = F2FComputing.getLocalPeer().getLocalAddresses();
+			Collection<InetAddress> localIPs = LocalAddresses.getLocalIPv4Addresses();
 			if (localIPs == null || localIPs.isEmpty())
 			{
 				log.warn("STUN test can not be run if local F2FPeer has no IPs");

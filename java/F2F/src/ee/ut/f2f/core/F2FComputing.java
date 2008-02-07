@@ -12,6 +12,7 @@ import javax.swing.JOptionPane;
 
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
+import ee.ut.f2f.comm.CommunicationFactory;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
@@ -67,8 +68,9 @@ public class F2FComputing
 		localPeer = new F2FPeer("me (localhost)");
 		logger.debug("local F2FPeer ID is " + localPeer.getID());
 		peers.put(localPeer.getID(), localPeer);
-		localPeer.updateLocalIPInfo();
-		//CommunicationFactory.getInitializedCommunicationProviders();
+		// start local STUN info update thread
+		//updateSTUNInfo();
+		CommunicationFactory.getInitializedCommunicationProviders();
 		addMessageListener(F2FMessage.class, new F2FMessageHandler());
 	}
 

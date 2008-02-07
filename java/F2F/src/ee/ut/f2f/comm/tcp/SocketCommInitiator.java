@@ -1,4 +1,4 @@
-package ee.ut.f2f.comm.socket;
+package ee.ut.f2f.comm.tcp;
 
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -14,13 +14,14 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.PeerPresenceListener;
 import ee.ut.f2f.util.F2FProperties;
+import ee.ut.f2f.util.LocalAddresses;
 import ee.ut.f2f.util.logging.Logger;
 
-public class SocketCommInitiator extends Thread implements Activity, PeerPresenceListener
+class SocketCommInitiator extends Thread implements Activity, PeerPresenceListener
 {
 	private final static Logger log = Logger.getLogger(SocketCommInitiator.class);
 	
-	public SocketCommInitiator()
+	SocketCommInitiator()
 	{
 		F2FComputing.addPeerPresenceListener(this);
 	}
@@ -41,7 +42,7 @@ public class SocketCommInitiator extends Thread implements Activity, PeerPresenc
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
 		// start a thread that initializes each network interface
 		List<Thread> initThreads = new ArrayList<Thread>();
-		for (InetAddress address: F2FComputing.getLocalPeer().getLocalAddresses())
+		for (InetAddress address: LocalAddresses.getLocalIPv4Addresses())
 		{
 			Thread thread = new SocketCommProviderInitThread(address);
 			initThreads.add(thread);
@@ -115,7 +116,7 @@ public class SocketCommInitiator extends Thread implements Activity, PeerPresenc
 		return SocketCommunicationProvider.getInstance();
 	}
 
-	HashMap<F2FPeer, TCPTester> tcpTesters = new HashMap<F2FPeer, TCPTester>();
+	private HashMap<F2FPeer, TCPTester> tcpTesters = new HashMap<F2FPeer, TCPTester>();
 	public void peerContacted(F2FPeer peer)
 	{
 		// do not start TCP tests before local IP info is resolved and

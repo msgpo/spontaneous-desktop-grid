@@ -1,4 +1,4 @@
-package ee.ut.f2f.comm.socket;
+package ee.ut.f2f.comm.tcp;
 
 import java.io.IOException;
 import java.io.ObjectInput;

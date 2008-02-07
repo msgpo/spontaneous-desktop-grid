@@ -4,7 +4,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import ee.ut.f2f.comm.sc.im.SipIMCommunicationProvider;
-import ee.ut.f2f.comm.socket.SocketCommunicationProvider;
+import ee.ut.f2f.comm.tcp.SocketCommunicationProvider;
 import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.F2FProperties.CommLayerProperties;
 import ee.ut.f2f.util.F2FProperties.SocketProviderProperties;
@@ -37,7 +37,7 @@ public class CommunicationFactory
 			log.debug("INIT SOCKET");
 			try
 			{
-				commProvider = GetSocketCommununication(null);
+				commProvider = GetSocketCommununication(props.socketLayerProps);
 				if (commProvider != null) commProviders.add(commProvider);
 			}
 			catch (CommunicationInitException e)
@@ -64,13 +64,18 @@ public class CommunicationFactory
 	private static CommunicationProvider GetSocketCommununication(SocketProviderProperties props) throws CommunicationInitException
 	{
 		SocketCommunicationProvider socketProvider = SocketCommunicationProvider.getInstance();
-		socketProvider.addServerSocket(props.local);
-		socketProvider.addFriends(props.friends);
+		if (props != null)
+		{
+			socketProvider.addServerSocket(props.local);
+			socketProvider.addFriends(props.friends);
+		}
 		return socketProvider;
 	}
 
 	private static CommunicationProvider GetSipCommununication()
 	{
+		// also init TCP communication provider
+		SocketCommunicationProvider.getInstance();
 		return SipIMCommunicationProvider.getInstance();
 	}
 }

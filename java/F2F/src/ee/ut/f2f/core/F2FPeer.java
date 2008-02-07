@@ -1,18 +1,11 @@
 package ee.ut.f2f.core;
 
 import java.io.Serializable;
-import java.net.Inet4Address;
-import java.net.InetAddress;
-import java.net.NetworkInterface;
-import java.net.SocketException;
 import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Enumeration;
 import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
-import ee.ut.f2f.comm.socket.SocketCommInitiator;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.stun.StunInfo;
 import ee.ut.f2f.util.stun.StunInfoClient;
@@ -54,7 +47,7 @@ public class F2FPeer
 		this.commProviders = new ArrayList<CommunicationProvider>();
 		addCommProvider(provider);
 		F2FComputing.addMessageListener(StunMessage.class, new StunMessageHandler());
-		updateSTUNInfo();
+		//updateSTUNInfo();
 	}
 	
 	boolean isContactable()
@@ -170,46 +163,6 @@ public class F2FPeer
 		
 			
 		}
-	}
-		
-	private Collection<InetAddress> localIPs = null;
-	public Collection<InetAddress> getLocalAddresses() { return localIPs; }
-	void updateLocalIPInfo()
-	{
-		localIPs = new ArrayList<InetAddress>();
-		// get the network interfaces
-		Enumeration<NetworkInterface> interfaces;
-		try
-		{
-			interfaces = NetworkInterface.getNetworkInterfaces();
-		}
-		catch (SocketException e)
-		{
-			e.printStackTrace();
-			logger.debug(e.getMessage());
-			return;
-		}
-		
-		// get local IP's
-		while (interfaces.hasMoreElements())
-		{
-			NetworkInterface inet = interfaces.nextElement();
-			Enumeration<InetAddress> ips = inet.getInetAddresses();
-			while(ips.hasMoreElements())
-			{
-				InetAddress ip = ips.nextElement();
-				if( !ip.isLinkLocalAddress() && !ip.isLoopbackAddress() )
-				{
-					if(ip instanceof Inet4Address) localIPs.add(ip);
-				}
-			}
-		}
-		
-		// start a SocketComm provider on each local IP
-		new SocketCommInitiator().start();
-		
-		// start STUN info update thread
-		updateSTUNInfo();
 	}
 	
 	public void updateSTUNInfo()

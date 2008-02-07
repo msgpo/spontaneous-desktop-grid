@@ -1,7 +1,7 @@
 /**
  * 
  */
-package ee.ut.f2f.comm.socket;
+package ee.ut.f2f.comm.tcp;
 
 import java.io.IOException;
 import java.io.ObjectInput;
@@ -47,6 +47,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 	{
 		ActivityEvent event = new ActivityEvent(this, ActivityEvent.Type.STARTED);
 		ActivityManager.getDefault().emitEvent(event);
+		new SocketCommInitiator().start();
 	}
 
 	public void addFriend(UUID id, InetSocketAddress friend, boolean bIntroduce) throws IOException
