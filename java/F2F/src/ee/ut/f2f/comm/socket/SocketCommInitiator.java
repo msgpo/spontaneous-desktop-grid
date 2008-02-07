@@ -22,6 +22,7 @@ public class SocketCommInitiator extends Thread implements Activity, PeerPresenc
 	
 	public SocketCommInitiator()
 	{
+		F2FComputing.addPeerPresenceListener(this);
 	}
 	
 	private static boolean initialized = false;
