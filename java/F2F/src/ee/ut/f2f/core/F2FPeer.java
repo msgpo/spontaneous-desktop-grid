@@ -1,5 +1,6 @@
 package ee.ut.f2f.core;
 
+import java.io.Serializable;
 import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.NetworkInterface;
@@ -312,8 +313,10 @@ public class F2FPeer
 	}
 }
 
-class StunMessage
+class StunMessage implements Serializable
 {
+	private static final long serialVersionUID = -2675081725822234846L;
+	
 	enum Type
 	{
 		GET,
