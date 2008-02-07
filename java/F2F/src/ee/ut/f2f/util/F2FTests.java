@@ -17,6 +17,7 @@ import org.osgi.framework.ServiceReference;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
+import ee.ut.f2f.ui.ChatMessage;
 
 public class F2FTests {
 	
@@ -90,7 +91,7 @@ public class F2FTests {
 			peer = F2FComputing.getPeers().iterator().next();
 			while (true)
 			{
-				F2FMessage fmsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, msg);
+				ChatMessage fmsg = new ChatMessage(msg);
 				peer.sendMessage(fmsg);
 				F2FDebug.println("sent string of length " + msg.length());
 				//msg += msg2;

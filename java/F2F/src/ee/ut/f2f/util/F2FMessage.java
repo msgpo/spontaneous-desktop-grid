@@ -43,10 +43,6 @@ public class F2FMessage implements Serializable
 		 */
 		ROUTE,
 		/**
-		 * A chat message.
-		 */
-		CHAT,
-		/**
 		 * A TCP/Tests
 		 */
 		TCP_TEST,

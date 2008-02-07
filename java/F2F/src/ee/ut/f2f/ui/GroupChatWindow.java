@@ -43,7 +43,6 @@ import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.model.FriendModel;
-import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
 
 /**
@@ -255,7 +254,7 @@ public class GroupChatWindow extends JFrame {
 				
 				try	{
 					if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())) {
-						peer.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, kickMessage));
+						peer.sendMessage(new ChatMessage(kickMessage));
 					}
 				}
 				catch (CommunicationFailedException cfe) {
@@ -267,7 +266,7 @@ public class GroupChatWindow extends JFrame {
 			String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM + ";";
 			
 			try	{
-				creator.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage));
+				creator.sendMessage(new ChatMessage(notifyMessage));
 			}
 			catch (CommunicationFailedException cfe) {
 				logger.error("Sending message failed: "	+ cfe.getMessage());
@@ -343,7 +342,7 @@ public class GroupChatWindow extends JFrame {
 			else if (operation.equals(CHAT_OPTYPE_REM)) {//Remove people from chat
 				if(isCreator) {
 					String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM + ";" + src.getDisplayName();
-					F2FMessage notifyMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage);
+					ChatMessage notifyMsg = new ChatMessage(notifyMessage);
 					
 					for (F2FPeer peer : memberModel.getPeers()) {
 						try	{
@@ -401,7 +400,7 @@ public class GroupChatWindow extends JFrame {
 	private void removeButtonPressed() {
 		//Message structure: end;chatId
 		String kickMessage = CHAT_TYPE_END + ";" + chatId + ";" + CHAT_OPTYPE_REM;
-		F2FMessage kickMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, kickMessage);
+		ChatMessage kickMsg = new ChatMessage(kickMessage);
 		String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM;
 		
 		// Send message to removed people
@@ -417,7 +416,7 @@ public class GroupChatWindow extends JFrame {
 		}		
 		
 		// Notify others
-		F2FMessage notifyMsg = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, notifyMessage);
+		ChatMessage notifyMsg = new ChatMessage(notifyMessage);
 		for (F2FPeer peer : memberModel.getPeers()) {
 			try	{
 				if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())) { 
@@ -437,7 +436,7 @@ public class GroupChatWindow extends JFrame {
 	private void sendMessage(String from, String msg, F2FPeer sender) {
 		String message =  CHAT_TYPE_MSG + ";" + chatId + ";" + from + ";" + msg;
 		 
-		F2FMessage mess = new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message);
+		ChatMessage mess = new ChatMessage(message);
 		 
 		if (isCreator) {
 			//Send to everyone but self
@@ -489,7 +488,7 @@ public class GroupChatWindow extends JFrame {
 						message = message + ";" + memberToAdd.getDisplayName();
 					}	
 					
-					member.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message));
+					member.sendMessage(new ChatMessage(message));
 				}
 				catch (CommunicationFailedException cfe) {
 					logger.error("Sending message failed: "	+ cfe.getMessage());
@@ -519,7 +518,7 @@ public class GroupChatWindow extends JFrame {
 					}
 				}	
 				
-				memberToAdd.sendMessage(new F2FMessage(F2FMessage.Type.CHAT, null, null, null, message));
+				memberToAdd.sendMessage(new ChatMessage(message));
 			}
 			catch (CommunicationFailedException cfe) {
 				logger.error("Sending message failed: "	+ cfe.getMessage());

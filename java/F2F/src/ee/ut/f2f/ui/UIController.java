@@ -34,6 +34,7 @@ import org.jdesktop.swingx.decorator.ColorHighlighter;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.F2FMessageListener;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.PeerPresenceListener;
 import ee.ut.f2f.ui.log.LogHandler;
@@ -47,7 +48,7 @@ import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.logging.Logger;
 
-public class UIController implements PeerPresenceListener
+public class UIController implements PeerPresenceListener, F2FMessageListener
 {
 	private static final Logger logger = Logger.getLogger(UIController.class);	
 	
@@ -314,6 +315,7 @@ public class UIController implements PeerPresenceListener
 				if (!peersGUI.contains(peer))
 					friendModel.add(peer);
 		}
+		F2FComputing.addMessageListener(ChatMessage.class, this);
 		
 		frame.setVisible(true);
 	}
@@ -429,7 +431,8 @@ public class UIController implements PeerPresenceListener
 		chats.remove(key);
 	}
 	
-	public void chatMessageReceived(String message, F2FPeer sender) {
+	public void messageReceived(Object msg, F2FPeer sender) {
+		String message = (String) msg;
 		logger.info("Received: " + message + ", from: " + sender.getDisplayName());
 		
 		//Message structure: type;chatId;restOfMessage
