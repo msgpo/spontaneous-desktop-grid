@@ -453,18 +453,18 @@ public class F2FComputing
 	/**
 	 * MessageType -> Listeners
 	 */
-	private static HashMap<Class, Collection<MessageListener>> messageListeners = new HashMap<Class, Collection<MessageListener>>();
-	public static void addMessageListener(Class messageType, MessageListener listener)
+	private static HashMap<Class, Collection<F2FMessageListener>> messageListeners = new HashMap<Class, Collection<F2FMessageListener>>();
+	public static void addMessageListener(Class messageType, F2FMessageListener listener)
 	{
 		synchronized (messageListeners)
 		{
 			if (!messageListeners.containsKey(messageType))
-				messageListeners.put(messageType, new ArrayList<MessageListener>());
+				messageListeners.put(messageType, new ArrayList<F2FMessageListener>());
 			if (!messageListeners.get(messageType).contains(listener))
 				messageListeners.get(messageType).add(listener);
 		}
 	}
-	public static void removeMessageListener(Class messageType, MessageListener listener)
+	public static void removeMessageListener(Class messageType, F2FMessageListener listener)
 	{
 		synchronized (messageListeners)
 		{
@@ -492,7 +492,7 @@ public class F2FComputing
 			return;
 		}
 		
-		for (MessageListener listener: messageListeners.get(message.getClass()))
+		for (F2FMessageListener listener: messageListeners.get(message.getClass()))
 			listener.messageReceived(message, sender);
 	}
 	
@@ -503,7 +503,7 @@ public class F2FComputing
 		allowAllFriendsToUseMyPC = allow;
 	}
 	
-	private class F2FMessageHandler implements MessageListener
+	private class F2FMessageHandler implements F2FMessageListener
 	{
 		private final Logger log = Logger.getLogger(F2FMessageHandler.class);
 		public void messageReceived(Object message, F2FPeer sender)

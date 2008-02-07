@@ -11,7 +11,7 @@ import org.osgi.framework.ServiceReference;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
-import ee.ut.f2f.core.MessageListener;
+import ee.ut.f2f.core.F2FMessageListener;
 import ee.ut.f2f.util.F2FDebug;
 
 import net.java.sip.communicator.service.gui.UIService;
@@ -33,7 +33,7 @@ import net.java.sip.communicator.service.protocol.event.LocalUserChatRoomPresenc
 import net.java.sip.communicator.service.protocol.event.LocalUserChatRoomPresenceListener;
 
 public class F2FMultiOperationSetMultiUserChat
-	implements OperationSetMultiUserChat, MessageListener
+	implements OperationSetMultiUserChat, F2FMessageListener
 {
 	private static final String OWNER_CONTACT_ADDRESS = "F2FMulti Owner Contact Address";
     /**
