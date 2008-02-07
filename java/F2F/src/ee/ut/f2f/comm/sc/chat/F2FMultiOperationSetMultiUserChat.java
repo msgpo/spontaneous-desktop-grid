@@ -72,6 +72,10 @@ public class F2FMultiOperationSetMultiUserChat
         this.provider = provider;
         addChatF2FButton();
         F2FComputing.addMessageListener(F2FMultiChatMessage.class, this);
+        F2FComputing.addMessageListener(F2FMultiInvitation.class, this);
+        F2FComputing.addMessageListener(F2FMultiInvitationAnswer.class, this);
+        F2FComputing.addMessageListener(F2FMultiChatMessageMemberJoined.class, this);
+        F2FComputing.addMessageListener(F2FMultiChatMessageMembers.class, this);
     }
     
     private void addChatF2FButton()
