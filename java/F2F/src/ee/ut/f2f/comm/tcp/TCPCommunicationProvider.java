@@ -27,27 +27,27 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.logging.Logger;
 
-public class SocketCommunicationProvider implements CommunicationProvider, Activity
+public class TCPCommunicationProvider implements CommunicationProvider, Activity
 {
-	private final Logger log = Logger.getLogger(SocketCommunicationProvider.class);
+	private final Logger log = Logger.getLogger(TCPCommunicationProvider.class);
 
 	/**
 	 * Name that identifies Socket communication layer.
 	 */
 	private static final String SOCKET_LAYER_ID = "F2FSocketCommLayer";
 	
-	private Hashtable<UUID, SocketPeer> peers = new Hashtable<UUID, SocketPeer>();
+	private Hashtable<UUID, TCPPeer> peers = new Hashtable<UUID, TCPPeer>();
 	
 	/**
 	 * Creates the communication layer with fixed count of friends.
 	 * @throws CommunicationInitException 
 	 */
-	private static SocketCommunicationProvider socketCommunicationProvider = null;
-	private SocketCommunicationProvider()
+	private static TCPCommunicationProvider tCPCommunicationProvider = null;
+	private TCPCommunicationProvider()
 	{
 		ActivityEvent event = new ActivityEvent(this, ActivityEvent.Type.STARTED);
 		ActivityManager.getDefault().emitEvent(event);
-		new SocketCommInitiator().start();
+		new TCPCommInitiator().start();
 	}
 
 	public void addFriend(UUID id, InetSocketAddress friend, boolean bIntroduce) throws IOException
@@ -56,7 +56,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		synchronized (peers)
 		{
 			if (peers.containsKey(id)) return;
-			SocketPeer peer = new SocketPeer(id, this, friend, bIntroduce);
+			TCPPeer peer = new TCPPeer(id, this, friend, bIntroduce);
 			peers.put(id, peer);
 			F2FComputing.peerContacted(id, id.toString(), this);
 		}
@@ -74,7 +74,7 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 	/* (non-Javadoc)
 	 * @see ee.ut.f2f.comm.CommunicationLayer#findPeerByID(java.lang.String)
 	 */
-	public SocketPeer findPeerByID(UUID id)
+	public TCPPeer findPeerByID(UUID id)
 	{
 		synchronized (peers)
 		{
@@ -193,12 +193,12 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 							log.warn("socket peer is already known");
 							continue;
 						}
-						SocketPeer peer = new SocketPeer(remoteID, SocketCommunicationProvider.this, null, false);
+						TCPPeer peer = new TCPPeer(remoteID, TCPCommunicationProvider.this, null, false);
 						// start listening for messages from the peer
 						peer.setOo(oo);
 						peer.setOi(oi);
 						peers.put(remoteID, peer);
-						F2FComputing.peerContacted(remoteID, socket.getInetAddress().getHostAddress()+":"+ socket.getPort(), SocketCommunicationProvider.this);
+						F2FComputing.peerContacted(remoteID, socket.getInetAddress().getHostAddress()+":"+ socket.getPort(), TCPCommunicationProvider.this);
 						log.debug("Accepted TCP connection from '"+socket.getInetAddress().getHostAddress()+":"+ socket.getPort()+"'");
 					}
 				}
@@ -217,13 +217,13 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 
 		public Activity getParentActivity()
 		{
-			return SocketCommunicationProvider.this;
+			return TCPCommunicationProvider.this;
 		}
 	}
 
 	public void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException
 	{
-		SocketPeer peer = null;
+		TCPPeer peer = null;
 		synchronized (peers)
 		{
 			peer = peers.get(destinationPeer);
@@ -248,17 +248,17 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 		return CommunicationProvider.SOCKET_COMM_WEIGHT;
 	}
 
-	public static SocketCommunicationProvider getInstance()
+	public static TCPCommunicationProvider getInstance()
 	{
-		if (socketCommunicationProvider == null)
+		if (tCPCommunicationProvider == null)
 		{
-			synchronized (SocketCommunicationProvider.class)
+			synchronized (TCPCommunicationProvider.class)
 			{
-				if (socketCommunicationProvider == null)
-					socketCommunicationProvider = new SocketCommunicationProvider();
+				if (tCPCommunicationProvider == null)
+					tCPCommunicationProvider = new TCPCommunicationProvider();
 			}
 		}
-		return socketCommunicationProvider;
+		return tCPCommunicationProvider;
 	}
 
 	private Collection<InetSocketAddress> serverSockets = new ArrayList<InetSocketAddress>();
@@ -296,12 +296,12 @@ public class SocketCommunicationProvider implements CommunicationProvider, Activ
 							log.warn("socket peer is already known");
 							return;
 						}
-						SocketPeer peer = new SocketPeer(remoteID, SocketCommunicationProvider.this, null, false);
+						TCPPeer peer = new TCPPeer(remoteID, TCPCommunicationProvider.this, null, false);
 						// start listening for messages from the peer
 						peer.setOo(oo);
 						peer.setOi(oi);
 						peers.put(remoteID, peer);
-						F2FComputing.peerContacted(remoteID, address.getAddress().getHostAddress() +":"+ address.getPort(), SocketCommunicationProvider.this);
+						F2FComputing.peerContacted(remoteID, address.getAddress().getHostAddress() +":"+ address.getPort(), TCPCommunicationProvider.this);
 						log.debug("Accepted remote connection from '"+remoteID+"'");
 					}
 				}

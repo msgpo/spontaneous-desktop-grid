@@ -19,13 +19,13 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.logging.Logger;
 
-class SocketPeer implements Activity
+class TCPPeer implements Activity
 {
-	final private static Logger log = Logger.getLogger(SocketPeer.class);
+	final private static Logger log = Logger.getLogger(TCPPeer.class);
 	
 	
-	private SocketCommunicationProvider scProvider = null;
-	public SocketCommunicationProvider getCommunicationLayer()
+	private TCPCommunicationProvider scProvider = null;
+	public TCPCommunicationProvider getCommunicationLayer()
 	{
 		return this.scProvider;
 	}
@@ -36,7 +36,7 @@ class SocketPeer implements Activity
 	private ObjectInput oi = null;
 	private UUID id = null;
 	
-	SocketPeer(UUID id, SocketCommunicationProvider layer, InetSocketAddress socketAddress, boolean bIntroduce) throws IOException
+	TCPPeer(UUID id, TCPCommunicationProvider layer, InetSocketAddress socketAddress, boolean bIntroduce) throws IOException
 	{
 		this.id = id;
 		this.scProvider = layer;
@@ -99,7 +99,7 @@ class SocketPeer implements Activity
 			{
 				try
 				{
-					ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+					ActivityManager.getDefault().emitEvent(new ActivityEvent(TCPPeer.this,
 							ActivityEvent.Type.STARTED, "start receiving messages"));
 					//log.debug(getActivityName() + " Remote socket [" + outSocket.getRemoteSocketAddress() + "]");
 					//log.debug(getActivityName() + " Local Bind [" + outSocket.getLocalAddress().getHostAddress() + ":" + outSocket.getLocalPort() + "]");
@@ -134,7 +134,7 @@ class SocketPeer implements Activity
 				} catch (Exception e) {}
 				log.debug("Stopping listening to Peer id [" + id + "]");
 				scProvider.removeFriend(id);
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(SocketPeer.this,
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(TCPPeer.this,
 						ActivityEvent.Type.FINISHED, "connection closed"));
 			}
 		}).start();

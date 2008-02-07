@@ -17,11 +17,11 @@ import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.LocalAddresses;
 import ee.ut.f2f.util.logging.Logger;
 
-class SocketCommInitiator extends Thread implements Activity, PeerPresenceListener
+class TCPCommInitiator extends Thread implements Activity, PeerPresenceListener
 {
-	private final static Logger log = Logger.getLogger(SocketCommInitiator.class);
+	private final static Logger log = Logger.getLogger(TCPCommInitiator.class);
 	
-	SocketCommInitiator()
+	TCPCommInitiator()
 	{
 		F2FComputing.addPeerPresenceListener(this);
 	}
@@ -85,7 +85,7 @@ class SocketCommInitiator extends Thread implements Activity, PeerPresenceListen
 			InetSocketAddress inetSoc = new InetSocketAddress(address, F2FProperties.getF2FProperties().getCommLayerProperties().iSocketCommunicationDefaultPort);
 			try
 			{
-				SocketCommunicationProvider.getInstance().addServerSocket(inetSoc);
+				TCPCommunicationProvider.getInstance().addServerSocket(inetSoc);
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FINISHED));
 			}
 			catch (CommunicationInitException e)
@@ -103,7 +103,7 @@ class SocketCommInitiator extends Thread implements Activity, PeerPresenceListen
 
 		public Activity getParentActivity()
 		{
-			return SocketCommInitiator.this;
+			return TCPCommInitiator.this;
 		}
 	}
 
@@ -113,7 +113,7 @@ class SocketCommInitiator extends Thread implements Activity, PeerPresenceListen
 	}
 	public Activity getParentActivity()
 	{
-		return SocketCommunicationProvider.getInstance();
+		return TCPCommunicationProvider.getInstance();
 	}
 
 	private HashMap<F2FPeer, TCPTester> tcpTesters = new HashMap<F2FPeer, TCPTester>();

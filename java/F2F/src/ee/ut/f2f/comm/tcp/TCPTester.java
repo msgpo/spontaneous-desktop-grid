@@ -95,7 +95,7 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 	public void run()
 	{
 		// do not start TCP tests before SocketComm providers are initialized
-		if (!SocketCommInitiator.isInitialized()) return;
+		if (!TCPCommInitiator.isInitialized()) return;
 		
 		F2FComputing.addMessageListener(TCPTestMessage.class, this);
 		// just for information catch any exceptions that may occur
@@ -153,7 +153,7 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 		
 		// exchange the server sockets that peers are listening on
 		remotePeer.sendMessage(
-			new TCPTestMessage(SocketCommunicationProvider.getInstance().getServerSocketAddresses()));
+			new TCPTestMessage(TCPCommunicationProvider.getInstance().getServerSocketAddresses()));
 		// wait at most 30 seconds for remote addresses
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting for addresses"));
 		for (int i = 0; i < 60; i++)
@@ -261,7 +261,7 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 		
 		// create the connection
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "local peer creates connection"));
-		SocketCommunicationProvider.getInstance().addFriend(remotePeer.getID(), usedAddress, true);
+		TCPCommunicationProvider.getInstance().addFriend(remotePeer.getID(), usedAddress, true);
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FINISHED, "TCP connection created"));
 	}
 	
