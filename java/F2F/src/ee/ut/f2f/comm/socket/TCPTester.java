@@ -134,17 +134,17 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 		}.start();
 		for (int i = 0; i < 60; i++)
 		{
-			if (status == Status.GOT_SOCKET_ADDRESSES) break;
+			if (status != Status.INIT) break;
 			try
 			{
 				Thread.sleep(500);
 			}
 			catch (InterruptedException e) {}
 		}
-		if (status != Status.GOT_SOCKET_ADDRESSES)
+		if (status == Status.INIT)
 		{
-			log.error("timeout while waiting for remote socket addresses");
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for remote socket addresses"));
+			log.error("timeout while initializing connection to remote TCP test thread");
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while initializing connection to remote TCP test thread"));
 			return;
 		}
 		
