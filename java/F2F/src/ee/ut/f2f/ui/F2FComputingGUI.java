@@ -64,7 +64,6 @@ public class F2FComputingGUI {
 				} catch (F2FComputingException e) {
 					log.error(e.toString());
 					e.printStackTrace();
-					return;
 				}
 			//}
 		//}).start();
