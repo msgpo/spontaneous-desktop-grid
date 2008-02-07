@@ -128,7 +128,7 @@ public class F2FPeer
 			}
 			catch (Exception e)
 			{
-				logger.warn("Error sending message to "+id+" through "+commProvider);
+				logger.warn("Error sending message to "+getDisplayName()+" through "+commProvider.getClass());
 				e.printStackTrace();
 				// try again with different communication provider
 				continue;
