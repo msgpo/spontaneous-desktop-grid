@@ -118,6 +118,7 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 		log.debug(getActivityName() + "started");
 		
 		// make sure that other peer has started the test too
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting for init"));
 		new Thread()
 		{
 			public void run()
@@ -143,8 +144,8 @@ public class TCPTester extends Thread implements Activity, F2FMessageListener
 		}
 		if (status == Status.INIT)
 		{
-			log.error("timeout while initializing connection to remote TCP test thread");
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while initializing connection to remote TCP test thread"));
+			log.error("timeout while waiting for init from remote TCP test thread");
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for init from remote TCP test thread"));
 			return;
 		}
 		
