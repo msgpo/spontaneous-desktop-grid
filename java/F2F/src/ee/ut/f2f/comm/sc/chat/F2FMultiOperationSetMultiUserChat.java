@@ -11,8 +11,8 @@ import org.osgi.framework.ServiceReference;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
+import ee.ut.f2f.core.MessageListener;
 import ee.ut.f2f.util.F2FDebug;
-import ee.ut.f2f.util.F2FMessage;
 
 import net.java.sip.communicator.service.gui.UIService;
 import net.java.sip.communicator.service.protocol.ChatRoom;
@@ -33,7 +33,7 @@ import net.java.sip.communicator.service.protocol.event.LocalUserChatRoomPresenc
 import net.java.sip.communicator.service.protocol.event.LocalUserChatRoomPresenceListener;
 
 public class F2FMultiOperationSetMultiUserChat
-	implements OperationSetMultiUserChat, F2FMultiChatListener
+	implements OperationSetMultiUserChat, MessageListener
 {
 	private static final String OWNER_CONTACT_ADDRESS = "F2FMulti Owner Contact Address";
     /**
@@ -70,8 +70,8 @@ public class F2FMultiOperationSetMultiUserChat
     public F2FMultiOperationSetMultiUserChat(F2FMultiProtocolProviderService provider)
     {
         this.provider = provider;
-        F2FComputing.addChatListener(this);
         addChatF2FButton();
+        F2FComputing.addMessageListener(F2FMultiChatMessage.class, this);
     }
     
     private void addChatF2FButton()
@@ -446,11 +446,10 @@ public class F2FMultiOperationSetMultiUserChat
     	if (contact == null) return;
     	F2FPeer peer = F2FComputing.getPeer(provider.getSipCommProvider().getF2FPeerID(contact));
     	if (peer == null) return;
-    	F2FMessage message = new F2FMessage(F2FMessage.Type.MULTI_CHAT, null, null, null, msg);
-    	peer.sendMessage(message);
+    	peer.sendMessage(msg);
     }
 
-	public void receivedF2FMultiChatMessage(Object message)
+	public void messageReceived(Object message, F2FPeer sender)
 	{
 		if (message instanceof F2FMultiChatMessage)
 		{

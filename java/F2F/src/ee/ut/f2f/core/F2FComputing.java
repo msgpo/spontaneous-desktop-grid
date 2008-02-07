@@ -15,7 +15,6 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
-import ee.ut.f2f.comm.sc.chat.F2FMultiChatListener;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FMessage;
 import ee.ut.f2f.util.logging.Logger;
@@ -56,16 +55,6 @@ public class F2FComputing
 	 */
 	static Map<UUID, F2FPeer> peers = null;
 	
-	static Collection<F2FMultiChatListener> chatListeners = new ArrayList<F2FMultiChatListener>();
-	public static void addChatListener(F2FMultiChatListener listener)
-	{
-		synchronized (chatListeners)
-		{
-			if (!chatListeners.contains(listener))
-				chatListeners.add(listener);
-		}
-	}
-	
 	private static boolean isInitialized() { return localPeer != null; } 
 	/**
 	 * Private constructor for singleton implementation.
@@ -79,10 +68,11 @@ public class F2FComputing
 		jobs = new HashMap<String, Job>();
 		peers = new HashMap<UUID, F2FPeer>();
 		localPeer = new F2FPeer("me (localhost)");
-		logger.debug("\tlocal F2FPeer ID is " + localPeer.getID());
+		logger.debug("local F2FPeer ID is " + localPeer.getID());
 		peers.put(localPeer.getID(), localPeer);
 		localPeer.updateLocalIPInfo();
 		//CommunicationFactory.getInitializedCommunicationProviders();
+		addMessageListener(F2FMessage.class, new F2FMessageHandler());
 	}
 
 	/**
@@ -461,163 +451,49 @@ public class F2FComputing
 	}
 
 	/**
+	 * MessageType -> Listeners
+	 */
+	private static HashMap<Class, Collection<MessageListener>> messageListeners = new HashMap<Class, Collection<MessageListener>>();
+	public static void addMessageListener(Class messageType, MessageListener listener)
+	{
+		synchronized (messageListeners)
+		{
+			if (!messageListeners.containsKey(messageType))
+				messageListeners.put(messageType, new ArrayList<MessageListener>());
+			if (!messageListeners.get(messageType).contains(listener))
+				messageListeners.get(messageType).add(listener);
+		}
+	}
+	public static void removeMessageListener(Class messageType, MessageListener listener)
+	{
+		synchronized (messageListeners)
+		{
+			if (!messageListeners.containsKey(messageType)) return;
+			if (!messageListeners.get(messageType).contains(listener)) return;
+			messageListeners.get(messageType).remove(listener);
+		}
+	}
+	/**
 	 * Handles F2F framework messages and forwards messages sent between tasks.
 	 */
-	@SuppressWarnings("unchecked")
 	public static void messageRecieved(Object message, UUID senderID)
 	{
 		if (!isInitialized()) return;
 		F2FPeer sender = peers.get(senderID);
 		// throw away messages from unknown peers
-		if (sender == null) return;
-		
-		if (message instanceof F2FMessage);
-		else 
+		if (sender == null)
 		{
-			logger.warn("messageRecieved() handles only F2FMessages!");
+			logger.warn("the framework received a message from an unknown peer " + senderID);
 			return;
 		}
-		F2FMessage f2fMessage = (F2FMessage) message;
-		// JOB/TASK START
-		if (f2fMessage.getType() == F2FMessage.Type.REQUEST_FOR_CPU)
+		if (!messageListeners.containsKey(message.getClass()))
 		{
-			askForCPU(sender, f2fMessage.getJobID());
+			logger.warn("the framework does not know the handler of messages of " + message.getClass());
+			return;
 		}
-		else if (f2fMessage.getType() == F2FMessage.Type.RESPONSE_FOR_CPU)
-		{
-			Job job = getJob(f2fMessage.getJobID());
-			if (job == null)
-			{
-				logger.error("Received RESPONSE_FOR_CPU for unknown job");
-				return;
-			}
-			CPURequests requests = job.getCPURequests(); 
-			if (requests == null)
-			{
-				logger.error("Received RESPONSE_FOR_CPU but requester is null");
-				return;
-			}
-			requests.responseReceived(f2fMessage, sender);
-		}
-		else if (f2fMessage.getType() == F2FMessage.Type.JOB)
-		{
-			logger.info("got JOB");
-			Job job = (Job) f2fMessage.getData();
-			// check if we know this job already
-			if (jobs.containsKey(job.getJobID()))
-			{
-				logger.error("Received a job that is already known!");
-				return;
-			}
-			try
-			{
-				job.initialize(rootDirectory);
-				jobs.put(job.getJobID(), job);
-				ActivityManager.getDefault().emitEvent(
-						new ActivityEvent(job,
-								ActivityEvent.Type.CHANGED, "Job received"));				
-				startJobTasks(job);
-			}
-			catch (F2FComputingException e)
-			{
-				logger.error("" + e, e);
-			}
-		}
-		else if (f2fMessage.getType() == F2FMessage.Type.TASKS)
-		{
-			logger.info("got TASKS");
-			Job job = getJob(f2fMessage.getJobID());
-			if (job == null)
-			{
-				logger.error("Received tasks for unknown job");
-				return;
-			}
-			Collection<TaskDescription> taskDescriptions = (Collection<TaskDescription>) f2fMessage.getData();
-			job.addTaskDescriptions(taskDescriptions);
-			startJobTasks(job);
-		}
-		// MESSAGES TO TASKS
-		else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
-		{
-			if(logger.isTraceEnabled()) {
-				logger.trace("MESSAGE received " + f2fMessage);
-			}
-			Job job = getJob(f2fMessage.getJobID());
-			if (job == null)
-			{
-				logger.warn("Got MESSAGE for unknown job with ID: "
-						+ f2fMessage.getJobID());
-				return;
-			}
-			Task recepientTask = job.getTask(f2fMessage.getReceiverTaskID());
-			if (recepientTask == null)
-			{
-				logger.warn("Got MESSAGE for unknown task with ID: "
-						+ f2fMessage.getReceiverTaskID());
-				return;
-			}
-			recepientTask.getTaskProxy(f2fMessage.getSenderTaskID())
-					.saveMessage(f2fMessage.getData());
-		}
-		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE)
-		{
-			if(logger.isTraceEnabled()) {
-				logger.trace("Received ROUTE: " + f2fMessage);
-			}
-			f2fMessage.setType(F2FMessage.Type.MESSAGE);
-			Job job = getJob(f2fMessage.getJobID());
-			if (job == null)
-			{
-				logger.error("didn't find the job");
-				return;
-			}
-			TaskDescription receiverTaskDesc = job
-					.getTaskDescription(f2fMessage.getReceiverTaskID());
-			if (receiverTaskDesc == null)
-			{
-				logger.error("didn't find the receiver task description");
-				return;
-			}
-			F2FPeer receiver = peers.get(receiverTaskDesc.peerID);
-			if (receiver == null)
-			{
-				logger.error("didn't find the receiver peer");
-				return;
-			}
-			try
-			{
-				receiver.sendMessage(f2fMessage);
-			}
-			catch (CommunicationFailedException e)
-			{
-				logger.error("couldn't send the message to the route target", e);
-			}
-		}
-		// CHAT
-		else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
-		{	 
-			F2FComputingGUI.controller.chatMessageReceived((String)f2fMessage.getData(), sender);
-		}
-		// SC MULTI CHAT
-		else if (f2fMessage.getType() == F2FMessage.Type.MULTI_CHAT)
-		{
-			for (F2FMultiChatListener listener: chatListeners)
-				listener.receivedF2FMultiChatMessage(f2fMessage.getData());
-		}
-		// STUN
-		else if (f2fMessage.getType() == F2FMessage.Type.GET_STUN_INFO)
-		{
-			getLocalPeer().reportSTUNInfo(sender);
-		}
-		else if (f2fMessage.getType() == F2FMessage.Type.REPORT_STUN_INFO)
-		{
-			sender.setSTUNInfo((StunInfo)f2fMessage.getData());
-		}
-		// TCP
-		else if (f2fMessage.getType() == F2FMessage.Type.TCP_TEST)
-		{
-			sender.getTCPTester().receivedTCPTestMessage(f2fMessage.getData());
-		}
+		
+		for (MessageListener listener: messageListeners.get(message.getClass()))
+			listener.messageReceived(message, sender);
 	}
 	
 	private static boolean allowAllFriendsToUseMyPC = false;
@@ -626,47 +502,199 @@ public class F2FComputing
 		logger.info((allow ? "Allow" : "Do not allow") + " all my friends to use my PC by default");
 		allowAllFriendsToUseMyPC = allow;
 	}
-	private static void askForCPU(final F2FPeer peer, final String jobID)
+	
+	private class F2FMessageHandler implements MessageListener
 	{
-		new Thread()
+		private final Logger log = Logger.getLogger(F2FMessageHandler.class);
+		public void messageReceived(Object message, F2FPeer sender)
 		{
-			public void run()
-			{
-				logger.debug("got REQUEST_FOR_CPU");
-				Boolean response = null;
-				// do not ask the permission from ourselves
-				if (peer.equals(localPeer)) response = true;
-				
-				// check if all friends are allowed to use this PC
-				else if (allowAllFriendsToUseMyPC) response = true;
 			
-				// ask the owner
-				else
+			if (message instanceof F2FMessage);
+			else 
+			{
+				log.warn("messageRecieved() handles only F2FMessages!");
+				return;
+			}
+			F2FMessage f2fMessage = (F2FMessage) message;
+			// JOB/TASK START
+			if (f2fMessage.getType() == F2FMessage.Type.REQUEST_FOR_CPU)
+			{
+				askForCPU(sender, f2fMessage.getJobID());
+			}
+			else if (f2fMessage.getType() == F2FMessage.Type.RESPONSE_FOR_CPU)
+			{
+				Job job = getJob(f2fMessage.getJobID());
+				if (job == null)
 				{
-					int n = JOptionPane.showConfirmDialog(
-			                null, "Do you allow " + peer.getDisplayName() + " to use your PC?",
-			                "F2FComputing", JOptionPane.YES_NO_OPTION);
-					if (n == JOptionPane.YES_OPTION) response = true;
-					else response = false;
-					// TODO: 
-					//?   1) add a checkbox to the dialog that user would not be asked again later at all (allow all)
-					//?   2) add a checkbox that the specified friend is always trusted
+					log.error("Received RESPONSE_FOR_CPU for unknown job");
+					return;
 				}
-
-				F2FMessage responseMessage = 
-					new F2FMessage(
-						F2FMessage.Type.RESPONSE_FOR_CPU, 
-						jobID, null, null,
-						response);
+				CPURequests requests = job.getCPURequests(); 
+				if (requests == null)
+				{
+					log.error("Received RESPONSE_FOR_CPU but requester is null");
+					return;
+				}
+				requests.responseReceived(f2fMessage, sender);
+			}
+			else if (f2fMessage.getType() == F2FMessage.Type.JOB)
+			{
+				log.info("got JOB");
+				Job job = (Job) f2fMessage.getData();
+				// check if we know this job already
+				if (jobs.containsKey(job.getJobID()))
+				{
+					log.error("Received a job that is already known!");
+					return;
+				}
 				try
 				{
-					peer.sendMessage(responseMessage);
+					job.initialize(rootDirectory);
+					jobs.put(job.getJobID(), job);
+					ActivityManager.getDefault().emitEvent(
+							new ActivityEvent(job,
+									ActivityEvent.Type.CHANGED, "Job received"));				
+					startJobTasks(job);
+				}
+				catch (F2FComputingException e)
+				{
+					log.error("" + e, e);
+				}
+			}
+			else if (f2fMessage.getType() == F2FMessage.Type.TASKS)
+			{
+				log.info("got TASKS");
+				Job job = getJob(f2fMessage.getJobID());
+				if (job == null)
+				{
+					log.error("Received tasks for unknown job");
+					return;
+				}
+				@SuppressWarnings("unchecked")
+				Collection<TaskDescription> taskDescriptions = (Collection<TaskDescription>) f2fMessage.getData();
+				job.addTaskDescriptions(taskDescriptions);
+				startJobTasks(job);
+			}
+			// MESSAGES TO TASKS
+			else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
+			{
+				if(log.isTraceEnabled()) {
+					log.trace("MESSAGE received " + f2fMessage);
+				}
+				Job job = getJob(f2fMessage.getJobID());
+				if (job == null)
+				{
+					log.warn("Got MESSAGE for unknown job with ID: "
+							+ f2fMessage.getJobID());
+					return;
+				}
+				Task recepientTask = job.getTask(f2fMessage.getReceiverTaskID());
+				if (recepientTask == null)
+				{
+					log.warn("Got MESSAGE for unknown task with ID: "
+							+ f2fMessage.getReceiverTaskID());
+					return;
+				}
+				recepientTask.getTaskProxy(f2fMessage.getSenderTaskID())
+						.saveMessage(f2fMessage.getData());
+			}
+			else if (f2fMessage.getType() == F2FMessage.Type.ROUTE)
+			{
+				if(log.isTraceEnabled()) {
+					log.trace("Received ROUTE: " + f2fMessage);
+				}
+				f2fMessage.setType(F2FMessage.Type.MESSAGE);
+				Job job = getJob(f2fMessage.getJobID());
+				if (job == null)
+				{
+					log.error("didn't find the job");
+					return;
+				}
+				TaskDescription receiverTaskDesc = job
+						.getTaskDescription(f2fMessage.getReceiverTaskID());
+				if (receiverTaskDesc == null)
+				{
+					log.error("didn't find the receiver task description");
+					return;
+				}
+				F2FPeer receiver = peers.get(receiverTaskDesc.peerID);
+				if (receiver == null)
+				{
+					log.error("didn't find the receiver peer");
+					return;
+				}
+				try
+				{
+					receiver.sendMessage(f2fMessage);
 				}
 				catch (CommunicationFailedException e)
 				{
-					e.printStackTrace();
+					log.error("couldn't send the message to the route target", e);
 				}
 			}
-		}.start();
+			// CHAT
+			else if (f2fMessage.getType() == F2FMessage.Type.CHAT)
+			{	 
+				F2FComputingGUI.controller.chatMessageReceived((String)f2fMessage.getData(), sender);
+			}
+			// STUN
+			else if (f2fMessage.getType() == F2FMessage.Type.GET_STUN_INFO)
+			{
+				getLocalPeer().reportSTUNInfo(sender);
+			}
+			else if (f2fMessage.getType() == F2FMessage.Type.REPORT_STUN_INFO)
+			{
+				sender.setSTUNInfo((StunInfo)f2fMessage.getData());
+			}
+			// TCP
+			else if (f2fMessage.getType() == F2FMessage.Type.TCP_TEST)
+			{
+				sender.getTCPTester().receivedTCPTestMessage(f2fMessage.getData());
+			}
+		}
+		
+		private void askForCPU(final F2FPeer peer, final String jobID)
+		{
+			new Thread()
+			{
+				public void run()
+				{
+					log.debug("got REQUEST_FOR_CPU");
+					Boolean response = null;
+					// do not ask the permission from ourselves
+					if (peer.equals(localPeer)) response = true;
+					
+					// check if all friends are allowed to use this PC
+					else if (allowAllFriendsToUseMyPC) response = true;
+				
+					// ask the owner
+					else
+					{
+						int n = JOptionPane.showConfirmDialog(
+				                null, "Do you allow " + peer.getDisplayName() + " to use your PC?",
+				                "F2FComputing", JOptionPane.YES_NO_OPTION);
+						if (n == JOptionPane.YES_OPTION) response = true;
+						else response = false;
+						// TODO: 
+						//?   1) add a checkbox to the dialog that user would not be asked again later at all (allow all)
+						//?   2) add a checkbox that the specified friend is always trusted
+					}
+
+					F2FMessage responseMessage = 
+						new F2FMessage(
+							F2FMessage.Type.RESPONSE_FOR_CPU, 
+							jobID, null, null,
+							response);
+					try
+					{
+						peer.sendMessage(responseMessage);
+					}
+					catch (CommunicationFailedException e)
+					{
+						e.printStackTrace();
+					}
+				}
+			}.start();
+		}		
 	}
 }

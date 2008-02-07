@@ -47,10 +47,6 @@ public class F2FMessage implements Serializable
 		 */
 		CHAT,
 		/**
-		 * A chat message.
-		 */
-		MULTI_CHAT,
-		/**
 		 * A TCP/Tests
 		 */
 		TCP_TEST,
