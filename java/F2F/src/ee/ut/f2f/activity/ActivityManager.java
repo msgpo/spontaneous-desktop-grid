@@ -95,14 +95,11 @@ public class ActivityManager {
 
 	public static ActivityManager getDefault()
 	{
-		if(defaultActivityManager == null)
+		if(defaultActivityManager != null) return defaultActivityManager;
+		synchronized (ActivityManager.class)
 		{
-			synchronized (ActivityManager.class)
-			{
-				if(defaultActivityManager == null)
-					defaultActivityManager = new ActivityManager();
-			}
+			if(defaultActivityManager != null) return defaultActivityManager;
+			return (defaultActivityManager = new ActivityManager());
 		}
-		return defaultActivityManager;
 	}
 }
