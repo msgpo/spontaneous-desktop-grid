@@ -162,7 +162,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	}
 	public Activity getParentActivity()
 	{
-		return UDPCommProvider.getInstance();
+		return null;
 	}
 }
 
