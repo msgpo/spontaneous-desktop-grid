@@ -118,11 +118,11 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		
 		// make sure that other peer has started the test too
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting for init"));
-		new Thread()
+		Thread thread = new Thread()
 		{
 			public void run()
 			{
-				while (true)
+				for (int i = 0; i < 60; i++)
 				{
 					try {
 						remotePeer.sendMessage(new TCPTestMessage());
@@ -131,15 +131,14 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 					} catch (Exception e) {}
 				}
 			}
-		}.start();
-		for (int i = 0; i < 60; i++)
+		};
+		thread.start();
+		while (true)
 		{
-			if (status != Status.INIT) break;
-			try
-			{
-				Thread.sleep(500);
-			}
-			catch (InterruptedException e) {}
+			try {
+				thread.join();
+				break;
+			} catch (InterruptedException e) {}
 		}
 		if (status == Status.INIT)
 		{
