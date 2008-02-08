@@ -29,7 +29,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	
 	public UDPTester(F2FPeer peer)
 	{
-		super("TCPTester [" + peer.getDisplayName() + "]");
+		super("UDPTester [" + peer.getDisplayName() + "]");
 		remotePeer = peer;
 		status = Status.INIT;
 	}
