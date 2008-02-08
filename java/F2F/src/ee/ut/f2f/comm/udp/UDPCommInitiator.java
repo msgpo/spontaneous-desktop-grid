@@ -34,7 +34,7 @@ public class UDPCommInitiator extends Thread implements PeerPresenceListener
 		
 		//ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FINISHED));
 		initialized = true;
-		// check if some TCP tests have to be started
+		// check if some UDP tests have to be started
 		// (that is if some peers are known already)
 		for (F2FPeer peer: F2FComputing.getPeers())
 		{
@@ -46,6 +46,9 @@ public class UDPCommInitiator extends Thread implements PeerPresenceListener
 	private HashMap<F2FPeer, UDPTester> udpTesters = new HashMap<F2FPeer, UDPTester>();
 	public void peerContacted(F2FPeer peer)
 	{
+		// do not start tests before local STUN info is resolved
+		if (!isInitialized()) return;
+		
 		if (udpTesters.containsKey(peer)) return;
 		synchronized (udpTesters)
 		{
