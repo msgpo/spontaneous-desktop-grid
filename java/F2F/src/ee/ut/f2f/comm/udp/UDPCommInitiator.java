@@ -18,7 +18,7 @@ public class UDPCommInitiator extends Thread implements PeerPresenceListener
 	static boolean isInitialized() { return initialized; }
 	
 	public void run()
-	{		
+	{
 		//ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
 		// start a thread that gets local STUN info
 		LocalStunInfo localStun = LocalStunInfo.getInstance();

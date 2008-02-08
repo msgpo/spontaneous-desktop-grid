@@ -34,7 +34,7 @@ class TCPCommInitiator extends Thread implements Activity, PeerPresenceListener
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
 		// start a thread that initializes each network interface
 		List<Thread> initThreads = new ArrayList<Thread>();
-		for (InetAddress address: LocalAddresses.getLocalIPv4Addresses())
+		for (InetAddress address: LocalAddresses.getInstance().getLocalIPv4Addresses())
 		{
 			Thread thread = new SocketCommProviderInitThread(address);
 			initThreads.add(thread);

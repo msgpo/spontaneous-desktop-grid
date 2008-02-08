@@ -311,9 +311,10 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 		{
 			Collection<F2FPeer> peersGUI = friendModel.getPeers();
 			Collection<F2FPeer> peersF2F = F2FComputing.getPeers();
-			for (F2FPeer peer: peersF2F)
-				if (!peersGUI.contains(peer))
-					friendModel.add(peer);
+			if (peersF2F != null)
+				for (F2FPeer peer: peersF2F)
+					if (!peersGUI.contains(peer))
+						friendModel.add(peer);
 		}
 		F2FComputing.addMessageListener(ChatMessage.class, this);
 		

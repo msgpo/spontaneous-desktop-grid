@@ -56,11 +56,11 @@ public class LocalStunInfo
 		{
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
 			
-			Collection<InetAddress> localIPs = LocalAddresses.getLocalIPv4Addresses();
-			if (localIPs == null || localIPs.isEmpty())
+			Collection<InetAddress> localIPs = LocalAddresses.getInstance().getLocalIPv4Addresses();
+			if (localIPs.isEmpty())
 			{
 				log.warn("STUN test can not be run if local machine has no IPs");
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED, "no NICs"));
 				return;
 			}
 			Collection<String> stunServers = F2FProperties.getF2FProperties().getSTUNProperties().stunServers;

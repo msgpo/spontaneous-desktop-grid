@@ -13,46 +13,54 @@ import ee.ut.f2f.util.logging.Logger;
 public class LocalAddresses
 {
 	private final static Logger log = Logger.getLogger(LocalAddresses.class);
-	private static Collection<InetAddress> localAddresses = null;
 	
-	public static Collection<InetAddress> getLocalIPv4Addresses()
+	private static LocalAddresses instance = null;
+	public static LocalAddresses getInstance()
 	{
-		if (localAddresses != null) return localAddresses;
-		
+		if (instance != null) return instance;
 		synchronized (LocalAddresses.class)
 		{
-			if (localAddresses != null) return localAddresses;
-
-			localAddresses = new ArrayList<InetAddress>();
-			// get the network interfaces
-			Enumeration<NetworkInterface> interfaces;
-			try
+			if (instance != null) return instance;
+			return (instance = new LocalAddresses());
+		}
+	}
+	
+	private LocalAddresses()
+	{
+		localAddresses = new ArrayList<InetAddress>();
+		// get the network interfaces
+		Enumeration<NetworkInterface> interfaces;
+		try
+		{
+			interfaces = NetworkInterface.getNetworkInterfaces();
+		}
+		catch (SocketException e)
+		{
+			e.printStackTrace();
+			log.debug(e.getMessage());
+			return;
+		}
+		
+		// get local IP's
+		while (interfaces.hasMoreElements())
+		{
+			NetworkInterface inet = interfaces.nextElement();
+			Enumeration<InetAddress> ips = inet.getInetAddresses();
+			while (ips.hasMoreElements())
 			{
-				interfaces = NetworkInterface.getNetworkInterfaces();
-			}
-			catch (SocketException e)
-			{
-				e.printStackTrace();
-				log.debug(e.getMessage());
-				return localAddresses;
-			}
-			
-			// get local IP's
-			while (interfaces.hasMoreElements())
-			{
-				NetworkInterface inet = interfaces.nextElement();
-				Enumeration<InetAddress> ips = inet.getInetAddresses();
-				while (ips.hasMoreElements())
+				InetAddress ip = ips.nextElement();
+				if ( !ip.isLinkLocalAddress() && !ip.isLoopbackAddress() )
 				{
-					InetAddress ip = ips.nextElement();
-					if ( !ip.isLinkLocalAddress() && !ip.isLoopbackAddress() )
-					{
-						if (ip instanceof Inet4Address) localAddresses.add(ip);
-					}
+					if (ip instanceof Inet4Address) localAddresses.add(ip);
 				}
 			}
-			return localAddresses;
 		}
+	}
+	
+	private Collection<InetAddress> localAddresses = null;
+	public Collection<InetAddress> getLocalIPv4Addresses()
+	{
+		return localAddresses;
 	}
 
 }

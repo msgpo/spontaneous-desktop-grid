@@ -6,7 +6,7 @@ public class UDPCommProvider implements Activity
 {
 	private UDPCommProvider()
 	{
-		new UDPCommInitiator();
+		new UDPCommInitiator().start();
 	}
 	
 	private static UDPCommProvider udpCommProvider = null;
