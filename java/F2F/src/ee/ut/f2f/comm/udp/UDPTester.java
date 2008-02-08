@@ -188,4 +188,12 @@ class UDPTestMessage implements Serializable
 		type = Type.STUN_INFO;
 		this.stunInfo = stunInfo;
 	}
+	
+	public String toString()
+	{
+		String s = "UDPTestMessage ";
+		if (type == Type.INIT) s += "INIT";
+		else if (type == Type.STUN_INFO) s += "STUN_INFO";
+		return s;
+	}
 }

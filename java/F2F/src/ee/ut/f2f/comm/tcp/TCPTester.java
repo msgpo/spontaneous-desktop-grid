@@ -384,6 +384,15 @@ class TCPTestMessage implements Serializable
 		type = Type.RESULT;
 		this.result = result;
 	}
+	
+	public String toString()
+	{
+		String s = "TCPTestMessage ";
+		if (type == Type.INIT) s += "INIT";
+		else if (type == Type.ADDRESSES) s += "ADDRESSES";
+		else if (type == Type.RESULT) s += "RESULT " + result;
+		return s;
+	}
 }
 
 class TCPTestPacket implements Serializable
