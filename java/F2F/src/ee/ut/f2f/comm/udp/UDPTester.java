@@ -153,6 +153,8 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		}
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "got remote STUN info"));
 		log.debug("got remote STUN info: " + remoteStunInfo);
+		
+		//TODO: now remote and local STUN info is known -> try to establish UDP connection!
 	}
 
 	public String getActivityName()
