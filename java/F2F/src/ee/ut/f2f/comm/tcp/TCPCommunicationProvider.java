@@ -45,8 +45,7 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 	private static TCPCommunicationProvider tCPCommunicationProvider = null;
 	private TCPCommunicationProvider()
 	{
-		ActivityEvent event = new ActivityEvent(this, ActivityEvent.Type.STARTED);
-		ActivityManager.getDefault().emitEvent(event);
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
 		new TCPCommInitiator().start();
 	}
 
@@ -245,7 +244,7 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 
 	public int getWeight()
 	{
-		return CommunicationProvider.SOCKET_COMM_WEIGHT;
+		return CommunicationProvider.TCP_COMM_WEIGHT;
 	}
 
 	public static TCPCommunicationProvider getInstance()

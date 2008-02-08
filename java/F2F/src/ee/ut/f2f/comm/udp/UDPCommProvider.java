@@ -1,11 +1,18 @@
 package ee.ut.f2f.comm.udp;
 
-import ee.ut.f2f.activity.Activity;
+import java.util.UUID;
 
-public class UDPCommProvider implements Activity
+import ee.ut.f2f.activity.Activity;
+import ee.ut.f2f.activity.ActivityEvent;
+import ee.ut.f2f.activity.ActivityManager;
+import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.comm.CommunicationProvider;
+
+public class UDPCommProvider implements CommunicationProvider, Activity
 {
 	private UDPCommProvider()
 	{
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
 		new UDPCommInitiator().start();
 	}
 	
@@ -26,5 +33,15 @@ public class UDPCommProvider implements Activity
 	public Activity getParentActivity()
 	{
 		return null;
+	}
+	
+	public int getWeight()
+	{
+		return CommunicationProvider.UDP_COMM_WEIGHT;
+	}
+	
+	public void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException
+	{
+		// TODO Auto-generated method stub
 	}
 }

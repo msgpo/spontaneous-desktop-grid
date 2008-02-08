@@ -830,7 +830,7 @@ public class SipIMCommunicationProvider
 
 	public int getWeight()
 	{
-		return CommunicationProvider.IM_COMM_WEIGHT;
+		return CommunicationProvider.SIP_IM_COMM_WEIGHT;
 	}
 }
 

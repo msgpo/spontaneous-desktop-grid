@@ -17,8 +17,9 @@ public interface CommunicationProvider
 	 * @return The weight/priority of a communicatin provider.
 	 */
 	int getWeight();
-	static final int IM_COMM_WEIGHT = 10;
-	static final int SOCKET_COMM_WEIGHT = 1000;
+	static final int SIP_IM_COMM_WEIGHT = 10;
+	static final int TCP_COMM_WEIGHT = 1000;
+	static final int UDP_COMM_WEIGHT = 500;
 	
 	void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException;
 }
