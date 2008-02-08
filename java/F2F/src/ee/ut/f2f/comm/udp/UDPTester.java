@@ -75,7 +75,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		F2FComputing.addMessageListener(UDPTestMessage.class, this);
 		// just for information catch any exceptions that may occur
 		try
-		{			
+		{
 			testProcess();
 		}
 		catch (Exception e)
@@ -102,9 +102,9 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 				{
 					try {
 						remotePeer.sendMessage(new UDPTestMessage());
+						if (status != Status.INIT) return;
 						Thread.sleep(1000);
 					} catch (Exception e) {}
-					if (status != Status.INIT) return;
 				}
 			}
 		}.start();

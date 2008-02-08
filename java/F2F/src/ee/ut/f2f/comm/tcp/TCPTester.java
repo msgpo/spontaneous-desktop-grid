@@ -126,9 +126,9 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 				{
 					try {
 						remotePeer.sendMessage(new TCPTestMessage());
+						if (status != Status.INIT) return;
 						Thread.sleep(1000);
 					} catch (Exception e) {}
-					if (status != Status.INIT) return;
 				}
 			}
 		}.start();
