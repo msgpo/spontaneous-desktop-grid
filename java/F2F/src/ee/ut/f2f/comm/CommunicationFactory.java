@@ -5,6 +5,7 @@ import java.util.Collection;
 
 import ee.ut.f2f.comm.sc.im.SipIMCommunicationProvider;
 import ee.ut.f2f.comm.tcp.TCPCommunicationProvider;
+import ee.ut.f2f.comm.udp.UDPCommProvider;
 import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.F2FProperties.CommLayerProperties;
 import ee.ut.f2f.util.F2FProperties.SocketProviderProperties;
@@ -74,8 +75,10 @@ public class CommunicationFactory
 
 	private static CommunicationProvider GetSipCommununication()
 	{
-		// also init TCP communication provider
+		// also init TCP and UDP communication providers
 		TCPCommunicationProvider.getInstance();
+		UDPCommProvider.getInstance();
+		
 		return SipIMCommunicationProvider.getInstance();
 	}
 }

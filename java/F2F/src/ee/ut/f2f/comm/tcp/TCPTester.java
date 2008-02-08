@@ -25,7 +25,6 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 {
 	final private static Logger log = Logger.getLogger(TCPTester.class);
 	
-	//statuses
 	private enum Status
 	{
 		INIT,
@@ -33,8 +32,8 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		GOT_SOCKET_ADDRESSES,
 		GOT_RESULT
 	}
-	
 	private Status status = null;
+	
 	private F2FPeer remotePeer = null;
 	
 	/**
@@ -265,17 +264,18 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FINISHED, "TCP connection created"));
 	}
 	
-	public String getActivityName() {
-		return this.getName() + " thread ";
+	public String getActivityName()
+	{
+		return getName();
 	}
-
-	public Activity getParentActivity() {
+	public Activity getParentActivity()
+	{
 		return null;
 	}
 	
 	public String toString()
 	{
-		return getActivityName() + "status [" + toString(status) + "]";
+		return getActivityName() + " status [" + toString(status) + "]";
 	}
 	
 	private String toString(Status status)

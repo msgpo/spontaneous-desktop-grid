@@ -8,24 +8,40 @@ import de.javawi.jstun.test.DiscoveryTest;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.F2FProperties;
 import ee.ut.f2f.util.LocalAddresses;
 import ee.ut.f2f.util.logging.Logger;
 
-public class StunInfoClient
+public class LocalStunInfo
 {
-	final private static Logger log = Logger.getLogger(StunInfoClient.class);
+	final private static Logger log = Logger.getLogger(LocalStunInfo.class);
+	
 	final private int STUN_SERVER_DEFAULT_PORT = 3478;
 	
-	public StunInfoClient()
-	{
+	private LocalStunInfo()
+	{	
 	}
 	
-	private Boolean updateInProgress = false;
+	private static LocalStunInfo instance = null;
+	public static LocalStunInfo getInstance()
+	{
+		if (instance != null) return instance;
+		synchronized (LocalStunInfo.class)
+		{
+			if (instance != null) return instance;
+			return (instance = new LocalStunInfo());
+		}
+	}
+
+	private StunInfo stunInfo = null;
+	public StunInfo getStunInfo() { return stunInfo; }
+
+	private boolean updateInProgress = false;
+	public boolean isUpdating() { return updateInProgress; }
+	
 	public void updateSTUNInfo()
 	{
-		synchronized (updateInProgress)
+		synchronized (LocalStunInfo.class)
 		{
 			if (updateInProgress == true) return;
 			updateInProgress = true;
@@ -33,49 +49,17 @@ public class StunInfoClient
 		
 		new StunInfoUpdateThread().start();
 	}
-
-	/**
-	 * Controls if host can be reached from specific local ip
-	 * @param yourIp
-	 * @param server host
-	 * @return true if is reachable, false if not
-	 */
-	public boolean isReachable(InetAddress yourIP, String server)
-	{
-		try
-		{
-			InetAddress serverIP = InetAddress.getByName(server);
-			NetworkInterface eth = NetworkInterface.getByInetAddress(yourIP);
-			if (eth == null) return false;
-			return serverIP.isReachable(eth, 0, 5000);
-		}
-		catch (Exception e)
-		{
-			log.warn(e.getMessage());
-			return false;
-		}
-	}
 	
 	private class StunInfoUpdateThread extends Thread implements Activity
-	{
-		private StunInfoUpdateThread()
-		{
-		}
-		
+	{		
 		public void run()
 		{
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
 			
-			if (F2FComputing.getLocalPeer() == null)
-			{
-				log.warn("STUN test can not be run if local F2FPeer is null");
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
-				return;
-			}
 			Collection<InetAddress> localIPs = LocalAddresses.getLocalIPv4Addresses();
 			if (localIPs == null || localIPs.isEmpty())
 			{
-				log.warn("STUN test can not be run if local F2FPeer has no IPs");
+				log.warn("STUN test can not be run if local machine has no IPs");
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED));
 				return;
 			}
@@ -116,9 +100,8 @@ public class StunInfoClient
 							log.info("Using StunServer [" + address + ":" + port + "]");
 							stunInfo = new StunInfo(diTest.test());
 							stunInfo.setLocalIP(ip.getHostAddress());
-							stunInfo.setId(F2FComputing.getLocalPeer().getID().toString());
 							log.info("Getting STUN info succeeded!");
-							F2FComputing.getLocalPeer().setSTUNInfo(stunInfo);
+							LocalStunInfo.this.stunInfo = stunInfo;
 							break;
 						}
 						catch (Exception e)
@@ -135,9 +118,9 @@ public class StunInfoClient
 			}
 			
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.FINISHED));
-			synchronized (StunInfoClient.this.updateInProgress)
+			synchronized (LocalStunInfo.class)
 			{
-				StunInfoClient.this.updateInProgress = false;
+				LocalStunInfo.this.updateInProgress = false;
 			}
 		}
 
@@ -148,6 +131,28 @@ public class StunInfoClient
 
 		public Activity getParentActivity() {
 			return null;
+		}
+	}
+
+	/**
+	 * Controls if host can be reached from specific local ip
+	 * @param yourIp
+	 * @param server host
+	 * @return true if is reachable, false if not
+	 */
+	public static boolean isReachable(InetAddress yourIP, String server)
+	{
+		try
+		{
+			InetAddress serverIP = InetAddress.getByName(server);
+			NetworkInterface eth = NetworkInterface.getByInetAddress(yourIP);
+			if (eth == null) return false;
+			return serverIP.isReachable(eth, 0, 5000);
+		}
+		catch (Exception e)
+		{
+			log.warn(e.getMessage());
+			return false;
 		}
 	}
 }

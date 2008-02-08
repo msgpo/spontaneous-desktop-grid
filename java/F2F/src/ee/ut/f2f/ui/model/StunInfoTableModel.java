@@ -39,8 +39,6 @@ public class StunInfoTableModel extends AbstractTableModel {
 		StunInfoTableItem sinf = stunInfoList.get(rowIndex);
 		
 		switch (columnIndex) {
-			case C_PEER:
-				return sinf.getId();
 			
 			case C_LOCAL_IP:
 				return sinf.getLocalIp();
@@ -110,7 +108,7 @@ public class StunInfoTableModel extends AbstractTableModel {
 	
 	public StunInfo get(String id){
 		for (StunInfo sinf : stunInfoList)
-			if (sinf.getId().equals(id))
+			//if (sinf.getId().equals(id))
 				return sinf;
 		
 		return null;
@@ -130,16 +128,5 @@ public class StunInfoTableModel extends AbstractTableModel {
 				return sinfItem;
 		
 		return null;
-	}
-	public boolean update(StunInfoTableItem sinft){
-		for (StunInfoTableItem sinfItem : stunInfoList){
-			if (sinfItem.getId().equals(sinft.getId())){
-				stunInfoList.remove(sinfItem);
-				stunInfoList.add(sinft);
-				fireTableDataChanged();
-				return true;
-			}
-		}
-		return false;
 	}
 }

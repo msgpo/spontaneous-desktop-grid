@@ -1,14 +1,11 @@
 package ee.ut.f2f.core;
 
-import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.UUID;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.stun.StunInfo;
-import ee.ut.f2f.util.stun.StunInfoClient;
 
 public class F2FPeer
 {
@@ -31,8 +28,6 @@ public class F2FPeer
 	{
 		this.id = UUID.randomUUID();
 		this.displayName = displayName;
-		reportSTUNPeers = new ArrayList<F2FPeer>();
-		F2FComputing.addMessageListener(StunMessage.class, new StunMessageHandler());
 	}
 	
 	/**
@@ -46,8 +41,6 @@ public class F2FPeer
 		this.displayName = displayName;
 		this.commProviders = new ArrayList<CommunicationProvider>();
 		addCommProvider(provider);
-		F2FComputing.addMessageListener(StunMessage.class, new StunMessageHandler());
-		//updateSTUNInfo();
 	}
 	
 	boolean isContactable()
@@ -131,139 +124,5 @@ public class F2FPeer
 		}
 		// throw an exception if message is not sent
 		throw new CommunicationFailedException("peer " + getDisplayName() + " is not reachable");
-	}
-	
-	private StunInfoClient stunInfoClient = null;
-	private StunInfo stunInfo = null;
-	public StunInfo getSTUNInfo()
-	{
-		return stunInfo; 
-	}
-	public void setSTUNInfo(StunInfo stunInf)
-	{
-		stunInfo = stunInf;
-		if (F2FComputing.getLocalPeer().equals(this))
-		{
-		// init the processes that have to be done
-		// after the local peer has has got its STUN info
-			
-			// send the STUN info to the peers that have asked for it
-			synchronized (reportSTUNPeers)
-			{
-				for (F2FPeer peer: reportSTUNPeers)
-					reportSTUNInfo(peer);
-				reportSTUNPeers.clear();
-			}
-		}
-		else
-		{
-			logger.info("received STUN info from " + this.displayName);
-		// init the processes that have to be done
-		// after a remote peer has sent its STUN info
-		
-			
-		}
-	}
-	
-	public void updateSTUNInfo()
-	{
-		if (F2FComputing.getLocalPeer() == null) return;
-		// update the local STUN info ...
-		if(F2FComputing.getLocalPeer().equals(this))
-		{
-			if (stunInfoClient == null)
-			{
-				try
-				{
-					stunInfoClient = new StunInfoClient();
-				}
-				catch (Exception e)
-				{
-					logger.error(e.getMessage());
-					return;
-				}
-			}
-			stunInfoClient.updateSTUNInfo();
-		}
-		// ... or ask update for a remote peer's STUN info 
-		else
-		{
-			try
-			{
-				sendMessage(new StunMessage());
-			}
-			catch (CommunicationFailedException e)
-			{
-				logger.debug("could not send GET_STUN_INFO to " + getDisplayName());
-			}
-		}
-	}
-
-	private ArrayList<F2FPeer> reportSTUNPeers = null;
-	private void reportSTUNInfo(F2FPeer remotePeer)
-	{
-		if(!F2FComputing.getLocalPeer().equals(this)) return;
-		
-		if (stunInfo != null)
-		{
-			try
-			{
-				remotePeer.sendMessage(new StunMessage(stunInfo));
-			}
-			catch (CommunicationFailedException e)
-			{
-				logger.warn("could not send REPORT_STUN_INFO to " + remotePeer.getDisplayName());
-			}
-		}
-		else
-		{
-			synchronized (reportSTUNPeers)
-			{
-				reportSTUNPeers.add(remotePeer);
-			}
-		}
-	}
-
-	private class StunMessageHandler implements F2FMessageListener
-	{
-		public void messageReceived(Object message, F2FPeer sender)
-		{
-			if (message instanceof StunMessage)
-			{
-				StunMessage msg = (StunMessage) message;
-				if (msg.type == StunMessage.Type.GET && F2FPeer.this.equals(F2FComputing.getLocalPeer()))
-				{
-					reportSTUNInfo(sender);
-				}
-				else if (msg.type == StunMessage.Type.REPORT && F2FPeer.this.equals(sender))
-				{
-					sender.setSTUNInfo(msg.stunInfo);
-				}
-			}
-			else logger.warn("StunMessageHandler.messageRecieved() handles only StunMessage");
-		}
-	}
-}
-
-class StunMessage implements Serializable
-{
-	private static final long serialVersionUID = -2675081725822234846L;
-	
-	enum Type
-	{
-		GET,
-		REPORT
-	}
-
-	Type type = null;
-	StunMessage()
-	{
-		type = Type.GET;
-	}
-	StunInfo stunInfo = null;
-	StunMessage(StunInfo stunInfo)
-	{
-		type = Type.REPORT;
-		this.stunInfo = stunInfo;
 	}
 }

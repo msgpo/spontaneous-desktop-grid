@@ -4,9 +4,9 @@ import java.io.Serializable;
 
 import de.javawi.jstun.test.DiscoveryInfo;
 
-public class StunInfo implements Serializable{
-
-	private String id;
+public class StunInfo implements Serializable
+{
+	private static final long serialVersionUID = 4721470383254301632L;
 	
 	private boolean openAccess = false;
 	private boolean blockedUDP = false;
@@ -17,8 +17,6 @@ public class StunInfo implements Serializable{
 	private boolean symmetricUDPFirewall = false;
 	private String publicIp = null;
 	private String localIp = null;
-	
-	private static final long serialVersionUID = 4721470383254301632L;
 
 	public StunInfo(){
 		
@@ -37,15 +35,6 @@ public class StunInfo implements Serializable{
 			this.publicIp = discoveryInfo.getPublicIP().getHostAddress();
 		}
 	}
-	
-	public String getId() {
-		return id;
-	}
-
-	public void setId(String id) {
-		this.id = id;
-	}
-
 	
 	public boolean isOpenAccess() {
 		return openAccess;
@@ -121,7 +110,6 @@ public class StunInfo implements Serializable{
 
 	public String toString(){
 		StringBuffer sb = new StringBuffer();
-		sb.append("[\nid: " + getId() + '\n');
 		sb.append("Local IP address: ");
 		sb.append(localIp);
 		sb.append("\n");

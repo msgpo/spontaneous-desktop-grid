@@ -30,15 +30,7 @@ class TCPCommInitiator extends Thread implements Activity, PeerPresenceListener
 	static boolean isInitialized() { return initialized; }
 	
 	public void run()
-	{
-		// wait 1 second so that UI would initialize
-		// events are not shown otherwize
-		try
-		{
-			Thread.sleep(1000);
-		}
-		catch (InterruptedException e1)	{}
-		
+	{		
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
 		// start a thread that initializes each network interface
 		List<Thread> initThreads = new ArrayList<Thread>();

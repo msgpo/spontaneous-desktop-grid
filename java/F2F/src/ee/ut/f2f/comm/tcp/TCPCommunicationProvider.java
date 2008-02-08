@@ -50,7 +50,7 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 		new TCPCommInitiator().start();
 	}
 
-	public void addFriend(UUID id, InetSocketAddress friend, boolean bIntroduce) throws IOException
+	void addFriend(UUID id, InetSocketAddress friend, boolean bIntroduce) throws IOException
 	{
 		if (peers.containsKey(id)) return;
 		synchronized (peers)

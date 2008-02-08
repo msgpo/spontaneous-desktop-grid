@@ -21,7 +21,6 @@ public class StunInfoTest extends TestCase{
 		}
 		
 		assertNotNull(sinf);
-		sinf.setId("From");
 		System.out.println("Stun info : " + sinf.toString());
 		
 	}
