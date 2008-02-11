@@ -56,7 +56,7 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 	private JPanel mainPanel = null;
 	private JPanel friendsPanel = null;
 	private JList friendsList = null;
-	private FriendModel friendModel = null;
+	private FriendModel<F2FPeer> friendModel = null;
 	//private JTextArea console = null;
 	
 	private JButton createChatButton;
@@ -110,7 +110,7 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 		friendsPanel.setPreferredSize(new Dimension(200, 300+200));
 		mainPanel.add(friendsPanel, BorderLayout.WEST);
 		
-		friendModel = new FriendModel();
+		friendModel = new FriendModel<F2FPeer>();
 		friendsList = new JList(friendModel);
 		friendsList.addListSelectionListener(new FriendsListListener());
 
@@ -118,7 +118,7 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 		friendsList.setLayoutOrientation(JList.VERTICAL);
 		JScrollPane listScroller = new JScrollPane(friendsList);
 		friendsPanel.add(listScroller);
-		
+
 		createChatButton = new JButton("Create chat");
 		createChatButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
@@ -321,7 +321,7 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 		frame.setVisible(true);
 	}
 
-	public FriendModel getFriendModel() {
+	public FriendModel<F2FPeer> getFriendModel() {
 		return friendModel;
 	}
 

@@ -67,8 +67,10 @@ public class GroupChatWindow extends JFrame {
 	private JList memberList;
 
 	private JButton removeButton;
+
+	private FriendModel<F2FPeer> f2fMembers = null;
+	private FriendModel<ChatMember> chatMembers = null;
 	
-	private FriendModel memberModel;
 	private UIController mainWindow;
 	private JobSelector jobSelect;
 	private String chatId;
@@ -137,19 +139,23 @@ public class GroupChatWindow extends JFrame {
 		typeAreaScrollPane.setVerticalScrollBarPolicy(ScrollPaneConstants.VERTICAL_SCROLLBAR_AS_NEEDED);
 		typeAreaScrollPane.setHorizontalScrollBarPolicy(ScrollPaneConstants.HORIZONTAL_SCROLLBAR_NEVER);
 		
-		memberModel = new FriendModel();
-		memberList = new JList(memberModel);
 		
-		if (isCreator){
+		if (isCreator)
+		{
+			f2fMembers = new FriendModel<F2FPeer>();
+			memberList = new JList(f2fMembers);
 			if(members.contains(F2FComputing.getLocalPeer())) {
 				members.remove(F2FComputing.getLocalPeer());
 			}
 			
-			memberModel.add(F2FComputing.getLocalPeer());
+			f2fMembers.add(F2FComputing.getLocalPeer());
 			addMembers(members);
 		}
-		else {
-			memberModel.add(F2FComputing.getLocalPeer());
+		else
+		{
+			chatMembers = new FriendModel<ChatMember>();
+			memberList = new JList(chatMembers);
+			chatMembers.add(new ChatMember(F2FComputing.getLocalPeer().getDisplayName()));
 		}
 		
 		memberList.setSelectionMode(ListSelectionModel.MULTIPLE_INTERVAL_SELECTION);
@@ -190,7 +196,7 @@ public class GroupChatWindow extends JFrame {
 				if(jobSelect != null) {
 					jobSelect.dispose();
 				}
-				jobSelect = new JobSelector(memberModel);
+				jobSelect = new JobSelector(f2fMembers);
 			}
 		}); 
 		
@@ -249,8 +255,8 @@ public class GroupChatWindow extends JFrame {
 		if(isCreator) {
 			String kickMessage = CHAT_TYPE_END + ";" + chatId + ";" + CHAT_OPTYPE_REM;
 			
-			for (F2FPeer peer : memberModel.getPeers()) {
-				memberModel.remove(peer);
+			for (F2FPeer peer : f2fMembers.getPeers()) {
+				f2fMembers.remove(peer);
 				
 				try	{
 					if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())) {
@@ -325,8 +331,8 @@ public class GroupChatWindow extends JFrame {
 		//Message structure: operationType;member;member;member...
 		if (this.creator == null && isCreator == false) {
 			this.creator = src;
-			memberModel.add(creator);
-		} 
+			chatMembers.add(new ChatMember(creator.getDisplayName()));
+		}
 		
 		int separatorIndex = control.indexOf(";");
 		if(separatorIndex != -1) {
@@ -336,7 +342,7 @@ public class GroupChatWindow extends JFrame {
 			if (operation.equals(CHAT_OPTYPE_ADD)) {
 				//Add people to chat
 				for (String member : members) {
-					memberModel.add(new F2FPeer(member));
+					chatMembers.add(new ChatMember(member));
 				}
 			}
 			else if (operation.equals(CHAT_OPTYPE_REM)) {//Remove people from chat
@@ -344,7 +350,7 @@ public class GroupChatWindow extends JFrame {
 					String notifyMessage = CHAT_TYPE_CTRL + ";" + chatId + ";" + CHAT_OPTYPE_REM + ";" + src.getDisplayName();
 					ChatMessage notifyMsg = new ChatMessage(notifyMessage);
 					
-					for (F2FPeer peer : memberModel.getPeers()) {
+					for (F2FPeer peer : f2fMembers.getPeers()) {
 						try	{
 							if(!peer.getID().equals(F2FComputing.getLocalPeer().getID()) &&
 									!peer.getID().equals(src.getID())) { 
@@ -356,13 +362,13 @@ public class GroupChatWindow extends JFrame {
 						}
 					}
 					
-					memberModel.remove(src);
+					f2fMembers.remove(src);
 				}
 				else {
 					for (String member : members) {
-						for (F2FPeer peer : memberModel.getPeers()){
+						for (ChatMember peer : chatMembers.getPeers()){
 							if (peer.getDisplayName().equals(member)) {
-								memberModel.remove(peer);
+								chatMembers.remove(peer);
 								break;
 							}
 						}				
@@ -377,7 +383,7 @@ public class GroupChatWindow extends JFrame {
 		Collection<F2FPeer> peopleList = new ArrayList<F2FPeer>();
 		for (F2FPeer peer : peers) {
 			boolean isInChat = false;
-			for (F2FPeer member : memberModel.getPeers()) {
+			for (F2FPeer member : f2fMembers.getPeers()) {
 				if (peer.equals(member)) {
 					isInChat = true;
 					break;
@@ -405,7 +411,7 @@ public class GroupChatWindow extends JFrame {
 		
 		// Send message to removed people
 		for (F2FPeer selectedPeer : selectedMembers) {
-			memberModel.remove(selectedPeer);
+			f2fMembers.remove(selectedPeer);
 			notifyMessage = notifyMessage + ";" + selectedPeer.getDisplayName();			
 			try	{
 				selectedPeer.sendMessage(kickMsg);
@@ -417,7 +423,7 @@ public class GroupChatWindow extends JFrame {
 		
 		// Notify others
 		ChatMessage notifyMsg = new ChatMessage(notifyMessage);
-		for (F2FPeer peer : memberModel.getPeers()) {
+		for (F2FPeer peer : f2fMembers.getPeers()) {
 			try	{
 				if(!peer.getID().equals(F2FComputing.getLocalPeer().getID())) { 
 					peer.sendMessage(notifyMsg);
@@ -440,7 +446,7 @@ public class GroupChatWindow extends JFrame {
 		 
 		if (isCreator) {
 			//Send to everyone but self
-			for (F2FPeer peer : ((FriendModel)memberList.getModel()).getPeers()) {
+			for (F2FPeer peer : f2fMembers.getPeers()) {
 				if(!peer.getID().equals(F2FComputing.getLocalPeer().getID()) && 
 						(sender == null || !peer.getID().equals(sender.getID()))) {
 					try	{
@@ -480,7 +486,7 @@ public class GroupChatWindow extends JFrame {
 		String message;
 		
 		// Send new members to old members
-		for (F2FPeer member : memberModel.getPeers()) {
+		for (F2FPeer member : f2fMembers.getPeers()) {
 			if(!member.getID().equals(F2FComputing.getLocalPeer().getID())) {
 				try	{
 					message = messageStruct;
@@ -499,7 +505,7 @@ public class GroupChatWindow extends JFrame {
 		// Adds new members to my list
 		for (F2FPeer memberToAdd : membersToAdd) {
 			if(!memberToAdd.getID().equals(F2FComputing.getLocalPeer().getID())) {
-				memberModel.add(memberToAdd);
+				f2fMembers.add(memberToAdd);
 			}
 		}	
 		
@@ -511,7 +517,7 @@ public class GroupChatWindow extends JFrame {
 			
 			try	{
 				message = messageStruct;
-				for (F2FPeer member : memberModel.getPeers()) {
+				for (F2FPeer member : f2fMembers.getPeers()) {
 					if(!member.getID().equals(F2FComputing.getLocalPeer().getID()) && 
 							!member.getID().equals(memberToAdd.getID())) {
 						message = message + ";" + member.getDisplayName();
@@ -542,7 +548,7 @@ public class GroupChatWindow extends JFrame {
 			selectedMembers.clear();
 			
 			for (int i : memberList.getSelectedIndices()) {
-				selectedMembers.add(memberModel.getElementAt(i));
+				selectedMembers.add(f2fMembers.getElementAt(i));
 			}
 			
 			// Can't remove yourself

@@ -41,10 +41,10 @@ public class JobSelector extends JFrame
 	private JTextField tf2 = null;
 	private JPanel mainPanel = null;
 	private File[] selectedFiles = null;
-	private SpringLayout bottomPanelLayout = null;
+	private SpringLayout layout = null;
 	private JButton btnCompute = null;
 	
-	private FriendModel members = null;
+	private FriendModel<F2FPeer> members = null;
 	Collection<F2FPeer> friends = null;
 
 	private JCheckBox btnSlave = null;
@@ -73,7 +73,7 @@ public class JobSelector extends JFrame
 		endInit();
 	}
 
-	public JobSelector(FriendModel people)
+	public JobSelector(FriendModel<F2FPeer> people)
 	{
 		members = people;
 		
@@ -91,8 +91,8 @@ public class JobSelector extends JFrame
 		this.setTitle("Start a F2F application");
 		this.setResizable(false);
 		
-		bottomPanelLayout = new SpringLayout();
-		mainPanel = new JPanel(bottomPanelLayout);
+		layout = new SpringLayout();
+		mainPanel = new JPanel(layout);
 		mainPanel.setSize(new Dimension(560, 150));
 		
 	}
@@ -100,19 +100,19 @@ public class JobSelector extends JFrame
 	private void initFileChooser()
 	{
 		JLabel label1 = new JLabel("Choose jar(s) and specify the Master class");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.NORTH, mainPanel);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, label1, 0, SpringLayout.WEST, mainPanel);
+		layout.putConstraint(SpringLayout.NORTH, label1, 5, SpringLayout.NORTH, mainPanel);
+		layout.putConstraint(SpringLayout.WEST, label1, 0, SpringLayout.WEST, mainPanel);
 		mainPanel.add(label1);
 		
 		tf1 = new JTextField();
 		tf1.setColumns(40);
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, tf1, 5, SpringLayout.SOUTH, label1);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, tf1, 0, SpringLayout.WEST, label1);
+		layout.putConstraint(SpringLayout.NORTH, tf1, 5, SpringLayout.SOUTH, label1);
+		layout.putConstraint(SpringLayout.WEST, tf1, 0, SpringLayout.WEST, label1);
 		mainPanel.add(tf1);
 
 		JButton button1 = new JButton("Browse...");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button1, 0, SpringLayout.NORTH, tf1);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, button1, 5, SpringLayout.EAST, tf1);
+		layout.putConstraint(SpringLayout.NORTH, button1, 0, SpringLayout.NORTH, tf1);
+		layout.putConstraint(SpringLayout.WEST, button1, 5, SpringLayout.EAST, tf1);
 		mainPanel.add(button1);
 		
 		// Main task will be filled from the manifest file's entry.
@@ -173,16 +173,16 @@ public class JobSelector extends JFrame
 		});
 		
 		tf2.setColumns(40);
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, tf2, 5, SpringLayout.SOUTH, tf1);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, tf2, 0, SpringLayout.WEST, tf1);
+		layout.putConstraint(SpringLayout.NORTH, tf2, 5, SpringLayout.SOUTH, tf1);
+		layout.putConstraint(SpringLayout.WEST, tf2, 0, SpringLayout.WEST, tf1);
 		mainPanel.add(tf2);
 	}
 	
 	private void initCompute()
 	{
 		btnCompute = new JButton("Compute");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, btnCompute, 5, SpringLayout.SOUTH, tf2);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, btnCompute, 0, SpringLayout.WEST, tf2);
+		layout.putConstraint(SpringLayout.NORTH, btnCompute, 5, SpringLayout.SOUTH, tf2);
+		layout.putConstraint(SpringLayout.WEST, btnCompute, 0, SpringLayout.WEST, tf2);
 		mainPanel.add(btnCompute);
 		
 		btnCompute.addActionListener(new ActionListener() {
@@ -210,14 +210,14 @@ public class JobSelector extends JFrame
 		});
 		
 		// bottomPanel constraints (constraint SOUTH of the bottom panel to the last button)
-		bottomPanelLayout.putConstraint(SpringLayout.SOUTH, mainPanel, 5, SpringLayout.SOUTH, btnCompute);
+		layout.putConstraint(SpringLayout.SOUTH, mainPanel, 5, SpringLayout.SOUTH, btnCompute);
 	}
 
 	private void initSlave()
 	{
 	    btnSlave = new JCheckBox("Participate as a Slave");
-	    bottomPanelLayout.putConstraint(SpringLayout.NORTH, btnSlave, 0, SpringLayout.NORTH, btnCompute);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, btnSlave, 10, SpringLayout.EAST, btnCompute);
+	    layout.putConstraint(SpringLayout.NORTH, btnSlave, 0, SpringLayout.NORTH, btnCompute);
+		layout.putConstraint(SpringLayout.WEST, btnSlave, 10, SpringLayout.EAST, btnCompute);
 		btnSlave.setSelected(false);
 	    mainPanel.add(btnSlave);
 	}
@@ -226,8 +226,8 @@ public class JobSelector extends JFrame
 	{
 		
 		JButton button3 = new JButton("Show stats");
-		bottomPanelLayout.putConstraint(SpringLayout.NORTH, button3, 0, SpringLayout.NORTH, btnCompute);
-		bottomPanelLayout.putConstraint(SpringLayout.WEST, button3, 10, SpringLayout.EAST, btnCompute);
+		layout.putConstraint(SpringLayout.NORTH, button3, 0, SpringLayout.NORTH, btnCompute);
+		layout.putConstraint(SpringLayout.WEST, button3, 10, SpringLayout.EAST, btnCompute);
 		mainPanel.add(button3);
 		
 		button3.addActionListener(new ActionListener()

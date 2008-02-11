@@ -20,11 +20,8 @@ public class F2FPeer
 
 	/**
 	 * Used only for the local peer creation.
-	 *
-	 * TODO: remove the hack for Chat
-	 * make this method not public
 	 */	
-	public F2FPeer(String displayName)
+	F2FPeer(String displayName)
 	{
 		this.id = UUID.randomUUID();
 		this.displayName = displayName;
