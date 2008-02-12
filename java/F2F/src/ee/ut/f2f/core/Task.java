@@ -120,7 +120,7 @@ public abstract class Task extends Thread implements Activity
 	}
 
 	/**
-	 * An abstract method which realisation should describe the steps 
+	 * An abstract method which realization should describe the steps 
 	 * of a distributed algorithm. This is the place where one can put his/her
 	 * code and let it be executed by F2FComputing framework!
 	 */
