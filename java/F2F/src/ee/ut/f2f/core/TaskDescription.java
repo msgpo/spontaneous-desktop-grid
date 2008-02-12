@@ -21,7 +21,8 @@ class TaskDescription implements Serializable
 	/**
 	 * Specifies the ID of a peer where the described class should be executed  
 	 */
-	UUID peerID;
+	private UUID peerID;
+	UUID getPeerID() { return peerID; }
 	
 	/**
 	 * The unique ID of the corresponding job.

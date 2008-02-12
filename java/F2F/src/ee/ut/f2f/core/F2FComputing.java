@@ -431,7 +431,7 @@ public class F2FComputing
 		for (TaskDescription taskDesc : job.getTaskDescriptions())
 		{
 			if (job.getTask(taskDesc.getTaskID()) == null &&
-				taskDesc.peerID.equals(localPeer.getID()))
+				taskDesc.getPeerID().equals(localPeer.getID()))
 			{
 				try
 				{
@@ -616,7 +616,7 @@ public class F2FComputing
 					log.error("didn't find the receiver task description");
 					return;
 				}
-				F2FPeer receiver = peers.get(receiverTaskDesc.peerID);
+				F2FPeer receiver = peers.get(receiverTaskDesc.getPeerID());
 				if (receiver == null)
 				{
 					log.error("didn't find the receiver peer");
