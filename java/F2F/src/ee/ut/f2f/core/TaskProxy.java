@@ -168,7 +168,7 @@ public class TaskProxy
 	/**
 	 * @return The description of the task to which this proxy belongs to.
 	 */
-	private TaskDescription getRemoteTaskDescription()
+	public TaskDescription getRemoteTaskDescription()
 	{
 		return remoteTaskDescription;
 	}

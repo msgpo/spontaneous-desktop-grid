@@ -325,8 +325,8 @@ public class F2FComputing
 		// this job must definetely exist!
 		Job job = jobs.get(taskDescription.getJobID());
 		ClassLoader loader = job.getClassLoader();
-		logger.debug("Loading class: " + taskDescription.className);
-		Class clazz = loader.loadClass(taskDescription.className);
+		logger.debug("Loading class: " + taskDescription.getClassName());
+		Class clazz = loader.loadClass(taskDescription.getClassName());
 		Task task = (Task) clazz.newInstance();
 		task.setTaskDescription(taskDescription);
 		job.addTask(task);

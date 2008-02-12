@@ -50,8 +50,8 @@ public class Job implements Serializable, Activity
 			taskDescriptions.put(task.getTaskID(), task);
 	}
 	void addTaskDescription(TaskDescription task) { taskDescriptions.put(task.getTaskID(), task); }
-	TaskDescription getTaskDescription(String taskID) { return taskDescriptions.get(taskID); }
-	Collection<TaskDescription> getTaskDescriptions() { return taskDescriptions.values(); }
+	public TaskDescription getTaskDescription(String taskID) { return taskDescriptions.get(taskID); }
+	public Collection<TaskDescription> getTaskDescriptions() { return taskDescriptions.values(); }
 	public Collection<String> getTaskIDs() { return taskDescriptions.keySet(); }
 	
 	/**

@@ -8,7 +8,7 @@ import java.util.UUID;
  * a class that has to be executed and 
  * a peer where it has to be executed. 
  */
-class TaskDescription implements Serializable
+public class TaskDescription implements Serializable
 {
 	private static final long serialVersionUID = 6393763867640026109L;
 
@@ -16,24 +16,25 @@ class TaskDescription implements Serializable
 	 * The unique ID of a task in a job.
 	 */
 	private String taskID;
-	String getTaskID() { return taskID; }
+	public String getTaskID() { return taskID; }
 	
 	/**
 	 * Specifies the ID of a peer where the described class should be executed  
 	 */
 	private UUID peerID;
-	UUID getPeerID() { return peerID; }
+	public UUID getPeerID() { return peerID; }
 	
 	/**
 	 * The unique ID of the corresponding job.
 	 */
 	private String jobID;
-	String getJobID() { return jobID; }
+	public String getJobID() { return jobID; }
 	
 	/**
 	 * The name of the executable class that contains algorithm of described task.
 	 */
-	String className;
+	private String className;
+	String getClassName() { return className; }
 
 	TaskDescription(String jobID, String taskID, 
 			UUID peerID, String className) 
