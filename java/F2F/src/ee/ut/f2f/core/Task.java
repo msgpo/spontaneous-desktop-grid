@@ -20,7 +20,9 @@ public abstract class Task extends Thread implements Activity
 {
 	private final static Logger logger = Logger.getLogger(Task.class);
 	/**
-	 * Returns unique ID of the task in a job.
+	 * Returns the unique ID of the task.
+	 * Each task has an unique ID in a job. The master task has ID "0", and all the 
+	 * slave tasks have IDs from "1" to "N", where N is the number of slave tasks.
 	 */
 	public String getTaskID() { return taskDescription.getTaskID(); }
 
@@ -34,15 +36,29 @@ public abstract class Task extends Thread implements Activity
 	 * Map taskID->taskProxy, holds proxies to other tasks of a job.
 	 */
 	private Map<String, TaskProxy> taskProxies = new HashMap<String, TaskProxy>();
+	/**
+	 * This method returns all proxies to remote tasks that have been created
+	 * (that means the proxies have been asked for with the method getTaskProxy()).
+	 * This information can be useful in GUI to show existing connections to remote peers
+	 * and the size of message queues.
+	 */
 	public Collection<TaskProxy> getTaskProxies() { return taskProxies.values(); }
 
 	/**
 	 * Exception that was thrown during task's execution.
 	 */
 	private Exception exception = null;
+	/**
+	 * Returns the exception that caused the task to stop (was thrown during task's execution).
+	 * Returns null if such exception did not happen.
+	 */
 	public Exception getException() { return exception; }
 	
 	/**
+	 * This method tries to return a proxy to a remote task with ID taskID.
+	 * If the proxy to the remote task is asked the first time, it is created and saved for later use.
+	 * The framework checks if a task with the given ID exists and then creates the proxy to it.
+	 *  
 	 * @param taskID The ID of a task to communicate with (send/receive messages to/from the task). 
 	 * @return TaskProxy that can be used to send/receive messages to/from a task.
 	 */
@@ -110,13 +126,13 @@ public abstract class Task extends Thread implements Activity
 	 */
 	public abstract void runTask();
 
-	public String getActivityName() {
+	public String getActivityName()
+	{
 		return "Task " + taskDescription.getTaskID();
 	}
 
-	public Activity getParentActivity() {
+	public Activity getParentActivity()
+	{
 		return getJob();
-	}
-	
-	
+	}	
 }
