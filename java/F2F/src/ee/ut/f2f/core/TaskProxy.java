@@ -23,7 +23,7 @@ public class TaskProxy
 	/** Whose proxy is this. */
 	private TaskDescription remoteTaskDescription;
 	
-	TaskProxy(Task task, TaskDescription remoteTaskDescription)
+	protected TaskProxy(Task task, TaskDescription remoteTaskDescription)
 	{
 		this.task = task;
 		this.remoteTaskDescription = remoteTaskDescription;
