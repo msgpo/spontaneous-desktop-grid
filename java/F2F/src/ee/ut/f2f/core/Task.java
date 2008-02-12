@@ -73,7 +73,7 @@ public abstract class Task extends Thread implements Activity
 				proxy = taskProxies.get(taskID);
 				if (proxy==null)
 				{
-					Job job = F2FComputing.getJob(taskDescription.getJobID());
+					Job job = getJob();
 					if (job != null)
 					{
 						TaskDescription taskDescription = job.getTaskDescription(taskID);
