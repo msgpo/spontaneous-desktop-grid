@@ -7,12 +7,8 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
-import ee.ut.f2f.util.logging.Logger;
-
 public class F2FDebug
-{
-	private static final Logger logger = Logger.getLogger(F2FDebug.class);
-	
+{	
 	private static F2FDebug debug;
 	
 	private JFrame frame;
@@ -52,9 +48,7 @@ public class F2FDebug
 	}
 
 	public static synchronized void println(String msg)
-	{
-		logger.debug(msg);
-		
+	{		
 		getInstance().console.append(msg);
 		if (!msg.endsWith(String.valueOf('\n')))
 		{
