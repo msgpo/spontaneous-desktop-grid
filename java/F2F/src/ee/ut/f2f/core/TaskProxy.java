@@ -100,6 +100,14 @@ public class TaskProxy
 			}
 			messages.notify();
 		}
+		// notify the task that a message from a remote task was received
+		new Thread()
+		{
+			public void run()
+			{
+				task.messageReceived(remoteTaskDescription.getTaskID());
+			}
+		}.start();
 	}
 	
 	/**

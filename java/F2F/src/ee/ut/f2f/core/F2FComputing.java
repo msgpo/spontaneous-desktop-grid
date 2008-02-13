@@ -397,8 +397,16 @@ public class F2FComputing
 				peers.put(peerID, peer);
 				synchronized (peerListeners)
 				{
-					for (PeerPresenceListener listener: peerListeners)
-						listener.peerContacted(peer);
+					for (final PeerPresenceListener listener: peerListeners)
+					{
+						final F2FPeer fPeer = peer;
+						new Thread() {
+							public void run()
+							{
+								listener.peerContacted(fPeer);
+							}
+						}.start();
+					}
 				}
 				return;
 			}
@@ -418,8 +426,16 @@ public class F2FComputing
 			peers.remove(peerID);
 			synchronized (peerListeners)
 			{
-				for (PeerPresenceListener listener: peerListeners)
-					listener.peerUnContacted(peer);
+				for (final PeerPresenceListener listener: peerListeners)
+				{
+					final F2FPeer fPeer = peer;
+					new Thread() {
+						public void run()
+						{
+							listener.peerUnContacted(fPeer);
+						}
+					}.start();
+				}
 			}
 		}
 	}
@@ -475,10 +491,10 @@ public class F2FComputing
 	/**
 	 * Handles F2F framework messages and forwards messages sent between tasks.
 	 */
-	public static void messageRecieved(Object message, UUID senderID)
+	public static void messageRecieved(final Object message, UUID senderID)
 	{
 		if (!isInitialized()) return;
-		F2FPeer sender = peers.get(senderID);
+		final F2FPeer sender = peers.get(senderID);
 		// throw away messages from unknown peers
 		if (sender == null)
 		{
@@ -491,8 +507,15 @@ public class F2FComputing
 			return;
 		}
 		
-		for (F2FMessageListener listener: messageListeners.get(message.getClass()))
-			listener.messageReceived(message, sender);
+		for (final F2FMessageListener listener: messageListeners.get(message.getClass()))
+		{
+			new Thread() {
+				public void run()
+				{
+					listener.messageReceived(message, sender);
+				}
+			}.start();
+		}
 	}
 	
 	private static boolean allowAllFriendsToUseMyPC = false;

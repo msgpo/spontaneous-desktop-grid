@@ -125,6 +125,11 @@ public abstract class Task extends Thread implements Activity
 	 * code and let it be executed by F2FComputing framework!
 	 */
 	public abstract void runTask();
+	
+	
+	public void messageReceived(String taskID)
+	{
+	}
 
 	public String getActivityName()
 	{
