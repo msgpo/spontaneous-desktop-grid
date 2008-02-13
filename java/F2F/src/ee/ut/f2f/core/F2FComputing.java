@@ -1,5 +1,6 @@
 package ee.ut.f2f.core;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
@@ -30,11 +31,17 @@ public class F2FComputing
 	 * at. New jobs can be added by user by GUI or received from other nodes.
 	 */
 	private static Map<String, Job> jobs = null;
+	/**
+	 * Returns all the jobs that are currently known.
+	 */
 	public static Collection<Job> getJobs()
 	{
 		if (!isInitialized()) return null;
 		return jobs.values();
 	}
+	/**
+	 * Returns the job with the given ID or null if such a job is not known.
+	 */
 	public static Job getJob(String jobID)
 	{
 		if (!isInitialized()) return null;
@@ -47,13 +54,16 @@ public class F2FComputing
 	private static java.io.File rootDirectory = null;
 	
 	private static F2FPeer localPeer = null;
+	/**
+	 * Returns a peer in F2F frameork that represents the local machine.
+	 */
 	public static F2FPeer getLocalPeer() {return localPeer;}
 	/**
 	 * Collection of remote peers that are known.
 	 */
-	static Map<UUID, F2FPeer> peers = null;
+	private static Map<UUID, F2FPeer> peers = null;
 	
-	private static boolean isInitialized() { return localPeer != null; } 
+	private static boolean isInitialized() { return localPeer != null; }
 	/**
 	 * Private constructor for singleton implementation.
 	 * 
@@ -68,18 +78,15 @@ public class F2FComputing
 		localPeer = new F2FPeer("me (localhost)");
 		logger.debug("local F2FPeer ID is " + localPeer.getID());
 		peers.put(localPeer.getID(), localPeer);
-		// start local STUN info update thread
-		//updateSTUNInfo();
+		// init comm providers
 		CommunicationFactory.getInitializedCommunicationProviders();
 	}
 
 	/**
-	 * Initiates F2FComputing in rootDirectory which will be parent directory for all
-	 * job directories.
+	 * Initiates F2FComputing in rootDirectory which will be parent 
+	 * directory for all job directories.
 	 * 
 	 * @param rootDirectory Parent directory of all job directories
-	 * @throws F2FComputingException 
-	 * @throws CommunicationInitException
 	 */
 	public static void initiateF2FComputing(java.io.File rootDirectory)
 	{
@@ -88,13 +95,10 @@ public class F2FComputing
 	}
 
 	/**
-	 * Initiates F2FComputing in ./__F2F_ROOTDIRECTORY which will be parent directory for all
-	 * job directories.
-	 * 
-	 * @throws CommunicationInitException
-	 * @throws F2FComputingException 
+	 * Initiates F2FComputing in ./__F2F_ROOTDIRECTORY which will be parent
+	 * directory for all job directories.
 	 */
-	public static void initiateF2FComputing() throws F2FComputingException
+	public static void initiateF2FComputing()
 	{
 		if (isInitialized()) return;
 		String tempName = "__F2F_ROOTDIRECTORY";
@@ -111,13 +115,10 @@ public class F2FComputing
 	 * 
 	 * @param jarFiles Jar files that contain an algorithm that has to be executed.
 	 * @param masterTaskClassName The name of class that contains the implementation of master task.
-	 * @param peers The peers that have been selected to be 'slaves' of the algorithm.
-	 * @throws F2FComputingException 
+	 * @param peers The peers that have been selected to be involved in the execution of the job.
 	 */
-	public static Job createJob(Collection<String> jarFilesNames, String masterTaskClassName, Collection<F2FPeer> peers) throws F2FComputingException
+	public static Job createJob(Collection<String> jarFilesNames, String masterTaskClassName, Collection<F2FPeer> peers) throws IOException, ClassNotFoundException, InstantiationException, IllegalAccessException
 	{
-		try
-		{
 		if (!isInitialized()) return null;
 		// create a job
 		String jobID = newJobID();
@@ -140,30 +141,18 @@ public class F2FComputing
 		job.addTaskDescription(masterTaskDescription);
 		job.addWorkingPeer(localPeer);
 		// create a task based on master task description and execute it	
-		try
-		{
-			Task task = newTask(masterTaskDescription);
-			task.start();
-		}
-		catch (Exception e)
-		{
-			logger.error("Error starting a master task: "+masterTaskDescription + e, e);
-		}
+		Task task = newTask(masterTaskDescription);
+		task.start();
+		
 		return job;
-		}
-		catch (Exception e)
-		{
-			logger.error("Error starting a job: " + e, e);
-			e.printStackTrace();
-			throw new RuntimeException(e);
-		}
 	}
 
 	/**
 	 * Generate unique ID for a job.
+	 * ID of a job consists of "Job" + 'a random integer that is generated in the local peer' + 'the ID of the local peer'
 	 */
-	private static String newJobID() { return "Job"+(++lastJobID); }
-	private static int lastJobID = new Random(System.currentTimeMillis()).nextInt();
+	private static String newJobID() { return "Job"+(++lastJobID)+localPeer.getID(); }
+	private static int lastJobID = new Random(UUID.randomUUID().getLeastSignificantBits()).nextInt();
 		
 	/**
 	 * This method is used to create new tasks.
@@ -183,10 +172,9 @@ public class F2FComputing
 	 * 	This collection should hold at least taskCount peers, otherwise the method
 	 *  throws RuntimeError. 
 	 * @return The job to which new tasks were added.
-	 * @throws F2FComputingException 
 	 */
 	static void submitTasks(String jobID, String className,
-			int taskCount, Collection<F2FPeer> peers) throws F2FComputingException
+			int taskCount, Collection<F2FPeer> peers) throws F2FComputingException, ClassNotFoundException, InstantiationException, IllegalAccessException
 	{
 		if (!isInitialized()) return;
 		logger.debug("Submitting " + taskCount + " tasks of " + className);
@@ -200,16 +188,12 @@ public class F2FComputing
 		if (job == null)
 			throw new F2FComputingException("Can not submit tasks to unknown job ("+jobID+")!");
 		ClassLoader loader = job.getClassLoader();
-		try
-		{
-			Class clazz = loader.loadClass(className);
-			@SuppressWarnings("unused")
-			Task task = (Task) clazz.newInstance();
-		}
-		catch (Exception e)
-		{
-			throw new F2FComputingException("Could not initialize task " + className, e);
-		}
+		
+		// try to load the class
+		Class clazz = loader.loadClass(className);
+		@SuppressWarnings("unused")
+		Task task = (Task) clazz.newInstance();
+		
 		
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(job, ActivityEvent.Type.CHANGED, 
 				"submitting " + taskCount + " tasks of " + className));
@@ -487,8 +471,17 @@ public class F2FComputing
 			messageListeners.get(messageType).remove(listener);
 		}
 	}
+	
 	/**
-	 * Handles F2F framework messages and forwards messages sent between tasks.
+	 * This method is called by a communication provider (IM, TCP, UDP etc) if
+	 * a message from a remote peer has been received.
+	 * This method directs the message to the right place for processing.
+	 * 
+	 * Messages of type F2FMessage (framework's internal messages and messages
+	 * that are exchanged between Tasks) are handled in this method.
+	 * Messages of other types are handled only if some listener is interested
+	 * in them (has registered itself to be a F2FMessageListener that wants to
+	 * be notified if a message of a specific type is received). 
 	 */
 	public static void messageReceived(final Object message, UUID senderID)
 	{
@@ -562,8 +555,9 @@ public class F2FComputing
 								ActivityEvent.Type.CHANGED, "Job received"));				
 				startJobTasks(job);
 			}
-			catch (F2FComputingException e)
+			catch (IOException e)
 			{
+				e.printStackTrace();
 				logger.error("" + e, e);
 			}
 		}

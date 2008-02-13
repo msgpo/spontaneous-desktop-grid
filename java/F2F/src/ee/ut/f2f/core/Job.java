@@ -4,7 +4,6 @@ import java.io.FileInputStream;
 import java.io.FileOutputStream;
 import java.io.IOException;
 import java.io.Serializable;
-import java.net.MalformedURLException;
 import java.net.URL;
 import java.net.URLClassLoader;
 import java.util.ArrayList;
@@ -105,9 +104,10 @@ public class Job implements Serializable, Activity
 	/**
 	 * @param rootDirectory parent directory of job working directory
 	 * @param jobID
+	 * @throws IOException 
 	 * @throws F2FComputingException 
 	 */
-	Job(java.io.File rootDirectory, String jobID, Collection<String> jarFilesNames, Collection<F2FPeer> peers) throws F2FComputingException
+	Job(java.io.File rootDirectory, String jobID, Collection<String> jarFilesNames, Collection<F2FPeer> peers) throws IOException
 	{
 		this.jobID = jobID;
 		this.jarFiles = new ArrayList<F2FJarFile>();
@@ -130,9 +130,10 @@ public class Job implements Serializable, Activity
 	 * initialization of a class loader that can load classes specific 
 	 * to the job.
 	 * @param rootDirectory
+	 * @throws IOException 
 	 * @throws F2FComputingException 
 	 */
-	void initialize(java.io.File rootDirectory) throws F2FComputingException
+	void initialize(java.io.File rootDirectory) throws IOException
 	{
 		workingDirectory = new java.io.File(rootDirectory, this.jobID);
 		workingDirectory.mkdir();
@@ -150,29 +151,18 @@ public class Job implements Serializable, Activity
 				fileStream = new FileOutputStream(jarFile);
 				fileStream.write(jar.getData());
 			}
-			catch (Exception e)
-			{
-				throw new F2FComputingException("Could not initialize a job! ", e);
-			}
 			finally
 			{
 				IOUtils.closeQuietly(fileStream);				
 			}
 		}
 		// initialize class loader of this job
-		try
+		Collection<URL> urls = new ArrayList<URL>();
+		for(F2FJarFile file: jarFiles)
 		{
-			Collection<URL> urls = new ArrayList<URL>();
-			for(F2FJarFile file: jarFiles)
-			{
-				urls.add(new java.io.File(workingDirectory, file.getName()).toURI().toURL());
-			}
-			classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), Job.class.getClassLoader());
+			urls.add(new java.io.File(workingDirectory, file.getName()).toURI().toURL());
 		}
-		catch (MalformedURLException e)
-		{
-			throw new F2FComputingException("Could not initialize a job! Error creating class loader. ", e);
-		}
+		classLoader = new URLClassLoader(urls.toArray(new URL[urls.size()]), Job.class.getClassLoader());
 	}
 
 	/**
@@ -196,9 +186,8 @@ public class Job implements Serializable, Activity
 	 * @param peers The collection of peers to where new tasks should be sent.
 	 * 	This collection should hold at least taskCount peers, otherwise the method
 	 *  throws RuntimeError. 
-	 * @throws F2FComputingException 
 	 */
-	public void submitTasks(String className, int taskCount, Collection<F2FPeer> peers) throws F2FComputingException
+	public void submitTasks(String className, int taskCount, Collection<F2FPeer> peers) throws F2FComputingException, ClassNotFoundException, InstantiationException, IllegalAccessException
 	{
 		if (getTask(getMasterTaskID()) == null)
 			throw new F2FComputingException("Tasks can only be submitted from master task!");
@@ -224,17 +213,10 @@ public class Job implements Serializable, Activity
 		 * @param absName Absolute name of a file.
 		 * @throws F2FComputingException 
 		 */
-		F2FJarFile(String absName) throws F2FComputingException
+		F2FJarFile(String absName) throws IOException
 		{
 			this.name = new java.io.File(absName).getName();
-			try
-			{
-				this.data = IOUtils.toByteArray(new FileInputStream(absName));
-			}
-			catch (IOException e)
-			{
-				throw new F2FComputingException("Error reading file "+absName, e);
-			}
+			this.data = IOUtils.toByteArray(new FileInputStream(absName));
 		}
 	}
 	

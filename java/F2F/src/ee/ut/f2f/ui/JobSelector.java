@@ -18,13 +18,13 @@ import javax.swing.JCheckBox;
 import javax.swing.JFileChooser;
 import javax.swing.JFrame;
 import javax.swing.JLabel;
+import javax.swing.JOptionPane;
 import javax.swing.JPanel;
 import javax.swing.JTextField;
 import javax.swing.SpringLayout;
 import javax.swing.filechooser.FileFilter;
 
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Job;
 import ee.ut.f2f.core.Task;
@@ -202,8 +202,18 @@ public class JobSelector extends JFrame
 					try {
 						jobID = F2FComputing.createJob(jarFilesNames, tf2.getText(), getF2FPeers()).getJobID();
 						logger.info("Started job with ID: " + jobID);
-					} catch (F2FComputingException ex) {
+					} catch (final Exception ex) {
+						ex.printStackTrace();
 						logger.error("Error with starting a job! " + ex);
+						new Thread()
+						{
+							public void run()
+							{
+								JOptionPane.showMessageDialog(
+					                null, "An exception was thrown during job creation. \n"+ ex,
+					                "Exception", JOptionPane.OK_OPTION);
+							}
+						}.start();
 					}
 				}
 			}

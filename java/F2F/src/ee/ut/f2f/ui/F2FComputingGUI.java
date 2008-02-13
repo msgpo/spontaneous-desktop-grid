@@ -5,7 +5,6 @@ import java.io.IOException;
 import java.io.OutputStream;
 
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.util.logging.Logger;
 
 public class F2FComputingGUI {
@@ -59,12 +58,7 @@ public class F2FComputingGUI {
 			//public void run()
 			//{
 				controller = new UIController("F2FComputing GUI");
-				try {
-					F2FComputing.initiateF2FComputing();
-				} catch (F2FComputingException e) {
-					log.error(e.toString());
-					e.printStackTrace();
-				}
+				F2FComputing.initiateF2FComputing();
 			//}
 		//}).start();
 	}

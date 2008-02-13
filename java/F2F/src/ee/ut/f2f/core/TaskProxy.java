@@ -47,7 +47,7 @@ public class TaskProxy
 					task.getTaskID(),
 					message);
 		// try to send message directly to the receiver
-		F2FPeer receiver = F2FComputing.peers.get(remoteTaskDescription.getPeerID());
+		F2FPeer receiver = F2FComputing.getPeer(remoteTaskDescription.getPeerID());
 		if (receiver != null)
 		{
 			try
@@ -63,7 +63,7 @@ public class TaskProxy
 		// could not find receiver directly -> try routing through master node
 		f2fMessage.setType(F2FMessage.Type.ROUTE);
 		TaskDescription masterTaskDesc = task.getTaskProxy(F2FComputing.getJob(task.getJob().getJobID()).getMasterTaskID()).getRemoteTaskDescription();
-		F2FPeer master = F2FComputing.peers.get(masterTaskDesc.getPeerID());
+		F2FPeer master = F2FComputing.getPeer(masterTaskDesc.getPeerID());
 		if (master == null)
 		{
 			logger.warn("MASTER PEER IS NOT KNOWN!!!");
