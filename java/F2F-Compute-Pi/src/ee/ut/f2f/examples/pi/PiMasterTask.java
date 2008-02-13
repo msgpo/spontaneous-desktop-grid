@@ -13,6 +13,14 @@ import ee.ut.f2f.util.F2FDebug;
 
 public class PiMasterTask extends Task
 {
+	// number of milliseconds to the slaves, how long
+	// they should compute points
+	Long intervalms = 2000L;
+	// received points
+	AtomicLongVector received = new AtomicLongVector( 0, 0 );
+	// How many points to compute in total
+	long maxpoints = 1000000000L;
+	
 	public void runTask()
 	{
 		long start = System.currentTimeMillis();
@@ -54,59 +62,27 @@ public class PiMasterTask extends Task
 			TaskProxy proxy = this.getTaskProxy(taskID);
 			if (proxy != null) slaveProxies.add(proxy);
 		}
-		
-		// number of milliseconds to the slaves, how long
-		// they should compute points
-		long intervalms = 2000L;
-		// received points
-		AtomicLongVector received = new AtomicLongVector( 0, 0 );
-		// How many points to compute in total
-		long maxpoints = 1000000000L;
 
 		// Send the interval time to all slaves
 		for (TaskProxy proxy: slaveProxies)
 		{
 			try {
-					proxy.sendMessage(new Long(intervalms));
-				} catch (CommunicationFailedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
+				proxy.sendMessage(intervalms);
+			} catch (CommunicationFailedException e) {
+				// TODO Auto-generated catch block
+				e.printStackTrace();
+			}
 		}
 		
-		long debug = System.currentTimeMillis() - 10000;
-		// collect results
+		// show current result after each 10 seconds
+		// the loop is exited after enough results have been received from slaves
 		while (received.getUnSyncTotal() < maxpoints)
 		{
-			if (debug + 10000 < System.currentTimeMillis())
-			{
-				debug = System.currentTimeMillis();
-				F2FDebug.println("processed " + (int)(((float)received.getUnSyncTotal() / maxpoints)*100) + "%" );
-				F2FDebug.println("Pi is " + received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal() );
-			}
+			F2FDebug.println("processed " + (int)(((float)received.getUnSyncTotal() / maxpoints)*100) + "%" );
+			F2FDebug.println("Pi is " + received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal() );
 			try {
-				Thread.sleep(100);
-			} catch (InterruptedException e) {
-				e.printStackTrace();
-			} // wait a little for collecting results
-			
-			// check if one of the slaves has new numbers
-			for (TaskProxy proxy: slaveProxies)
-			{
-				while (proxy.hasMessage())
-				{
-					AtomicLongVector receivedvector = (AtomicLongVector) proxy.receiveMessage();
-					F2FDebug.println("Received: total " 
-							+ receivedvector.getUnSyncTotal()
-							+ " positives " 
-							+ receivedvector.getUnSyncPositive());
-					received.add( receivedvector );
-					F2FDebug.println("Sum is now: total " 
-							+ received.getUnSyncTotal()
-							+ " positives " 
-							+ received.getUnSyncPositive());
-				}
-			}
+				Thread.sleep(10000);
+			} catch (InterruptedException e) {}
 		}
 		
 		// send stop message to slave tasks
@@ -128,5 +104,36 @@ public class PiMasterTask extends Task
 		System.out.println("The computed Pi is : " + 
 				received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal());
 		System.out.println("Took " + (end - start) / 1000 + "s");
+	}
+	
+	// collect results
+	public void messageReceived(String remoteTaskID)
+	{
+		// do not process the message if the required amount of 
+		// points have been calculated already
+		if (received.getUnSyncTotal() >= maxpoints) return;
+		
+		// process the numbers from the slave task
+		TaskProxy proxy = this.getTaskProxy(remoteTaskID);
+		if (!proxy.hasMessage()) return;
+		AtomicLongVector receivedvector = (AtomicLongVector) proxy.receiveMessage();
+		synchronized (this)
+		{
+			if (received.getUnSyncTotal() >= maxpoints) return;
+			received.add( receivedvector );
+			
+			F2FDebug.println("Received from task "+remoteTaskID+": total " 
+					+ receivedvector.getUnSyncTotal()
+					+ " positives " 
+					+ receivedvector.getUnSyncPositive());
+			F2FDebug.println("Sum is now: total " 
+					+ received.getUnSyncTotal()
+					+ " positives " 
+					+ received.getUnSyncPositive());
+			
+			// check if the job is finished
+			if (received.getUnSyncTotal() >= maxpoints)
+				this.interrupt();
+		}
 	}
 }
