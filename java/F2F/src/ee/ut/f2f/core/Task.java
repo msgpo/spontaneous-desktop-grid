@@ -126,8 +126,14 @@ public abstract class Task extends Thread implements Activity
 	 */
 	public abstract void runTask();
 	
-	
-	public void messageReceived(String taskID)
+	/**
+	 * This method is called if a message is received from a remote task
+	 * with ID remoteTaskID. The message can be read from the proper task proxy.
+	 * An implementation of the Task class that wants to be notified about 
+	 * incoming messages should overwrite this method and take the actions it
+	 * wants (probably read the message and process it). 
+	 */
+	public void messageReceived(String remoteTaskID)
 	{
 	}
 
