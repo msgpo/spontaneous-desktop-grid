@@ -497,13 +497,19 @@ public class F2FComputing
 		if (message instanceof F2FMessage);
 		else // other types of messages should have a listener
 		{
-			if (!messageListeners.containsKey(message.getClass()))
+			HashMap<Class, Collection<F2FMessageListener>> messageListenersCopy = null;
+			synchronized (messageListeners)
+			{
+				messageListenersCopy = new HashMap<Class, Collection<F2FMessageListener>>(messageListeners);
+			}
+			
+			if (!messageListenersCopy.containsKey(message.getClass()))
 			{
 				logger.warn("the framework does not know the handler of messages of " + message.getClass());
 				return;
 			}
 			
-			for (final F2FMessageListener listener: messageListeners.get(message.getClass()))
+			for (final F2FMessageListener listener: messageListenersCopy.get(message.getClass()))
 			{
 				new Thread() {
 					public void run()
