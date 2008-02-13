@@ -9,7 +9,6 @@ import java.util.Collection;
 import java.util.List;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.xpp2p.exception.NothingRenderedException;
@@ -207,10 +206,7 @@ public class MasterBlenderer extends Task {
 
 			long end = System.currentTimeMillis();
 			System.out.println("Took " + (end - start) / 1000 + "s");
-			} catch (F2FComputingException e) {
-				e.printStackTrace();
-				// TODO: Handle exception
-			} catch (IOException e) {
+			} catch (Exception e) {
 				e.printStackTrace();
 				// TODO: Handle exception
 			}
