@@ -110,7 +110,7 @@ class TCPPeer implements Activity
 							Object message = oi.readObject();
 							//log.debug("\t\tReceived message from id [" + getID() + "] ip [" +
 							//		 outSocket.getRemoteSocketAddress() + ":" + "]"  + "'. Message: '" + message + "'.");
-							F2FComputing.messageRecieved(message, id);
+							F2FComputing.messageReceived(message, id);
 						}
 						catch (ClassNotFoundException e)
 						{

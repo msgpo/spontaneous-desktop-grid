@@ -94,7 +94,7 @@ public class F2FPeer
 		if (this.id.equals(F2FComputing.getLocalPeer().getID()))
 		{
 			logger.debug("Sending F2FMessage to MYSELF - loopback");
-			F2FComputing.messageRecieved(message, this.getID());			
+			F2FComputing.messageReceived(message, this.getID());			
 			return;
 		}
 		

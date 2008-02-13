@@ -666,7 +666,7 @@ public class SipIMCommunicationProvider
 					else
 					{
 						//F2FDebug.println("\t\t received a F2F message from peer " + evt.getSourceContact().getAddress());
-						F2FComputing.messageRecieved(message, sipPeers.get(evt.getSourceContact().getAddress()).id);
+						F2FComputing.messageReceived(message, sipPeers.get(evt.getSourceContact().getAddress()).id);
 					}
 				}
 				else

@@ -491,7 +491,7 @@ public class F2FComputing
 	/**
 	 * Handles F2F framework messages and forwards messages sent between tasks.
 	 */
-	public static void messageRecieved(final Object message, UUID senderID)
+	public static void messageReceived(final Object message, UUID senderID)
 	{
 		if (!isInitialized()) return;
 		final F2FPeer sender = peers.get(senderID);
