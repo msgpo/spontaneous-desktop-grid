@@ -5,7 +5,6 @@ import java.util.Collection;
 
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
@@ -45,7 +44,7 @@ public class PiMasterTask extends Task
 					this.getJob().getPeers().size(),
 					this.getJob().getPeers());
 			}
-		} catch (F2FComputingException e) {
+		} catch (Exception e) {
 			e.printStackTrace();
 			return;
 		}
