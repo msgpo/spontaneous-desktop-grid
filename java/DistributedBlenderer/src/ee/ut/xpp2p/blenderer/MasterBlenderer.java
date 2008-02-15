@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.xpp2p.exception.NothingRenderedException;
