@@ -29,8 +29,11 @@ public class TaskProxy
 		logger.info("Created new TaskProxy of task " + remoteTaskDescription.getTaskID());
 	}
 
-	/** Sends a message to the corresponding task. 
-	 * @throws CommunicationFailedException */
+	/** 
+	 * Sends a message to the corresponding task.
+	 *  
+	 * @throws CommunicationFailedException 
+	 */
 	public void sendMessage(Object message) throws CommunicationFailedException
 	{
 		if (remoteTaskDescription == null)
@@ -110,7 +113,7 @@ public class TaskProxy
 	}
 	
 	/**
-	 * @param timeoutInMillis custom timeout when the method will return
+	 * @param timeoutInMillis Custom timeout when the method will return
 	 * if it has not found the message. 0 or negative value will wait until
 	 * message is received.
 	 * 
@@ -127,14 +130,15 @@ public class TaskProxy
 		{
 			if (messages.isEmpty())
 			{
-				try
+				while (true)
 				{
-					if (timeoutInMillis < 0) timeoutInMillis = 0;
-					messages.wait(timeoutInMillis);
-				}
-				catch (InterruptedException e)
-				{
-					throw new RuntimeException(e);
+					try
+					{
+						if (timeoutInMillis < 0) timeoutInMillis = 0;
+						messages.wait(timeoutInMillis);
+						break;
+					}
+					catch (InterruptedException e){}
 				}
 			}
 			Object message = messages.poll(); 
@@ -156,7 +160,7 @@ public class TaskProxy
 	}
 
 	/**
-	 * @return <code>true</code> if there is message from the task;
+	 * @return <code>true</code> if there is message from the task,
 	 *         <code>false</code> otherwise.
 	 */
 	public boolean hasMessage()
@@ -173,7 +177,7 @@ public class TaskProxy
 	}
 	
 	/**
-	 * @return The description of the task to which this proxy belongs to.
+	 * @return The description of the task to which this proxy links to.
 	 */
 	public TaskDescription getRemoteTaskDescription()
 	{

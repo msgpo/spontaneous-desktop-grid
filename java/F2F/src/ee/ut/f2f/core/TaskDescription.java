@@ -34,7 +34,7 @@ public class TaskDescription implements Serializable
 	 * The name of the executable class that contains algorithm of described task.
 	 */
 	private String className;
-	String getClassName() { return className; }
+	public String getClassName() { return className; }
 
 	TaskDescription(String jobID, String taskID, 
 			UUID peerID, String className) 
