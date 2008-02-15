@@ -53,7 +53,7 @@ public class JobSelector extends JFrame
 	{
 		Collection<F2FPeer> peers = null;
 		if (friends != null)
-			peers = friends;
+			peers = new ArrayList<F2FPeer>(friends);
 		else peers = members.getPeers();
 		
 		if (btnSlave != null && btnSlave.isSelected() && !peers.contains(F2FComputing.getLocalPeer()))

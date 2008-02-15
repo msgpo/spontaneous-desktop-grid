@@ -2,7 +2,6 @@ package ee.ut.f2f.ui.model;
 
 import java.util.ArrayList;
 import java.util.Collection;
-import java.util.HashSet;
 import java.util.List;
 
 import javax.swing.AbstractListModel;
@@ -39,5 +38,5 @@ public class FriendModel<ElemType> extends AbstractListModel
 		}
 		this.fireContentsChanged(this,0,friends.size());
 	}
-	public Collection<ElemType> getPeers() { return new HashSet<ElemType>(friends); }
+	public Collection<ElemType> getPeers() { return new ArrayList<ElemType>(friends); }
 }
