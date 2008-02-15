@@ -107,6 +107,7 @@ public class F2FComputing
 	 * algorithm and selects peers whose computational power he/she wants
 	 * to use, specifies the name of master task class and initiates start of
 	 * the job by pressing "Start" button).
+	 * The method asks if the given peers allow to use their PC.
 	 * 
 	 * @param jarFiles Jar files that contain an algorithm that has to be executed.
 	 * @param masterTaskClassName The name of class that contains the implementation of master task.
@@ -333,8 +334,7 @@ public class F2FComputing
 
 	/**
 	 * This method is mainly ment for GUI to show available peers.
-	 * But this collection of peers can also be used to create a new job
-	 * or add new tasks to a job.
+	 * But this collection of peers can also be used to create a new job.
 	 * 
 	 * @return All peers that are known through communication providers.
 	 */

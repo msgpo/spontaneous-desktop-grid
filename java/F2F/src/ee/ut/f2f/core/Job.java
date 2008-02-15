@@ -176,8 +176,8 @@ public class Job implements Serializable, Activity
 	/**
 	 * This method of a job should be used to create and 
 	 * add new tasks of type className to the job. 
-	 * The method asks for computational power from given peers, 
-	 * waits until taskCount positive answers have been returned and 
+	 * The method waits until taskCount peers of given peers have allowed 
+	 * to use their PC (request was sent during job creation),
 	 * then new tasks are added to the job and executed in corresponding nodes.
 	 * 
 	 * @param className The name of the class that should be executed as new task.
@@ -191,6 +191,11 @@ public class Job implements Serializable, Activity
 	{
 		if (getTask(getMasterTaskID()) == null)
 			throw new NotMasterException();
+		if (peers == null || peers.size() < taskCount)
+			throw new NotEnoughPeersException(taskCount, peers == null ? 0: peers.size());
+		for (F2FPeer peer: peers)
+			if (!getPeers().contains(peer))
+				throw new NotJobPeerException(peer, this);
 		F2FComputing.submitTasks(this, className, taskCount, peers);
 	}
 	
