@@ -2,6 +2,7 @@ package ee.ut.f2f.core;
 
 import java.io.IOException;
 import java.io.Serializable;
+import java.util.Collection;
 
 import ee.ut.f2f.util.logging.Logger;
 
@@ -16,28 +17,36 @@ class F2FMessage implements Serializable
 	public enum Type
 	{
 		/**
-		 * Master node asks slaves for cpu.
+		 * Master peer asks a peer for CPU.
 		 */
 		REQUEST_FOR_CPU,
 		/**
-		 * Slave answers to REQUEST_FOR_CPU.
+		 * Peer answers to REQUEST_FOR_CPU.
 		 */
 		RESPONSE_FOR_CPU,
 		/**
-		 * Master sends job to slave nodes.
+		 * Master sends job with task descriptions to a peer.
 		 */
 		JOB,
 		/**
-		 * Master sends tasks to slave nodes.
+		 * Master sends job with task descriptions and a prepared task to a peer.
 		 */
-		TASKS,
+		JOB_TASK,
+		/**
+		 * Master sends task descriptions and a prepared task to a peer.
+		 */
+		TASK,
+		/**
+		 * Master sends task descriptios to a peer.
+		 */
+		TASK_DESCRIPTIONS,
 		/**
 		 * A message from one task to another.
 		 */
 		MESSAGE,
 		/**
 		 * A message from one task to another that has to be routed. Only
-		 * master tasks receive such messages and forward them to final
+		 * master peers receive such messages and forward them to final
 		 * destination nodes.
 		 */
 		ROUTE
@@ -137,5 +146,22 @@ class F2FMessage implements Serializable
 		{
 			logger.error("Error deserializing F2FMessage data", e);
 		}
+	}
+}
+
+class F2FTaskMessage implements Serializable
+{
+	private static final long serialVersionUID = -1956956326946440671L;
+
+	private Collection<TaskDescription> newTaskDescriptions;
+	Collection<TaskDescription> getTaskDescriptions() { return newTaskDescriptions; }
+	
+	private Task task;
+	Task getTask() { return task; }
+	
+	F2FTaskMessage(Collection<TaskDescription> newTaskDescriptions, Task task)
+	{
+		this.newTaskDescriptions = newTaskDescriptions;
+		this.task = task;
 	}
 }

@@ -45,6 +45,7 @@ public class Job implements Serializable, Activity
 	private Map<String, TaskDescription> taskDescriptions = new HashMap<String, TaskDescription>();
 	void addTaskDescriptions(Collection<TaskDescription> tasks)
 	{
+		if (tasks == null) return;
 		for(TaskDescription task: tasks)
 			taskDescriptions.put(task.getTaskID(), task);
 	}
@@ -174,29 +175,37 @@ public class Job implements Serializable, Activity
 	private int lastTaskId = 0;
 	
 	/**
-	 * This method of a job should be used to create and 
-	 * add new tasks of type className to the job. 
+	 * This method of a job should be used to create and add new tasks 
+	 * of type className to the job. 
 	 * The method waits until taskCount peers of given peers have allowed 
 	 * to use their PC (request was sent during job creation),
 	 * then new tasks are added to the job and executed in corresponding nodes.
 	 * 
 	 * @param className The name of the class that should be executed as new task.
-	 * @param taskCount The number of tasks to make. If it is less than 1
-	 *  the method throws RuntimeError.
+	 * @param taskCount The number of tasks to make.
 	 * @param peers The collection of peers to where new tasks should be sent.
-	 * 	This collection should hold at least taskCount peers, otherwise the method
-	 *  throws RuntimeError. 
+	 * 	This collection should hold at least taskCount peers.
 	 */
 	public void submitTasks(String className, int taskCount, Collection<F2FPeer> peers) throws F2FComputingException, ClassNotFoundException, InstantiationException, IllegalAccessException
 	{
-		if (getTask(getMasterTaskID()) == null)
-			throw new NotMasterException();
-		if (peers == null || peers.size() < taskCount)
-			throw new NotEnoughPeersException(taskCount, peers == null ? 0: peers.size());
-		for (F2FPeer peer: peers)
-			if (!getPeers().contains(peer))
-				throw new NotJobPeerException(peer, this);
 		F2FComputing.submitTasks(this, className, taskCount, peers);
+	}
+	/**
+	 * This method of a job should be used to add new tasks to the job. 
+	 * The method waits until tasks.size() peers of given peers have allowed 
+	 * to use their PC (request was sent during job creation),
+	 * then the tasks are added to the job and executed in corresponding nodes.
+	 * All given tasks have to be Serializable.
+	 * This method provides a way that master task can instantiate the slaves with
+	 * initial data.
+	 * 
+	 * @param tasks The collection of tasks should be executed.
+	 * @param peers The collection of peers to where new tasks should be sent.
+	 * 	This collection should be at least the same size as the collection of tasks.
+	 */
+	public void submitTasks(Collection<Task> tasks, Collection<F2FPeer> peers) throws F2FComputingException, ClassNotFoundException, InstantiationException, IllegalAccessException
+	{
+		F2FComputing.submitTasks(this, tasks, peers);
 	}
 	
 	private class F2FJarFile implements Serializable

@@ -1,9 +1,11 @@
 package ee.ut.f2f.core;
 
 import java.io.IOException;
+import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
+import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.Map;
 import java.util.Random;
@@ -150,6 +152,23 @@ public class F2FComputing
 	private static String newJobID() { return "Job"+(++lastJobID)+localPeer.getID(); }
 	private static int lastJobID = new Random(UUID.randomUUID().getLeastSignificantBits()).nextInt();
 		
+	private static boolean checkSubmitTasks(Job job,
+			int taskCount, Collection<F2FPeer> peers) throws F2FComputingException
+	{
+		if (taskCount < 1)
+		{
+			logger.debug("no tasks to submit (taskCount < 1)");
+			return false;
+		}
+		if (job.getTask(job.getMasterTaskID()) == null)
+			throw new NotMasterException();
+		if (peers == null || peers.size() < taskCount)
+			throw new NotEnoughPeersException(taskCount, peers == null ? 0: peers.size());
+		for (F2FPeer peer: peers)
+			if (!job.getPeers().contains(peer))
+				throw new NotJobPeerException(peer, job);
+		return true;
+	}
 	/**
 	 * This method is used to create new tasks.
 	 * 
@@ -171,13 +190,8 @@ public class F2FComputing
 	{
 		if (!isInitialized()) return;
 		logger.debug("Submitting " + taskCount + " tasks of " + className);
-		if (taskCount < 1)
-		{
-			logger.debug("no tasks to submit (taskCount < 1)");
-			return;
-		}
-		if (peers == null || peers.size() < taskCount)
-			throw new NotEnoughPeersException(taskCount, peers == null ? 0: peers.size());
+		
+		if (!checkSubmitTasks(job, taskCount, peers)) return;
 		
 		// try to load the class
 		ClassLoader loader = job.getClassLoader();
@@ -252,10 +266,154 @@ public class F2FComputing
 		}
 		// ... notify other peers about additional tasks
 		final F2FMessage messageTasks = 
-			new F2FMessage(F2FMessage.Type.TASKS, job.getJobID(), null, null, newTaskDescriptions);
+			new F2FMessage(F2FMessage.Type.TASK_DESCRIPTIONS, job.getJobID(), null, null, newTaskDescriptions);
 		for (final F2FPeer peer: job.getWorkingPeers())
 		{
 			if (newPeers.contains(peer)) continue;
+			
+			Thread thread = new Thread()
+				{
+					public void run()
+					{
+						try {
+							peer.sendMessage(messageTasks);
+						} catch (CommunicationFailedException e) {
+							logger.error("Error sending new tasks to a peer. " + e, e);
+						}
+					}
+				};
+			threads.add(thread);
+			thread.start();
+		}
+		for (Thread thread: threads)
+		{
+			while (true)
+			{
+				try
+				{
+					thread.join();
+					break;
+				} catch (InterruptedException e) {}
+			}
+		}
+		
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(job, ActivityEvent.Type.CHANGED, 
+				"tasks submitted"));
+	}
+	
+	static void submitTasks(Job job, Collection<Task> tasks,
+			Collection<F2FPeer> peers) throws F2FComputingException, ClassNotFoundException, InstantiationException, IllegalAccessException
+	{
+		if (!isInitialized()) return;
+		int taskCount = (tasks != null? tasks.size(): 0);
+		logger.debug("Submitting " + taskCount + " tasks");
+		
+		if (!checkSubmitTasks(job, taskCount, peers)) return;
+		
+		for (Task task: tasks)
+			if (!(task instanceof Serializable))
+				throw new NotSerializableTaskException(task);
+						
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(job, ActivityEvent.Type.CHANGED, 
+				"submitting " + taskCount + " tasks"));
+	
+		// wait for answers
+		Iterator<F2FPeer> reservedPeersIterator = job.getCPURequests().waitForResponses(taskCount, peers);
+		
+		// now we know in which peers new tasks should be started
+		Collection<F2FPeer> peersToBeUsed = new ArrayList<F2FPeer>();
+		for (int i = 0; i < taskCount; i++) peersToBeUsed.add(reservedPeersIterator.next());
+		
+		// create descriptions of new tasks and add them to the job
+		Iterator<Task> tasksIter = tasks.iterator();
+		Hashtable<F2FPeer, Task> peerTask = new Hashtable<F2FPeer, Task>();
+		Collection<TaskDescription> newTaskDescriptions = new ArrayList<TaskDescription>();
+		for (F2FPeer peer: peersToBeUsed)
+		{
+			Task task = tasksIter.next();
+			TaskDescription newTaskDescription = 
+				new TaskDescription(
+					job.getJobID(), job.newTaskId(),
+					peer.getID(), task.getClass().toString());
+			job.addTaskDescription(newTaskDescription);
+			newTaskDescriptions.add(newTaskDescription);
+			peerTask.put(peer, task);
+			logger.debug("Added new taskdescription to the job: "
+					+ newTaskDescription);
+		}
+		
+		// send Job to those peers who are new for this job and ...
+		Collection<F2FPeer> newPeers = new ArrayList<F2FPeer>();
+		for (F2FPeer peer: peersToBeUsed)
+		{
+			if (job.getWorkingPeers() == null || !job.getWorkingPeers().contains(peer))
+			{
+				newPeers.add(peer);
+				job.addWorkingPeer(peer);
+			}
+		}
+		
+		//TODO: if sendig fails nothing is done at the moment
+		// possible solutions
+		// 1) throw exception - in this case some of the tasks start running,
+		//	  maybe master should be able to determine which are running and
+		//    submit some new ones (but this is possible already now (exchange
+		//    some test messages));
+		// 2) try to submit to a new peer - this means that according task 
+		//    description has to be updated (in all peers)
+		// NB! do not return from this method before the submit has succeeded
+		//     or failed (tasks have started in remote peers)!
+		
+		tasksIter = tasks.iterator();
+		Collection<Thread> threads = new ArrayList<Thread>();
+		final F2FMessage messageJobTask = 
+			new F2FMessage(F2FMessage.Type.JOB_TASK, null, null, null, job);
+		for (final F2FPeer peer: newPeers)
+		{
+			final F2FMessage messageTask = 
+				new F2FMessage(F2FMessage.Type.TASK, job.getJobID(), null, null, new F2FTaskMessage(null, peerTask.get(peer)));
+			Thread thread = new Thread()
+				{
+					public void run()
+					{
+						try {
+							peer.sendMessage(messageJobTask);
+							peer.sendMessage(messageTask);
+						} catch (CommunicationFailedException e) {
+							logger.error("Error sending a job to a peer. " + e, e);
+						}
+					}
+				};
+			threads.add(thread);
+			thread.start();
+		}
+		// ... send tasks to the peers where they are executed and ...
+		for (final F2FPeer peer: peersToBeUsed)
+		{
+			if (newPeers.contains(peer)) continue;
+			
+			final F2FMessage messageTask = 
+				new F2FMessage(F2FMessage.Type.TASK, job.getJobID(), null, null, new F2FTaskMessage(newTaskDescriptions, peerTask.get(peer)));
+			Thread thread = new Thread()
+				{
+					public void run()
+					{
+						try {
+							peer.sendMessage(messageTask);
+						} catch (CommunicationFailedException e) {
+							logger.error("Error sending a job to a peer. " + e, e);
+						}
+					}
+				};
+			threads.add(thread);
+			thread.start();
+		}
+		// ... notify other peers about additional tasks
+		final F2FMessage messageTasks = 
+			new F2FMessage(F2FMessage.Type.TASK_DESCRIPTIONS, job.getJobID(), null, null, newTaskDescriptions);
+		for (final F2FPeer peer: job.getWorkingPeers())
+		{
+			if (peersToBeUsed.contains(peer)) continue;
 			
 			Thread thread = new Thread()
 				{
@@ -298,9 +456,6 @@ public class F2FComputing
 	 * @param taskDescription
 	 *            The description of the task to create.
 	 * @return Created task
-	 * @throws ClassNotFoundException
-	 * @throws InstantiationException
-	 * @throws IllegalAccessException
 	 */
 	private static Task newTask(TaskDescription taskDescription)
 			throws ClassNotFoundException, InstantiationException,
@@ -453,6 +608,32 @@ public class F2FComputing
 			}
 		}
 	}
+	private static void startJobTask(Job job, Task task)
+	{
+		// find the tasks, that are not created yet and are
+		// ment for execution in this peer, and start them
+		for (TaskDescription taskDesc : job.getTaskDescriptions())
+		{
+			if (job.getTask(taskDesc.getTaskID()) == null &&
+				taskDesc.getPeerID().equals(localPeer.getID()) &&
+				taskDesc.getClassName().equals(task.getClass().toString()))
+			{
+				try
+				{
+					logger.debug("Starting a task: " + taskDesc);
+					task.setTaskDescription(taskDesc);
+					job.addTask(task);
+					task.start();
+				}
+				catch (Exception e)
+				{
+					logger.error("Error starting a task: "
+							+ taskDesc
+							+ e, e);
+				}
+			}
+		}
+	}
 
 	/**
 	 * MessageType -> Listeners
@@ -500,9 +681,8 @@ public class F2FComputing
 			return;
 		}
 		// F2FMessages are handeled in this method
-		if (message instanceof F2FMessage);
-		else // other types of messages should have a listener
-		{
+		if (!(message instanceof F2FMessage))
+		{ // other types of messages should have a listener
 			HashMap<Class, Collection<F2FMessageListener>> messageListenersCopy = null;
 			synchronized (messageListeners)
 			{
@@ -573,9 +753,33 @@ public class F2FComputing
 				logger.error("" + e, e);
 			}
 		}
-		else if (f2fMessage.getType() == F2FMessage.Type.TASKS)
+		else if (f2fMessage.getType() == F2FMessage.Type.JOB_TASK)
 		{
-			logger.info("got TASKS");
+			logger.info("got JOB_TASK");
+			Job job = (Job) f2fMessage.getData();
+			// check if we know this job already
+			if (jobs.containsKey(job.getJobID()))
+			{
+				logger.error("Received a job that is already known!");
+				return;
+			}
+			try
+			{
+				job.initialize(rootDirectory);
+				jobs.put(job.getJobID(), job);
+				ActivityManager.getDefault().emitEvent(
+						new ActivityEvent(job,
+								ActivityEvent.Type.CHANGED, "Job received"));				
+			}
+			catch (IOException e)
+			{
+				e.printStackTrace();
+				logger.error("" + e, e);
+			}
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.TASK_DESCRIPTIONS)
+		{
+			logger.info("got TASK_DESCRIPTIONS");
 			Job job = getJob(f2fMessage.getJobID());
 			if (job == null)
 			{
@@ -586,6 +790,20 @@ public class F2FComputing
 			Collection<TaskDescription> taskDescriptions = (Collection<TaskDescription>) f2fMessage.getData();
 			job.addTaskDescriptions(taskDescriptions);
 			startJobTasks(job);
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.TASK)
+		{
+			logger.info("got TASK");
+			Job job = getJob(f2fMessage.getJobID());
+			if (job == null)
+			{
+				logger.error("Received tasks for unknown job");
+				return;
+			}
+			F2FTaskMessage msgTask = (F2FTaskMessage) f2fMessage.getData();
+			Collection<TaskDescription> taskDescriptions = msgTask.getTaskDescriptions();
+			job.addTaskDescriptions(taskDescriptions);
+			startJobTask(job, msgTask.getTask());
 		}
 		// MESSAGES TO TASKS
 		else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
