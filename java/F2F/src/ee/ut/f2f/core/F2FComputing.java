@@ -377,6 +377,8 @@ public class F2FComputing
 					public void run()
 					{
 						try {
+							// The job has to be sent first because otherwise
+							// custom classes in the task can not be deserialized.
 							peer.sendMessage(messageJobTask);
 							peer.sendMessage(messageTask);
 						} catch (CommunicationFailedException e) {
@@ -801,8 +803,7 @@ public class F2FComputing
 				return;
 			}
 			F2FTaskMessage msgTask = (F2FTaskMessage) f2fMessage.getData();
-			Collection<TaskDescription> taskDescriptions = msgTask.getTaskDescriptions();
-			job.addTaskDescriptions(taskDescriptions);
+			job.addTaskDescriptions(msgTask.getTaskDescriptions());
 			startJobTask(job, msgTask.getTask());
 		}
 		// MESSAGES TO TASKS

@@ -29,7 +29,10 @@ class F2FMessage implements Serializable
 		 */
 		JOB,
 		/**
-		 * Master sends job with task descriptions and a prepared task to a peer.
+		 * Master sends job with task descriptions a peer.
+		 * The TASK message without task descriptions follows it.
+		 * The job has to be sent first because otherwise
+		 * custom classes in the task can not be deserialized.
 		 */
 		JOB_TASK,
 		/**
