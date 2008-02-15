@@ -17,8 +17,8 @@ class CPURequests extends Thread implements Activity
 	private final static Logger logger = Logger.getLogger(CPURequests.class);
 
 	/**
-	 * The time how long to wait for the answers of REQUEST_FOR_CPU before
-	 * throwing error that there are not enough CPUs
+	 * The time how long to wait for the answer(s) to a REQUEST_FOR_CPU before
+	 * throwing NotEnoughFriendsException.
 	 */
 	private static final long REQUEST_FOR_CPUS_TIMEOUT = 10000;	
 	
@@ -56,9 +56,11 @@ class CPURequests extends Thread implements Activity
 				"requesting " + requestedPeers.size() + " peer(s)"));
 	}
 	
-	Iterator<F2FPeer> waitForResponses(int taskCount, Collection<F2FPeer> peers) throws F2FComputingException
+	Iterator<F2FPeer> waitForResponses(int taskCount, Collection<F2FPeer> peers) throws NotEnoughFriendsException
 	{
 		Collection<F2FPeer> result = new ArrayList<F2FPeer>();
+		
+		long start = System.currentTimeMillis();
 		while (true)
 		{
 			synchronized(reservedPeers)
@@ -68,21 +70,20 @@ class CPURequests extends Thread implements Activity
 						result.add(reservedPeer);
 			}
 			
-			if (result.size() >= taskCount) break;
+			if (result.size() >= taskCount) result.iterator();
+			
+			if (System.currentTimeMillis() - start > REQUEST_FOR_CPUS_TIMEOUT)
+				throw new NotEnoughFriendsException(taskCount, result.size());
 			
 			try
 			{
 				synchronized(reservedPeers)
 				{
-					reservedPeers.wait(REQUEST_FOR_CPUS_TIMEOUT);
+					reservedPeers.wait(1000);
 				}
 			}
-			catch (InterruptedException e)
-			{// timeout
-				throw new F2FComputingException("Not enough available CPUs!");
-			}
+			catch (InterruptedException e){}
 		}
-		return result.iterator();
 	}
 
 	void responseReceived(F2FMessage f2fMessage, F2FPeer sender)

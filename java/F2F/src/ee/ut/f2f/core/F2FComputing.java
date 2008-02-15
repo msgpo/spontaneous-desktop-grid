@@ -61,7 +61,7 @@ public class F2FComputing
 	/**
 	 * Collection of remote peers that are known.
 	 */
-	private static Map<UUID, F2FPeer> peers = null;
+	private static Map<UUID, F2FPeer> peers = new HashMap<UUID, F2FPeer>();
 	
 	private static boolean isInitialized() { return localPeer != null; }
 	/**
@@ -74,7 +74,6 @@ public class F2FComputing
 		rootDirectory = rootDir;
 		rootDirectory.mkdir();
 		jobs = new HashMap<String, Job>();
-		peers = new HashMap<UUID, F2FPeer>();
 		localPeer = new F2FPeer("me (localhost)");
 		logger.debug("local F2FPeer ID is " + localPeer.getID());
 		peers.put(localPeer.getID(), localPeer);
@@ -176,11 +175,12 @@ public class F2FComputing
 		if (!isInitialized()) return;
 		logger.debug("Submitting " + taskCount + " tasks of " + className);
 		if (taskCount < 1)
-			throw new F2FComputingException("Can not submit 0 tasks!");
-		if (peers == null || peers.size() == 0)
-			throw new F2FComputingException("Can not submit tasks if no peers are given!");
-		if (peers.size() < taskCount)
-			throw new F2FComputingException("Not enough peers selected!");
+		{
+			logger.debug("no tasks to submit (taskCount < 1)");
+			return;
+		}
+		if (peers == null || peers.size() < taskCount)
+			throw new NotEnoughPeersException(taskCount, peers == null ? 0: peers.size());
 		
 		// try to load the class
 		ClassLoader loader = job.getClassLoader();
@@ -344,7 +344,6 @@ public class F2FComputing
 	 */
 	public static Collection<F2FPeer> getPeers()
 	{
-		if (!isInitialized()) return null;
 		return peers.values();
 	}
 
@@ -356,7 +355,6 @@ public class F2FComputing
 	 */
 	public static F2FPeer getPeer(UUID id)
 	{
-		if (!isInitialized()) return null;
 		if (!peers.containsKey(id)) return null;
 		return peers.get(id);
 	}
@@ -364,7 +362,6 @@ public class F2FComputing
 	private static ArrayList<PeerPresenceListener> peerListeners = new ArrayList<PeerPresenceListener>();
 	public static void addPeerPresenceListener(PeerPresenceListener listener)
 	{
-		if (!isInitialized()) return;
 		synchronized (peerListeners)
 		{
 			if (!peerListeners.contains(listener))
@@ -373,7 +370,6 @@ public class F2FComputing
 	}	
 	public static void removePeerPresenceListener(PeerPresenceListener listener)
 	{
-		if (!isInitialized()) return;
 		synchronized (peerListeners)
 		{
 			if (peerListeners.contains(listener))
@@ -468,7 +464,6 @@ public class F2FComputing
 	private static HashMap<Class, Collection<F2FMessageListener>> messageListeners = new HashMap<Class, Collection<F2FMessageListener>>();
 	public static void addMessageListener(Class messageType, F2FMessageListener listener)
 	{
-		if (!isInitialized()) return;
 		synchronized (messageListeners)
 		{
 			if (!messageListeners.containsKey(messageType))
@@ -479,7 +474,6 @@ public class F2FComputing
 	}
 	public static void removeMessageListener(Class messageType, F2FMessageListener listener)
 	{
-		if (!isInitialized()) return;
 		synchronized (messageListeners)
 		{
 			if (!messageListeners.containsKey(messageType)) return;
@@ -639,7 +633,7 @@ public class F2FComputing
 				logger.error("didn't find the receiver task description");
 				return;
 			}
-			F2FPeer receiver = peers.get(receiverTaskDesc.getPeerID());
+			F2FPeer receiver = getPeer(receiverTaskDesc.getPeerID());
 			if (receiver == null)
 			{
 				logger.error("didn't find the receiver peer");

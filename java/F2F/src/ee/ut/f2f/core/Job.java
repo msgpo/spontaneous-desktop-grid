@@ -190,7 +190,7 @@ public class Job implements Serializable, Activity
 	public void submitTasks(String className, int taskCount, Collection<F2FPeer> peers) throws F2FComputingException, ClassNotFoundException, InstantiationException, IllegalAccessException
 	{
 		if (getTask(getMasterTaskID()) == null)
-			throw new F2FComputingException("Tasks can only be submitted from master task!");
+			throw new NotMasterException();
 		F2FComputing.submitTasks(this, className, taskCount, peers);
 	}
 	
