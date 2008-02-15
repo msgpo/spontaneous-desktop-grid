@@ -1,6 +1,6 @@
 package ee.ut.f2f.examples.pi;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.util.F2FDebug;

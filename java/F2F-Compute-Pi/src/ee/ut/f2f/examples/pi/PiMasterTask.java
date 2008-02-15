@@ -3,7 +3,7 @@ package ee.ut.f2f.examples.pi;
 import java.util.ArrayList;
 import java.util.Collection;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Task;
