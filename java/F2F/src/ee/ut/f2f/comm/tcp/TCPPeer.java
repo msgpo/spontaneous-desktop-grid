@@ -15,8 +15,8 @@ import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.JobCustomObjectInputStream;
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.logging.Logger;
 
 class TCPPeer implements Activity
@@ -71,7 +71,7 @@ class TCPPeer implements Activity
 			UUID uid = F2FComputing.getLocalPeer().getID();
 			oo.writeObject(uid);
 			//Client starting listening server respond
-			oi = new CustomObjectInputStream(outSocket.getInputStream());
+			oi = new JobCustomObjectInputStream(outSocket.getInputStream());
 			runSocketThread();
 		}
 		return oo;

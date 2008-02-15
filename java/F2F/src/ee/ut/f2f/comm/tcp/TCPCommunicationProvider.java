@@ -23,8 +23,8 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.core.JobCustomObjectInputStream;
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.util.CustomObjectInputStream;
 import ee.ut.f2f.util.logging.Logger;
 
 public class TCPCommunicationProvider implements CommunicationProvider, Activity
@@ -158,7 +158,10 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 				{
 					// wait while someone tries to connect
 					Socket socket = serverSocket.accept();
-					ObjectInput oi = new CustomObjectInputStream(socket.getInputStream());
+					// use JobCustomObjectInputStream to deserialize objects in
+					// a communication provider, because otherwise custom classes
+					// of a job can not be deserialized
+					ObjectInput oi = new JobCustomObjectInputStream(socket.getInputStream());
 					ObjectOutput oo = new ObjectOutputStream(socket.getOutputStream());
 					log.debug("\t\tAccepted socket from IP: '"+socket.getInetAddress().getHostAddress()+"' port: "+ socket.getPort());
 					log.debug("\t\tBinded socket on local IP: '"+socket.getLocalAddress().getHostAddress()+"' port: "+ socket.getLocalPort());

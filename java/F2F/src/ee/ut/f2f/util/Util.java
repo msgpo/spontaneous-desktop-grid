@@ -15,7 +15,7 @@ import java.util.zip.GZIPOutputStream;
 
 import org.apache.commons.codec.binary.Base64;
 
-import ee.ut.f2f.util.CustomObjectInputStream;
+import ee.ut.f2f.core.JobCustomObjectInputStream;
 
 public abstract class Util
 {
@@ -44,7 +44,7 @@ public abstract class Util
     {
     	InputStream is = new ByteArrayInputStream(serializedObj);
     	ObjectInput oi;
-		oi = new CustomObjectInputStream(is);
+		oi = new JobCustomObjectInputStream(is);
 		return  oi.readObject();
 	}
 	

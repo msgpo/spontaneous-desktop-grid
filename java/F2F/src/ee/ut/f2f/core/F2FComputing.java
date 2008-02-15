@@ -166,35 +166,28 @@ public class F2FComputing
 	 * @param jobID The ID of the job to which new tasks should be added.
 	 *  If the jobID is not valid the method throws RuntimeError.
 	 * @param className The name of the class that should be executed as new task.
-	 * @param taskCount The number of tasks to make. If it is less than 1
-	 *  the method throws RuntimeError.
+	 * @param taskCount The number of tasks to make. It should be more than 0.
 	 * @param peers The collection of peers to where new tasks should be sent.
-	 * 	This collection should hold at least taskCount peers, otherwise the method
-	 *  throws RuntimeError. 
-	 * @return The job to which new tasks were added.
+	 * 	This collection should hold at least taskCount peers.
 	 */
-	static void submitTasks(String jobID, String className,
+	static void submitTasks(Job job, String className,
 			int taskCount, Collection<F2FPeer> peers) throws F2FComputingException, ClassNotFoundException, InstantiationException, IllegalAccessException
 	{
 		if (!isInitialized()) return;
 		logger.debug("Submitting " + taskCount + " tasks of " + className);
-		if (taskCount <= 0)
+		if (taskCount < 1)
 			throw new F2FComputingException("Can not submit 0 tasks!");
 		if (peers == null || peers.size() == 0)
 			throw new F2FComputingException("Can not submit tasks if no peers are given!");
 		if (peers.size() < taskCount)
 			throw new F2FComputingException("Not enough peers selected!");
-		Job job = jobs.get(jobID);
-		if (job == null)
-			throw new F2FComputingException("Can not submit tasks to unknown job ("+jobID+")!");
-		ClassLoader loader = job.getClassLoader();
 		
 		// try to load the class
+		ClassLoader loader = job.getClassLoader();
 		Class clazz = loader.loadClass(className);
 		@SuppressWarnings("unused")
 		Task task = (Task) clazz.newInstance();
-		
-		
+				
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(job, ActivityEvent.Type.CHANGED, 
 				"submitting " + taskCount + " tasks of " + className));
 	
@@ -211,7 +204,7 @@ public class F2FComputing
 		{
 			TaskDescription newTaskDescription = 
 				new TaskDescription(
-					jobID, job.newTaskId(),
+					job.getJobID(), job.newTaskId(),
 					peer.getID(), className);
 			job.addTaskDescription(newTaskDescription);
 			newTaskDescriptions.add(newTaskDescription);
@@ -230,6 +223,17 @@ public class F2FComputing
 			}
 		}
 		
+		//TODO: if sendig fails nothing is done at the moment
+		// possible solutions
+		// 1) throw exception - in this case some of the tasks start running,
+		//	  maybe master should be able to determine which are running and
+		//    submit some new ones (but this is possible already now (exchange
+		//    some test messages));
+		// 2) try to submit to a new peer - this means that according task 
+		//    description has to be updated (in all peers)
+		// NB! do not return from this method before the submit has succeeded
+		//     or failed (tasks have started in remote peers)!
+		
 		Collection<Thread> threads = new ArrayList<Thread>();
 		final F2FMessage messageJob = 
 			new F2FMessage(F2FMessage.Type.JOB, null, null, null, job);
@@ -242,7 +246,7 @@ public class F2FComputing
 						try {
 							peer.sendMessage(messageJob);
 						} catch (CommunicationFailedException e) {
-							logger.error("Error sending the job to a peer. " + e, e);
+							logger.error("Error sending a job to a peer. " + e, e);
 						}
 					}
 				};
@@ -322,7 +326,7 @@ public class F2FComputing
 	 * @return the class loader of the specific job; <code>null</code> if
 	 *         there is no loader for this job
 	 */
-	public static ClassLoader getJobClassLoader(String jobID)
+	static ClassLoader getJobClassLoader(String jobID)
 	{
 		// If there is no such job
 		if (!isInitialized() || !jobs.containsKey(jobID))
@@ -333,8 +337,10 @@ public class F2FComputing
 
 	/**
 	 * This method is mainly ment for GUI to show available peers.
+	 * But this collection of peers can also be used to create a new job
+	 * or add new tasks to a job.
 	 * 
-	 * @return All peers that are known through communication layers.
+	 * @return All peers that are known through communication providers.
 	 */
 	public static Collection<F2FPeer> getPeers()
 	{
@@ -342,6 +348,12 @@ public class F2FComputing
 		return peers.values();
 	}
 
+	/**
+	 * This method can be used to get reference to a peer if its ID is known.
+	 * 
+	 * @param id the ID of a peer
+	 * @return The peer which ID is id, or null if such a peer is not known.
+	 */
 	public static F2FPeer getPeer(UUID id)
 	{
 		if (!isInitialized()) return null;
@@ -352,6 +364,7 @@ public class F2FComputing
 	private static ArrayList<PeerPresenceListener> peerListeners = new ArrayList<PeerPresenceListener>();
 	public static void addPeerPresenceListener(PeerPresenceListener listener)
 	{
+		if (!isInitialized()) return;
 		synchronized (peerListeners)
 		{
 			if (!peerListeners.contains(listener))
@@ -360,6 +373,7 @@ public class F2FComputing
 	}	
 	public static void removePeerPresenceListener(PeerPresenceListener listener)
 	{
+		if (!isInitialized()) return;
 		synchronized (peerListeners)
 		{
 			if (peerListeners.contains(listener))
@@ -454,6 +468,7 @@ public class F2FComputing
 	private static HashMap<Class, Collection<F2FMessageListener>> messageListeners = new HashMap<Class, Collection<F2FMessageListener>>();
 	public static void addMessageListener(Class messageType, F2FMessageListener listener)
 	{
+		if (!isInitialized()) return;
 		synchronized (messageListeners)
 		{
 			if (!messageListeners.containsKey(messageType))
@@ -464,6 +479,7 @@ public class F2FComputing
 	}
 	public static void removeMessageListener(Class messageType, F2FMessageListener listener)
 	{
+		if (!isInitialized()) return;
 		synchronized (messageListeners)
 		{
 			if (!messageListeners.containsKey(messageType)) return;

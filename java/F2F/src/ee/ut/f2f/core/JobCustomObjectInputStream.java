@@ -1,31 +1,32 @@
-package ee.ut.f2f.util;
+package ee.ut.f2f.core;
 
 import java.io.IOException;
 import java.io.InputStream;
 import java.io.ObjectStreamClass;
 import java.io.StreamCorruptedException;
 
-import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.logging.Logger;
 
 /**
  * Custom input object stream reader in order to make use of the custom
  * classloaders.
+ * Use JobCustomObjectInputStream to deserialize objects in
+ * a communication provider, because otherwise custom classes
+ * of a job can not be deserialized.
  */
-public class CustomObjectInputStream extends java.io.ObjectInputStream
+public class JobCustomObjectInputStream extends java.io.ObjectInputStream
 {
-	private final static Logger logger = Logger.getLogger(CustomObjectInputStream.class);
+	private final static Logger logger = Logger.getLogger(JobCustomObjectInputStream.class);
 	
 	/**
 	 * If set, then the class has to be resolved using the classloader of this job.
-	 * TODO Total absent of SYNCHRONIZATION - IT IS A NIGHTMARE CURRENLTY!!!
 	 */
 	private String jobID = null;
 	
     /**
      * Constructor to create this custom object from input stream.
      */
-    public CustomObjectInputStream(InputStream theStream) throws IOException, StreamCorruptedException
+    public JobCustomObjectInputStream(InputStream theStream) throws IOException, StreamCorruptedException
     {
         super(theStream);
     }
@@ -37,9 +38,7 @@ public class CustomObjectInputStream extends java.io.ObjectInputStream
      */
     protected Class<?> resolveClass(ObjectStreamClass osc) throws IOException, ClassNotFoundException
     {
-    	if(logger.isTraceEnabled()) {
-    		logger.trace("Resolving custom class: " + osc.getName());
-    	}
+    	//logger.trace("Resolving custom class: " + osc.getName());
     	
         Class theClass = null;
         try
@@ -75,7 +74,7 @@ public class CustomObjectInputStream extends java.io.ObjectInputStream
     	ClassLoader jobClassLoader = F2FComputing.getJobClassLoader(jobID);
 		if (jobClassLoader==null)
 		{
-			return CustomObjectInputStream.class.getClassLoader();
+			return JobCustomObjectInputStream.class.getClassLoader();
 		}
 		return jobClassLoader;
 	}

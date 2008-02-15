@@ -191,7 +191,7 @@ public class Job implements Serializable, Activity
 	{
 		if (getTask(getMasterTaskID()) == null)
 			throw new F2FComputingException("Tasks can only be submitted from master task!");
-		F2FComputing.submitTasks(this.jobID, className, taskCount, peers);
+		F2FComputing.submitTasks(this, className, taskCount, peers);
 	}
 	
 	private class F2FJarFile implements Serializable
