@@ -10,4 +10,9 @@ public class F2FComputingException extends Exception
 	{
 		super(message);
 	}
+	
+	protected F2FComputingException(Exception e)
+	{
+		super(e);
+	}
 }

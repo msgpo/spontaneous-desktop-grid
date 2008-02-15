@@ -226,4 +226,9 @@ public class Job implements Serializable, Activity
 	public Activity getParentActivity() {
 		return null;
 	}
+	
+	public String toString()
+	{
+		return jobID;
+	}
 }

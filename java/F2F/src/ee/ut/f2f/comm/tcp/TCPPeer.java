@@ -14,7 +14,7 @@ import java.util.UUID;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.JobCustomObjectInputStream;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.logging.Logger;
@@ -119,10 +119,7 @@ class TCPPeer implements Activity
 						}
 					}
 				}
-				catch (Exception e)
-				{
-					e.printStackTrace();
-				}
+				catch (Exception e){}
 				try
 				{
 					if (oi != null) oi.close();

@@ -5,7 +5,7 @@ package ee.ut.f2f.comm.sc.im;
 
 import net.java.sip.communicator.service.protocol.Contact;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.util.F2FDebug;
 
 class SipIMPeer

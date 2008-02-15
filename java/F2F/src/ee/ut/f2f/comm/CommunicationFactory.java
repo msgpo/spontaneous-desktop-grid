@@ -1,5 +1,6 @@
 package ee.ut.f2f.comm;
 
+import java.io.IOException;
 import java.util.ArrayList;
 import java.util.Collection;
 
@@ -41,9 +42,9 @@ public class CommunicationFactory
 				commProvider = GetSocketCommununication(props.socketLayerProps);
 				if (commProvider != null) commProviders.add(commProvider);
 			}
-			catch (CommunicationInitException e)
+			catch (IOException e)
 			{
-				log.debug("GetSocketCommununication() throwed CommunicationInitException!" + e);
+				log.debug("GetSocketCommununication() throwed IOException!" + e);
 			}
 		}
 		
@@ -62,7 +63,7 @@ public class CommunicationFactory
 		return commProviders;
 	}	
 	
-	private static CommunicationProvider GetSocketCommununication(SocketProviderProperties props) throws CommunicationInitException
+	private static CommunicationProvider GetSocketCommununication(SocketProviderProperties props) throws IOException
 	{
 		TCPCommunicationProvider socketProvider = TCPCommunicationProvider.getInstance();
 		if (props != null)

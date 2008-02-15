@@ -3,7 +3,6 @@ package ee.ut.f2f.core;
 import java.util.ArrayList;
 import java.util.UUID;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -120,6 +119,6 @@ public class F2FPeer
 			return;
 		}
 		// throw an exception if message is not sent
-		throw new CommunicationFailedException("peer " + getDisplayName() + " is not reachable");
+		throw new CommunicationFailedException("Peer " + getDisplayName() + " is not reachable!");
 	}
 }

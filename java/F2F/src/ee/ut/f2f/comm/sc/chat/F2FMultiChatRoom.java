@@ -5,7 +5,7 @@ import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.util.F2FDebug;
 
 import net.java.sip.communicator.service.protocol.ChatRoom;

@@ -2,6 +2,8 @@ package ee.ut.f2f.comm;
 
 import java.util.UUID;
 
+import ee.ut.f2f.core.CommunicationFailedException;
+
 public interface CommunicationProvider
 {
 

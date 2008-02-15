@@ -20,9 +20,8 @@ import java.util.UUID;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.JobCustomObjectInputStream;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.logging.Logger;
@@ -40,7 +39,6 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 	
 	/**
 	 * Creates the communication layer with fixed count of friends.
-	 * @throws CommunicationInitException 
 	 */
 	private static TCPCommunicationProvider tCPCommunicationProvider = null;
 	private TCPCommunicationProvider()
@@ -96,30 +94,22 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 		private ServerSocket serverSocket;
 		private InetSocketAddress socketAddress = null;
 		
-		SocketListener(InetSocketAddress inetSoc) throws CommunicationInitException
+		SocketListener(InetSocketAddress inetSoc) throws IOException
 		{
-			try
+			serverSocket = new ServerSocket();
+			for (int i = 1; i < 11; i++)
 			{
-				serverSocket = new ServerSocket();
-				for (int i = 1; i < 11; i++)
+				try
 				{
-					try
-					{
-						serverSocket.bind(inetSoc);
-						break;
-					}
-					catch (BindException e)
-					{
-						log.warn("Unable to bind ServerSocket to  local [" + inetSoc.getAddress().getHostAddress() + ":" + inetSoc.getPort() + "]");
-						if (i == 10) throw e;
-						inetSoc = new InetSocketAddress(inetSoc.getAddress(), inetSoc.getPort() + i);
-					}
+					serverSocket.bind(inetSoc);
+					break;
 				}
-			}
-			catch (IOException e)
-			{
-				log.error("Unable to bind ServerSocket to  local [" + inetSoc.getAddress().getHostAddress() + ":" + inetSoc.getPort() + "]" , e);
-				throw new CommunicationInitException("SocketComm: Could not create server socket! " + e.getMessage(), e);
+				catch (BindException e)
+				{
+					log.warn("Unable to bind ServerSocket to  local [" + inetSoc.getAddress().getHostAddress() + ":" + inetSoc.getPort() + "]");
+					if (i == 10) throw e;
+					inetSoc = new InetSocketAddress(inetSoc.getAddress(), inetSoc.getPort() + i);
+				}
 			}
 			setName("SocketListener ["+ inetSoc.getAddress().getHostAddress() + ":" + inetSoc.getPort() + "]");
 			socketAddress = inetSoc;
@@ -265,7 +255,7 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 
 	private Collection<InetSocketAddress> serverSockets = new ArrayList<InetSocketAddress>();
 	Collection<InetSocketAddress> getServerSocketAddresses() { return serverSockets; } 
-	public void addServerSocket(InetSocketAddress inetSoc) throws CommunicationInitException
+	public void addServerSocket(InetSocketAddress inetSoc) throws IOException
 	{
 		SocketListener socketListener = new SocketListener(inetSoc);
 		serverSockets.add(socketListener.socketAddress);

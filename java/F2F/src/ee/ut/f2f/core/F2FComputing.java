@@ -14,8 +14,6 @@ import javax.swing.JOptionPane;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationFactory;
-import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -66,8 +64,6 @@ public class F2FComputing
 	private static boolean isInitialized() { return localPeer != null; }
 	/**
 	 * Private constructor for singleton implementation.
-	 * 
-	 * @throws CommunicationInitException
 	 */
 	private F2FComputing(java.io.File rootDir)
 	{

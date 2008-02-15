@@ -70,7 +70,7 @@ class CPURequests extends Thread implements Activity
 						result.add(reservedPeer);
 			}
 			
-			if (result.size() >= taskCount) result.iterator();
+			if (result.size() >= taskCount) return result.iterator();
 			
 			if (System.currentTimeMillis() - start > REQUEST_FOR_CPUS_TIMEOUT)
 				throw new NotEnoughFriendsException(taskCount, result.size());

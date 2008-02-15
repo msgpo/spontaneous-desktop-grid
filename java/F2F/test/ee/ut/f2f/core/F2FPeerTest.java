@@ -2,7 +2,6 @@ package ee.ut.f2f.core;
 
 import java.util.UUID;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.core.F2FPeer;
 import junit.framework.TestCase;

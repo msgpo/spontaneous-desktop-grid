@@ -1,5 +1,6 @@
 package ee.ut.f2f.comm.tcp;
 
+import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.util.ArrayList;
@@ -9,7 +10,6 @@ import java.util.List;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.PeerPresenceListener;
@@ -80,7 +80,7 @@ class TCPCommInitiator extends Thread implements Activity, PeerPresenceListener
 				TCPCommunicationProvider.getInstance().addServerSocket(inetSoc);
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FINISHED));
 			}
-			catch (CommunicationInitException e)
+			catch (IOException e)
 			{
 				log.warn(e.getMessage());
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED));

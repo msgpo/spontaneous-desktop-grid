@@ -39,7 +39,7 @@ import javax.swing.ScrollPaneConstants;
 import javax.swing.event.ListSelectionEvent;
 import javax.swing.event.ListSelectionListener;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.ui.model.FriendModel;

@@ -3,7 +3,6 @@ package ee.ut.f2f.core;
 import java.util.Queue;
 import java.util.concurrent.ConcurrentLinkedQueue;
 
-import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -67,7 +66,7 @@ public class TaskProxy
 		if (master == null)
 		{
 			logger.warn("MASTER PEER IS NOT KNOWN!!!");
-			throw new CommunicationFailedException();
+			throw new MasterNotFoundException(task);
 		}
 		try
 		{

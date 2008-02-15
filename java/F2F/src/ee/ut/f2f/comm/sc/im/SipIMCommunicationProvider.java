@@ -11,11 +11,9 @@ import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.UUID;
 
-import ee.ut.f2f.comm.CommunicationException;
-import ee.ut.f2f.comm.CommunicationFailedException;
-import ee.ut.f2f.comm.CommunicationInitException;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.comm.sc.chat.F2FMultiProtocolProviderFactory;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
@@ -76,7 +74,7 @@ public class SipIMCommunicationProvider
 	private static SipIMCommunicationProvider siplayer = null;
 	public static SipIMCommunicationProvider getInstance() { return siplayer; }
 	
-	public static SipIMCommunicationProvider initiateSipIMCommunicationProvider(BundleContext bc) throws CommunicationException
+	public static SipIMCommunicationProvider initiateSipIMCommunicationProvider(BundleContext bc) throws InvalidSyntaxException
 	{
 		if (siplayer != null) return siplayer;		
 		
@@ -90,7 +88,7 @@ public class SipIMCommunicationProvider
 	private BundleContext bundleContext = null;
 	public BundleContext getBundleContext() { return bundleContext; }
 	
-	private SipIMCommunicationProvider(BundleContext bc) throws CommunicationException
+	private SipIMCommunicationProvider(BundleContext bc) throws InvalidSyntaxException
 	{
 		sipPeers = new Hashtable<String, UUIDSipPeer>();
 		idMap = new Hashtable<UUID, Collection<String>>();
@@ -125,7 +123,7 @@ public class SipIMCommunicationProvider
 			// this shouldn't happen since we're providing no parameter string
 			// but let's log just in case.
 			F2FDebug.println("\t\tError while retrieving service refs" + ex);
-			throw new CommunicationInitException("Error while retrieving service refs!", ex);
+			throw ex;
 		}
 		
 		// listen for contacts presence status changes
@@ -825,7 +823,7 @@ public class SipIMCommunicationProvider
 				continue;
 			}
 		}
-		throw new CommunicationFailedException();
+		throw new CommunicationFailedException("Could not send a message to peer "+destinationPeer+" via SIP Communicator");
 	}
 
 	public int getWeight()

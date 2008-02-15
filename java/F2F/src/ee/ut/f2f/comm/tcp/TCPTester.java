@@ -15,7 +15,7 @@ import java.util.Random;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.comm.CommunicationFailedException;
+import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FMessageListener;
 import ee.ut.f2f.core.F2FPeer;

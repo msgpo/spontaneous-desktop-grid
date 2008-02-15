@@ -5,8 +5,8 @@ import java.util.UUID;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
-import ee.ut.f2f.comm.CommunicationFailedException;
 import ee.ut.f2f.comm.CommunicationProvider;
+import ee.ut.f2f.core.CommunicationFailedException;
 
 public class UDPCommProvider implements CommunicationProvider, Activity
 {
