@@ -87,7 +87,7 @@ public class F2FPeer
 	}
 	public void sendMessage(Object message) throws CommunicationFailedException
 	{
-		logger.info("TO "+getDisplayName()+": "+message);
+		
 		
 		// Loopback
 		if (this.id.equals(F2FComputing.getLocalPeer().getID()))
@@ -104,9 +104,8 @@ public class F2FPeer
 			CommunicationProvider commProvider = commProviders.get(i);
 			try
 			{	
-				//logger.debug("Using SipCommucationProvider sending F2FMessage to [" + this.getID().toString() + "]");
 				commProvider.sendMessage(id, message);
-				//logger.debug("Message successfully sent using SipCommunicationProvider");
+				logger.info("TO "+getDisplayName()+"("+commProvider.getWeight()+")"+": "+message);
 			}
 			catch (Exception e)
 			{
