@@ -7,6 +7,7 @@ import java.util.Vector;
 
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.util.F2FDebug;
+import ee.ut.f2f.util.logging.Logger;
 
 import net.java.sip.communicator.service.protocol.ChatRoom;
 import net.java.sip.communicator.service.protocol.ChatRoomConfigurationForm;
@@ -30,6 +31,8 @@ import net.java.sip.communicator.service.protocol.event.LocalUserChatRoomPresenc
 public class F2FMultiChatRoom
 	implements ChatRoom
 {
+	private static final Logger logger = Logger.getLogger(F2FMultiChatRoom.class);
+	
     private F2FMultiProtocolProviderService provider;
     
     private F2FMultiOperationSetMultiUserChat parentOpSet = null;
@@ -406,7 +409,7 @@ public class F2FMultiChatRoom
     	if (owner != null)
     	{
     		//TODO: inform user that only Owner can invite people
-			F2FDebug.println("only owner can add members to the chat room");
+			logger.warn("only owner can add members to the chat room");
     		return;
     	}
     	final String sUserAddress = userAddress;
@@ -420,13 +423,13 @@ public class F2FMultiChatRoom
     			if (contact == null)
     			{
     				//TODO: inform user that such contact was not found
-    				F2FDebug.println("contact " + sUserAddress + " not found");
+    				logger.warn("contact " + sUserAddress + " not found");
     				return;
     			}
     			if (!contact.getPresenceStatus().isOnline())
     			{
     				//TODO: inform user the contact is not online
-    				F2FDebug.println("contact " + sUserAddress + " is not online");
+    				logger.warn("contact " + sUserAddress + " is not online");
     				return;
     			}
     			provider.getSipCommProvider().makeF2FTest(contact);
@@ -442,7 +445,7 @@ public class F2FMultiChatRoom
 					if (System.currentTimeMillis() - start > 1000 * F2F_TEST_TIMEOUT)
 					{
 						//TODO: inform the user, that F2F-capability test failed
-						F2FDebug.println("contact " + sUserAddress + " F2F-capability test failed");
+						logger.warn("contact " + sUserAddress + " F2F-capability test failed");
 						return;
 					}
     			}
