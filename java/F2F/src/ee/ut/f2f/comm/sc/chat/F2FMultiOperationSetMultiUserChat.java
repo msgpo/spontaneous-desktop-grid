@@ -291,25 +291,20 @@ public class F2FMultiOperationSetMultiUserChat
      */
     public void rejectInvitation(ChatRoomInvitation invitation, String reason)
     {
-    	//TODO: inform the sender that I do not want to join the chat room
-    	
-        // this code is actually doing nothing now, because
-    	// MultiUserChatManager does nothing on this event.
-    	// but it may do one day
-    	ChatRoomInvitationRejectedEvent evt = 
-            new ChatRoomInvitationRejectedEvent(
-                    this,
-                    invitation.getTargetChatRoom(),
-                    provider.getAccountID().getUserID(),
-                    invitation.getReason(),
-                    new Date());
-    	Vector<ChatRoomInvitationRejectionListener> listeners = null;
-    	synchronized (invitationRejectListeners)
+    	F2FMultiChatRoom chatRoom = (F2FMultiChatRoom) invitation.getTargetChatRoom(); 
+    	if (chatRoom.getOwner() != null)
     	{
-    		listeners = new Vector<ChatRoomInvitationRejectionListener>(invitationRejectListeners);
+	    	F2FMultiInvitationAnswer answer = new F2FMultiInvitationAnswer(chatRoom, false, reason);
+			try
+			{
+				sendF2FMultiChatMessage(answer, chatRoom.getOwner());
+			}
+			catch (CommunicationFailedException e)
+			{
+				//TODO: inform the user, that answer could not be sent
+				F2FDebug.println("could not send INVITATION ANSWER to the contact " + chatRoom.getOwner() + ": " + e);
+			}
     	}
-        for (ChatRoomInvitationRejectionListener listener: listeners)
-        	listener.invitationRejected(evt);
     }
     
     /**
@@ -547,7 +542,8 @@ public class F2FMultiOperationSetMultiUserChat
 		F2FMultiChatRoom room = findRoom(msg.getRoomName());
 		if (room == null)
 		{
-			F2FDebug.println("contact " + msg.getSourceAddress() + " has accepted INVITATION of an unknown chat room " + msg.getRoomName());
+			logger.warn("contact " + msg.getSourceAddress() + " has accepted INVITATION of an unknown chat room " + msg.getRoomName());
+			return;
 		}
 		Contact contact = provider.getSipCommProvider().findContact(msg.getSourceAddress());
 
@@ -604,6 +600,29 @@ public class F2FMultiOperationSetMultiUserChat
 
 	private void onInvitationRejected(F2FMultiChatMessage msg)
 	{
-		// TODO Auto-generated method stub
+		F2FMultiChatRoom room = findRoom(msg.getRoomName());
+		if (room == null)
+		{
+			logger.warn("contact " + msg.getSourceAddress() + " has rejected INVITATION of an unknown chat room " + msg.getRoomName());
+			return;
+		}
+		Contact contact = provider.getSipCommProvider().findContact(msg.getSourceAddress());
+		// this code is actually doing nothing now, because
+    	// MultiUserChatManager does nothing on this event.
+    	// but it may do one day
+    	ChatRoomInvitationRejectedEvent evt = 
+            new ChatRoomInvitationRejectedEvent(
+                    this,
+                    room,
+                    contact.getDisplayName(),
+                    msg.getContent(),
+                    new Date());
+    	Vector<ChatRoomInvitationRejectionListener> listeners = null;
+    	synchronized (invitationRejectListeners)
+    	{
+    		listeners = new Vector<ChatRoomInvitationRejectionListener>(invitationRejectListeners);
+    	}
+        for (ChatRoomInvitationRejectionListener listener: listeners)
+        	listener.invitationRejected(evt);
 	}
 }

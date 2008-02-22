@@ -432,6 +432,12 @@ public class F2FMultiChatRoom
     				logger.warn("contact " + sUserAddress + " is not online");
     				return;
     			}
+    			for (F2FMultiChatRoomMember member: getMembers())
+    	    		if (sUserAddress.equals(member.getContactAddress()))
+    	    		{
+        				logger.warn("contact " + sUserAddress + " is already in the chat");
+    	    			return;
+    	    		}
     			provider.getSipCommProvider().makeF2FTest(contact);
     			// wait until F2F-capability test is done
     			long start = System.currentTimeMillis();
