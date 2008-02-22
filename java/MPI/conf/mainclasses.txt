@@ -1,0 +1,13 @@
+F2F-MasterTask: ee.ut.f2f.mpi.examples.ep.Ep
+F2F-MasterTask: ee.ut.f2f.mpi.examples.fdTest.FDTest
+F2F-MasterTask: ee.ut.f2f.mpi.examples.fileTransfer.RemoteDataTest
+F2F-MasterTask: ee.ut.f2f.mpi.examples.graph.Floyd
+F2F-MasterTask: ee.ut.f2f.mpi.examples.is.Is
+F2F-MasterTask: ee.ut.f2f.mpi.examples.matrix.MatrixPar
+F2F-MasterTask: ee.ut.f2f.mpi.examples.matrix.SendMatrix2D
+F2F-MasterTask: ee.ut.f2f.mpi.examples.mpiCommTest.CommTestIndividual
+F2F-MasterTask: ee.ut.f2f.mpi.examples.mpiCommTest.CommTestPref
+F2F-MasterTask: ee.ut.f2f.mpi.examples.pi.Pi
+F2F-MasterTask: ee.ut.f2f.mpi.examples.ring.ElectionLCR
+F2F-MasterTask: ee.ut.f2f.mpi.examples.ring.Ring
+F2F-MasterTask: ee.ut.f2f.mpi.examples.Hostname
