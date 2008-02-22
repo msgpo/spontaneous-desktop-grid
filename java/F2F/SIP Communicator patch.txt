@@ -614,7 +614,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.jav
              new BoxLayout(contactsPanel, BoxLayout.Y_AXIS));
 Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(revision 3432)
+--- src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(revision 3462)
 +++ src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(working copy)
 @@ -16,6 +16,9 @@
  import net.java.sip.communicator.impl.gui.*;
@@ -624,9 +624,9 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +import net.java.sip.communicator.impl.gui.dnd.DnDFrame;
 +import net.java.sip.communicator.impl.gui.dnd.DnDTarget;
  import net.java.sip.communicator.impl.gui.main.*;
+ import net.java.sip.communicator.impl.gui.main.MainFrame.*;
  import net.java.sip.communicator.impl.gui.main.chat.menus.*;
- import net.java.sip.communicator.impl.gui.main.chat.toolBars.*;
-@@ -40,7 +43,8 @@
+@@ -41,7 +44,8 @@
  public class ChatWindow
      extends SIPCommFrame
      implements  ExportedWindow,
@@ -637,8 +637,8 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
      private Logger logger = Logger.getLogger(ChatWindow.class.getName());
  
 @@ -60,6 +64,11 @@
+     public ChatWindow(MainFrame mainFrame)
      {
- 
          this.mainFrame = mainFrame;
 +        
 +        dndCoordinator = mainFrame.getDnDCoordinator();
@@ -648,17 +648,17 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
  
          this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
  
-@@ -679,4 +688,87 @@
-     {
-         return this;
+@@ -721,4 +730,87 @@
+             g.drawImage(backgroundImage, 0, 0, null);
+         }
      }
 +
-+    private DnDCoordinator dndCoordinator;
-+    
-+    /**
-+     * Vector of objects of type <tt>DnDTarget</tt> that are interested in dnd events.
-+     */
-+    private Vector<DnDTarget> dndTargets = new Vector<DnDTarget>();
++	private DnDCoordinator dndCoordinator;
++	
++	/**
++	 * Vector of objects of type <tt>DnDTarget</tt> that are interested in dnd events.
++	 */
++	private Vector<DnDTarget> dndTargets = new Vector<DnDTarget>();
 +	/**
 +	 * Registers a DnDTarget.
 +	 * If you don't register, you won't get dnd events. 
@@ -678,14 +678,14 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +		dndTargets.removeElement(target);
 +	}
 +	
-+    /**
-+     * If the specified point is over a target which can accept the  dragged
-+     * object, then return that target, otherwise return null.  The source and
-+     * obj parameters are to help the target decide whether it wants the
-+     * offered object.
-+     * 
-+     * We go through the list of registered DnDTargets and see if any of them
-+     * are both under the specified point and want to accept the dragged object.
++	/**
++	 * If the specified point is over a target which can accept the  dragged
++	 * object, then return that target, otherwise return null.  The source and
++	 * obj parameters are to help the target decide whether it wants the
++	 * offered object.
++	 * 
++	 * We go through the list of registered DnDTargets and see if any of them
++	 * are both under the specified point and want to accept the dragged object.
 +	 */
 +	public DnDTarget findTarget(Point absPos, Object source, Object obj)
 +	{
@@ -694,7 +694,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +				return target;
 +		return null;
 +	}
-+
++	
 +	/** 
 +	 * Return true if the specified point is over this chat frame.
 +	 * "Over this frame" means title bars, scroll bars, etc. 
@@ -703,7 +703,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +	{
 +		return getBounds().contains(absPos);
 +	}
-+
++	
 +	/**
 +	 * Overwrites the setVisible method in order to notify the 
 +	 * DnD coorinator that this chat window is on top of other all frames. 
@@ -713,24 +713,24 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +		super.setVisible(isVisible);
 +		if (isVisible) dndCoordinator.setTopFrame(this);
 +	}
-+
-+    /**
-+     * Overwrites the dispose method in order to unregister
-+     * this chat window from DnD coordinator.
-+     * DnD events are no longer sent to this chat window.
-+     */
++	
++	/**
++	 * Overwrites the dispose method in order to unregister
++	 * this chat window from DnD coordinator.
++	 * DnD events are no longer sent to this chat window.
++	 */
 +	public void dispose()
 +	{
 +		dndCoordinator.unregisterFrame(this);
 +		super.dispose();
 +	}
-+
++	
 +	public void windowGainedFocus(WindowEvent arg0)
 +	{
 +		//System.out.println("focusGained: "+ this.getClass().toString());
 +		dndCoordinator.setTopFrame(this);
 +	}
-+
++	
 +	public void windowLostFocus(WindowEvent arg0)
 +	{
 +		//System.out.println("focusLost: "+ this.getClass().toString());
