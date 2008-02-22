@@ -20,9 +20,9 @@ public class F2FPeer
 	/**
 	 * Used only for the local peer creation.
 	 */	
-	F2FPeer(String displayName)
+	F2FPeer(UUID id, String displayName)
 	{
-		this.id = UUID.randomUUID();
+		this.id = id;
 		this.displayName = displayName;
 	}
 	

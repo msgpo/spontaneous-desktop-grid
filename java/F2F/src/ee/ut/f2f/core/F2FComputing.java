@@ -72,13 +72,23 @@ public class F2FComputing
 		rootDirectory = rootDir;
 		rootDirectory.mkdir();
 		jobs = new HashMap<String, Job>();
-		localPeer = new F2FPeer("me (localhost)");
+		localPeer = new F2FPeer(getLocalPeerID(), "me (localhost)");
 		logger.debug("local F2FPeer ID is " + localPeer.getID());
 		peers.put(localPeer.getID(), localPeer);
 		// init comm providers
 		CommunicationFactory.getInitializedCommunicationProviders();
 	}
 
+	private static UUID localPeerID = null;
+	public static UUID getLocalPeerID()
+	{
+		if (localPeerID != null) return localPeerID;
+		synchronized(F2FComputing.class)
+		{
+			if (localPeerID != null) return localPeerID;
+			return (localPeerID = UUID.randomUUID());
+		}
+	}
 	/**
 	 * Initiates F2FComputing in rootDirectory which will be parent 
 	 * directory for all job directories.

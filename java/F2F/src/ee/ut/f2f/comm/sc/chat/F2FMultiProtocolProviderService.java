@@ -7,6 +7,7 @@ import java.util.List;
 import java.util.Map;
 
 import ee.ut.f2f.comm.sc.im.SipIMCommunicationProvider;
+import ee.ut.f2f.core.F2FComputing;
 
 import net.java.sip.communicator.service.protocol.AccountID;
 import net.java.sip.communicator.service.protocol.OperationSet;
@@ -57,8 +58,8 @@ public class F2FMultiProtocolProviderService
      */
     public F2FMultiProtocolProviderService(SipIMCommunicationProvider sipCommProvider)
     {
-    	//accountID = new F2FMultiAccountID(F2FComputing.getLocalPeer().getID().toString());
-    	accountID = new F2FMultiAccountID("");
+    	accountID = new F2FMultiAccountID(F2FComputing.getLocalPeerID().toString());
+    	//accountID = new F2FMultiAccountID("");
     	this.sipCommProvider = sipCommProvider;
     	multiUserChat = new F2FMultiOperationSetMultiUserChat(this); 
         this.supportedOperationSets.put(
