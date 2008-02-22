@@ -533,3 +533,702 @@ Index: src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicIn
 +		
 +	}
  }
+Index: src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java	(revision 3432)
++++ src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java	(working copy)
+@@ -66,11 +66,15 @@
+      * A set of 2 cursors indicating if the dragged element is currently
+      * located over the contactlist or not.
+      */
+-    private static Hashtable cursors = new Hashtable(2);
++    private static Hashtable<String, Cursor> cursors = new Hashtable<String, Cursor>(3);
++    public static Cursor getCursor(String type)
++    {
++    	return cursors.get(type);
++    }
+     static {
+         try 
+         {
+-            cursors.put("valid", Cursor.getSystemCustomCursor("MoveDrop.32x32"));
++            cursors.put("move", Cursor.getSystemCustomCursor("MoveDrop.32x32"));
+         }
+         catch (Exception ex)
+         {
+@@ -88,6 +92,16 @@
+                 "will use Cursor.WAIT_CURSOR instead", ex);
+             cursors.put("invalid", Cursor.getPredefinedCursor(Cursor.WAIT_CURSOR));
+         }
++        try 
++        {
++            cursors.put("copy", Cursor.getSystemCustomCursor("CopyDrop.32x32"));
++        }
++        catch (Exception ex)
++        {
++            logger.debug("Cursor \"CopyDrop.32x32\" isn't available " +
++                "will use Cursor.CROSSHAIR_CURSOR instead", ex);
++            cursors.put("copy", Cursor.getPredefinedCursor(Cursor.CROSSHAIR_CURSOR));
++        }
+     }
+     
+     /**
+@@ -237,11 +251,11 @@
+         Point p = SwingUtilities.convertPoint(this, location, contactList);
+         if (contactList.contains(p))
+         {
+-            setCursor((Cursor) cursors.get("valid"));
++            setCursor(getCursor("move"));
+         }
+         else
+         {
+-            setCursor((Cursor) cursors.get("invalid"));
++            setCursor(getCursor("invalid"));
+         }
+     }
+ }
+Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.java	(revision 3432)
++++ src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.java	(working copy)
+@@ -36,7 +36,7 @@
+ 
+     private JScrollPane contactsScrollPane = new JScrollPane();
+ 
+-    private JPanel mainPanel = new JPanel(new BorderLayout());
++    private JPanel mainPanel;
+ 
+     private SIPCommButton addToChatButton = new SIPCommButton(
+         ImageLoader.getImage(ImageLoader.ADD_TO_CHAT_BUTTON),
+@@ -57,6 +57,12 @@
+         super(new BorderLayout(5, 5));
+ 
+         this.chatPanel = chat;
++        
++        if(chatPanel instanceof ConferenceChatPanel)
++        {
++        	mainPanel = new ConferenceChatContactsPanel((ConferenceChatPanel)chatPanel, new BorderLayout());
++        }
++        else mainPanel = new JPanel(new BorderLayout());
+ 
+         this.contactsPanel.setLayout(
+             new BoxLayout(contactsPanel, BoxLayout.Y_AXIS));
+Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(revision 3432)
++++ src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(working copy)
+@@ -16,6 +16,9 @@
+ import net.java.sip.communicator.impl.gui.*;
+ import net.java.sip.communicator.impl.gui.customcontrols.*;
+ import net.java.sip.communicator.impl.gui.customcontrols.events.*;
++import net.java.sip.communicator.impl.gui.dnd.DnDCoordinator;
++import net.java.sip.communicator.impl.gui.dnd.DnDFrame;
++import net.java.sip.communicator.impl.gui.dnd.DnDTarget;
+ import net.java.sip.communicator.impl.gui.main.*;
+ import net.java.sip.communicator.impl.gui.main.chat.menus.*;
+ import net.java.sip.communicator.impl.gui.main.chat.toolBars.*;
+@@ -40,7 +43,8 @@
+ public class ChatWindow
+     extends SIPCommFrame
+     implements  ExportedWindow,
+-                PluginComponentListener
++                PluginComponentListener,
++                DnDFrame, WindowFocusListener
+ {
+     private Logger logger = Logger.getLogger(ChatWindow.class.getName());
+ 
+@@ -60,6 +64,11 @@
+     {
+ 
+         this.mainFrame = mainFrame;
++        
++        dndCoordinator = mainFrame.getDnDCoordinator();
++        dndCoordinator.registerFrame(this);
++        enableEvents(AWTEvent.WINDOW_FOCUS_EVENT_MASK);
++        addWindowFocusListener(this);
+ 
+         this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
+ 
+@@ -679,4 +688,87 @@
+     {
+         return this;
+     }
++
++    private DnDCoordinator dndCoordinator;
++    
++    /**
++     * Vector of objects of type <tt>DnDTarget</tt> that are interested in dnd events.
++     */
++    private Vector<DnDTarget> dndTargets = new Vector<DnDTarget>();
++	/**
++	 * Registers a DnDTarget.
++	 * If you don't register, you won't get dnd events. 
++	 */
++	public void registerDnDTarget(DnDTarget target)
++	{
++		//System.out.println("Registered a DnDTaget: "+ target.getClass().toString());
++		dndTargets.addElement(target);
++	}
++	/** 
++	 * Unregisters the DnDTarget.
++	 * Dnd events will no longer be sent. 
++	 */
++	public void unregisterDnDTarget(DnDTarget target)
++	{
++		//System.out.println("Unregistered a DnDTaget: "+ target.getClass().toString());
++		dndTargets.removeElement(target);
++	}
++	
++    /**
++     * If the specified point is over a target which can accept the  dragged
++     * object, then return that target, otherwise return null.  The source and
++     * obj parameters are to help the target decide whether it wants the
++     * offered object.
++     * 
++     * We go through the list of registered DnDTargets and see if any of them
++     * are both under the specified point and want to accept the dragged object.
++	 */
++	public DnDTarget findTarget(Point absPos, Object source, Object obj)
++	{
++		for (DnDTarget target: dndTargets)
++			if (target.inside(absPos) && target.dndAccept(source, obj))
++				return target;
++		return null;
++	}
++
++	/** 
++	 * Return true if the specified point is over this chat frame.
++	 * "Over this frame" means title bars, scroll bars, etc. 
++	 */
++	public boolean inside(Point absPos)
++	{
++		return getBounds().contains(absPos);
++	}
++
++	/**
++	 * Overwrites the setVisible method in order to notify the 
++	 * DnD coorinator that this chat window is on top of other all frames. 
++	 */
++	public void setVisible(boolean isVisible)
++	{	
++		super.setVisible(isVisible);
++		if (isVisible) dndCoordinator.setTopFrame(this);
++	}
++
++    /**
++     * Overwrites the dispose method in order to unregister
++     * this chat window from DnD coordinator.
++     * DnD events are no longer sent to this chat window.
++     */
++	public void dispose()
++	{
++		dndCoordinator.unregisterFrame(this);
++		super.dispose();
++	}
++
++	public void windowGainedFocus(WindowEvent arg0)
++	{
++		//System.out.println("focusGained: "+ this.getClass().toString());
++		dndCoordinator.setTopFrame(this);
++	}
++
++	public void windowLostFocus(WindowEvent arg0)
++	{
++		//System.out.println("focusLost: "+ this.getClass().toString());
++	}
+ }
+Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java	(revision 3432)
++++ src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java	(working copy)
+@@ -67,7 +67,10 @@
+     }
+ 
+     public void invitationRejected(ChatRoomInvitationRejectedEvent evt)
+-    {   
++    {
++    	chatWindowManager.getMultiChat(evt.getChatRoom()).
++    		processMessage(evt.getInvitee(), evt.getTimestamp(), 
++    		Constants.ACTION_MESSAGE, "Rejected invitation: "+evt.getReason(), ChatConversationPanel.TEXT_CONTENT_TYPE);
+     }
+ 
+     /**
+Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceChatContactsPanel.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceChatContactsPanel.java	(revision 0)
++++ src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceChatContactsPanel.java	(revision 0)
+@@ -0,0 +1,174 @@
++package net.java.sip.communicator.impl.gui.main.chat.conference;
++
++import java.awt.AlphaComposite;
++import java.awt.Color;
++import java.awt.Cursor;
++import java.awt.Graphics;
++import java.awt.Graphics2D;
++import java.awt.LayoutManager;
++import java.awt.Point;
++import java.util.Date;
++
++import javax.swing.JPanel;
++import javax.swing.SwingUtilities;
++
++import net.java.sip.communicator.impl.gui.dnd.DnDTarget;
++import net.java.sip.communicator.impl.gui.main.chat.ChatConversationPanel;
++import net.java.sip.communicator.impl.gui.main.contactlist.ContactList;
++import net.java.sip.communicator.impl.gui.utils.Constants;
++import net.java.sip.communicator.impl.gui.utils.ContactListDraggable;
++import net.java.sip.communicator.service.protocol.ChatRoom;
++import net.java.sip.communicator.service.protocol.Contact;
++
++/**
++ * The <tt>ConferenceChatContactsPanel</tt> is the panel in the 
++ * <tt>ChatContactListPanel</tt> that contains a list of 
++ * <tt>ChatContactPanel</tt>s if a chat is a conference.
++ * The <tt>ConferenceChatContactsPanel</tt> enables to add participants
++ * to the conference with drag-and-drop.
++ * 
++ * @author Keio Kraaner
++ */
++@SuppressWarnings("serial")
++public class ConferenceChatContactsPanel extends JPanel 
++	implements DnDTarget
++{
++	private ConferenceChatPanel conferenceChatPanel;
++	
++	public ConferenceChatContactsPanel(ConferenceChatPanel conferenceChatPanel, LayoutManager layout)
++	{
++		super(layout);
++		this.conferenceChatPanel = conferenceChatPanel;
++		conferenceChatPanel.getChatWindow().registerDnDTarget(this);
++	}
++
++	public boolean inside(Point absPos)
++	{
++		return contains(relPos(absPos));
++	}
++
++	public Point relPos(Point absPos)
++	{
++		Point p = (Point) absPos.clone();
++		SwingUtilities.convertPointFromScreen(p, this);
++		return p;
++	}
++
++	public boolean dndAccept(Object src, Object obj)
++	{
++		if (src instanceof ContactList && obj instanceof ContactListDraggable)
++			return true;
++		return false;
++	}
++
++	public void dndDrop(Point relPos, Object src, Object obj)
++	{
++		if (draggable == null) return;
++
++		Object o = conferenceChatPanel.getChatIdentifier();
++		if (!(o instanceof ChatRoomWrapper)) return;
++		ChatRoomWrapper chatRoomWrapper = (ChatRoomWrapper) o;
++		ChatRoom chatRoom = chatRoomWrapper.getChatRoom();
++		if (chatRoom == null) return;
++		Contact contact;
++		if (draggable.getContact() != null)
++			contact = draggable.getContact();
++		else contact = draggable.getMetaContact().getDefaultContact();
++		chatRoom.invite(contact.getAddress(), "");
++		conferenceChatPanel.processMessage(contact.getDisplayName(),
++                new Date(System.currentTimeMillis()),
++                Constants.ACTION_MESSAGE,
++                "Sending invitation to join",
++                ChatConversationPanel.TEXT_CONTENT_TYPE);
++		
++		draggable = null;
++		setCursor(Cursor.getDefaultCursor());
++		repaint();
++	}
++
++	public void dndCancel(Point relPos, Object src, Object obj)
++	{
++		if (draggable == null) return;
++
++		draggable = null;
++		setCursor(Cursor.getDefaultCursor());
++		repaint();
++	}
++
++	private ContactListDraggable draggable = null;
++	private Point draggablePos;
++	public void dndEnter(Point relPos, Object src, Object obj)
++	{
++		if (!(obj instanceof ContactListDraggable)) return;
++		
++		draggable = (ContactListDraggable) obj;
++		draggablePos = relPos;
++		repaint();
++	}
++
++	public void dndExit(Point relPos, Object src, Object obj)
++	{
++		if (draggable == null) return;
++
++		draggable = null;
++		setCursor(Cursor.getDefaultCursor());
++		repaint();
++	}
++
++	public void dndMove(Point relPos, Object src, Object obj)
++	{
++		if (draggable == null) return;
++		
++		if (relPos.equals(draggablePos)) return;
++		
++		draggablePos = relPos;
++        repaint();
++	}
++	
++	public void paintComponent(Graphics g)
++	{
++		super.paintComponent(g);
++		drawDraggable(g);
++	}
++	
++	private void drawDraggable(Graphics g)
++	{
++		if (draggable == null || draggablePos == null) return;
++		
++		// make the dragged element "transparent" with a coef. of 0.8
++        // and paint it
++        Graphics2D g2 = (Graphics2D) g;
++        g2.setComposite(AlphaComposite.
++            getInstance(AlphaComposite.SRC_OVER, 0.8f));
++        
++        g2.drawImage(
++            draggable.getImage(),
++            (int) (draggablePos.getX() - draggable.getImage().getWidth(null) / 2),
++            (int) (draggablePos.getY() - draggable.getImage().getHeight(null) / 2),
++            null);
++        
++        g2.setColor(Color.GRAY);
++        g2.drawRect((int) (draggablePos.getX() - draggable.getImage().getWidth(null) / 2),
++                    (int) (draggablePos.getY() - draggable.getImage().getHeight(null) / 2),
++                    draggable.getImage().getWidth(null),
++                    draggable.getImage().getHeight(null));
++        if (contains(draggablePos))
++        {
++            setCursor(ContactListDraggable.getCursor("copy"));
++        }
++        else
++        {
++            setCursor(ContactListDraggable.getCursor("invalid"));
++        }
++	}
++	
++    /**
++     * Overwrites the dispose method in order to unregister
++     * this DnD target from the chat window.
++     * DnD events are no longer sent to this target.
++     */
++	public void dispose()
++	{
++		conferenceChatPanel.getChatWindow().unregisterDnDTarget(this);
++	}
++}
+Index: src/net/java/sip/communicator/impl/gui/main/MainFrame.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/main/MainFrame.java	(revision 3432)
++++ src/net/java/sip/communicator/impl/gui/main/MainFrame.java	(working copy)
+@@ -17,6 +17,7 @@
+ 
+ import net.java.sip.communicator.impl.gui.*;
+ import net.java.sip.communicator.impl.gui.customcontrols.*;
++import net.java.sip.communicator.impl.gui.dnd.DnDCoordinator;
+ import net.java.sip.communicator.impl.gui.i18n.*;
+ import net.java.sip.communicator.impl.gui.main.call.*;
+ import net.java.sip.communicator.impl.gui.main.chat.*;
+@@ -85,6 +86,9 @@
+         providerContactHandlers
+             = new Hashtable<ProtocolProviderService, ContactEventHandler>();
+ 
++    private DnDCoordinator dndCoordinator = new DnDCoordinator();
++    public DnDCoordinator getDnDCoordinator() { return dndCoordinator; }
++    
+     /**
+      * Creates an instance of <tt>MainFrame</tt>.
+      */
+Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java	(revision 3432)
++++ src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java	(working copy)
+@@ -108,6 +108,8 @@
+                 {
+                     draggedElement.setVisible(false);
+                     draggedElement = null;
++                    
++                    ContactList.this.mainFrame.getDnDCoordinator().cancelDnD();
+                 }
+             }
+         });
+@@ -121,6 +123,8 @@
+                     {
+                         draggedElement.setVisible(false);
+                         draggedElement = null;
++                        
++                        ContactList.this.mainFrame.getDnDCoordinator().cancelDnD();
+                     }
+                 }
+             }
+@@ -788,6 +792,10 @@
+ 
+             p = SwingUtilities.convertPoint(e.getComponent(), p, draggedElement);
+             draggedElement.setLocation(p);
++            
++            Point eventAbsPos = (Point) e.getPoint().clone();
++            SwingUtilities.convertPointToScreen(eventAbsPos, e.getComponent());
++            mainFrame.getDnDCoordinator().startDnD(eventAbsPos, this, draggedElement);
+         }
+     }
+     
+@@ -806,6 +814,10 @@
+             p = SwingUtilities.convertPoint(e.getComponent(), p, draggedElement);
+             draggedElement.setLocation(p);
+             draggedElement.repaint();
++
++            Point eventAbsPos = (Point) e.getPoint().clone();
++            SwingUtilities.convertPointToScreen(eventAbsPos, e.getComponent());
++            mainFrame.getDnDCoordinator().updateDnD(eventAbsPos);
+         }
+     }
+     
+@@ -823,6 +835,8 @@
+         ContactListModel listModel = (ContactListModel) this.getModel();
+ 
+         Object dest = listModel.getElementAt(selectedIndex);
++        if (!contains(e.getPoint())) dest = null;
++        
+         if (draggedElement != null)
+         {
+             if (dest instanceof MetaContact)
+@@ -895,6 +909,8 @@
+ 
+             draggedElement.setVisible(false);
+             draggedElement = null;
++            
++            mainFrame.getDnDCoordinator().finishDnD();
+         }
+     }
+ 
+Index: src/net/java/sip/communicator/impl/gui/dnd/DnDFrame.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/dnd/DnDFrame.java	(revision 0)
++++ src/net/java/sip/communicator/impl/gui/dnd/DnDFrame.java	(revision 0)
+@@ -0,0 +1,25 @@
++
++package net.java.sip.communicator.impl.gui.dnd;
++
++import java.awt.Point;
++
++/** 
++Every Frame that wants to get dnd events has to implement this interface.  
++DnDFrames that don't have to extend some other class should extend 
++DnDFrameBase.
++@see DnDFrameBase
++*/
++public interface DnDFrame {
++	/** 
++	Return true if the specified point is over this frame.  "Over this frame"
++	means title bars, scroll bars, etc. */
++	public boolean inside(Point absPos);
++
++	/** 
++	If the specified point is over a target which can accept the  dragged 
++	object, then return that target, otherwise return null.  The source and
++	obj parameters are to help the target decide whether it wants the
++	proffered object. 
++	*/
++	public DnDTarget findTarget(Point absPos, Object source, Object obj);
++}
+Index: src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java	(revision 0)
++++ src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java	(revision 0)
+@@ -0,0 +1,124 @@
++
++package net.java.sip.communicator.impl.gui.dnd;
++
++/** 
++<p>This class coordinates the mouse events involved in a drag and drop 
++transaction.  The DnDSource should call startDnD, updateDnD, and finishDnD 
++or cancelDND.  This class will then call lookAlive, doDrop, and cancelDrop on 
++the target as appropriate.  The reason this class is necessary is because when
++the mouse starts dragging in one Component and then moves over a different
++Component, the first Component is the one that gets all the mouse messages.
++That first Component is the DnDSource, and the second is the DnDTarget.  The
++job of this class is to shuttle the mouse events from the source to the target,
++translating the mouse events on the way.
++
++<p><b>Note</b>: this class assumes only one dnd operation can happen at a time 
++(after all, there's only one mouse)
++*/
++
++import java.awt.Point;
++import java.util.Vector;
++
++public class DnDCoordinator
++{
++	private Vector<DnDFrame> frames = new Vector<DnDFrame>();
++	private Object src;
++	private Object draggable;
++	private DnDTarget currentTarget;	// target the mouse is currently over
++	private Point currentPos;		// position of mouse relative to target
++
++	/** Register a Frame as dnd-capable.  If you don't register the Frame, it
++	  won't be notified of dnd events. */
++	public void registerFrame(DnDFrame frame) {
++		if (!frames.contains(frame))
++		{
++			//System.out.println("Registered a DnDFrame: "+ frame.getClass().toString());
++			frames.addElement(frame);
++		}
++	}
++	/** Unregister a Frame as dnd-capable.  Dnd events will no longer be sent. */
++	public void unregisterFrame(DnDFrame frame) {
++		if (frames.contains(frame))
++		{
++			//System.out.println("Unregistered a DnDFrame: "+ frame.getClass().toString());
++			frames.removeElement(frame);
++		}
++	}
++	/** Call this when a Frame is moved to the top (eg when it gets the focus) */
++	public void setTopFrame(DnDFrame frame) {
++		if (!frames.contains(frame)) return;
++		frames.removeElement(frame);
++		frames.insertElementAt(frame, 0);
++	}
++
++	/** Call this to start a dnd operation.
++	  @param pos The position of the mouse when the dnd operation started
++	  @param src Where the object is being dragged from.  May be null.
++	  @param obj The thing that's being dragged.  May be null.
++	*/
++	public void startDnD(Point absPos, Object src, Object draggable) {
++		this.src = src;
++		this.draggable = draggable;
++		findTarget(absPos);
++		if (currentTarget != null)
++			currentTarget.dndEnter(currentPos, src, draggable);
++	}
++	/** Call this when the mouse moves during a dnd operation.
++	  @param newPos the new position of the mouse
++	*/
++	public void updateDnD(Point newAbsPos) {
++		DnDTarget oldTarget = currentTarget;
++		findTarget(newAbsPos);
++		// if we're still over the same target, it's a move()
++		if (currentTarget == oldTarget) {
++			if (currentTarget != null)
++				currentTarget.dndMove(currentPos, src, draggable);
++		}
++		// otherwise we exit() old target and enter() new one
++		else {
++			if (oldTarget != null)
++				oldTarget.dndExit(currentPos, src, draggable);
++			if (currentTarget != null)
++				currentTarget.dndEnter(currentPos, src, draggable);
++		}
++	}
++	/** Call this when the dnd operation is finished successfully (eg when the 
++	  mouse button is released). */
++	public void finishDnD() {
++		if (currentTarget != null)
++			currentTarget.dndDrop(currentPos, src, draggable);
++		src = null;
++		currentTarget = null;
++	}
++	/** Call this if the user aborts the dnd operation without dropping the object
++	  (eg by hitting the ESC key) */
++	public void cancelDnD() {
++		if (currentTarget != null)
++			currentTarget.dndCancel(currentPos, src, draggable);
++		src = null;
++		currentTarget = null;
++	}
++
++	private void findTarget(Point absPos) {
++		// check for a target in every frame we know about
++		for (DnDFrame frame: frames)
++		{
++			if (frame.inside(absPos)) {
++				DnDTarget target = frame.findTarget(absPos, src, draggable);
++				if (target != null) {
++					// hooray!  we found a target
++					currentTarget = target;
++					currentPos = target.relPos(absPos);
++					return;
++				}
++				// we're over a frame, but not over a target
++				currentTarget = null;
++				currentPos = null;
++				return;
++			}
++		}
++		// we're not over a frame that supports dnd
++		currentTarget = null;
++		currentPos = null;
++	}
++}
+Index: src/net/java/sip/communicator/impl/gui/dnd/DnDTarget.java
+===================================================================
+--- src/net/java/sip/communicator/impl/gui/dnd/DnDTarget.java	(revision 0)
++++ src/net/java/sip/communicator/impl/gui/dnd/DnDTarget.java	(revision 0)
+@@ -0,0 +1,53 @@
++
++package net.java.sip.communicator.impl.gui.dnd;
++
++import java.awt.Point;
++
++/**
++Implement this interface if you want to have things dropped on you.
++*/
++public interface DnDTarget
++{
++	/** 
++	Convert absolute coordinates into coordinates relative to this target. 
++	@see RelPoint
++	*/
++	public Point relPos(Point absPos);
++
++	/** 
++	Return true if this target will accept the object being dragged.
++	*/
++	public boolean dndAccept(Object src, Object obj);
++
++	/**
++	Something has just been dragged onto this target.
++	This method will not be called if dndAccept returns false. 
++	*/
++	public void dndEnter(Point relPos, Object src, Object obj);
++
++	/** 
++	The dragged object has been moved (but it is still over this target). 
++	*/
++	public void dndMove(Point relPos, Object src, Object obj);
++
++	/** 
++	The mouse has left the building.  The dragged object is no longer over
++	this target.
++	*/
++	public void dndExit(Point relPos, Object src, Object obj);
++
++	/** 
++	Do your thing.
++	*/
++	public void dndDrop(Point relPos, Object src, Object obj);
++
++	/** 
++	The source has decided to cancel the dnd operation.
++	*/
++	public void dndCancel(Point relPos, Object src, Object obj);
++
++	/** 
++	Return true if the specified point is over this target.
++	*/
++	public boolean inside(Point absPos);
++}
