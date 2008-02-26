@@ -496,11 +496,11 @@ Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantM
  }
 Index: src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(revision 3320)
+--- src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(revision 3469)
 +++ src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(working copy)
-@@ -400,5 +400,15 @@
+@@ -389,5 +389,15 @@
      {
-         return false;
+         return MessageSSHImpl.contentType.equals(contentType);
      }
 +
 +	public void addEventFilter(EventFilter filter) {
@@ -1019,54 +1019,52 @@ Index: src/net/java/sip/communicator/impl/gui/dnd/DnDFrame.java
 ===================================================================
 --- src/net/java/sip/communicator/impl/gui/dnd/DnDFrame.java	(revision 0)
 +++ src/net/java/sip/communicator/impl/gui/dnd/DnDFrame.java	(revision 0)
-@@ -0,0 +1,25 @@
+@@ -0,0 +1,23 @@
 +
 +package net.java.sip.communicator.impl.gui.dnd;
 +
 +import java.awt.Point;
 +
-+/** 
-+Every Frame that wants to get dnd events has to implement this interface.  
-+DnDFrames that don't have to extend some other class should extend 
-+DnDFrameBase.
-+@see DnDFrameBase
-+*/
-+public interface DnDFrame {
-+	/** 
-+	Return true if the specified point is over this frame.  "Over this frame"
-+	means title bars, scroll bars, etc. */
++/**
++ * Every Frame that wants to get DnD events has to implement this interface.
++ */
++public interface DnDFrame
++{
++	/**
++	 * Return true if the specified point is over this frame.
++	 * "Over this frame" means title bars, scroll bars, etc.
++	 */
 +	public boolean inside(Point absPos);
 +
-+	/** 
-+	If the specified point is over a target which can accept the  dragged 
-+	object, then return that target, otherwise return null.  The source and
-+	obj parameters are to help the target decide whether it wants the
-+	proffered object. 
-+	*/
++	/**
++	 * If the specified point is over a target which can accept the  dragged
++	 * object, then return that target, otherwise return null.  The source and
++	 * obj parameters are to help the target decide whether it wants the object. 
++	 */
 +	public DnDTarget findTarget(Point absPos, Object source, Object obj);
 +}
 Index: src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java
 ===================================================================
 --- src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java	(revision 0)
 +++ src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java	(revision 0)
-@@ -0,0 +1,124 @@
+@@ -0,0 +1,146 @@
 +
 +package net.java.sip.communicator.impl.gui.dnd;
 +
 +/** 
-+<p>This class coordinates the mouse events involved in a drag and drop 
-+transaction.  The DnDSource should call startDnD, updateDnD, and finishDnD 
-+or cancelDND.  This class will then call lookAlive, doDrop, and cancelDrop on 
-+the target as appropriate.  The reason this class is necessary is because when
-+the mouse starts dragging in one Component and then moves over a different
-+Component, the first Component is the one that gets all the mouse messages.
-+That first Component is the DnDSource, and the second is the DnDTarget.  The
-+job of this class is to shuttle the mouse events from the source to the target,
-+translating the mouse events on the way.
-+
-+<p><b>Note</b>: this class assumes only one dnd operation can happen at a time 
-+(after all, there's only one mouse)
-+*/
++ * <p>This class coordinates the mouse events involved in a drag and drop 
++ * transaction.  The source where dragging starts should call startDnD, updateDnD, and finishDnD 
++ * or cancelDnD.  This class will then call appropriate target methods. 
++ * The reason this class is necessary is because when
++ * the mouse starts dragging in one Component and then moves over a different
++ * Component, the first Component is the one that gets all the mouse messages. 
++ * That first Component is the source, and the second is the target.  The
++ * job of this class is to shuttle the mouse events from the source to the target,
++ * translating the mouse events on the way.
++ *
++ * <p><b>Note</b>: this class assumes only one DnD operation can happen at a time 
++ * (after all, there's only one mouse)
++ */
 +
 +import java.awt.Point;
 +import java.util.Vector;
@@ -1079,17 +1077,21 @@ Index: src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java
 +	private DnDTarget currentTarget;	// target the mouse is currently over
 +	private Point currentPos;		// position of mouse relative to target
 +
-+	/** Register a Frame as dnd-capable.  If you don't register the Frame, it
-+	  won't be notified of dnd events. */
-+	public void registerFrame(DnDFrame frame) {
++	/** 
++	 * Register a Frame as DnD-capable.  If you don't register the Frame, it
++	 * won't be notified of DnD events. 
++	 */
++	public void registerFrame(DnDFrame frame)
++	{
 +		if (!frames.contains(frame))
 +		{
 +			//System.out.println("Registered a DnDFrame: "+ frame.getClass().toString());
 +			frames.addElement(frame);
 +		}
 +	}
-+	/** Unregister a Frame as dnd-capable.  Dnd events will no longer be sent. */
-+	public void unregisterFrame(DnDFrame frame) {
++	/** Unregister a Frame as DnD-capable.  Dnd events will no longer be sent. */
++	public void unregisterFrame(DnDFrame frame)
++	{
 +		if (frames.contains(frame))
 +		{
 +			//System.out.println("Unregistered a DnDFrame: "+ frame.getClass().toString());
@@ -1097,67 +1099,85 @@ Index: src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java
 +		}
 +	}
 +	/** Call this when a Frame is moved to the top (eg when it gets the focus) */
-+	public void setTopFrame(DnDFrame frame) {
++	public void setTopFrame(DnDFrame frame)
++	{
 +		if (!frames.contains(frame)) return;
 +		frames.removeElement(frame);
 +		frames.insertElementAt(frame, 0);
 +	}
 +
-+	/** Call this to start a dnd operation.
-+	  @param pos The position of the mouse when the dnd operation started
-+	  @param src Where the object is being dragged from.  May be null.
-+	  @param obj The thing that's being dragged.  May be null.
-+	*/
-+	public void startDnD(Point absPos, Object src, Object draggable) {
++	/** 
++	 * Call this to start a DnD operation.
++	 *
++	 * @param absPos The position of the mouse when the DnD operation started
++	 * @param src Where the object is being dragged from. May be null.
++	 * @param obj The thing that's being dragged. May be null.
++	 */
++	public void startDnD(Point absPos, Object src, Object draggable)
++	{
 +		this.src = src;
 +		this.draggable = draggable;
 +		findTarget(absPos);
 +		if (currentTarget != null)
 +			currentTarget.dndEnter(currentPos, src, draggable);
 +	}
-+	/** Call this when the mouse moves during a dnd operation.
-+	  @param newPos the new position of the mouse
-+	*/
-+	public void updateDnD(Point newAbsPos) {
++	/**
++	 * Call this when the mouse moves during a DnD operation.
++	 * 
++	 * @param newAbsPos the new position of the mouse
++	 */
++	public void updateDnD(Point newAbsPos)
++	{
 +		DnDTarget oldTarget = currentTarget;
 +		findTarget(newAbsPos);
 +		// if we're still over the same target, it's a move()
-+		if (currentTarget == oldTarget) {
++		if (currentTarget == oldTarget)
++		{
 +			if (currentTarget != null)
 +				currentTarget.dndMove(currentPos, src, draggable);
 +		}
 +		// otherwise we exit() old target and enter() new one
-+		else {
++		else
++		{
 +			if (oldTarget != null)
 +				oldTarget.dndExit(currentPos, src, draggable);
 +			if (currentTarget != null)
 +				currentTarget.dndEnter(currentPos, src, draggable);
 +		}
 +	}
-+	/** Call this when the dnd operation is finished successfully (eg when the 
-+	  mouse button is released). */
-+	public void finishDnD() {
++	/** 
++	 * Call this when the DnD operation is finished successfully (eg when the
++	 * mouse button is released). 
++	 */
++	public void finishDnD()
++	{
 +		if (currentTarget != null)
 +			currentTarget.dndDrop(currentPos, src, draggable);
 +		src = null;
 +		currentTarget = null;
 +	}
-+	/** Call this if the user aborts the dnd operation without dropping the object
-+	  (eg by hitting the ESC key) */
-+	public void cancelDnD() {
++	/** 
++	 * Call this if the user aborts the DnD operation without dropping the object
++	 * (eg by hitting the ESC key) 
++	 */
++	public void cancelDnD()
++	{
 +		if (currentTarget != null)
 +			currentTarget.dndCancel(currentPos, src, draggable);
 +		src = null;
 +		currentTarget = null;
 +	}
 +
-+	private void findTarget(Point absPos) {
++	private void findTarget(Point absPos)
++	{
 +		// check for a target in every frame we know about
 +		for (DnDFrame frame: frames)
 +		{
-+			if (frame.inside(absPos)) {
++			if (frame.inside(absPos))
++			{
 +				DnDTarget target = frame.findTarget(absPos, src, draggable);
-+				if (target != null) {
++				if (target != null)
++				{
 +					// hooray!  we found a target
 +					currentTarget = target;
 +					currentPos = target.relPos(absPos);
@@ -1169,7 +1189,7 @@ Index: src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java
 +				return;
 +			}
 +		}
-+		// we're not over a frame that supports dnd
++		// we're not over a frame that supports DnD
 +		currentTarget = null;
 +		currentPos = null;
 +	}
@@ -1178,57 +1198,56 @@ Index: src/net/java/sip/communicator/impl/gui/dnd/DnDTarget.java
 ===================================================================
 --- src/net/java/sip/communicator/impl/gui/dnd/DnDTarget.java	(revision 0)
 +++ src/net/java/sip/communicator/impl/gui/dnd/DnDTarget.java	(revision 0)
-@@ -0,0 +1,53 @@
+@@ -0,0 +1,52 @@
 +
 +package net.java.sip.communicator.impl.gui.dnd;
 +
 +import java.awt.Point;
 +
 +/**
-+Implement this interface if you want to have things dropped on you.
-+*/
++ * Implement this interface if you want to have things dropped on you.
++ */
 +public interface DnDTarget
 +{
-+	/** 
-+	Convert absolute coordinates into coordinates relative to this target. 
-+	@see RelPoint
-+	*/
++	/**
++	 * Convert absolute coordinates into coordinates relative to this target. 
++	 */
 +	public Point relPos(Point absPos);
 +
 +	/** 
-+	Return true if this target will accept the object being dragged.
-+	*/
++	 * Return true if this target will accept the object being dragged.
++	 */
 +	public boolean dndAccept(Object src, Object obj);
 +
 +	/**
-+	Something has just been dragged onto this target.
-+	This method will not be called if dndAccept returns false. 
-+	*/
++	 * Something has just been dragged onto this target.
++	 * This method will not be called if dndAccept returns false. 
++	 */
 +	public void dndEnter(Point relPos, Object src, Object obj);
 +
 +	/** 
-+	The dragged object has been moved (but it is still over this target). 
-+	*/
++	 * The dragged object has been moved (but it is still over this target). 
++	 */
 +	public void dndMove(Point relPos, Object src, Object obj);
 +
 +	/** 
-+	The mouse has left the building.  The dragged object is no longer over
-+	this target.
-+	*/
++	 * The mouse has left the building.  The dragged object is no longer over
++	 * this target.
++	 */
 +	public void dndExit(Point relPos, Object src, Object obj);
 +
 +	/** 
-+	Do your thing.
-+	*/
++	 * The dragged bject has been dropped.
++	 */
 +	public void dndDrop(Point relPos, Object src, Object obj);
 +
 +	/** 
-+	The source has decided to cancel the dnd operation.
-+	*/
++	 * The source has decided to cancel the DnD operation.
++	 */
 +	public void dndCancel(Point relPos, Object src, Object obj);
 +
 +	/** 
-+	Return true if the specified point is over this target.
-+	*/
++	 * Return true if the specified point is over this target.
++	 */
 +	public boolean inside(Point absPos);
 +}
