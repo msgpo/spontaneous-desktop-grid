@@ -163,10 +163,10 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 			}
 			catch (InterruptedException e) {}
 		}
-		if (status != Status.GOT_SOCKET_ADDRESSES)
+		if (status != Status.GOT_SOCKET_ADDRESSES && status != Status.GOT_RESULT)
 		{
-			log.error("timeout while waiting for remote socket addresses");
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for remote socket addresses"));
+			log.error("timeout while waiting for remote socket addresses "+status);
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for remote socket addresses "+status));
 			return;
 		}
 		if (remoteServerSockets == null)
@@ -226,10 +226,10 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 				}
 				catch (InterruptedException e) {}
 			}
-			if (status != Status.GOT_RESULT)
+			if (status != Status.GOT_RESULT && status != Status.GOT_RESULT)
 			{
-				log.error("timeout while waiting for remote result");
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for remote result"));
+				log.error("timeout while waiting for remote result "+status);
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for remote result "+status));
 				return;
 			}
 			if (remoteResult == null)
