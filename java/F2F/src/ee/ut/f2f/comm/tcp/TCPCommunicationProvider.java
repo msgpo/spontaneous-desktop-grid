@@ -5,7 +5,6 @@ package ee.ut.f2f.comm.tcp;
 
 import java.io.IOException;
 import java.io.ObjectInput;
-import java.io.ObjectInputStream;
 import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.BindException;
@@ -274,7 +273,7 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 				{
 					Socket socket = new Socket(address.getAddress(), address.getPort());
 					ObjectOutput oo = new ObjectOutputStream(socket.getOutputStream());
-					ObjectInput oi = new ObjectInputStream(socket.getInputStream());
+					ObjectInput oi = new JobCustomObjectInputStream(socket.getInputStream());
 					// send local peer's ID
 					oo.writeObject(F2FComputing.getLocalPeer().getID());
 					UUID remoteID = (UUID)oi.readObject();
