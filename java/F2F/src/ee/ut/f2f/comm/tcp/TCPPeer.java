@@ -119,7 +119,7 @@ class TCPPeer implements Activity
 						}
 					}
 				}
-				catch (Exception e){}
+				catch (Exception e){e.printStackTrace();}
 				try
 				{
 					if (oi != null) oi.close();
@@ -144,7 +144,8 @@ class TCPPeer implements Activity
 
 	public String getActivityName()
 	{
-		return "TCP Listening Thread, Peer id [" + id + "]";
+		return "TCP conn to " + 
+			(F2FComputing.getPeer(id) != null? F2FComputing.getPeer(id).getDisplayName(): id);
 	}
 
 	public Activity getParentActivity()

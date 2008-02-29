@@ -28,9 +28,7 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 	private enum Status
 	{
 		INIT,
-		WAITING_SOCKET_ADDRESSES,
-		GOT_SOCKET_ADDRESSES,
-		GOT_RESULT
+		START
 	}
 	private Status status = null;
 	
@@ -49,7 +47,7 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 	}
 
 	private Collection<InetSocketAddress> remoteServerSockets = null; 
-	private Integer remoteResult = null;
+	private ArrayList<Integer> remoteResults = new ArrayList<Integer>();
 	public void messageReceived(Object message, F2FPeer sender)
 	{
 		if (sender.equals(remotePeer))
@@ -63,31 +61,12 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 	
 	private void receivedTCPTestMessage(TCPTestMessage msg)
 	{
-		if (status == Status.INIT)
-		{
-			if (msg.type == TCPTestMessage.Type.INIT);
-				status = Status.WAITING_SOCKET_ADDRESSES;
-		}
-		else if (status == Status.WAITING_SOCKET_ADDRESSES)
-		{
-			if (msg.type == TCPTestMessage.Type.ADDRESSES)
-			{
-				remoteServerSockets = msg.addresses; 
-				status = Status.GOT_SOCKET_ADDRESSES;
-			}
-		}
-		else if (status == Status.GOT_SOCKET_ADDRESSES)
-		{
-			if (msg.type == TCPTestMessage.Type.RESULT)
-			{
-				remoteResult = msg.result; 
-				status = Status.GOT_RESULT;
-			}
-		}
-		else if (msg.type != TCPTestMessage.Type.INIT)
-		{	
-			log.error("receivedTCPTestMessage() at illegal moment: " + toString());
-		}
+		if (msg.type == TCPTestMessage.Type.INIT)
+				status = Status.START;
+		else if (msg.type == TCPTestMessage.Type.ADDRESSES)
+			remoteServerSockets = msg.addresses;
+		else if (msg.type == TCPTestMessage.Type.RESULT)
+			remoteResults.add(msg.result);
 	}
 
 	private InetSocketAddress usedAddress = null;
@@ -156,18 +135,12 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting for addresses"));
 		for (int i = 0; i < 60; i++)
 		{
-			if (status == Status.GOT_SOCKET_ADDRESSES) break;
+			if (remoteServerSockets != null) break;
 			try
 			{
 				Thread.sleep(500);
 			}
 			catch (InterruptedException e) {}
-		}
-		if (status != Status.GOT_SOCKET_ADDRESSES && status != Status.GOT_RESULT)
-		{
-			log.error("timeout while waiting for remote socket addresses "+status);
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for remote socket addresses "+status));
-			return;
 		}
 		if (remoteServerSockets == null)
 		{
@@ -201,6 +174,7 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		// and a random number that will be used to select the final connection if
 		// if both sides made a successful test
 		Integer localResult;// 0 means that test(s) failed
+		Integer remoteResult;
 		Random random = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis());
 		for (int r = 0; ; r++)//this is repeated until peers generate different random numbers
 		{
@@ -219,30 +193,29 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting remote result"));
 			for (int i = 0; i < 60; i++)
 			{
-				if (status == Status.GOT_RESULT) break;
+				if (remoteResults.size() > r) break;
 				try
 				{
 					Thread.sleep(500);
 				}
 				catch (InterruptedException e) {}
 			}
-			if (status != Status.GOT_RESULT && status != Status.GOT_RESULT)
+			if (remoteResults.size() <= r)
 			{
-				log.error("timeout while waiting for remote result "+status);
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "timeout while waiting for remote result "+status));
+				log.error("remoteResult.size() ("+remoteResults.size()+") <= r ("+r+")");
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "remoteResult.size() ("+remoteResults.size()+") <= r ("+r+")"));
 				return;
 			}
-			if (remoteResult == null)
-			{
-				log.error("remoteResult == null");
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "remoteResult == null"));
-				return;
-			}
+			remoteResult = remoteResults.get(r);
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "remote result is " + remoteResult));
-			if (localResult.intValue() == 0 || !localResult.equals(remoteResult)) break;
+			
+			// end the test if local tests failed
+			if (localResult.intValue() == 0) break;
+	
+			// end the test if local and remote results are different
+			if (!localResult.equals(remoteResult)) break;
+			
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "generate new results"));
-			remoteResult = null;
-			status = Status.GOT_SOCKET_ADDRESSES;
 		}
 		
 		// now we know the results
@@ -274,19 +247,7 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 	
 	public String toString()
 	{
-		return getActivityName() + " status [" + toString(status) + "]";
-	}
-	
-	private String toString(Status status)
-	{
-		switch(status)
-		{
-		case INIT : return "initialized";
-		case WAITING_SOCKET_ADDRESSES : return "waiting addresses";
-		case GOT_SOCKET_ADDRESSES : return "got addresses";
-		case GOT_RESULT: return "got result";
-		default : return "Unknown status: " + status;
-		}
+		return getActivityName() + " status [" + status + "]";
 	}
 	
 	private class TCPTestThread extends Thread implements Activity
