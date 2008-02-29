@@ -120,7 +120,7 @@ public class TaskProxy
 			}
 		}
 		// could not find receiver directly -> try routing through master node
-		f2fMessage.setType(F2FMessage.Type.ROUTE);
+		f2fMessage.setType(F2FMessage.Type.ROUTE_BLOCKING);
 		TaskDescription masterTaskDesc = task.getTaskProxy(F2FComputing.getJob(task.getJob().getJobID()).getMasterTaskID()).getRemoteTaskDescription();
 		F2FPeer master = F2FComputing.getPeer(masterTaskDesc.getPeerID());
 		if (master == null)
@@ -134,7 +134,10 @@ public class TaskProxy
 			// now the message has reached master
 			// but we still have to wait until it has reached the final
 			// destination
-			this.wait();
+			synchronized (this)
+			{
+				this.wait();
+			}
 			if (!routeReport)
 				throw new MessageNotDeliveredException(message);
 		}

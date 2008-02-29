@@ -720,7 +720,7 @@ public class F2FComputing
 			}
 			return;
 		}
-		F2FMessage f2fMessage = (F2FMessage) message;
+		final F2FMessage f2fMessage = (F2FMessage) message;
 		// JOB/TASK START
 		if (f2fMessage.getType() == F2FMessage.Type.REQUEST_FOR_CPU)
 		{
@@ -728,19 +728,25 @@ public class F2FComputing
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.RESPONSE_FOR_CPU)
 		{
-			Job job = getJob(f2fMessage.getJobID());
-			if (job == null)
+			new Thread()
 			{
-				logger.error("Received RESPONSE_FOR_CPU for unknown job");
-				return;
-			}
-			CPURequests requests = job.getCPURequests(); 
-			if (requests == null)
-			{
-				logger.error("Received RESPONSE_FOR_CPU but requester is null");
-				return;
-			}
-			requests.responseReceived(f2fMessage, sender);
+				public void run()
+				{
+					Job job = getJob(f2fMessage.getJobID());
+					if (job == null)
+					{
+						logger.error("Received RESPONSE_FOR_CPU for unknown job");
+						return;
+					}
+					CPURequests requests = job.getCPURequests(); 
+					if (requests == null)
+					{
+						logger.error("Received RESPONSE_FOR_CPU but requester is null");
+						return;
+					}
+					requests.responseReceived(f2fMessage, sender);
+				}
+			}.start();
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.JOB)
 		{
@@ -821,144 +827,166 @@ public class F2FComputing
 		// MESSAGES TO TASKS
 		else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
 		{
-			if(logger.isTraceEnabled()) {
-				logger.trace("MESSAGE received " + f2fMessage);
-			}
-			Job job = getJob(f2fMessage.getJobID());
-			if (job == null)
+			new Thread()
 			{
-				logger.warn("Got MESSAGE for unknown job with ID: "
-						+ f2fMessage.getJobID());
-				return;
-			}
-			Task recepientTask = job.getTask(f2fMessage.getReceiverTaskID());
-			if (recepientTask == null)
-			{
-				logger.warn("Got MESSAGE for unknown task with ID: "
-						+ f2fMessage.getReceiverTaskID());
-				return;
-			}
-			recepientTask.getTaskProxy(f2fMessage.getSenderTaskID())
-					.saveMessage(f2fMessage.getData());
+				public void run()
+				{
+					logger.trace("MESSAGE received " + f2fMessage);
+					Job job = getJob(f2fMessage.getJobID());
+					if (job == null)
+					{
+						logger.warn("Got MESSAGE for unknown job with ID: "
+								+ f2fMessage.getJobID());
+						return;
+					}
+					Task recepientTask = job.getTask(f2fMessage.getReceiverTaskID());
+					if (recepientTask == null)
+					{
+						logger.warn("Got MESSAGE for unknown task with ID: "
+								+ f2fMessage.getReceiverTaskID());
+						return;
+					}
+					recepientTask.getTaskProxy(f2fMessage.getSenderTaskID())
+							.saveMessage(f2fMessage.getData());
+				}
+			}.start();
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE)
 		{
-			if(logger.isTraceEnabled()) {
-				logger.trace("Received ROUTE: " + f2fMessage);
-			}
-			f2fMessage.setType(F2FMessage.Type.MESSAGE);
-			Job job = getJob(f2fMessage.getJobID());
-			if (job == null)
+			new Thread()
 			{
-				logger.error("didn't find the job");
-				return;
-			}
-			TaskDescription receiverTaskDesc = job
-					.getTaskDescription(f2fMessage.getReceiverTaskID());
-			if (receiverTaskDesc == null)
-			{
-				logger.error("didn't find the receiver task description");
-				return;
-			}
-			F2FPeer receiver = getPeer(receiverTaskDesc.getPeerID());
-			if (receiver == null)
-			{
-				logger.error("didn't find the receiver peer");
-				return;
-			}
-			try
-			{
-				receiver.sendMessage(f2fMessage);
-			}
-			catch (CommunicationFailedException e)
-			{
-				logger.error("couldn't send the message to the route target", e);
-			}
+				public void run()
+				{
+					logger.trace("Received ROUTE: " + f2fMessage);
+					f2fMessage.setType(F2FMessage.Type.MESSAGE);
+					Job job = getJob(f2fMessage.getJobID());
+					if (job == null)
+					{
+						logger.error("didn't find the job");
+						return;
+					}
+					TaskDescription receiverTaskDesc = job
+							.getTaskDescription(f2fMessage.getReceiverTaskID());
+					if (receiverTaskDesc == null)
+					{
+						logger.error("didn't find the receiver task description");
+						return;
+					}
+					F2FPeer receiver = getPeer(receiverTaskDesc.getPeerID());
+					if (receiver == null)
+					{
+						logger.error("didn't find the receiver peer");
+						return;
+					}
+					try
+					{
+						receiver.sendMessage(f2fMessage);
+					}
+					catch (CommunicationFailedException e)
+					{
+						logger.error("couldn't send the message to the route target", e);
+					}
+				}
+			}.start();
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE_BLOCKING)
 		{
-			if(logger.isTraceEnabled()) {
-				logger.trace("Received ROUTE_BLOCKING: " + f2fMessage);
-			}
-			
-			while (true)
+			new Thread()
 			{
-				Job job = getJob(f2fMessage.getJobID());
-				if (job == null)
+				public void run()
 				{
-					logger.error("couldn't send the message to the route target: didn't find the job");
-					break;
-				}
-				TaskDescription receiverTaskDesc = job
-						.getTaskDescription(f2fMessage.getReceiverTaskID());
-				if (receiverTaskDesc == null)
-				{
-					logger.error("couldn't send the message to the route target: didn't find the receiver task description");
-					break;
-				}
-				F2FPeer receiver = getPeer(receiverTaskDesc.getPeerID());
-				if (receiver == null)
-				{
-					logger.error("couldn't send the message to the route target: didn't find the receiver peer");
-					break;
-				}
-				try
-				{
-					f2fMessage.setType(F2FMessage.Type.MESSAGE);
-					receiver.sendMessageBlocking(f2fMessage);
-					// notify the sender about the success
+					logger.info("Received ROUTE_BLOCKING: " + f2fMessage);
+			
+					while (true)
+					{
+						Job job = getJob(f2fMessage.getJobID());
+						if (job == null)
+						{
+							logger.error("couldn't send the message to the route target: didn't find the job");
+							break;
+						}
+						TaskDescription receiverTaskDesc = job
+								.getTaskDescription(f2fMessage.getReceiverTaskID());
+						if (receiverTaskDesc == null)
+						{
+							logger.error("couldn't send the message to the route target: didn't find the receiver task description");
+							break;
+						}
+						F2FPeer receiver = getPeer(receiverTaskDesc.getPeerID());
+						if (receiver == null)
+						{
+							logger.error("couldn't send the message to the route target: didn't find the receiver peer");
+							break;
+						}
+						try
+						{
+							f2fMessage.setType(F2FMessage.Type.MESSAGE);
+							receiver.sendMessageBlocking(f2fMessage);
+							logger.info("ROUTE_BLOCKING: sent message");
+							// notify the sender about the success
+							try
+							{
+								f2fMessage.setType(F2FMessage.Type.ROUTE_REPORT);
+								f2fMessage.setData(Boolean.TRUE);
+								sender.sendMessage(f2fMessage);
+								logger.info("ROUTE_BLOCKING: sent reply");
+							}
+							catch (CommunicationFailedException e) {}
+							return;
+						}
+						catch (CommunicationFailedException e)
+						{
+							logger.error("couldn't send the message to the route target", e);
+							break;
+						}
+						catch (InterruptedException e)
+						{
+							logger.error("couldn't send the message to the route target", e);
+							break;
+						}
+					}
+					// notify the sender about the failure
 					try
 					{
 						f2fMessage.setType(F2FMessage.Type.ROUTE_REPORT);
-						f2fMessage.setData(Boolean.TRUE);
+						f2fMessage.setData(Boolean.FALSE);
 						sender.sendMessage(f2fMessage);
+						logger.info("ROUTE_BLOCKING: sent reply (false)");
 					}
-					catch (CommunicationFailedException e) {}
-					return;
+					catch (CommunicationFailedException ex) {}
 				}
-				catch (CommunicationFailedException e)
-				{
-					logger.error("couldn't send the message to the route target", e);
-					break;
-				}
-				catch (InterruptedException e)
-				{
-					logger.error("couldn't send the message to the route target", e);
-					break;
-				}
-			}
-			// notify the sender about the failure
-			try
-			{
-				f2fMessage.setType(F2FMessage.Type.ROUTE_REPORT);
-				f2fMessage.setData(Boolean.FALSE);
-				sender.sendMessage(f2fMessage);
-			}
-			catch (CommunicationFailedException ex) {}
-			
+			}.start();
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE_REPORT)
 		{
-			if(logger.isTraceEnabled()) {
-				logger.trace("ROUTE_REPORT received " + f2fMessage);
-			}
-			Job job = getJob(f2fMessage.getJobID());
-			if (job == null)
+			new Thread()
 			{
-				logger.warn("Got ROUTE_REPORT for unknown job with ID: "
-						+ f2fMessage.getJobID());
-				return;
-			}
-			Task senderTask = job.getTask(f2fMessage.getSenderTaskID());
-			if (senderTask == null)
-			{
-				logger.warn("Got ROUTE_REPORT for unknown task with ID: "
-						+ f2fMessage.getSenderTaskID());
-				return;
-			}
-			TaskProxy proxy = senderTask.getTaskProxy(f2fMessage.getReceiverTaskID());
-			proxy.routeReport = (Boolean) f2fMessage.getData();
-			proxy.notify();
+				public void run()
+				{
+					logger.trace("ROUTE_REPORT received " + f2fMessage);
+			
+					Job job = getJob(f2fMessage.getJobID());
+					if (job == null)
+					{
+						logger.warn("Got ROUTE_REPORT for unknown job with ID: "
+								+ f2fMessage.getJobID());
+						return;
+					}
+					Task senderTask = job.getTask(f2fMessage.getSenderTaskID());
+					if (senderTask == null)
+					{
+						logger.warn("Got ROUTE_REPORT for unknown task with ID: "
+								+ f2fMessage.getSenderTaskID());
+						return;
+					}
+					TaskProxy proxy = senderTask.getTaskProxy(f2fMessage.getReceiverTaskID());
+					proxy.routeReport = (Boolean) f2fMessage.getData();
+					synchronized (proxy)
+					{
+						proxy.notify();
+					}
+				}
+			}.start();
 		}
 	}
 	
