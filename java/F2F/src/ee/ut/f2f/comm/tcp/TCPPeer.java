@@ -9,14 +9,18 @@ import java.io.ObjectOutput;
 import java.io.ObjectOutputStream;
 import java.net.InetSocketAddress;
 import java.net.Socket;
+import java.util.HashMap;
 import java.util.UUID;
 
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
+import ee.ut.f2f.comm.BlockingMessage;
+import ee.ut.f2f.comm.BlockingReply;
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.JobCustomObjectInputStream;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.MessageNotDeliveredException;
 import ee.ut.f2f.util.logging.Logger;
 
 class TCPPeer implements Activity
@@ -110,7 +114,26 @@ class TCPPeer implements Activity
 							Object message = oi.readObject();
 							//log.debug("\t\tReceived message from id [" + getID() + "] ip [" +
 							//		 outSocket.getRemoteSocketAddress() + ":" + "]"  + "'. Message: '" + message + "'.");
-							F2FComputing.messageReceived(message, id);
+							if (message instanceof BlockingMessage)
+							{
+								BlockingMessage msg = (BlockingMessage) message;
+								F2FComputing.messageReceived(msg.data, id);
+								sendMessage(new BlockingReply(msg));
+							}
+							else if (message instanceof BlockingReply)
+							{
+								BlockingReply msg = (BlockingReply) message;
+								if (blockingMessages.containsKey(msg.ID))
+								{
+									BlockingMessage blockMsg = blockingMessages.get(msg.ID);
+									blockingMessages.remove(msg.ID);
+									synchronized (blockMsg)
+									{
+										blockMsg.notify();
+									}
+								}
+							}
+							else F2FComputing.messageReceived(message, id);
 						}
 						catch (ClassNotFoundException e)
 						{
@@ -151,5 +174,29 @@ class TCPPeer implements Activity
 	public Activity getParentActivity()
 	{
 		return scProvider;
+	}
+
+	private long msgID = 0;
+	private synchronized long getMsgID() { return ++msgID; }
+	private HashMap<Long, BlockingMessage> blockingMessages = new HashMap<Long, BlockingMessage>();
+	
+	public void sendMessageBlocking(Object message, long timeout, boolean countTimeout)
+		throws CommunicationFailedException, InterruptedException
+	{
+		if (countTimeout && timeout <= 0) throw new MessageNotDeliveredException(message);
+		
+		BlockingMessage msg = new BlockingMessage(message, getMsgID());
+		blockingMessages.put(msg.ID, msg);
+		sendMessage(msg);
+		synchronized(msg)
+		{
+			if (countTimeout) msg.wait(timeout);
+			else msg.wait(0);
+			if (blockingMessages.containsKey(msg.ID))
+			{
+				blockingMessages.remove(msg.ID);
+				throw new MessageNotDeliveredException(message);
+			}
+		}
 	}
 }

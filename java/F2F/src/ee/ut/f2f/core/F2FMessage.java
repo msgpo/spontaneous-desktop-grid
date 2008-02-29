@@ -52,7 +52,9 @@ class F2FMessage implements Serializable
 		 * master peers receive such messages and forward them to final
 		 * destination nodes.
 		 */
-		ROUTE
+		ROUTE,
+		ROUTE_BLOCKING,
+		ROUTE_REPORT
 	}
 
 	public F2FMessage(Type type, String jobID, String receiverTaskID,
@@ -95,6 +97,7 @@ class F2FMessage implements Serializable
 	 */
 	private Object data;
 	public Object getData() { return data; }
+	public void setData(Object data) { this.data = data; }
 
 	public String toString()
 	{

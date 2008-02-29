@@ -7,14 +7,18 @@ import java.io.Serializable;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.EventObject;
+import java.util.HashMap;
 import java.util.Hashtable;
 import java.util.Iterator;
 import java.util.UUID;
 
+import ee.ut.f2f.comm.BlockingMessage;
+import ee.ut.f2f.comm.BlockingReply;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.comm.sc.chat.F2FMultiProtocolProviderFactory;
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.MessageNotDeliveredException;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.Util;
 import ee.ut.f2f.util.logging.Logger;
@@ -65,7 +69,7 @@ public class SipIMCommunicationProvider
 	/**
 	 * SipPeer ID (account ID) -> <UUID, SipPeer>
 	 */
-	private Hashtable<String, UUIDSipPeer> sipPeers = null;
+	private Hashtable<String, UUIDSipContact> sipPeers = null;
 	/**
 	 * UUID -> list of according SipPeer IDs
 	 */
@@ -90,7 +94,7 @@ public class SipIMCommunicationProvider
 	
 	private SipIMCommunicationProvider(BundleContext bc) throws InvalidSyntaxException
 	{
-		sipPeers = new Hashtable<String, UUIDSipPeer>();
+		sipPeers = new Hashtable<String, UUIDSipContact>();
 		idMap = new Hashtable<UUID, Collection<String>>();
 		messageCache = new Hashtable<Contact, byte[]>();
 		protocols = new ArrayList<ProtocolProviderService>();
@@ -288,6 +292,7 @@ public class SipIMCommunicationProvider
 		// send F2F-capability test message		  
 		try 
 		{
+			//NB! F2FTestMessage may not be sent with blocking send!
 			sendIMmessage(contact, new F2FTestMessage(F2FComputing.getLocalPeer().getID()));
 		}
 		catch (CommunicationFailedException e)
@@ -299,7 +304,7 @@ public class SipIMCommunicationProvider
 
 	private void removeF2FPeerIfNeeded(final Contact contact)
 	{
-		UUIDSipPeer up = sipPeers.get(contact.getAddress());
+		UUIDSipContact up = sipPeers.get(contact.getAddress());
 		if (up == null) return;
 		UUID peerID = up.id;
 		synchronized (idMap)
@@ -664,7 +669,26 @@ public class SipIMCommunicationProvider
 					else
 					{
 						//F2FDebug.println("\t\t received a F2F message from peer " + evt.getSourceContact().getAddress());
-						F2FComputing.messageReceived(message, sipPeers.get(evt.getSourceContact().getAddress()).id);
+						if (message instanceof BlockingMessage)
+						{
+							BlockingMessage msg = (BlockingMessage) message;
+							F2FComputing.messageReceived(msg.data, sipPeers.get(evt.getSourceContact().getAddress()).id);
+							sendIMmessage(sipPeers.get(evt.getSourceContact().getAddress()).peer, new BlockingReply(msg));
+						}
+						else if (message instanceof BlockingReply)
+						{
+							BlockingReply msg = (BlockingReply) message;
+							if (blockingMessages.containsKey(msg.ID))
+							{
+								BlockingMessage blockMsg = blockingMessages.get(msg.ID);
+								blockingMessages.remove(msg.ID);
+								synchronized (blockMsg)
+								{
+									blockMsg.notify();
+								}
+							}
+						}
+						else F2FComputing.messageReceived(message, sipPeers.get(evt.getSourceContact().getAddress()).id);
 					}
 				}
 				else
@@ -683,9 +707,8 @@ public class SipIMCommunicationProvider
 							addF2FPeerIfNeeded(evt.getSourceContact());
 							
 							// add new peer
-							SipIMPeer peer = new SipIMPeer(evt.getSourceContact());
 							F2FTestMessage tmsg = (F2FTestMessage) message;
-							sipPeers.put(evt.getSourceContact().getAddress(), new UUIDSipPeer(tmsg.id, peer));
+							sipPeers.put(evt.getSourceContact().getAddress(), new UUIDSipContact(tmsg.id, evt.getSourceContact()));
 							synchronized (idMap)
 							{
 								if (!idMap.containsKey(tmsg.id))
@@ -722,7 +745,7 @@ public class SipIMCommunicationProvider
 	private static final int SLEEP_TIME_ICQ = 100;
 	private static final int MAX_MSG_LENGTH = 256 - F2F_TAG_START.length() - F2F_TAG_END.length(); // max size of MSN message is 1050 bytes
 	private static final int SLEEP_TIME = 200; // How long to wait between sending messages
-	static synchronized void sendIMmessage(Contact contact, Object msg) throws CommunicationFailedException
+	synchronized void sendIMmessage(Contact contact, Object msg) throws CommunicationFailedException
 	{
 		ProtocolProviderService protProv = contact.getProtocolProvider();
 		OperationSetBasicInstantMessaging im = (OperationSetBasicInstantMessaging) protProv
@@ -784,6 +807,28 @@ public class SipIMCommunicationProvider
 		}
 	}
 
+	private long msgID = 0;
+	private synchronized long getMsgID() { return ++msgID; }
+	private HashMap<Long, BlockingMessage> blockingMessages = new HashMap<Long, BlockingMessage>();
+	synchronized void sendIMmessageBlocking(Contact contact, Object message, long timeout, boolean countTimeout) throws CommunicationFailedException, InterruptedException
+	{
+		if (countTimeout && timeout <= 0) throw new MessageNotDeliveredException(message);
+		
+		BlockingMessage msg = new BlockingMessage(message, getMsgID());
+		blockingMessages.put(msg.ID, msg);
+		sendIMmessage(contact, msg);
+		synchronized(msg)
+		{
+			if (countTimeout) msg.wait(timeout);
+			else msg.wait(0);
+			if (blockingMessages.containsKey(msg.ID))
+			{
+				blockingMessages.remove(msg.ID);
+				throw new MessageNotDeliveredException(message);
+			}
+		}
+	}
+
 	public boolean isLocalPeerID(String ID)
 	{
 		for (ProtocolProviderService protocol: protocols)
@@ -810,12 +855,44 @@ public class SipIMCommunicationProvider
 		//	* ICQ is not very good
 		for (String sipID: idMap.get(destinationPeer))
 		{
-			SipIMPeer peer = sipPeers.get(sipID).peer;
+			Contact peer = sipPeers.get(sipID).peer;
 			if (peer == null) continue;
 			try
 			{
-				peer.sendMessage(message);
+				sendIMmessage(peer, message);
 				return;
+			}
+			catch (Exception e)
+			{
+				e.printStackTrace();
+				continue;
+			}
+		}
+		throw new CommunicationFailedException("Could not send a message to peer "+destinationPeer+" via SIP Communicator");
+	}
+	public void sendMessageBlocking(UUID destinationPeer, Object message, long timeout, boolean countTimeout) throws CommunicationFailedException, InterruptedException
+	{
+		//TODO: prefere some IM channels to other if more than one can be used
+		//	* Jabber is working very well 
+		//	* MSN is not very good
+		//	* ICQ is not very good
+		long start = System.currentTimeMillis();
+		for (String sipID: idMap.get(destinationPeer))
+		{
+			Contact peer = sipPeers.get(sipID).peer;
+			if (peer == null) continue;
+			try
+			{
+				sendIMmessageBlocking(peer, message, timeout - (System.currentTimeMillis() - start), countTimeout);
+				return;
+			}
+			catch (MessageNotDeliveredException e)
+			{
+				throw e;
+			}
+			catch (InterruptedException e)
+			{
+				throw e;
 			}
 			catch (Exception e)
 			{
@@ -832,11 +909,11 @@ public class SipIMCommunicationProvider
 	}
 }
 
-class UUIDSipPeer
+class UUIDSipContact
 {
 	UUID id = null;
-	SipIMPeer peer = null;
-	UUIDSipPeer(UUID id, SipIMPeer peer)
+	Contact peer = null;
+	UUIDSipContact(UUID id, Contact peer)
 	{
 		this.id = id;
 		this.peer = peer;

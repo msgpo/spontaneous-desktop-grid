@@ -83,6 +83,68 @@ public class TaskProxy
 		}
 	}
 
+	boolean routeReport = false;
+	/** 
+	 * Sends a message to the corresponding task and blocks until the 
+	 * receiver has got it.
+	 *  
+	 * @throws CommunicationFailedException 
+	 * @throws InterruptedException 
+	 */
+	public void sendMessageBlocking(Object message) throws CommunicationFailedException, InterruptedException
+	{
+		if (remoteTaskDescription == null)
+		{
+			logger.error("remoteTaskDescription == null");
+			return;
+		}
+		F2FMessage f2fMessage = 
+			new F2FMessage(
+					F2FMessage.Type.MESSAGE,
+					task.getJob().getJobID(),
+					remoteTaskDescription.getTaskID(),
+					task.getTaskID(),
+					message);
+		// try to send message directly to the receiver
+		F2FPeer receiver = F2FComputing.getPeer(remoteTaskDescription.getPeerID());
+		if (receiver != null)
+		{
+			try
+			{
+				receiver.sendMessageBlocking(f2fMessage);
+				return;
+			}
+			catch (CommunicationFailedException e)
+			{
+				logger.warn("could not send a message to a tast directly, try to route via master");
+			}
+		}
+		// could not find receiver directly -> try routing through master node
+		f2fMessage.setType(F2FMessage.Type.ROUTE);
+		TaskDescription masterTaskDesc = task.getTaskProxy(F2FComputing.getJob(task.getJob().getJobID()).getMasterTaskID()).getRemoteTaskDescription();
+		F2FPeer master = F2FComputing.getPeer(masterTaskDesc.getPeerID());
+		if (master == null)
+		{
+			logger.warn("MASTER PEER IS NOT KNOWN!!!");
+			throw new MasterNotFoundException(task);
+		}
+		try
+		{
+			master.sendMessageBlocking(f2fMessage);
+			// now the message has reached master
+			// but we still have to wait until it has reached the final
+			// destination
+			this.wait();
+			if (!routeReport)
+				throw new MessageNotDeliveredException(message);
+		}
+		catch (CommunicationFailedException e)
+		{
+			logger.error("COULD NOT ROUTE A MESSAGE TO THE MASTER NODE!!!");
+			throw e;
+		}
+	}
+
 	/**
 	 * Message will be saved in this proxy's message queue. The message can be
 	 * aqcuired from {@link #receiveMessage}.

@@ -85,14 +85,17 @@ public class F2FPeer
 			//	commProviders.remove(getSocketCommunicationProvider());
 		}
 	}
+	
+	/**
+	 * This method sends out the given message to the peer.
+	 * Method is unblocking and unsynchronous, no guarantee that the message
+	 * reaches the destination.
+	 */
 	public void sendMessage(Object message) throws CommunicationFailedException
 	{
-		
-		
 		// Loopback
 		if (this.id.equals(F2FComputing.getLocalPeer().getID()))
 		{
-			logger.debug("Sending F2FMessage to MYSELF - loopback");
 			F2FComputing.messageReceived(message, this.getID());			
 			return;
 		}
@@ -106,6 +109,75 @@ public class F2FPeer
 			{	
 				commProvider.sendMessage(id, message);
 				logger.info("TO "+getDisplayName()+"("+commProvider.getWeight()+")"+": "+message);
+			}
+			catch (Exception e)
+			{
+				logger.warn("Error sending message to "+getDisplayName()+" through "+commProvider.getClass());
+				e.printStackTrace();
+				// try again with different communication provider
+				continue;
+			}
+			// return if message was sent successfully
+			return;
+		}
+		// throw an exception if message is not sent
+		throw new CommunicationFailedException("Peer " + getDisplayName() + " is not reachable!");
+	}
+	
+	/**
+	 * This method sends out the given message to the peer.
+	 * Method is blocking, it returns only when the message has 
+	 * reached the destination or throws an exception in case of 
+	 * a failure.
+	 * @throws InterruptedException 
+	 */
+	public void sendMessageBlocking(Object message) throws CommunicationFailedException, InterruptedException
+	{
+		sendMessageBlocking(message, 0);
+	}
+	
+	/**
+	 * This method sends out the given message to the peer.
+	 * Method is blocking, it returns only when the message has 
+	 * reached the destination or throws an exception in case of 
+	 * a failure or timeout.
+	 * If the timeout is reached MessageNotDeliveredException is thrown,
+	 * which actually does not mean that the message was not received
+	 * by the receiver, but means that the acknowledgement from the 
+	 * receiver was not sent back (so the message may have been 
+	 * reached the destination or not).
+	 * 
+	 * @param timeout The maximum amount of time to wait in 
+	 * milliseconds until the message gets sent. 
+	 * If timeout<=0, the timeout is never reached. 
+	 */
+	public void sendMessageBlocking(Object message, long timeout) throws CommunicationFailedException, InterruptedException
+	{
+		// Loopback
+		if (this.id.equals(F2FComputing.getLocalPeer().getID()))
+		{
+			F2FComputing.messageReceived(message, this.getID());			
+			return;
+		}
+		
+		// try to send the message to the receiver
+		// use high-weight comm providers before low-weight ones
+		long start = System.currentTimeMillis();
+		for (int i = 0; i < commProviders.size(); i++)
+		{
+			CommunicationProvider commProvider = commProviders.get(i);
+			try
+			{
+				commProvider.sendMessageBlocking(id, message, timeout - (System.currentTimeMillis() - start), timeout > 0);
+				logger.info("TO "+getDisplayName()+"("+commProvider.getWeight()+")"+": "+message);
+			}
+			catch (MessageNotDeliveredException e)
+			{
+				throw e;
+			}
+			catch (InterruptedException e)
+			{
+				throw e;
 			}
 			catch (Exception e)
 			{

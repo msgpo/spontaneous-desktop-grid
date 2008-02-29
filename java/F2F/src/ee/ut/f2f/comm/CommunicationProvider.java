@@ -22,6 +22,7 @@ public interface CommunicationProvider
 	static final int SIP_IM_COMM_WEIGHT = 10;
 	static final int TCP_COMM_WEIGHT = 1000;
 	static final int UDP_COMM_WEIGHT = 500;
-	
+
 	void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException;
+	void sendMessageBlocking(UUID destinationPeer, Object message, long timeout, boolean countTimeout) throws CommunicationFailedException, InterruptedException;
 }

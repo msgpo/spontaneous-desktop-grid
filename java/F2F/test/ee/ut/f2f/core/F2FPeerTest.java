@@ -46,6 +46,12 @@ public class F2FPeerTest extends TestCase {
 			return weight;
 		}
 
-		public void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException {		}
+		public void sendMessage(UUID destinationPeer, Object message) throws CommunicationFailedException
+		{
+		}
+
+		public void sendMessageBlocking(UUID destinationPeer, Object message, long timeout, boolean countTimeout) throws CommunicationFailedException
+		{
+		}
 	}
 }

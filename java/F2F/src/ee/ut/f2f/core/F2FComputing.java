@@ -389,9 +389,11 @@ public class F2FComputing
 						try {
 							// The job has to be sent first because otherwise
 							// custom classes in the task can not be deserialized.
-							peer.sendMessage(messageJobTask);
+							peer.sendMessageBlocking(messageJobTask);
 							peer.sendMessage(messageTask);
 						} catch (CommunicationFailedException e) {
+							logger.error("Error sending a job to a peer. " + e, e);
+						} catch (InterruptedException e) {
 							logger.error("Error sending a job to a peer. " + e, e);
 						}
 					}
@@ -872,6 +874,91 @@ public class F2FComputing
 			{
 				logger.error("couldn't send the message to the route target", e);
 			}
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE_BLOCKING)
+		{
+			if(logger.isTraceEnabled()) {
+				logger.trace("Received ROUTE_BLOCKING: " + f2fMessage);
+			}
+			
+			while (true)
+			{
+				Job job = getJob(f2fMessage.getJobID());
+				if (job == null)
+				{
+					logger.error("couldn't send the message to the route target: didn't find the job");
+					break;
+				}
+				TaskDescription receiverTaskDesc = job
+						.getTaskDescription(f2fMessage.getReceiverTaskID());
+				if (receiverTaskDesc == null)
+				{
+					logger.error("couldn't send the message to the route target: didn't find the receiver task description");
+					break;
+				}
+				F2FPeer receiver = getPeer(receiverTaskDesc.getPeerID());
+				if (receiver == null)
+				{
+					logger.error("couldn't send the message to the route target: didn't find the receiver peer");
+					break;
+				}
+				try
+				{
+					f2fMessage.setType(F2FMessage.Type.MESSAGE);
+					receiver.sendMessageBlocking(f2fMessage);
+					// notify the sender about the success
+					try
+					{
+						f2fMessage.setType(F2FMessage.Type.ROUTE_REPORT);
+						f2fMessage.setData(Boolean.TRUE);
+						sender.sendMessage(f2fMessage);
+					}
+					catch (CommunicationFailedException e) {}
+					return;
+				}
+				catch (CommunicationFailedException e)
+				{
+					logger.error("couldn't send the message to the route target", e);
+					break;
+				}
+				catch (InterruptedException e)
+				{
+					logger.error("couldn't send the message to the route target", e);
+					break;
+				}
+			}
+			// notify the sender about the failure
+			try
+			{
+				f2fMessage.setType(F2FMessage.Type.ROUTE_REPORT);
+				f2fMessage.setData(Boolean.FALSE);
+				sender.sendMessage(f2fMessage);
+			}
+			catch (CommunicationFailedException ex) {}
+			
+		}
+		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE_REPORT)
+		{
+			if(logger.isTraceEnabled()) {
+				logger.trace("ROUTE_REPORT received " + f2fMessage);
+			}
+			Job job = getJob(f2fMessage.getJobID());
+			if (job == null)
+			{
+				logger.warn("Got ROUTE_REPORT for unknown job with ID: "
+						+ f2fMessage.getJobID());
+				return;
+			}
+			Task senderTask = job.getTask(f2fMessage.getSenderTaskID());
+			if (senderTask == null)
+			{
+				logger.warn("Got ROUTE_REPORT for unknown task with ID: "
+						+ f2fMessage.getSenderTaskID());
+				return;
+			}
+			TaskProxy proxy = senderTask.getTaskProxy(f2fMessage.getReceiverTaskID());
+			proxy.routeReport = (Boolean) f2fMessage.getData();
+			proxy.notify();
 		}
 	}
 	

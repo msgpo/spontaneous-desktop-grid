@@ -223,6 +223,18 @@ public class TCPCommunicationProvider implements CommunicationProvider, Activity
 			throw new CommunicationFailedException("socket peer wasn't found - id: " + destinationPeer);
 		peer.sendMessage(message);
 	}
+	
+	public void sendMessageBlocking(UUID destinationPeer, Object message, long timeout, boolean countTimeout) throws CommunicationFailedException, InterruptedException
+	{
+		TCPPeer peer = null;
+		synchronized (peers)
+		{
+			peer = peers.get(destinationPeer);
+		}
+		if (peer == null)
+			throw new CommunicationFailedException("socket peer wasn't found - id: " + destinationPeer);
+		peer.sendMessageBlocking(message, timeout, countTimeout);
+	}
 
 	public String getActivityName()
 	{

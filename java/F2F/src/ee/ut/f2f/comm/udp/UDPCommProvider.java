@@ -44,4 +44,8 @@ public class UDPCommProvider implements CommunicationProvider, Activity
 	{
 		// TODO Auto-generated method stub
 	}
+	public void sendMessageBlocking(UUID destinationPeer, Object message, long timeout, boolean countTimeout) throws CommunicationFailedException, InterruptedException
+	{
+		// TODO Auto-generated method stub
+	}
 }
