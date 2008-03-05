@@ -263,19 +263,11 @@ Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessagin
 \ No newline at end of file
 Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3320)
+--- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3502)
 +++ src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
-@@ -10,6 +10,7 @@
- import java.net.*;
- import java.text.*;
- import java.util.*;
-+
- import javax.sip.*;
- import javax.sip.address.*;
- import javax.sip.header.*;
-@@ -38,6 +39,11 @@
-     private Vector messageListeners = new Vector();
- 
+@@ -43,6 +43,11 @@
+     private Vector messageProcessors = new Vector();
+     
      /**
 +     * A list of filters registered for message events.
 +     */
@@ -285,7 +277,27 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
       * The provider that created us.
       */
      private ProtocolProviderServiceSipImpl sipProvider = null;
-@@ -588,6 +594,21 @@
+@@ -272,19 +277,6 @@
+     
+     void sendRequestMessage(Request mes, Contact to, Message message)
+     {
+-        //check whether there's a cached authorization header for this
+-        //call id and if so - attach it to the request.
+-        // add authorization header
+-        CallIdHeader call = (CallIdHeader)mes.getHeader(CallIdHeader.NAME);
+-        String callid = call.getCallId();
+-
+-        AuthorizationHeader authorization = sipProvider
+-            .getSipSecurityManager()
+-                .getCachedAuthorizationHeader(callid);
+-
+-        if(authorization != null)
+-            mes.addHeader(authorization);
+-        
+         //Transaction
+         ClientTransaction messageTransaction;
+         SipProvider jainSipProvider
+@@ -644,6 +636,21 @@
       */
      private void fireMessageEvent(EventObject evt)
      {
@@ -307,13 +319,26 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
          Iterator listeners = null;
          synchronized (this.messageListeners)
          {
-@@ -1048,5 +1069,36 @@
+@@ -1102,12 +1109,6 @@
+                         , clientTransaction
+                         , jainSipProvider);
+ 
+-                if(retryTran == null)
+-                {
+-                    logger.trace("No password supplied or error occured!");
+-                    return;
+-                }
+-                
+                 retryTran.sendRequest();
+                 return;
+             }
+@@ -1123,5 +1124,36 @@
              }
          }
      }
 +
 +    /**
-+     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * Registeres a <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to register.
@@ -330,8 +355,8 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
 +	}
 +
 +    /**
-+     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
-+     * if an event should be filtered out.
++     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
++     * if a event should be filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to unregister.
 +     */
