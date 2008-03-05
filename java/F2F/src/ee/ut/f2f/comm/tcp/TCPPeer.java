@@ -129,6 +129,7 @@ class TCPPeer implements Activity
 									blockingMessages.remove(msg.ID);
 									synchronized (blockMsg)
 									{
+										//log.debug(msg.ID +" end WAIT "+System.currentTimeMillis());
 										blockMsg.notify();
 									}
 								}
@@ -187,16 +188,56 @@ class TCPPeer implements Activity
 		
 		BlockingMessage msg = new BlockingMessage(message, getMsgID());
 		blockingMessages.put(msg.ID, msg);
+		// start to wait for the confirmation before the message is sent out
+		// this ensures that the reply is not received before the wait is called
+		BlockingMessageThread t = new BlockingMessageThread(msg, timeout, countTimeout);
+		t.start();
+		// wait until the waiting thread has started before sending the message out
+		while (!t.startedWaiting) Thread.sleep(5);
 		sendMessage(msg);
-		synchronized(msg)
+		// wait until the confirmation is received
+		t.join();
+		// throw an exception if it occurred
+		if (t.interruptEx != null) throw t.interruptEx;
+		if (t.notDeliveredEx != null) throw t.notDeliveredEx;
+	}
+
+	private class BlockingMessageThread extends Thread
+	{
+		BlockingMessage msg;
+		long timeout;
+		boolean countTimeout;
+		InterruptedException interruptEx = null;
+		MessageNotDeliveredException notDeliveredEx = null;
+		boolean startedWaiting = false;
+		
+		BlockingMessageThread(BlockingMessage msg, long timeout, boolean countTimeout)
 		{
-			if (countTimeout) msg.wait(timeout);
-			else msg.wait(0);
-			if (blockingMessages.containsKey(msg.ID))
+			this.msg = msg;
+			this.timeout = timeout;
+			this.countTimeout = countTimeout;
+		}
+		
+		public void run()
+		{
+			synchronized(msg)
 			{
-				blockingMessages.remove(msg.ID);
-				throw new MessageNotDeliveredException(message);
-			}
+				try {
+					//log.debug(msg.ID + " start WAIT "+System.currentTimeMillis() + " - "+msg.data);
+					startedWaiting = true;
+					if (countTimeout)
+						msg.wait(timeout);
+					else msg.wait(0);
+				} catch (InterruptedException ex) {
+					interruptEx = ex;
+					return;
+				}
+				if (blockingMessages.containsKey(msg.ID))
+				{
+					blockingMessages.remove(msg.ID);
+					notDeliveredEx = new MessageNotDeliveredException(msg.data);
+				}
+			}				
 		}
 	}
 }
