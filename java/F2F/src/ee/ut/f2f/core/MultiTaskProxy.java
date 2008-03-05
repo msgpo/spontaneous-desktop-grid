@@ -137,4 +137,12 @@ public class MultiTaskProxy //extends TaskProxy
 		}
 		return false;
 	}
+
+	public void sendMessageBlocking(Object message) throws CommunicationFailedException, InterruptedException
+	{
+		for(TaskProxy taskProxy : taskProxies)
+		{
+			taskProxy.sendMessageBlocking(message);
+		}
+	}
 }
