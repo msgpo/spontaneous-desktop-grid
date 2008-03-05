@@ -694,6 +694,7 @@ public class F2FComputing
 			logger.warn("the framework received a message from an unknown peer " + senderID);
 			return;
 		}
+		logger.info("FROM "+sender.getDisplayName()+": "+message);
 		// F2FMessages are handeled in this method
 		if (!(message instanceof F2FMessage))
 		{ // other types of messages should have a listener

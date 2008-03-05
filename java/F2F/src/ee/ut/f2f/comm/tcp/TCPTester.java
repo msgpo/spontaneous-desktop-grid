@@ -101,7 +101,7 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		{
 			public void run()
 			{
-				for (int i = 0; i < 60; i++)
+				for (int i = 0; i < 600; i++)
 				{
 					try {
 						remotePeer.sendMessage(new TCPTestMessage());
@@ -131,9 +131,9 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		// exchange the server sockets that peers are listening on
 		remotePeer.sendMessage(
 			new TCPTestMessage(TCPCommunicationProvider.getInstance().getServerSocketAddresses()));
-		// wait at most 30 seconds for remote addresses
+		// wait at most 10 minutes for remote addresses
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting for addresses"));
-		for (int i = 0; i < 60; i++)
+		for (int i = 0; i < 1200; i++)
 		{
 			if (remoteServerSockets != null) break;
 			try
@@ -158,8 +158,8 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		for (TCPTestThread test: testThreads)
 			test.start();
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "started test threads"));
-		// ... and wait until the first of them exits, max 30 seconds
-		for (int i = 0; i < 60; i++)
+		// ... and wait until the first of them exits, max 10 min
+		for (int i = 0; i < 1200; i++)
 		{
 			if (usedAddress != null) break;
 			try
@@ -191,7 +191,7 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "local result is " + localResult));
 			remotePeer.sendMessage(new TCPTestMessage(localResult));
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting remote result"));
-			for (int i = 0; i < 60; i++)
+			for (int i = 0; i < 1200; i++)
 			{
 				if (remoteResults.size() > r) break;
 				try
