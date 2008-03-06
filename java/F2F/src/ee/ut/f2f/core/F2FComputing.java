@@ -825,10 +825,12 @@ public class F2FComputing
 		// MESSAGES TO TASKS
 		else if (f2fMessage.getType() == F2FMessage.Type.MESSAGE)
 		{
-			new Thread()
-			{
-				public void run()
-				{
+			// messages have to remain in the proper order!
+			// so do not use new thread here
+			//new Thread()
+			//{
+			//	public void run()
+			//	{
 					logger.trace("MESSAGE received " + f2fMessage);
 					Job job = getJob(f2fMessage.getJobID());
 					if (job == null)
@@ -846,8 +848,8 @@ public class F2FComputing
 					}
 					recepientTask.getTaskProxy(f2fMessage.getSenderTaskID())
 							.saveMessage(f2fMessage.getData());
-				}
-			}.start();
+			//	}
+			//}.start();
 		}
 		else if (f2fMessage.getType() == F2FMessage.Type.ROUTE)
 		{
