@@ -253,4 +253,9 @@ public class F2FMultiProtocolProviderService
     {
         return f2fIcon;
     }
+
+	public String getProtocolDisplayName()
+	{
+		return F2FMultiProtocolProviderFactory.F2F_MULTI_PROTOCOL_NAME;
+	}
 }
