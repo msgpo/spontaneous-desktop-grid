@@ -80,9 +80,6 @@ public class F2FPeer
 			{
 				//logger.debug("CommunicationProvider [" + comm + "] not found in list, nothing removed");
 			}
-			//TODO: remove, if it is not needed
-			//if (commProviders.size() == 1 && commProviders.contains(getSocketCommunicationProvider()))
-			//	commProviders.remove(getSocketCommunicationProvider());
 		}
 	}
 	
