@@ -58,9 +58,9 @@ Index: src/net/java/sip/communicator/service/protocol/event/EventFilter.java
 +}
 Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(revision 3320)
+--- src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(revision 3505)
 +++ src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(working copy)
-@@ -47,6 +47,11 @@
+@@ -48,6 +48,11 @@
      private Vector messageListeners = new Vector();
  
      /**
@@ -72,33 +72,33 @@ Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstan
       * The provider that created us.
       */
      private ProtocolProviderServiceYahooImpl yahooProvider = null;
-@@ -303,6 +308,21 @@
+@@ -310,6 +315,21 @@
       */
      private void fireMessageEvent(EventObject evt)
      {
-+    	// check if this event should be filtered out
-+    	Iterator<EventFilter> filters = null;
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
 +        synchronized (eventFilters)
 +        {
 +            filters = new ArrayList<EventFilter>(eventFilters).iterator();
 +        }
 +        while (filters.hasNext())
 +        {
-+        	// return if a filter has filtered this event out
-+        	if (filters.next().filterEvent(evt))
-+        	{
-+        		return;
-+        	}
++            // return if a filter has filtered this event out
++            if (filters.next().filterEvent(evt))
++            {
++                return;
++            }
 +        }
-+    	
++        
          Iterator listeners = null;
          synchronized (messageListeners)
          {
-@@ -593,4 +613,35 @@
+@@ -627,4 +647,35 @@
  
          return linkBuffer.toString();
      }
-+
++    
 +    /**
 +     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -130,6 +130,7 @@ Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstan
 +        }	
 +	}
  }
+
 Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java
 ===================================================================
 --- src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(revision 3320)
@@ -263,7 +264,7 @@ Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessagin
 \ No newline at end of file
 Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3502)
+--- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3505)
 +++ src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
 @@ -43,6 +43,11 @@
      private Vector messageProcessors = new Vector();
@@ -277,66 +278,33 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
       * The provider that created us.
       */
      private ProtocolProviderServiceSipImpl sipProvider = null;
-@@ -272,19 +277,6 @@
-     
-     void sendRequestMessage(Request mes, Contact to, Message message)
-     {
--        //check whether there's a cached authorization header for this
--        //call id and if so - attach it to the request.
--        // add authorization header
--        CallIdHeader call = (CallIdHeader)mes.getHeader(CallIdHeader.NAME);
--        String callid = call.getCallId();
--
--        AuthorizationHeader authorization = sipProvider
--            .getSipSecurityManager()
--                .getCachedAuthorizationHeader(callid);
--
--        if(authorization != null)
--            mes.addHeader(authorization);
--        
-         //Transaction
-         ClientTransaction messageTransaction;
-         SipProvider jainSipProvider
-@@ -644,6 +636,21 @@
+@@ -652,6 +657,21 @@
       */
      private void fireMessageEvent(EventObject evt)
      {
-+    	// check if this event should be filtered out
-+    	Iterator<EventFilter> filters = null;
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
 +        synchronized (eventFilters)
 +        {
 +            filters = new ArrayList<EventFilter>(eventFilters).iterator();
 +        }
 +        while (filters.hasNext())
 +        {
-+        	// return if a filter has filtered this event out
-+        	if (filters.next().filterEvent(evt))
-+        	{
-+        		return;
-+        	}
++            // return if a filter has filtered this event out
++            if (filters.next().filterEvent(evt))
++            {
++                return;
++            }
 +        }
-+    	
++    	    	
          Iterator listeners = null;
          synchronized (this.messageListeners)
          {
-@@ -1102,12 +1109,6 @@
-                         , clientTransaction
-                         , jainSipProvider);
- 
--                if(retryTran == null)
--                {
--                    logger.trace("No password supplied or error occured!");
--                    return;
--                }
--                
-                 retryTran.sendRequest();
-                 return;
-             }
-@@ -1123,5 +1124,36 @@
+@@ -1131,5 +1151,36 @@
              }
          }
      }
-+
++    
 +    /**
 +     * Registeres a <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -369,6 +337,7 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
 +	}
  }
  
+
 Index: src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java
 ===================================================================
 --- src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(revision 3320)
