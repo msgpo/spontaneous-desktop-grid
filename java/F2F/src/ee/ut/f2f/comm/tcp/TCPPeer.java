@@ -193,7 +193,9 @@ class TCPPeer implements Activity
 		BlockingMessageThread t = new BlockingMessageThread(msg, timeout, countTimeout);
 		t.start();
 		// wait until the waiting thread has started before sending the message out
-		while (!t.startedWaiting) Thread.sleep(5);
+		while (!t.startedWaiting ||
+			   !(t.getState() != Thread.State.WAITING || 
+				 t.getState() != Thread.State.TIMED_WAITING)) Thread.sleep(5);
 		sendMessage(msg);
 		// wait until the confirmation is received
 		t.join();
