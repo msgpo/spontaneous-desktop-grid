@@ -557,6 +557,22 @@ public class F2FComputing {
 		}
 	}
 
+	static ArrayList<TaskListener> taskListeners = new ArrayList<TaskListener>();
+
+	public static void addTaskListener(TaskListener listener) {
+		synchronized (taskListeners) {
+			if (!taskListeners.contains(listener))
+				taskListeners.add(listener);
+		}
+	}
+
+	public static void removeTaskListener(TaskListener listener) {
+		synchronized (taskListeners) {
+			if (taskListeners.contains(listener))
+				taskListeners.remove(listener);
+		}
+	}
+
 	public static void peerContacted(UUID peerID, String displayName,
 			CommunicationProvider comm) {
 		if (!isInitialized())

@@ -172,7 +172,7 @@ public class TaskProxy
 		{
 			public void run()
 			{
-				task.messageReceived(remoteTaskDescription.getTaskID());
+				task.messageReceivedEvent(remoteTaskDescription.getTaskID());
 			}
 		}.start();
 	}

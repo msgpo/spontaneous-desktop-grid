@@ -224,8 +224,18 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 			logTable.addHighlighter(new LogHighlighter());
 			logHandler.setTableModel(tableModel);
 			tabs.addTab("Logs", new JScrollPane(logTable));
-			logger.trace("Log table created");
 		}
+		
+		// tasks panel
+		TasksTableModel tasksTableModel = new TasksTableModel();
+		JXTable tasksTable = new JXTable(tasksTableModel);
+		tabs.addTab("Tasks", new JScrollPane(tasksTable));
+		StopTaskButton stopButton = new StopTaskButton(tasksTableModel);
+		tasksTable.setDefaultRenderer(StopTaskButton.class, stopButton);
+		//tasksTable.getColumnModel().getColumn(3).setCellRenderer(tasksTableModel.stopButton);
+		tasksTable.setDefaultEditor(StopTaskButton.class, stopButton.editor);
+		//tasksTable.getColumnModel().getColumn(3).setCellEditor(tasksTableModel.stopButton.editor);
+		F2FComputing.addTaskListener(tasksTableModel);
 		
 		generalMenuBar = new JMenuBar();
 		frame.setJMenuBar(generalMenuBar);

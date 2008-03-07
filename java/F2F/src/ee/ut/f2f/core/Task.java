@@ -105,6 +105,11 @@ public abstract class Task extends Thread implements Activity
 		try
 		{
 			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
+			synchronized (F2FComputing.taskListeners)
+			{
+				for (TaskListener listener: F2FComputing.taskListeners)
+					listener.taskStarted(this);
+			}
 			runTask();
 			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.FINISHED));
 		}
@@ -113,6 +118,12 @@ public abstract class Task extends Thread implements Activity
 			manager.emitEvent(new ActivityEvent(this, ActivityEvent.Type.FAILED, "error: "+ e.getMessage()));
 			exception = e;
 			logger.error(this.taskDescription+" exited with error", e);
+		}
+		stopTask();
+		synchronized (F2FComputing.taskListeners)
+		{
+			for (TaskListener listener: F2FComputing.taskListeners)
+				listener.taskStopped(this);
 		}
 		// if this is the Master task, the Job has finished
 		if (getTaskID().equals(getJob().getMasterTaskID()))
@@ -133,7 +144,7 @@ public abstract class Task extends Thread implements Activity
 	 * incoming messages should overwrite this method and take the actions it
 	 * wants (probably read the message and process it). 
 	 */
-	public void messageReceived(String remoteTaskID)
+	public void messageReceivedEvent(String remoteTaskID)
 	{
 	}
 
@@ -145,5 +156,28 @@ public abstract class Task extends Thread implements Activity
 	public Activity getParentActivity()
 	{
 		return getJob();
-	}	
+	}
+	
+	/**
+	 * If framework sets this flag to TRUE, the task should stop the execution 
+	 * (exit the runTask method and stop all sub-threads).
+	 */
+	public boolean bStopFlag = false;
+	/**
+	 * Framework uses this method to stop the thread. 
+	 */
+	public void stopTask()
+	{
+		bStopFlag = true;
+		taskStoppedEvent();
+	}
+	/**
+	 * This method is called if the task shoult stop the execution.
+	 * (exit the runTask method and stop all sub-threads).
+	 * Overwrite this method, if you want to react on the event that
+	 * turns on the bStopFlag.
+	 */
+	protected void taskStoppedEvent()
+	{
+	}
 }
