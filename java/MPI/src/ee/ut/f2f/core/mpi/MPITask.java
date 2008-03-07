@@ -31,7 +31,7 @@ public abstract class MPITask extends Task {
 	private MPI mpi = new MPI();
 	MPIDebug mpiDebug = null;
 
-	public void messageReceived(String taskID) {
+	public void messageReceivedEvent(String taskID) {
 		try {
 		Object msg = getTaskProxy(taskID).receiveMessage();
 
