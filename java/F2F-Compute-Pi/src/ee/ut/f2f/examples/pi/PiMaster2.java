@@ -61,7 +61,7 @@ public class PiMaster2 extends Task
 				
 		// show current result after each 10 seconds
 		// the loop is exited after enough results have been received from slaves
-		while (received.getUnSyncTotal() < maxpoints)
+		while (!bStopFlag && received.getUnSyncTotal() < maxpoints)
 		{
 			F2FDebug.println("processed " + (int)(((float)received.getUnSyncTotal() / maxpoints)*100) + "%" );
 			F2FDebug.println("Pi is " + received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal() );
@@ -95,7 +95,7 @@ public class PiMaster2 extends Task
 	}
 	
 	// collect results
-	public void messageReceived(String remoteTaskID)
+	public void messageReceivedEvent(String remoteTaskID)
 	{
 		// do not process the message if the required amount of 
 		// points have been calculated already
@@ -124,5 +124,11 @@ public class PiMaster2 extends Task
 			if (received.getUnSyncTotal() >= maxpoints)
 				this.interrupt();
 		}
+	}
+	
+	// kill the job
+	protected void taskStoppedEvent()
+	{
+		this.interrupt();
 	}
 }

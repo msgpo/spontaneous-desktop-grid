@@ -20,9 +20,7 @@ public class PiSlave2 extends Task implements Serializable
 	{
 		this.intervalms = intervalms;
 	}
-	
-	boolean bStop = false;
-		
+			
 	public void runTask()
 	{
 		// get proxy of master task
@@ -42,7 +40,7 @@ public class PiSlave2 extends Task implements Serializable
 			} catch (InterruptedException e) {}
 			
 			// Test if stop message has been sent
-			if (bStop) break;
+			if (bStopFlag) break;
 				
 			F2FDebug.println("Stop-condition not met, sending back results. total: "
 					+ computedPoints.getUnSyncTotal() + " positives: " 
@@ -56,30 +54,25 @@ public class PiSlave2 extends Task implements Serializable
 				e.printStackTrace();
 			}
 		}
-		
-		// stop the thread
-		compTask.run = false;
 	}
 
 	// end the calculations
-	public void messageReceived(String remoteTaskID)
+	public void messageReceivedEvent(String remoteTaskID)
 	{
 		if (!remoteTaskID.equals(this.getJob().getMasterTaskID())) return;
 		TaskProxy proxy = this.getTaskProxy(remoteTaskID);
 		if (!proxy.hasMessage()) return;
 		Long stopcondition = (Long) proxy.receiveMessage();
-		if (stopcondition.intValue() == 0) bStop = true;
+		if (stopcondition.intValue() == 0) stopTask();
 		this.interrupt();
 	}
 	
 	private class ComputePoints extends Thread
 	{
-		boolean run = true; 
-
 		public void run()
 		{
 			MersenneTwisterRNG random = new MersenneTwisterRNG();
-			while(run)
+			while(!bStopFlag)
 			{
 				double x = random.nextDouble();
 				double y = random.nextDouble();
