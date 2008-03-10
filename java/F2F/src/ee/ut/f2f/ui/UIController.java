@@ -231,7 +231,9 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 		JXTable tasksTable = new JXTable(tasksTableModel);
 		tabs.addTab("Tasks", new JScrollPane(tasksTable));
 		StopTaskButton stopButton = new StopTaskButton(tasksTableModel);
+		TaskProgress taskProgress = new TaskProgress(tasksTableModel);
 		tasksTable.setDefaultRenderer(StopTaskButton.class, stopButton);
+		tasksTable.setDefaultRenderer(TaskProgress.class, taskProgress);
 		//tasksTable.getColumnModel().getColumn(3).setCellRenderer(tasksTableModel.stopButton);
 		tasksTable.setDefaultEditor(StopTaskButton.class, stopButton.editor);
 		//tasksTable.getColumnModel().getColumn(3).setCellEditor(tasksTableModel.stopButton.editor);

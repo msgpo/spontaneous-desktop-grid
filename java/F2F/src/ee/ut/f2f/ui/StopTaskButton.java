@@ -18,19 +18,18 @@ public class StopTaskButton extends JButton implements ActionListener, TableCell
 {
 	private Task task;
 	private TasksTableModel tableModel;
-	StopTaskButton(Task task, TasksTableModel model)
-	{
-		super("Stop");
-		this.task = task;
-		this.tableModel = model;
-		addActionListener(this);
-	}
 	
 	StopTaskButton(TasksTableModel model)
 	{
 		super("Stop");
 		this.tableModel = model;
 		addActionListener(this);
+	}
+	
+	StopTaskButton(Task task, TasksTableModel model)
+	{
+		this(model);
+		this.task = task;
 	}
 	
 	public void actionPerformed(ActionEvent e)

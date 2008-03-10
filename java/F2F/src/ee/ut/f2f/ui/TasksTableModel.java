@@ -60,7 +60,7 @@ public class TasksTableModel extends AbstractTableModel implements TaskListener
 		switch(columnIndex) {
 		case 0: return task.getJob().getJobID();
 		case 1: return task.getTaskID();
-		case 2: return task.getState() == Thread.State.TERMINATED ? "stopped" : "running";
+		case 2: return new TaskProgress(task, this);//task.getState() == Thread.State.TERMINATED ? "stopped" : "running";
 		case 3: return task.bStopFlag ? null : new StopTaskButton(task, this);
 		}
 		return null;
@@ -80,7 +80,8 @@ public class TasksTableModel extends AbstractTableModel implements TaskListener
 	@SuppressWarnings("unchecked")
 	public Class getColumnClass(int c)
 	{
-		if (c < 3) return String.class;
+		if (c < 2) return String.class;
+		if (c == 2) return TaskProgress.class;
 		return StopTaskButton.class;
     }
 
@@ -90,6 +91,11 @@ public class TasksTableModel extends AbstractTableModel implements TaskListener
 	}
 
 	public void taskStopped(Task task)
+	{
+		fireTableDataChanged();
+	}
+
+	public void taskProgressed(Task task)
 	{
 		fireTableDataChanged();
 	}

@@ -180,4 +180,26 @@ public abstract class Task extends Thread implements Activity
 	protected void taskStoppedEvent()
 	{
 	}
+	
+	/**
+	 * This method should return the progress of a task.
+	 * Return value less than 0 means the progress is not shown.
+	 * Return value 0 means the progress is indeterminate (GUI shows indeterminate progress bar).
+	 * Return value [1..100] means the task is 1..100% completed. 
+	 * Return value greater than 100 is considered equal to 100.
+	 */
+	private int progress = -1;
+	public int getProgress()
+	{
+		return progress;
+	}
+	protected void setProgress(int progress)
+	{
+		this.progress = progress;
+		synchronized (F2FComputing.taskListeners)
+		{
+			for (TaskListener listener: F2FComputing.taskListeners)
+				listener.taskProgressed(this);
+		}
+	}
 }

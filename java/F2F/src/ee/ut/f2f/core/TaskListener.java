@@ -4,4 +4,5 @@ public interface TaskListener
 {
 	void taskStarted(Task task);
 	void taskStopped(Task task);
+	void taskProgressed(Task task);
 }
