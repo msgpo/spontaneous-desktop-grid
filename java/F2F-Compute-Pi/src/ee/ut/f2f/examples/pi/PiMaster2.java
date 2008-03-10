@@ -18,7 +18,7 @@ public class PiMaster2 extends Task
 	// received points
 	AtomicLongVector received = new AtomicLongVector( 0, 0 );
 	// How many points to compute in total
-	long maxpoints = 1000000000L;
+	long maxpoints = 100000000L;
 	
 	public void runTask()
 	{
@@ -119,6 +119,7 @@ public class PiMaster2 extends Task
 					+ " positives " 
 					+ received.getUnSyncPositive());
 			
+			setProgress((int)(((float)received.getUnSyncTotal() / maxpoints)*100));
 			// check if the job is finished
 			if (received.getUnSyncTotal() >= maxpoints)
 				this.interrupt();
