@@ -106,7 +106,7 @@ public class PiMasterTask extends Task
 	}
 	
 	// collect results
-	public void messageReceived(String remoteTaskID)
+	public void messageReceivedEvent(String remoteTaskID)
 	{
 		// do not process the message if the required amount of 
 		// points have been calculated already
