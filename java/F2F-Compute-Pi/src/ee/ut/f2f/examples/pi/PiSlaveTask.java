@@ -54,15 +54,13 @@ public class PiSlaveTask extends Task
 		}
 		
 		// stop the thread
-		compTask.run = false;
+		stopTask();
 	}
 
 	private class ComputePoints extends Thread
 	{
-		boolean run = true; 
-
 		public void run() {
-			while(run)
+			while(!bStopFlag)
 			{
 				double x = random.nextDouble();
 				double y = random.nextDouble();
