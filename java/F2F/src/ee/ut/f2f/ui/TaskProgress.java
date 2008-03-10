@@ -2,6 +2,7 @@ package ee.ut.f2f.ui;
 
 import java.awt.Component;
 
+import javax.swing.JLabel;
 import javax.swing.JProgressBar;
 import javax.swing.JTable;
 import javax.swing.table.TableCellRenderer;
@@ -35,7 +36,15 @@ class TaskProgress extends JProgressBar implements TableCellRenderer
             int row, int column)
 	{
 		TaskProgress ret = (TaskProgress)tableModel.getValueAt(row, column);
+		if (ret.task.getProgress() < 0)
+		{
+			return new JLabel(ret.task.getState() == Thread.State.TERMINATED? "stopped":"running"); 
+		}
+		int value = ret.task.getProgress();
+		if (value > 100) value = 100;
 		ret.setValue(ret.task.getProgress());
+		if (ret.task.getState() == Thread.State.TERMINATED)
+			ret.setString(value+"% (stopped)");
 		return ret;
 	}
 }
