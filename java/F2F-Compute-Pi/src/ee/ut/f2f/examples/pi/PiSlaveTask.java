@@ -35,6 +35,7 @@ public class PiSlaveTask extends Task
 		{
 			// Wait
 			Long stopcondition = (Long) masterProxy.receiveMessage(intervalms);
+			if (bStopFlag) break;
 			// Test if stopcondition was sent
 			if ( stopcondition != null )
 				if ( stopcondition.longValue() == 0 )
