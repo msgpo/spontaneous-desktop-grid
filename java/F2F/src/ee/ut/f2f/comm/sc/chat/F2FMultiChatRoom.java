@@ -1,11 +1,15 @@
 package ee.ut.f2f.comm.sc.chat;
 
+import java.util.Collection;
 import java.util.Date;
+import java.util.HashMap;
 import java.util.Iterator;
 import java.util.List;
 import java.util.Vector;
 
 import ee.ut.f2f.core.CommunicationFailedException;
+import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -48,8 +52,8 @@ public class F2FMultiChatRoom
 
     private boolean joined = true;
 
-    private Vector<F2FMultiChatRoomMember> members = new Vector<F2FMultiChatRoomMember>();
-
+    private HashMap<F2FMultiChatRoomMember, F2FPeer> members = new HashMap<F2FMultiChatRoomMember, F2FPeer>();
+    
     /**
      * Currently registered member presence listeners.
      */
@@ -175,10 +179,20 @@ public class F2FMultiChatRoom
     
     void addChatRoomMember(F2FMultiChatRoomMember member)
     {
+    	F2FPeer peer = null;
+    	if (getOwner() == null && member.getContact() != null)
+    	{
+    		peer = F2FComputing.getPeer(provider.getSipCommProvider().getF2FPeerID(member.getContact()));
+    		if (peer == null)
+    		{
+    			logger.error("contact "+member.getContact().getDisplayName()+" in not a F2F peer");
+    			return;
+    		}
+    	}
     	synchronized (members)
     	{
-    		if (!members.contains(member))
-    	    	members.add(member);
+    		if (!members.containsKey(member))
+    	    	members.put(member, peer);
 		}
     }
     
@@ -483,8 +497,16 @@ public class F2FMultiChatRoom
     {
     	synchronized (members)
     	{
-			return new Vector<F2FMultiChatRoomMember>(members);
+			return new Vector<F2FMultiChatRoomMember>(members.keySet());
 		}
+    }
+    
+    final Collection<F2FPeer> getF2FPeers()
+    {
+    	synchronized (members)
+    	{
+    		return members.values();
+    	}
     }
 
     /**

@@ -45,16 +45,22 @@ public class JobSelector extends JFrame
 	private JButton btnCompute = null;
 	
 	private FriendModel<F2FPeer> members = null;
-	Collection<F2FPeer> friends = null;
+	Collection<F2FPeer> friends = null;//NB! do not remove peers from this collection, because this means they are removed from the chat also
 
 	private JCheckBox btnSlave = null;
 	
 	private Collection<F2FPeer> getF2FPeers()
 	{
-		Collection<F2FPeer> peers = null;
+		Collection<F2FPeer> tmpPeers = null;
 		if (friends != null)
-			peers = new ArrayList<F2FPeer>(friends);
-		else peers = members.getPeers();
+		{
+			tmpPeers = new ArrayList<F2FPeer>(friends);
+		}
+		else tmpPeers = members.getPeers();
+		
+		Collection<F2FPeer> peers = new ArrayList<F2FPeer>();
+		for (F2FPeer peer: tmpPeers)
+			if (peer != null && !peers.contains(peer)) peers.add(peer);
 		
 		if (btnSlave != null && btnSlave.isSelected() && !peers.contains(F2FComputing.getLocalPeer()))
 			peers.add(F2FComputing.getLocalPeer());
@@ -62,7 +68,7 @@ public class JobSelector extends JFrame
 		return peers;
 	}
 
-	public JobSelector(Collection<F2FPeer> friends)
+	public JobSelector(final Collection<F2FPeer> friends)
 	{
 		this.friends = friends;
 

@@ -48,7 +48,7 @@ class CPURequests extends Thread implements Activity
 			try {
 				peer.sendMessage(message);
 			} catch (Exception e) {
-				logger.warn("Error sending CPU request to peer" + peer.getClass(), e);
+				logger.warn("Error sending CPU request to peer " + peer, e);
 			}
 		}
 	
