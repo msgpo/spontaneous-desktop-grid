@@ -189,4 +189,5 @@ public class F2FPeer
 		// throw an exception if message is not sent
 		throw new CommunicationFailedException("Peer " + getDisplayName() + " is not reachable!");
 	}
+	boolean routeReport = false;
 }

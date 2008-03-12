@@ -3,6 +3,7 @@ package ee.ut.f2f.core;
 import java.io.IOException;
 import java.io.Serializable;
 import java.util.Collection;
+import java.util.UUID;
 
 import ee.ut.f2f.util.logging.Logger;
 
@@ -14,7 +15,7 @@ class F2FMessage implements Serializable
 	/**
 	 * Defines the nature of a message.
 	 */
-	public enum Type
+	enum Type
 	{
 		/**
 		 * Master peer asks a peer for CPU.
@@ -46,15 +47,7 @@ class F2FMessage implements Serializable
 		/**
 		 * A message from one task to another.
 		 */
-		MESSAGE,
-		/**
-		 * A message from one task to another that has to be routed. Only
-		 * master peers receive such messages and forward them to final
-		 * destination nodes.
-		 */
-		ROUTE,
-		ROUTE_BLOCKING,
-		ROUTE_REPORT
+		MESSAGE
 	}
 
 	public F2FMessage(Type type, String jobID, String receiverTaskID,
@@ -169,5 +162,60 @@ class F2FTaskMessage implements Serializable
 	{
 		this.newTaskDescriptions = newTaskDescriptions;
 		this.task = task;
+	}
+}
+
+class RoutedMessage implements Serializable
+{
+	private static final long serialVersionUID = -6580996578031674516L;
+	
+	/**
+	 * Defines the nature of a message.
+	 */
+	enum Type
+	{
+		/**
+		 * A message from one peer to another that has to be routed.
+		 */
+		ROUTE,
+		ROUTE_BLOCKING,
+		ROUTED,
+		ROUTE_REPORT
+	}
+
+	/**
+	 * This is the nature of the message object.
+	 */
+	private Type type;
+	Type getType() { return type; }
+
+	/**
+	 * The data object that is being sent.
+	 */
+	private Object data;
+	Object getData() { return data; }
+	
+	private UUID peerID;
+	UUID getPeerID() { return peerID; }
+	
+	RoutedMessage(Type type, UUID destination, Object data)
+	{
+		this.type = type;
+		this.data = data;
+		this.peerID = destination;
+	}
+	
+	private String toString(Type type)
+	{
+		if (type == Type.ROUTE) return "ROUTE";
+		if (type == Type.ROUTE_BLOCKING) return "ROUTE_BLOCKING";
+		if (type == Type.ROUTED) return "ROUTED";
+		if (type == Type.ROUTE_REPORT) return "ROUTE_REPORT";
+		return "";
+	}
+	
+	public String toString()
+	{
+		return "RoutedMessage (" + toString(type) + ") " + data;
 	}
 }
