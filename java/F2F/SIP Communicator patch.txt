@@ -608,7 +608,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.jav
              new BoxLayout(contactsPanel, BoxLayout.Y_AXIS));
 Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(revision 3462)
+--- src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(revision 3502)
 +++ src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(working copy)
 @@ -16,6 +16,9 @@
  import net.java.sip.communicator.impl.gui.*;
@@ -642,7 +642,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
  
          this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
  
-@@ -721,4 +730,87 @@
+@@ -721,4 +730,76 @@
              g.drawImage(backgroundImage, 0, 0, null);
          }
      }
@@ -708,17 +708,6 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +		if (isVisible) dndCoordinator.setTopFrame(this);
 +	}
 +	
-+	/**
-+	 * Overwrites the dispose method in order to unregister
-+	 * this chat window from DnD coordinator.
-+	 * DnD events are no longer sent to this chat window.
-+	 */
-+	public void dispose()
-+	{
-+		dndCoordinator.unregisterFrame(this);
-+		super.dispose();
-+	}
-+	
 +	public void windowGainedFocus(WindowEvent arg0)
 +	{
 +		//System.out.println("focusGained: "+ this.getClass().toString());
@@ -730,6 +719,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +		//System.out.println("focusLost: "+ this.getClass().toString());
 +	}
  }
+
 Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java
 ===================================================================
 --- src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java	(revision 3432)
