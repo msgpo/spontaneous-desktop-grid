@@ -114,7 +114,7 @@ public class SlaveBlenderer extends Task {
 			String line;
 			boolean anythingRendered = false;
 			System.out.println("Buffered reader: ");
-			while ((line = br.readLine()) != null) {
+			while ((line = br.readLine()) != null && !bStopFlag) {
 				System.out.println(line);
 				if (line.startsWith("'blender' is not recognized")
 						|| line.indexOf("blender") != -1

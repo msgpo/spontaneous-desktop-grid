@@ -312,8 +312,13 @@ public class MainWindow extends JFrame {
 	/**
 	 * Method that executes when quit button is pressed
 	 */
-	private void quitButtonPressed() {
-		System.exit(0);
+	private void quitButtonPressed()
+	{
+		synchronized (this)
+		{
+			this.notifyAll();
+		}
+		mainWindow.dispose();
 	}
 
 	/**

@@ -8,9 +8,12 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.List;
 
+import javax.swing.JFrame;
+
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
+import ee.ut.f2f.util.F2FDebug;
 import ee.ut.xpp2p.exception.NothingRenderedException;
 import ee.ut.xpp2p.model.RenderJob;
 import ee.ut.xpp2p.model.RenderResult;
@@ -34,15 +37,23 @@ public class MasterBlenderer extends Task {
 		new MainWindow(new MasterBlenderer());
 	}
 
-	
+	private JFrame mainWindow;
 	/*
 	 * (non-Javadoc)
 	 * 
 	 * @see ee.ut.f2f.core.Task#runTask()
 	 */
-	public void runTask() {
-		System.out.println("Task is running");
-		new MainWindow(this);
+	public void runTask()
+	{
+		mainWindow = new MainWindow(this);
+		synchronized (mainWindow)
+		{
+			try
+			{
+				mainWindow.wait();
+			}
+			catch (InterruptedException e){}
+		}
 	}
 
 	/**
@@ -171,6 +182,7 @@ public class MasterBlenderer extends Task {
 			task.setFileFormat(job.getOutputFormat());
 			for (TaskProxy proxy : slaveProxies)
 			{
+				F2FDebug.println("task "+proxy.getRemoteTaskID()+" renders frames "+currentFrame+".."+(currentFrame + partLengths[i] - 1));
 				task.setStartFrame(currentFrame);
 				task.setEndFrame(currentFrame + partLengths[i] - 1);
 				try {
@@ -209,6 +221,10 @@ public class MasterBlenderer extends Task {
 			} catch (Exception e) {
 				e.printStackTrace();
 				// TODO: Handle exception
+			}
+			synchronized (mainWindow)
+			{
+				mainWindow.notifyAll();
 			}
 		}}.start();
 	}
