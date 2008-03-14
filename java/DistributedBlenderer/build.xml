@@ -14,6 +14,7 @@
 			<include name="**/*.jar"/>
 		</fileset>
 		<pathelement path="${f2f.framework}"/>
+		<pathelement path="${scPath}/lib/installer-exclude/jmf.jar"/>
 	</path>
 	<property name="propsBuildDir" value="${basedir}/_tmpBuild"/>
 	<!-- -->
@@ -45,7 +46,8 @@
 			<fileset dir="${basedir}/lib"/>
 		</copy-->
 		
-		<!-- Package the task. -->	<jar
+		<!-- Package the task. -->
+		<jar
 			update="yes"
 			destfile="${package.name}"
 			basedir="${propsBuildDir}"
@@ -53,7 +55,6 @@
 			>
 			<include name="**/*.class"/>
 			<include name="**/*.java"/>
-			<include name="**/*.jar"/>
 		</jar>
 
 		<!-- Cleanup -->
