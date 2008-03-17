@@ -264,7 +264,7 @@ Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessagin
 \ No newline at end of file
 Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3505)
+--- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3539)
 +++ src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
 @@ -43,6 +43,11 @@
      private Vector messageProcessors = new Vector();
@@ -278,11 +278,11 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
       * The provider that created us.
       */
      private ProtocolProviderServiceSipImpl sipProvider = null;
-@@ -652,6 +657,21 @@
+@@ -665,6 +670,21 @@
       */
      private void fireMessageEvent(EventObject evt)
      {
-+        // check if this event should be filtered out
++    	// check if this event should be filtered out
 +        Iterator<EventFilter> filters = null;
 +        synchronized (eventFilters)
 +        {
@@ -296,11 +296,11 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
 +                return;
 +            }
 +        }
-+    	    	
++    	
          Iterator listeners = null;
          synchronized (this.messageListeners)
          {
-@@ -1131,5 +1151,36 @@
+@@ -1148,5 +1168,36 @@
              }
          }
      }
