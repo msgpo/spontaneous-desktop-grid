@@ -33,6 +33,7 @@ Checkout sip-communicator from the SIPc SVN repository or download latest versio
  # open `META-INF/MANIFEST.MF` -> runtime and export all _net.java.sip.communicator_ packages
  # fix any errors
  # run ant with `build.xml make`
+ # run ant with `build.xml run` (this copies OS-specific bundles to the right place, and starts SIP Communicator)
 
 = F2F =
 
