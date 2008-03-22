@@ -6,8 +6,6 @@ import java.util.List;
 import java.util.Map;
 import java.util.Vector;
 
-import org.osgi.framework.ServiceReference;
-
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
@@ -15,7 +13,8 @@ import ee.ut.f2f.core.F2FMessageListener;
 import ee.ut.f2f.util.F2FDebug;
 import ee.ut.f2f.util.logging.Logger;
 
-import net.java.sip.communicator.service.gui.UIService;
+import net.java.sip.communicator.service.gui.Container;
+import net.java.sip.communicator.service.gui.PluginComponent;
 import net.java.sip.communicator.service.protocol.ChatRoom;
 import net.java.sip.communicator.service.protocol.ChatRoomInvitation;
 import net.java.sip.communicator.service.protocol.ChatRoomMember;
@@ -91,42 +90,24 @@ public class F2FMultiOperationSetMultiUserChat
 				{
 					try
 					{
-						ServiceReference uiServiceRef = 
-							F2FMultiOperationSetMultiUserChat.this.provider.getSipCommProvider()
-								.getBundleContext().getServiceReference(UIService.class.getName());
-						if (uiServiceRef == null)
-						{
-							Thread.sleep(1000);
-							continue;
-						}
-						UIService uiService = (UIService) 
-							F2FMultiOperationSetMultiUserChat.this.provider.getSipCommProvider()
-								.getBundleContext().getService(uiServiceRef);
-						if (uiService == null)
-						{
-							Thread.sleep(1000);
-							continue;
-						}
-					    if(uiService.isContainerSupported(UIService.CONTAINER_CHAT_TOOL_BAR))
-					    	uiService.addComponent(
-					    		UIService.CONTAINER_CHAT_TOOL_BAR,
-					    		F2FMultiOperationSetMultiUserChat.this.chatButton);
-					    return;
-					}
-					catch (IllegalStateException e)
-					{
-						F2FDebug.println(e.toString());
+                        Hashtable<String, String> containerFilter
+                            = new Hashtable<String, String>();
+                        containerFilter.put(
+                                Container.CONTAINER_ID,
+                                Container.CONTAINER_CHAT_TOOL_BAR.getID());
+                        
+                        F2FMultiOperationSetMultiUserChat.this.provider.getSipCommProvider()
+                            .getBundleContext().registerService(
+                                PluginComponent.class.getName(),
+                                chatButton,
+                                containerFilter);
 						return;
-					}
-					catch (InterruptedException e1)
-					{
-						continue;
 					}
 					catch (Exception e)
 					{
 						e.printStackTrace();
 						try {
-							Thread.sleep(10000);
+							Thread.sleep(1000);
 						} catch (InterruptedException e1) {}
 						continue;
 					}

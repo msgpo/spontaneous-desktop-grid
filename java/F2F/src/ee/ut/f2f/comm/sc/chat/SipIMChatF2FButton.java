@@ -10,30 +10,35 @@ import org.osgi.framework.ServiceReference;
 
 import ee.ut.f2f.ui.JobSelector;
 
+import net.java.sip.communicator.service.contactlist.MetaContact;
+import net.java.sip.communicator.service.contactlist.MetaContactGroup;
 import net.java.sip.communicator.service.gui.Chat;
+import net.java.sip.communicator.service.gui.Container;
+import net.java.sip.communicator.service.gui.PluginComponent;
 import net.java.sip.communicator.service.gui.UIService;
 import net.java.sip.communicator.service.protocol.ProtocolIcon;
 
 @SuppressWarnings("serial")
 class SipIMChatF2FButton
-	extends JButton
-	implements ActionListener
-{	
+	implements ActionListener,
+    PluginComponent
+{
 	private F2FMultiOperationSetMultiUserChat multiUserChat = null;
 	private JobSelector jobSelector = null;
+    private JButton button = null;
 	
 	SipIMChatF2FButton(F2FMultiOperationSetMultiUserChat chat)
 	{
-		super();
+        button = new JButton();
 		this.multiUserChat = chat;
 		ImageIcon icon = F2FMultiProtocolIcon.getImageIcon(ProtocolIcon.ICON_SIZE_16x16);
 		if (icon != null)
-			setIcon(icon);
+            button.setIcon(icon);
 		else
-			setText("F2F");
+            button.setText("F2F");
 		//setToolTipText("");
 		//setEnabled(false);
-		addActionListener(this);
+        button.addActionListener(this);
 	}
 
 	public void actionPerformed(ActionEvent evt)
@@ -59,4 +64,32 @@ class SipIMChatF2FButton
 			}
 		}
 	}
+
+    public Object getComponent()
+    {
+        return button;
+    }
+
+    public String getConstraints()
+    {
+        return null;
+    }
+
+    public Container getContainer()
+    {
+        return Container.CONTAINER_CHAT_TOOL_BAR;
+    }
+
+    public void setCurrentContact(MetaContact metaContact)
+    {
+    }
+
+    public void setCurrentContactGroup(MetaContactGroup metaGroup)
+    {
+    }
+
+    public String getName()
+    {
+        return null;
+    }
 }

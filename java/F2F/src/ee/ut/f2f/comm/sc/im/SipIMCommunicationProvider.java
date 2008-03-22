@@ -25,6 +25,7 @@ import ee.ut.f2f.util.logging.Logger;
 import net.java.sip.communicator.service.protocol.Contact;
 import net.java.sip.communicator.service.protocol.Message;
 import net.java.sip.communicator.service.protocol.OperationSetBasicInstantMessaging;
+import net.java.sip.communicator.service.protocol.OperationSetInstantMessageFiltering;
 import net.java.sip.communicator.service.protocol.OperationSetPersistentPresence;
 import net.java.sip.communicator.service.protocol.ProtocolNames;
 import net.java.sip.communicator.service.protocol.ProtocolProviderFactory;
@@ -45,7 +46,8 @@ import net.java.sip.communicator.service.contactlist.event.MetaContactListListen
 import net.java.sip.communicator.service.contactlist.event.MetaContactMovedEvent;
 import net.java.sip.communicator.service.contactlist.event.MetaContactRenamedEvent;
 import net.java.sip.communicator.service.contactlist.event.ProtoContactEvent;
-import net.java.sip.communicator.service.gui.UIService;
+import net.java.sip.communicator.service.gui.Container;
+import net.java.sip.communicator.service.gui.PluginComponent;
 
 import org.osgi.framework.BundleContext;
 import org.osgi.framework.InvalidSyntaxException;
@@ -113,7 +115,7 @@ public class SipIMCommunicationProvider
                     hashtable);
 		
 		// add our button to SipCommunicator contact context menu
-		addContactMenuButton();
+		//addContactMenuButton();
 		
 		// get the protocols that peer has account in
 		ServiceReference[] protocolProviderRefs = null;
@@ -149,7 +151,8 @@ public class SipIMCommunicationProvider
 		}
 	}
 	
-	private void addContactMenuButton()
+	@SuppressWarnings("unused")
+    private void addContactMenuButton()
 	{
 		new Thread(new Runnable()
 		{
@@ -159,32 +162,17 @@ public class SipIMCommunicationProvider
 				{
 					try
 					{
-						ServiceReference uiServiceRef = SipIMCommunicationProvider.this.bundleContext.getServiceReference(UIService.class.getName());
-						if (uiServiceRef == null)
-						{
-							Thread.sleep(1000);
-							continue;
-						}
-						UIService uiService = (UIService) SipIMCommunicationProvider.this.bundleContext.getService(uiServiceRef);
-						if (uiService == null)
-						{
-							Thread.sleep(1000);
-							continue;
-						}
-					    if(uiService.isContainerSupported(UIService.CONTAINER_CONTACT_RIGHT_BUTTON_MENU))
-					    	uiService.addComponent(
-					    		UIService.CONTAINER_CONTACT_RIGHT_BUTTON_MENU,
-					    		new SipIMContactF2FMenuItem());
-					    return;
-					}
-					catch (IllegalStateException e)
-					{
-						F2FDebug.println(e.toString());
+                        Hashtable<String, String> containerFilter
+                            = new Hashtable<String, String>();
+                        containerFilter.put(
+                                Container.CONTAINER_ID,
+                                Container.CONTAINER_CONTACT_RIGHT_BUTTON_MENU.getID());
+                        
+						SipIMCommunicationProvider.this.bundleContext.registerService(
+                            PluginComponent.class.getName(),
+                            new SipIMContactF2FMenuItem(),
+                            containerFilter);
 						return;
-					}
-					catch (InterruptedException e1)
-					{
-						continue;
 					}
 					catch (Exception e)
 					{
@@ -444,16 +432,23 @@ public class SipIMCommunicationProvider
     	= (OperationSetPersistentPresence)provider
     		.getOperationSet(OperationSetPersistentPresence.class);
     	if(opSetPresence != null) opSetPresence.addContactPresenceStatusListener(this);
-    	
+
         // start listening for IM messages
-    	OperationSetBasicInstantMessaging opSetMessaging
-    	= (OperationSetBasicInstantMessaging)provider
-    		.getOperationSet(OperationSetBasicInstantMessaging.class);
-    	if(opSetMessaging != null)
-    	{
-    		opSetMessaging.addMessageListener(this);
-    		opSetMessaging.addEventFilter(this);
-    	}
+        OperationSetBasicInstantMessaging opSetMessaging
+        = (OperationSetBasicInstantMessaging)provider
+            .getOperationSet(OperationSetBasicInstantMessaging.class);
+        if(opSetMessaging != null)
+        {
+            opSetMessaging.addMessageListener(this);
+        }
+        // start filtering out F2F messages
+        OperationSetInstantMessageFiltering opSetMessageFiltering
+        = (OperationSetInstantMessageFiltering)provider
+            .getOperationSet(OperationSetInstantMessageFiltering.class);
+        if(opSetMessageFiltering != null)
+        {
+            opSetMessageFiltering.addEventFilter(this);
+        }
 
         //F2FDebug.println("\t\t ProtocolProvider added");
     }
@@ -476,8 +471,15 @@ public class SipIMCommunicationProvider
     	if(opSetMessaging != null)
     	{
     		opSetMessaging.removeMessageListener(this);
-    		opSetMessaging.removeEventFilter(this);
     	}
+        // stop filtering out F2F messages
+        OperationSetInstantMessageFiltering opSetMessageFiltering
+        = (OperationSetInstantMessageFiltering)provider
+            .getOperationSet(OperationSetInstantMessageFiltering.class);
+        if(opSetMessageFiltering != null)
+        {
+            opSetMessageFiltering.removeEventFilter(this);
+        }
 
         //F2FDebug.println("\t\t ProtocolProvider removed");
     }
