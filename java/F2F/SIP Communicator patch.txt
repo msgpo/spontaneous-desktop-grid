@@ -17,7 +17,7 @@ Index: src/net/java/sip/communicator/service/protocol/OperationSetInstantMessage
 +     * @param filter the <tt>EventFilter</tt> to register.
 +     */
 +    public void addEventFilter(EventFilter filter);
-+    
++
 +    /**
 +     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
 +     * if an event should be filtered out.
@@ -71,7 +71,7 @@ Index: src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java
 +    private static Hashtable<String, Cursor> cursors = new Hashtable<String, Cursor>(3);
 +    public static Cursor getCursor(String type)
 +    {
-+    	return cursors.get(type);
++        return cursors.get(type);
 +    }
      static {
          try 
@@ -170,7 +170,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +        dndCoordinator.registerFrame(this);
 +        enableEvents(AWTEvent.WINDOW_FOCUS_EVENT_MASK);
 +        addWindowFocusListener(this);
-+        
++
          this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
  
          menusPanel = new MenusPanel(this);
@@ -178,9 +178,9 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
              g.drawImage(backgroundImage, 0, 0, null);
          }
      }
-+    
++
 +    private DnDCoordinator dndCoordinator;
-+    	
++
 +    /**
 +     * Vector of objects of type <tt>DnDTarget</tt> that are interested in dnd events.
 +     */
@@ -203,7 +203,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +        //System.out.println("Unregistered a DnDTaget: "+ target.getClass().toString());
 +        dndTargets.removeElement(target);
 +    }
-+    
++
 +    /**
 +     * If the specified point is over a target which can accept the  dragged
 +     * object, then return that target, otherwise return null.  The source and
@@ -220,7 +220,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +                return target;
 +        return null;
 +    }
-+    
++
 +    /** 
 +     * Return true if the specified point is over this chat frame.
 +     * "Over this frame" means title bars, scroll bars, etc. 
@@ -229,7 +229,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +    {
 +        return getBounds().contains(absPos);
 +    }
-+    
++
 +    /**
 +     * Overwrites the setVisible method in order to notify the 
 +     * DnD coorinator that this chat window is on top of other all frames. 
@@ -239,13 +239,13 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 +        super.setVisible(isVisible);
 +        if (isVisible) dndCoordinator.setTopFrame(this);
 +    }
-+    
++
 +    public void windowGainedFocus(WindowEvent arg0)
 +    {
 +        //System.out.println("focusGained: "+ this.getClass().toString());
 +        dndCoordinator.setTopFrame(this);
 +    }
-+    
++
 +    public void windowLostFocus(WindowEvent arg0)
 +    {
 +        //System.out.println("focusLost: "+ this.getClass().toString());
@@ -261,9 +261,9 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChat
      public void invitationRejected(ChatRoomInvitationRejectedEvent evt)
 -    {   
 +    {
-+    	chatWindowManager.getMultiChat(evt.getChatRoom()).
-+    		processMessage(evt.getInvitee(), evt.getTimestamp(), 
-+    		Constants.ACTION_MESSAGE, "Rejected invitation: "+evt.getReason(), ChatConversationPanel.TEXT_CONTENT_TYPE);
++        chatWindowManager.getMultiChat(evt.getChatRoom()).
++            processMessage(evt.getInvitee(), evt.getTimestamp(), 
++            Constants.ACTION_MESSAGE, "Rejected invitation: "+evt.getReason(), ChatConversationPanel.TEXT_CONTENT_TYPE);
      }
  
      /**
@@ -305,10 +305,10 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceCha
 + */
 +@SuppressWarnings("serial")
 +public class ConferenceChatContactsPanel extends JPanel 
-+	implements DnDTarget
++    implements DnDTarget
 +{
 +    private ConferenceChatPanel conferenceChatPanel;
-+    
++
 +    public ConferenceChatContactsPanel(ConferenceChatPanel conferenceChatPanel, LayoutManager layout)
 +    {
 +        super(layout);
@@ -354,7 +354,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceCha
 +                Constants.ACTION_MESSAGE,
 +                "Sending invitation to join",
 +                ChatConversationPanel.TEXT_CONTENT_TYPE);
-+        
++
 +        draggable = null;
 +        setCursor(Cursor.getDefaultCursor());
 +        repaint();
@@ -392,35 +392,35 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceCha
 +    public void dndMove(Point relPos, Object src, Object obj)
 +    {
 +        if (draggable == null) return;
-+        
++
 +        if (relPos.equals(draggablePos)) return;
-+        
++
 +        draggablePos = relPos;
 +        repaint();
 +    }
-+    
++
 +    public void paintComponent(Graphics g)
 +    {
 +        super.paintComponent(g);
 +        drawDraggable(g);
 +    }
-+    
++
 +    private void drawDraggable(Graphics g)
 +    {
 +        if (draggable == null || draggablePos == null) return;
-+        
++
 +        // make the dragged element "transparent" with a coef. of 0.8
 +        // and paint it
 +        Graphics2D g2 = (Graphics2D) g;
 +        g2.setComposite(AlphaComposite.
 +            getInstance(AlphaComposite.SRC_OVER, 0.8f));
-+        
++
 +        g2.drawImage(
 +            draggable.getImage(),
 +            (int) (draggablePos.getX() - draggable.getImage().getWidth(null) / 2),
 +            (int) (draggablePos.getY() - draggable.getImage().getHeight(null) / 2),
 +            null);
-+        
++
 +        g2.setColor(Color.GRAY);
 +        g2.drawRect((int) (draggablePos.getX() - draggable.getImage().getWidth(null) / 2),
 +                    (int) (draggablePos.getY() - draggable.getImage().getHeight(null) / 2),
@@ -435,7 +435,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceCha
 +            setCursor(ContactListDraggable.getCursor("invalid"));
 +        }
 +    }
-+    
++
 +    /**
 +     * Overwrites the dispose method in order to unregister
 +     * this DnD target from the chat window.
@@ -464,7 +464,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/MainFrame.java
  
 +    private DnDCoordinator dndCoordinator = new DnDCoordinator();
 +    public DnDCoordinator getDnDCoordinator() { return dndCoordinator; }
-+    
++
      /**
       * Creates an instance of <tt>MainFrame</tt>.
       */
@@ -476,7 +476,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
                  {
                      draggedElement.setVisible(false);
                      draggedElement = null;
-+                    
++
 +                    ContactList.this.mainFrame.getDnDCoordinator().cancelDnD();
                  }
              }
@@ -485,7 +485,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
                      {
                          draggedElement.setVisible(false);
                          draggedElement = null;
-+                        
++
 +                        ContactList.this.mainFrame.getDnDCoordinator().cancelDnD();
                      }
                  }
@@ -494,7 +494,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
  
              p = SwingUtilities.convertPoint(e.getComponent(), p, draggedElement);
              draggedElement.setLocation(p);
-+            
++
 +            Point eventAbsPos = (Point) e.getPoint().clone();
 +            SwingUtilities.convertPointToScreen(eventAbsPos, e.getComponent());
 +            mainFrame.getDnDCoordinator().startDnD(eventAbsPos, this, draggedElement);
@@ -517,7 +517,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
  
          Object dest = listModel.getElementAt(selectedIndex);
 +        if (!contains(e.getPoint())) dest = null;
-+        
++
          if (draggedElement != null)
          {
              if (dest instanceof MetaContact)
@@ -525,7 +525,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
  
              draggedElement.setVisible(false);
              draggedElement = null;
-+            
++
 +            mainFrame.getDnDCoordinator().finishDnD();
          }
      }
@@ -816,7 +816,7 @@ Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstan
 +            catch(Exception e) {}
 +        }
 +        if (filtered) return;
-+        
++
          Iterator listeners = null;
          synchronized (messageListeners)
          {
@@ -824,7 +824,7 @@ Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstan
  
          return linkBuffer.toString();
      }
-+    
++
 +    /**
 +     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -864,7 +864,7 @@ Index: src/net/java/sip/communicator/impl/protocol/yahoo/ProtocolProviderService
              supportedOperationSets.put(
                  OperationSetBasicInstantMessaging.class.getName(),
                  basicInstantMessaging);
-+            
++
 +            supportedOperationSets.put(
 +                OperationSetInstantMessageFiltering.class.getName(),
 +                basicInstantMessaging);
@@ -929,7 +929,7 @@ Index: src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicIns
          else
             return false;
      }
-+    
++
 +    /**
 +     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -1006,8 +1006,8 @@ Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInsta
       */
      private void fireMessageEvent(EventObject evt)
      {
-+    	// check if this event should be filtered out
-+    	Iterator<EventFilter> filters = null;
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
 +        synchronized (eventFilters)
 +        {
 +            filters = new ArrayList<EventFilter>(eventFilters).iterator();
@@ -1026,7 +1026,7 @@ Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInsta
 +            catch(Exception e) {}
 +        }
 +        if (filtered) return;
-+    	
++
          Iterator listeners = null;
          synchronized (messageListeners)
          {
@@ -1074,7 +1074,7 @@ Index: src/net/java/sip/communicator/impl/protocol/jabber/ProtocolProviderServic
              supportedOperationSets.put(
                  OperationSetBasicInstantMessaging.class.getName(),
                  basicInstantMessaging);
-+            
++
 +            supportedOperationSets.put(
 +                OperationSetInstantMessageFiltering.class.getName(),
 +                basicInstantMessaging);
@@ -1162,7 +1162,7 @@ Index: src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantM
              timer = null;
         }
      }
-+    
++
 +    /**
 +     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -1268,7 +1268,7 @@ Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessagin
              listener.messageReceived(msgReceivedEvt);
          }
      }
-+    
++
 +    /**
 +     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -1331,7 +1331,7 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
       */
      private void fireMessageEvent(EventObject evt)
      {
-+    	// check if this event should be filtered out
++        // check if this event should be filtered out
 +        Iterator<EventFilter> filters = null;
 +        synchronized (eventFilters)
 +        {
@@ -1351,7 +1351,7 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
 +            catch(Exception e) {}
 +        }
 +        if (filtered) return;
-+    	
++
          Iterator listeners = null;
          synchronized (this.messageListeners)
          {
@@ -1359,7 +1359,7 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
              }
          }
      }
-+    
++
 +    /**
 +     * Registeres a <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -1403,7 +1403,7 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/ProtocolProviderServiceSi
 +            this.supportedOperationSets.put(
 +                OperationSetInstantMessageFiltering.class.getName(),
 +                opSetBasicIM);
-+            
++
              // init DTMF (from JM Heitz)
              OperationSetDTMF opSetDTMF = new OperationSetDTMFSipImpl(this);
              this.supportedOperationSets.put(
@@ -1415,7 +1415,7 @@ Index: src/net/java/sip/communicator/impl/protocol/icq/ProtocolProviderServiceIc
              supportedOperationSets.put(
                  OperationSetBasicInstantMessaging.class.getName(),
                  basicInstantMessaging);
-+            
++
 +            supportedOperationSets.put(
 +                OperationSetInstantMessageFiltering.class.getName(),
 +                basicInstantMessaging);
@@ -1613,7 +1613,7 @@ Index: src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantM
 +            eventFilters.remove(filter);
 +        }
 +    }
-+    
++
  }
 Index: src/net/java/sip/communicator/impl/protocol/ssh/ProtocolProviderServiceSSHImpl.java
 ===================================================================
@@ -1626,7 +1626,7 @@ Index: src/net/java/sip/communicator/impl/protocol/ssh/ProtocolProviderServiceSS
 +            supportedOperationSets.put(
 +                    OperationSetInstantMessageFiltering.class.getName(),
 +                    basicInstantMessaging);
-+            
++
              //initialze the file transfer operation set
              fileTranfer = new OperationSetFileTransferSSHImpl(
                      this);
@@ -1651,7 +1651,7 @@ Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantM
 +     * A list of filters registered for message events.
 +     */
 +    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
-+    
++
 +    /**
       * The provider that created us.
       */
@@ -1660,8 +1660,8 @@ Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantM
       */
      private void fireMessageEvent(EventObject evt)
      {
-+    	// check if this event should be filtered out
-+    	Iterator<EventFilter> filters = null;
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
 +        synchronized (eventFilters)
 +        {
 +            filters = new ArrayList<EventFilter>(eventFilters).iterator();
@@ -1680,7 +1680,7 @@ Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantM
 +            catch(Exception e) {}
 +        }
 +        if (filtered) return;
-+    	
++
          Iterator listeners = null;
          synchronized (messageListeners)
          {
@@ -1730,7 +1730,7 @@ Index: src/net/java/sip/communicator/impl/protocol/msn/ProtocolProviderServiceMs
              supportedOperationSets.put(
                  OperationSetBasicInstantMessaging.class.getName(),
                  basicInstantMessaging);
-+            
++
 +            supportedOperationSets.put(
 +                OperationSetInstantMessageFiltering.class.getName(),
 +                basicInstantMessaging);
@@ -1810,7 +1810,7 @@ Index: src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicIn
          else
             return false;
      }
-+    
++
 +    /**
 +     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
