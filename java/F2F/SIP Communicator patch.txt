@@ -1,12 +1,15 @@
-Index: src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java
+Index: src/net/java/sip/communicator/service/protocol/OperationSetInstantMessageFiltering.java
 ===================================================================
---- src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(revision 3320)
-+++ src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMessaging.java	(working copy)
-@@ -102,4 +102,20 @@
-      * <tt>false</tt> otherwise.
-      */
-     public boolean isContentTypeSupported(String contentType);
+--- src/net/java/sip/communicator/service/protocol/OperationSetInstantMessageFiltering.java	(revision 0)
++++ src/net/java/sip/communicator/service/protocol/OperationSetInstantMessageFiltering.java	(revision 0)
+@@ -0,0 +1,23 @@
++package net.java.sip.communicator.service.protocol;
 +
++import net.java.sip.communicator.service.protocol.event.EventFilter;
++
++public interface OperationSetInstantMessageFiltering
++    extends OperationSet
++{
 +    /**
 +     * Registeres an <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -14,15 +17,15 @@ Index: src/net/java/sip/communicator/service/protocol/OperationSetBasicInstantMe
 +     * @param filter the <tt>EventFilter</tt> to register.
 +     */
 +    public void addEventFilter(EventFilter filter);
-+
++    
 +    /**
 +     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
-+     * if a event should be filtered out.
++     * if an event should be filtered out.
 +     *
 +     * @param filter the <tt>EventFilter</tt> to unregister.
 +     */
 +    public void removeEventFilter(EventFilter filter);
- }
++}
 Index: src/net/java/sip/communicator/service/protocol/event/EventFilter.java
 ===================================================================
 --- src/net/java/sip/communicator/service/protocol/event/EventFilter.java	(revision 0)
@@ -56,480 +59,9 @@ Index: src/net/java/sip/communicator/service/protocol/event/EventFilter.java
 +     */
 +    public boolean filterEvent(EventObject msg);
 +}
-Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(revision 3505)
-+++ src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(working copy)
-@@ -48,6 +48,11 @@
-     private Vector messageListeners = new Vector();
- 
-     /**
-+     * A list of filters registered for message events.
-+     */
-+    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
-+
-+    /**
-      * The provider that created us.
-      */
-     private ProtocolProviderServiceYahooImpl yahooProvider = null;
-@@ -310,6 +315,21 @@
-      */
-     private void fireMessageEvent(EventObject evt)
-     {
-+        // check if this event should be filtered out
-+        Iterator<EventFilter> filters = null;
-+        synchronized (eventFilters)
-+        {
-+            filters = new ArrayList<EventFilter>(eventFilters).iterator();
-+        }
-+        while (filters.hasNext())
-+        {
-+            // return if a filter has filtered this event out
-+            if (filters.next().filterEvent(evt))
-+            {
-+                return;
-+            }
-+        }
-+        
-         Iterator listeners = null;
-         synchronized (messageListeners)
-         {
-@@ -627,4 +647,35 @@
- 
-         return linkBuffer.toString();
-     }
-+    
-+    /**
-+     * Registeres an <tt>EventFilter</tt> with this operation set so that 
-+     * events, that do not need processing, are filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to register.
-+     */
-+    public void addEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+            if(!eventFilters.contains(filter))
-+            {
-+            	eventFilters.add(filter);
-+            }
-+        }
-+	}
-+
-+    /**
-+     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
-+     * if an event should be filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to unregister.
-+     */
-+    public void removeEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+        	eventFilters.remove(filter);
-+        }	
-+	}
- }
-
-Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(revision 3320)
-+++ src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(working copy)
-@@ -69,6 +69,11 @@
-     private Vector messageListeners = new Vector();
- 
-     /**
-+     * A list of filters registered for message events.
-+     */
-+    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
-+
-+    /**
-      * The provider that created us.
-      */
-     private ProtocolProviderServiceJabberImpl jabberProvider = null;
-@@ -323,6 +328,21 @@
-      */
-     private void fireMessageEvent(EventObject evt)
-     {
-+    	// check if this event should be filtered out
-+    	Iterator<EventFilter> filters = null;
-+        synchronized (eventFilters)
-+        {
-+            filters = new ArrayList<EventFilter>(eventFilters).iterator();
-+        }
-+        while (filters.hasNext())
-+        {
-+        	// return if a filter has filtered this event out
-+        	if (filters.next().filterEvent(evt))
-+        	{
-+        		return;
-+        	}
-+        }
-+    	
-         Iterator listeners = null;
-         synchronized (messageListeners)
-         {
-@@ -588,4 +608,35 @@
-             return true;
-         }        
-     }
-+
-+    /**
-+     * Registeres an <tt>EventFilter</tt> with this operation set so that 
-+     * events, that do not need processing, are filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to register.
-+     */
-+    public void addEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+            if(!eventFilters.contains(filter))
-+            {
-+            	eventFilters.add(filter);
-+            }
-+        }
-+	}
-+
-+    /**
-+     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
-+     * if an event should be filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to unregister.
-+     */
-+    public void removeEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+        	eventFilters.remove(filter);
-+        }	
-+	}
- }
-Index: src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(revision 3320)
-+++ src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(working copy)
-@@ -289,4 +289,14 @@
-         else
-            return false;
-     }
-+
-+	public void addEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-+
-+	public void removeEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
- }
-Index: src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(revision 3320)
-+++ src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(working copy)
-@@ -453,4 +453,13 @@
-        }
-     }
- 
-+	public void addEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-+
-+	public void removeEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
- }
-Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(revision 3320)
-+++ src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(working copy)
-@@ -187,4 +187,14 @@
-             listener.messageReceived(msgReceivedEvt);
-         }
-     }
-+
-+	public void addEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-+
-+	public void removeEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
- }
-\ No newline at end of file
-Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3539)
-+++ src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
-@@ -43,6 +43,11 @@
-     private Vector messageProcessors = new Vector();
-     
-     /**
-+     * A list of filters registered for message events.
-+     */
-+    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
-+
-+    /**
-      * The provider that created us.
-      */
-     private ProtocolProviderServiceSipImpl sipProvider = null;
-@@ -665,6 +670,21 @@
-      */
-     private void fireMessageEvent(EventObject evt)
-     {
-+    	// check if this event should be filtered out
-+        Iterator<EventFilter> filters = null;
-+        synchronized (eventFilters)
-+        {
-+            filters = new ArrayList<EventFilter>(eventFilters).iterator();
-+        }
-+        while (filters.hasNext())
-+        {
-+            // return if a filter has filtered this event out
-+            if (filters.next().filterEvent(evt))
-+            {
-+                return;
-+            }
-+        }
-+    	
-         Iterator listeners = null;
-         synchronized (this.messageListeners)
-         {
-@@ -1148,5 +1168,36 @@
-             }
-         }
-     }
-+    
-+    /**
-+     * Registeres a <tt>EventFilter</tt> with this operation set so that 
-+     * events, that do not need processing, are filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to register.
-+     */
-+    public void addEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+            if(!eventFilters.contains(filter))
-+            {
-+            	eventFilters.add(filter);
-+            }
-+        }
-+	}
-+
-+    /**
-+     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
-+     * if a event should be filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to unregister.
-+     */
-+    public void removeEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+        	eventFilters.remove(filter);
-+        }	
-+	}
- }
- 
-
-Index: src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(revision 3320)
-+++ src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(working copy)
-@@ -46,6 +46,11 @@
-     private Vector messageListeners = new Vector();
- 
-     /**
-+     * A list of filters registered for message events.
-+     */
-+    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
-+
-+    /**
-      * The icq provider that created us.
-      */
-     private ProtocolProviderServiceIcqImpl icqProvider = null;
-@@ -467,6 +472,21 @@
-      */
-     private void fireMessageEvent(EventObject evt)
-     {
-+    	// check if this event should be filtered out
-+    	Iterator<EventFilter> filters = null;
-+        synchronized (eventFilters)
-+        {
-+            filters = new ArrayList<EventFilter>(eventFilters).iterator();
-+        }
-+        while (filters.hasNext())
-+        {
-+        	// return if a filter has filtered this event out
-+        	if (filters.next().filterEvent(evt))
-+        	{
-+        		return;
-+        	}
-+        }
-+    	
-         Iterator listeners = null;
-         synchronized (messageListeners)
-         {
-@@ -769,4 +789,35 @@
- 
-         }
-     }
-+
-+    /**
-+     * Registeres an <tt>EventFilter</tt> with this operation set so that 
-+     * events, that do not need processing, are filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to register.
-+     */
-+    public void addEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+            if(!eventFilters.contains(filter))
-+            {
-+            	eventFilters.add(filter);
-+            }
-+        }
-+	}
-+
-+    /**
-+     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
-+     * if an event should be filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to unregister.
-+     */
-+    public void removeEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+        	eventFilters.remove(filter);
-+        }	
-+	}
- }
-Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(revision 3320)
-+++ src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(working copy)
-@@ -36,6 +36,11 @@
-     private Vector messageListeners = new Vector();
- 
-     /**
-+     * A list of filters registered for message events.
-+     */
-+    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
-+    
-+    /**
-      * The provider that created us.
-      */
-     private ProtocolProviderServiceMsnImpl msnProvider = null;
-@@ -259,6 +264,21 @@
-      */
-     private void fireMessageEvent(EventObject evt)
-     {
-+    	// check if this event should be filtered out
-+    	Iterator<EventFilter> filters = null;
-+        synchronized (eventFilters)
-+        {
-+            filters = new ArrayList<EventFilter>(eventFilters).iterator();
-+        }
-+        while (filters.hasNext())
-+        {
-+        	// return if a filter has filtered this event out
-+        	if (filters.next().filterEvent(evt))
-+        	{
-+        		return;
-+        	}
-+        }
-+    	
-         Iterator listeners = null;
-         synchronized (messageListeners)
-         {
-@@ -382,5 +402,36 @@
-                                                       MsnContact contact)
-         {
-         }
--    }    
-+    }
-+
-+    /**
-+     * Registeres an <tt>EventFilter</tt> with this operation set so that 
-+     * events, that do not need processing, are filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to register.
-+     */
-+    public void addEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+            if(!eventFilters.contains(filter))
-+            {
-+            	eventFilters.add(filter);
-+            }
-+        }
-+	}
-+
-+    /**
-+     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
-+     * if an event should be filtered out.
-+     *
-+     * @param filter the <tt>EventFilter</tt> to unregister.
-+     */
-+    public void removeEventFilter(EventFilter filter)
-+	{
-+        synchronized(eventFilters)
-+        {
-+        	eventFilters.remove(filter);
-+        }	
-+	}
- }
-Index: src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(revision 3469)
-+++ src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(working copy)
-@@ -389,5 +389,15 @@
-     {
-         return MessageSSHImpl.contentType.equals(contentType);
-     }
-+
-+	public void addEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-+
-+	public void removeEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-     
- }
-Index: src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java
-===================================================================
---- src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(revision 3320)
-+++ src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(working copy)
-@@ -282,4 +282,14 @@
-         else
-            return false;
-     }
-+
-+	public void addEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
-+
-+	public void removeEventFilter(EventFilter filter) {
-+		// TODO Auto-generated method stub
-+		
-+	}
- }
 Index: src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java	(revision 3432)
+--- src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java	(revision 3556)
 +++ src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java	(working copy)
 @@ -66,11 +66,15 @@
       * A set of 2 cursors indicating if the dragged element is currently
@@ -582,7 +114,7 @@ Index: src/net/java/sip/communicator/impl/gui/utils/ContactListDraggable.java
  }
 Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.java	(revision 3432)
+--- src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.java	(revision 3556)
 +++ src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.java	(working copy)
 @@ -36,7 +36,7 @@
  
@@ -600,7 +132,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.jav
 +        
 +        if(chatPanel instanceof ConferenceChatPanel)
 +        {
-+        	mainPanel = new ConferenceChatContactsPanel((ConferenceChatPanel)chatPanel, new BorderLayout());
++            mainPanel = new ConferenceChatContactsPanel((ConferenceChatPanel)chatPanel, new BorderLayout());
 +        }
 +        else mainPanel = new JPanel(new BorderLayout());
  
@@ -608,7 +140,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatContactListPanel.jav
              new BoxLayout(contactsPanel, BoxLayout.Y_AXIS));
 Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(revision 3546)
+--- src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(revision 3556)
 +++ src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java	(working copy)
 @@ -16,6 +16,9 @@
  import net.java.sip.communicator.impl.gui.*;
@@ -630,7 +162,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
  {
      private Logger logger = Logger.getLogger(ChatWindow.class.getName());
  
-@@ -64,6 +68,11 @@
+@@ -66,6 +70,11 @@
      {
          this.mainFrame = mainFrame;
  
@@ -642,87 +174,86 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/ChatWindow.java
          this.setDefaultCloseOperation(JFrame.DO_NOTHING_ON_CLOSE);
  
          menusPanel = new MenusPanel(this);
-@@ -769,4 +778,76 @@
+@@ -784,4 +793,76 @@
              g.drawImage(backgroundImage, 0, 0, null);
          }
      }
 +    
 +    private DnDCoordinator dndCoordinator;
 +    	
-+	/**
-+	 * Vector of objects of type <tt>DnDTarget</tt> that are interested in dnd events.
-+	 */
-+	private Vector<DnDTarget> dndTargets = new Vector<DnDTarget>();
-+	/**
-+	 * Registers a DnDTarget.
-+	 * If you don't register, you won't get dnd events. 
-+	 */
-+	public void registerDnDTarget(DnDTarget target)
-+	{
-+		//System.out.println("Registered a DnDTaget: "+ target.getClass().toString());
-+		dndTargets.addElement(target);
-+	}
-+	/** 
-+	 * Unregisters the DnDTarget.
-+	 * Dnd events will no longer be sent. 
-+	 */
-+	public void unregisterDnDTarget(DnDTarget target)
-+	{
-+		//System.out.println("Unregistered a DnDTaget: "+ target.getClass().toString());
-+		dndTargets.removeElement(target);
-+	}
-+	
-+	/**
-+	 * If the specified point is over a target which can accept the  dragged
-+	 * object, then return that target, otherwise return null.  The source and
-+	 * obj parameters are to help the target decide whether it wants the
-+	 * offered object.
-+	 * 
-+	 * We go through the list of registered DnDTargets and see if any of them
-+	 * are both under the specified point and want to accept the dragged object.
-+	 */
-+	public DnDTarget findTarget(Point absPos, Object source, Object obj)
-+	{
-+		for (DnDTarget target: dndTargets)
-+			if (target.inside(absPos) && target.dndAccept(source, obj))
-+				return target;
-+		return null;
-+	}
-+	
-+	/** 
-+	 * Return true if the specified point is over this chat frame.
-+	 * "Over this frame" means title bars, scroll bars, etc. 
-+	 */
-+	public boolean inside(Point absPos)
-+	{
-+		return getBounds().contains(absPos);
-+	}
-+	
-+	/**
-+	 * Overwrites the setVisible method in order to notify the 
-+	 * DnD coorinator that this chat window is on top of other all frames. 
-+	 */
-+	public void setVisible(boolean isVisible)
-+	{	
-+		super.setVisible(isVisible);
-+		if (isVisible) dndCoordinator.setTopFrame(this);
-+	}
-+	
-+	public void windowGainedFocus(WindowEvent arg0)
-+	{
-+		//System.out.println("focusGained: "+ this.getClass().toString());
-+		dndCoordinator.setTopFrame(this);
-+	}
-+	
-+	public void windowLostFocus(WindowEvent arg0)
-+	{
-+		//System.out.println("focusLost: "+ this.getClass().toString());
-+	}
++    /**
++     * Vector of objects of type <tt>DnDTarget</tt> that are interested in dnd events.
++     */
++    private Vector<DnDTarget> dndTargets = new Vector<DnDTarget>();
++    /**
++     * Registers a DnDTarget.
++     * If you don't register, you won't get dnd events. 
++     */
++    public void registerDnDTarget(DnDTarget target)
++    {
++        //System.out.println("Registered a DnDTaget: "+ target.getClass().toString());
++        dndTargets.addElement(target);
++    }
++    /** 
++     * Unregisters the DnDTarget.
++     * Dnd events will no longer be sent. 
++     */
++    public void unregisterDnDTarget(DnDTarget target)
++    {
++        //System.out.println("Unregistered a DnDTaget: "+ target.getClass().toString());
++        dndTargets.removeElement(target);
++    }
++    
++    /**
++     * If the specified point is over a target which can accept the  dragged
++     * object, then return that target, otherwise return null.  The source and
++     * obj parameters are to help the target decide whether it wants the
++     * offered object.
++     * 
++     * We go through the list of registered DnDTargets and see if any of them
++     * are both under the specified point and want to accept the dragged object.
++     */
++    public DnDTarget findTarget(Point absPos, Object source, Object obj)
++    {
++        for (DnDTarget target: dndTargets)
++            if (target.inside(absPos) && target.dndAccept(source, obj))
++                return target;
++        return null;
++    }
++    
++    /** 
++     * Return true if the specified point is over this chat frame.
++     * "Over this frame" means title bars, scroll bars, etc. 
++     */
++    public boolean inside(Point absPos)
++    {
++        return getBounds().contains(absPos);
++    }
++    
++    /**
++     * Overwrites the setVisible method in order to notify the 
++     * DnD coorinator that this chat window is on top of other all frames. 
++     */
++    public void setVisible(boolean isVisible)
++    {    
++        super.setVisible(isVisible);
++        if (isVisible) dndCoordinator.setTopFrame(this);
++    }
++    
++    public void windowGainedFocus(WindowEvent arg0)
++    {
++        //System.out.println("focusGained: "+ this.getClass().toString());
++        dndCoordinator.setTopFrame(this);
++    }
++    
++    public void windowLostFocus(WindowEvent arg0)
++    {
++        //System.out.println("focusLost: "+ this.getClass().toString());
++    }
  }
-
 Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java	(revision 3432)
+--- src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java	(revision 3556)
 +++ src/net/java/sip/communicator/impl/gui/main/chat/conference/MultiUserChatManager.java	(working copy)
 @@ -67,7 +67,10 @@
      }
@@ -776,109 +307,109 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceCha
 +public class ConferenceChatContactsPanel extends JPanel 
 +	implements DnDTarget
 +{
-+	private ConferenceChatPanel conferenceChatPanel;
-+	
-+	public ConferenceChatContactsPanel(ConferenceChatPanel conferenceChatPanel, LayoutManager layout)
-+	{
-+		super(layout);
-+		this.conferenceChatPanel = conferenceChatPanel;
-+		conferenceChatPanel.getChatWindow().registerDnDTarget(this);
-+	}
++    private ConferenceChatPanel conferenceChatPanel;
++    
++    public ConferenceChatContactsPanel(ConferenceChatPanel conferenceChatPanel, LayoutManager layout)
++    {
++        super(layout);
++        this.conferenceChatPanel = conferenceChatPanel;
++        conferenceChatPanel.getChatWindow().registerDnDTarget(this);
++    }
 +
-+	public boolean inside(Point absPos)
-+	{
-+		return contains(relPos(absPos));
-+	}
++    public boolean inside(Point absPos)
++    {
++        return contains(relPos(absPos));
++    }
 +
-+	public Point relPos(Point absPos)
-+	{
-+		Point p = (Point) absPos.clone();
-+		SwingUtilities.convertPointFromScreen(p, this);
-+		return p;
-+	}
++    public Point relPos(Point absPos)
++    {
++        Point p = (Point) absPos.clone();
++        SwingUtilities.convertPointFromScreen(p, this);
++        return p;
++    }
 +
-+	public boolean dndAccept(Object src, Object obj)
-+	{
-+		if (src instanceof ContactList && obj instanceof ContactListDraggable)
-+			return true;
-+		return false;
-+	}
++    public boolean dndAccept(Object src, Object obj)
++    {
++        if (src instanceof ContactList && obj instanceof ContactListDraggable)
++            return true;
++        return false;
++    }
 +
-+	public void dndDrop(Point relPos, Object src, Object obj)
-+	{
-+		if (draggable == null) return;
++    public void dndDrop(Point relPos, Object src, Object obj)
++    {
++        if (draggable == null) return;
 +
-+		Object o = conferenceChatPanel.getChatIdentifier();
-+		if (!(o instanceof ChatRoomWrapper)) return;
-+		ChatRoomWrapper chatRoomWrapper = (ChatRoomWrapper) o;
-+		ChatRoom chatRoom = chatRoomWrapper.getChatRoom();
-+		if (chatRoom == null) return;
-+		Contact contact;
-+		if (draggable.getContact() != null)
-+			contact = draggable.getContact();
-+		else contact = draggable.getMetaContact().getDefaultContact();
-+		chatRoom.invite(contact.getAddress(), "");
-+		conferenceChatPanel.processMessage(contact.getDisplayName(),
++        Object o = conferenceChatPanel.getChatIdentifier();
++        if (!(o instanceof ChatRoomWrapper)) return;
++        ChatRoomWrapper chatRoomWrapper = (ChatRoomWrapper) o;
++        ChatRoom chatRoom = chatRoomWrapper.getChatRoom();
++        if (chatRoom == null) return;
++        Contact contact;
++        if (draggable.getContact() != null)
++            contact = draggable.getContact();
++        else contact = draggable.getMetaContact().getDefaultContact();
++        chatRoom.invite(contact.getAddress(), "");
++        conferenceChatPanel.processMessage(contact.getDisplayName(),
 +                new Date(System.currentTimeMillis()),
 +                Constants.ACTION_MESSAGE,
 +                "Sending invitation to join",
 +                ChatConversationPanel.TEXT_CONTENT_TYPE);
-+		
-+		draggable = null;
-+		setCursor(Cursor.getDefaultCursor());
-+		repaint();
-+	}
-+
-+	public void dndCancel(Point relPos, Object src, Object obj)
-+	{
-+		if (draggable == null) return;
-+
-+		draggable = null;
-+		setCursor(Cursor.getDefaultCursor());
-+		repaint();
-+	}
-+
-+	private ContactListDraggable draggable = null;
-+	private Point draggablePos;
-+	public void dndEnter(Point relPos, Object src, Object obj)
-+	{
-+		if (!(obj instanceof ContactListDraggable)) return;
-+		
-+		draggable = (ContactListDraggable) obj;
-+		draggablePos = relPos;
-+		repaint();
-+	}
-+
-+	public void dndExit(Point relPos, Object src, Object obj)
-+	{
-+		if (draggable == null) return;
-+
-+		draggable = null;
-+		setCursor(Cursor.getDefaultCursor());
-+		repaint();
-+	}
-+
-+	public void dndMove(Point relPos, Object src, Object obj)
-+	{
-+		if (draggable == null) return;
-+		
-+		if (relPos.equals(draggablePos)) return;
-+		
-+		draggablePos = relPos;
++        
++        draggable = null;
++        setCursor(Cursor.getDefaultCursor());
 +        repaint();
-+	}
-+	
-+	public void paintComponent(Graphics g)
-+	{
-+		super.paintComponent(g);
-+		drawDraggable(g);
-+	}
-+	
-+	private void drawDraggable(Graphics g)
-+	{
-+		if (draggable == null || draggablePos == null) return;
-+		
-+		// make the dragged element "transparent" with a coef. of 0.8
++    }
++
++    public void dndCancel(Point relPos, Object src, Object obj)
++    {
++        if (draggable == null) return;
++
++        draggable = null;
++        setCursor(Cursor.getDefaultCursor());
++        repaint();
++    }
++
++    private ContactListDraggable draggable = null;
++    private Point draggablePos;
++    public void dndEnter(Point relPos, Object src, Object obj)
++    {
++        if (!(obj instanceof ContactListDraggable)) return;
++        
++        draggable = (ContactListDraggable) obj;
++        draggablePos = relPos;
++        repaint();
++    }
++
++    public void dndExit(Point relPos, Object src, Object obj)
++    {
++        if (draggable == null) return;
++
++        draggable = null;
++        setCursor(Cursor.getDefaultCursor());
++        repaint();
++    }
++
++    public void dndMove(Point relPos, Object src, Object obj)
++    {
++        if (draggable == null) return;
++        
++        if (relPos.equals(draggablePos)) return;
++        
++        draggablePos = relPos;
++        repaint();
++    }
++    
++    public void paintComponent(Graphics g)
++    {
++        super.paintComponent(g);
++        drawDraggable(g);
++    }
++    
++    private void drawDraggable(Graphics g)
++    {
++        if (draggable == null || draggablePos == null) return;
++        
++        // make the dragged element "transparent" with a coef. of 0.8
 +        // and paint it
 +        Graphics2D g2 = (Graphics2D) g;
 +        g2.setComposite(AlphaComposite.
@@ -903,21 +434,21 @@ Index: src/net/java/sip/communicator/impl/gui/main/chat/conference/ConferenceCha
 +        {
 +            setCursor(ContactListDraggable.getCursor("invalid"));
 +        }
-+	}
-+	
++    }
++    
 +    /**
 +     * Overwrites the dispose method in order to unregister
 +     * this DnD target from the chat window.
 +     * DnD events are no longer sent to this target.
 +     */
-+	public void dispose()
-+	{
-+		conferenceChatPanel.getChatWindow().unregisterDnDTarget(this);
-+	}
++    public void dispose()
++    {
++        conferenceChatPanel.getChatWindow().unregisterDnDTarget(this);
++    }
 +}
 Index: src/net/java/sip/communicator/impl/gui/main/MainFrame.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/main/MainFrame.java	(revision 3546)
+--- src/net/java/sip/communicator/impl/gui/main/MainFrame.java	(revision 3556)
 +++ src/net/java/sip/communicator/impl/gui/main/MainFrame.java	(working copy)
 @@ -17,6 +17,7 @@
  
@@ -937,10 +468,9 @@ Index: src/net/java/sip/communicator/impl/gui/main/MainFrame.java
      /**
       * Creates an instance of <tt>MainFrame</tt>.
       */
-
 Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java	(revision 3432)
+--- src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java	(revision 3556)
 +++ src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java	(working copy)
 @@ -108,6 +108,8 @@
                  {
@@ -1015,18 +545,18 @@ Index: src/net/java/sip/communicator/impl/gui/dnd/DnDFrame.java
 + */
 +public interface DnDFrame
 +{
-+	/**
-+	 * Return true if the specified point is over this frame.
-+	 * "Over this frame" means title bars, scroll bars, etc.
-+	 */
-+	public boolean inside(Point absPos);
++    /**
++     * Return true if the specified point is over this frame.
++     * "Over this frame" means title bars, scroll bars, etc.
++     */
++    public boolean inside(Point absPos);
 +
-+	/**
-+	 * If the specified point is over a target which can accept the  dragged
-+	 * object, then return that target, otherwise return null.  The source and
-+	 * obj parameters are to help the target decide whether it wants the object. 
-+	 */
-+	public DnDTarget findTarget(Point absPos, Object source, Object obj);
++    /**
++     * If the specified point is over a target which can accept the  dragged
++     * object, then return that target, otherwise return null.  The source and
++     * obj parameters are to help the target decide whether it wants the object. 
++     */
++    public DnDTarget findTarget(Point absPos, Object source, Object obj);
 +}
 Index: src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java
 ===================================================================
@@ -1056,128 +586,128 @@ Index: src/net/java/sip/communicator/impl/gui/dnd/DnDCoordinator.java
 +
 +public class DnDCoordinator
 +{
-+	private Vector<DnDFrame> frames = new Vector<DnDFrame>();
-+	private Object src;
-+	private Object draggable;
-+	private DnDTarget currentTarget;	// target the mouse is currently over
-+	private Point currentPos;		// position of mouse relative to target
++    private Vector<DnDFrame> frames = new Vector<DnDFrame>();
++    private Object src;
++    private Object draggable;
++    private DnDTarget currentTarget;    // target the mouse is currently over
++    private Point currentPos;        // position of mouse relative to target
 +
-+	/** 
-+	 * Register a Frame as DnD-capable.  If you don't register the Frame, it
-+	 * won't be notified of DnD events. 
-+	 */
-+	public void registerFrame(DnDFrame frame)
-+	{
-+		if (!frames.contains(frame))
-+		{
-+			//System.out.println("Registered a DnDFrame: "+ frame.getClass().toString());
-+			frames.addElement(frame);
-+		}
-+	}
-+	/** Unregister a Frame as DnD-capable.  Dnd events will no longer be sent. */
-+	public void unregisterFrame(DnDFrame frame)
-+	{
-+		if (frames.contains(frame))
-+		{
-+			//System.out.println("Unregistered a DnDFrame: "+ frame.getClass().toString());
-+			frames.removeElement(frame);
-+		}
-+	}
-+	/** Call this when a Frame is moved to the top (eg when it gets the focus) */
-+	public void setTopFrame(DnDFrame frame)
-+	{
-+		if (!frames.contains(frame)) return;
-+		frames.removeElement(frame);
-+		frames.insertElementAt(frame, 0);
-+	}
++    /** 
++     * Register a Frame as DnD-capable.  If you don't register the Frame, it
++     * won't be notified of DnD events. 
++     */
++    public void registerFrame(DnDFrame frame)
++    {
++        if (!frames.contains(frame))
++        {
++            //System.out.println("Registered a DnDFrame: "+ frame.getClass().toString());
++            frames.addElement(frame);
++        }
++    }
++    /** Unregister a Frame as DnD-capable.  Dnd events will no longer be sent. */
++    public void unregisterFrame(DnDFrame frame)
++    {
++        if (frames.contains(frame))
++        {
++            //System.out.println("Unregistered a DnDFrame: "+ frame.getClass().toString());
++            frames.removeElement(frame);
++        }
++    }
++    /** Call this when a Frame is moved to the top (eg when it gets the focus) */
++    public void setTopFrame(DnDFrame frame)
++    {
++        if (!frames.contains(frame)) return;
++        frames.removeElement(frame);
++        frames.insertElementAt(frame, 0);
++    }
 +
-+	/** 
-+	 * Call this to start a DnD operation.
-+	 *
-+	 * @param absPos The position of the mouse when the DnD operation started
-+	 * @param src Where the object is being dragged from. May be null.
-+	 * @param obj The thing that's being dragged. May be null.
-+	 */
-+	public void startDnD(Point absPos, Object src, Object draggable)
-+	{
-+		this.src = src;
-+		this.draggable = draggable;
-+		findTarget(absPos);
-+		if (currentTarget != null)
-+			currentTarget.dndEnter(currentPos, src, draggable);
-+	}
-+	/**
-+	 * Call this when the mouse moves during a DnD operation.
-+	 * 
-+	 * @param newAbsPos the new position of the mouse
-+	 */
-+	public void updateDnD(Point newAbsPos)
-+	{
-+		DnDTarget oldTarget = currentTarget;
-+		findTarget(newAbsPos);
-+		// if we're still over the same target, it's a move()
-+		if (currentTarget == oldTarget)
-+		{
-+			if (currentTarget != null)
-+				currentTarget.dndMove(currentPos, src, draggable);
-+		}
-+		// otherwise we exit() old target and enter() new one
-+		else
-+		{
-+			if (oldTarget != null)
-+				oldTarget.dndExit(currentPos, src, draggable);
-+			if (currentTarget != null)
-+				currentTarget.dndEnter(currentPos, src, draggable);
-+		}
-+	}
-+	/** 
-+	 * Call this when the DnD operation is finished successfully (eg when the
-+	 * mouse button is released). 
-+	 */
-+	public void finishDnD()
-+	{
-+		if (currentTarget != null)
-+			currentTarget.dndDrop(currentPos, src, draggable);
-+		src = null;
-+		currentTarget = null;
-+	}
-+	/** 
-+	 * Call this if the user aborts the DnD operation without dropping the object
-+	 * (eg by hitting the ESC key) 
-+	 */
-+	public void cancelDnD()
-+	{
-+		if (currentTarget != null)
-+			currentTarget.dndCancel(currentPos, src, draggable);
-+		src = null;
-+		currentTarget = null;
-+	}
++    /** 
++     * Call this to start a DnD operation.
++     *
++     * @param absPos The position of the mouse when the DnD operation started
++     * @param src Where the object is being dragged from. May be null.
++     * @param obj The thing that's being dragged. May be null.
++     */
++    public void startDnD(Point absPos, Object src, Object draggable)
++    {
++        this.src = src;
++        this.draggable = draggable;
++        findTarget(absPos);
++        if (currentTarget != null)
++            currentTarget.dndEnter(currentPos, src, draggable);
++    }
++    /**
++     * Call this when the mouse moves during a DnD operation.
++     * 
++     * @param newAbsPos the new position of the mouse
++     */
++    public void updateDnD(Point newAbsPos)
++    {
++        DnDTarget oldTarget = currentTarget;
++        findTarget(newAbsPos);
++        // if we're still over the same target, it's a move()
++        if (currentTarget == oldTarget)
++        {
++            if (currentTarget != null)
++                currentTarget.dndMove(currentPos, src, draggable);
++        }
++        // otherwise we exit() old target and enter() new one
++        else
++        {
++            if (oldTarget != null)
++                oldTarget.dndExit(currentPos, src, draggable);
++            if (currentTarget != null)
++                currentTarget.dndEnter(currentPos, src, draggable);
++        }
++    }
++    /** 
++     * Call this when the DnD operation is finished successfully (eg when the
++     * mouse button is released). 
++     */
++    public void finishDnD()
++    {
++        if (currentTarget != null)
++            currentTarget.dndDrop(currentPos, src, draggable);
++        src = null;
++        currentTarget = null;
++    }
++    /** 
++     * Call this if the user aborts the DnD operation without dropping the object
++     * (eg by hitting the ESC key) 
++     */
++    public void cancelDnD()
++    {
++        if (currentTarget != null)
++            currentTarget.dndCancel(currentPos, src, draggable);
++        src = null;
++        currentTarget = null;
++    }
 +
-+	private void findTarget(Point absPos)
-+	{
-+		// check for a target in every frame we know about
-+		for (DnDFrame frame: frames)
-+		{
-+			if (frame.inside(absPos))
-+			{
-+				DnDTarget target = frame.findTarget(absPos, src, draggable);
-+				if (target != null)
-+				{
-+					// hooray!  we found a target
-+					currentTarget = target;
-+					currentPos = target.relPos(absPos);
-+					return;
-+				}
-+				// we're over a frame, but not over a target
-+				currentTarget = null;
-+				currentPos = null;
-+				return;
-+			}
-+		}
-+		// we're not over a frame that supports DnD
-+		currentTarget = null;
-+		currentPos = null;
-+	}
++    private void findTarget(Point absPos)
++    {
++        // check for a target in every frame we know about
++        for (DnDFrame frame: frames)
++        {
++            if (frame.inside(absPos))
++            {
++                DnDTarget target = frame.findTarget(absPos, src, draggable);
++                if (target != null)
++                {
++                    // hooray!  we found a target
++                    currentTarget = target;
++                    currentPos = target.relPos(absPos);
++                    return;
++                }
++                // we're over a frame, but not over a target
++                currentTarget = null;
++                currentPos = null;
++                return;
++            }
++        }
++        // we're not over a frame that supports DnD
++        currentTarget = null;
++        currentPos = null;
++    }
 +}
 Index: src/net/java/sip/communicator/impl/gui/dnd/DnDTarget.java
 ===================================================================
@@ -1194,45 +724,1121 @@ Index: src/net/java/sip/communicator/impl/gui/dnd/DnDTarget.java
 + */
 +public interface DnDTarget
 +{
-+	/**
-+	 * Convert absolute coordinates into coordinates relative to this target. 
-+	 */
-+	public Point relPos(Point absPos);
++    /**
++     * Convert absolute coordinates into coordinates relative to this target. 
++     */
++    public Point relPos(Point absPos);
 +
-+	/** 
-+	 * Return true if this target will accept the object being dragged.
-+	 */
-+	public boolean dndAccept(Object src, Object obj);
++    /** 
++     * Return true if this target will accept the object being dragged.
++     */
++    public boolean dndAccept(Object src, Object obj);
 +
-+	/**
-+	 * Something has just been dragged onto this target.
-+	 * This method will not be called if dndAccept returns false. 
-+	 */
-+	public void dndEnter(Point relPos, Object src, Object obj);
++    /**
++     * Something has just been dragged onto this target.
++     * This method will not be called if dndAccept returns false. 
++     */
++    public void dndEnter(Point relPos, Object src, Object obj);
 +
-+	/** 
-+	 * The dragged object has been moved (but it is still over this target). 
-+	 */
-+	public void dndMove(Point relPos, Object src, Object obj);
++    /** 
++     * The dragged object has been moved (but it is still over this target). 
++     */
++    public void dndMove(Point relPos, Object src, Object obj);
 +
-+	/** 
-+	 * The mouse has left the building.  The dragged object is no longer over
-+	 * this target.
-+	 */
-+	public void dndExit(Point relPos, Object src, Object obj);
++    /** 
++     * The mouse has left the building.  The dragged object is no longer over
++     * this target.
++     */
++    public void dndExit(Point relPos, Object src, Object obj);
 +
-+	/** 
-+	 * The dragged bject has been dropped.
-+	 */
-+	public void dndDrop(Point relPos, Object src, Object obj);
++    /** 
++     * The dragged bject has been dropped.
++     */
++    public void dndDrop(Point relPos, Object src, Object obj);
 +
-+	/** 
-+	 * The source has decided to cancel the DnD operation.
-+	 */
-+	public void dndCancel(Point relPos, Object src, Object obj);
++    /** 
++     * The source has decided to cancel the DnD operation.
++     */
++    public void dndCancel(Point relPos, Object src, Object obj);
 +
-+	/** 
-+	 * Return true if the specified point is over this target.
-+	 */
-+	public boolean inside(Point absPos);
++    /** 
++     * Return true if the specified point is over this target.
++     */
++    public boolean inside(Point absPos);
 +}
+Index: src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/yahoo/OperationSetBasicInstantMessagingYahooImpl.java	(working copy)
+@@ -23,7 +23,8 @@
+  * @author Damian Minkov
+  */
+ public class OperationSetBasicInstantMessagingYahooImpl
+-    implements OperationSetBasicInstantMessaging
++    implements OperationSetBasicInstantMessaging,
++    OperationSetInstantMessageFiltering
+ {
+     /**
+      * Logger for this class
+@@ -48,6 +49,11 @@
+     private Vector messageListeners = new Vector();
+ 
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * The provider that created us.
+      */
+     private ProtocolProviderServiceYahooImpl yahooProvider = null;
+@@ -310,6 +316,27 @@
+      */
+     private void fireMessageEvent(EventObject evt)
+     {
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++        
+         Iterator listeners = null;
+         synchronized (messageListeners)
+         {
+@@ -627,4 +654,35 @@
+ 
+         return linkBuffer.toString();
+     }
++    
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
+ }
+Index: src/net/java/sip/communicator/impl/protocol/yahoo/ProtocolProviderServiceYahooImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/yahoo/ProtocolProviderServiceYahooImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/yahoo/ProtocolProviderServiceYahooImpl.java	(working copy)
+@@ -371,6 +371,10 @@
+             supportedOperationSets.put(
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 basicInstantMessaging);
++            
++            supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                basicInstantMessaging);
+ 
+             //initialize the typing notifications operation set
+             typingNotifications =
+Index: src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/zeroconf/OperationSetBasicInstantMessagingZeroconfImpl.java	(working copy)
+@@ -21,7 +21,8 @@
+  *
+  */
+ public class OperationSetBasicInstantMessagingZeroconfImpl
+-    implements OperationSetBasicInstantMessaging
++    implements OperationSetBasicInstantMessaging,
++    OperationSetInstantMessageFiltering
+ {
+       private static final Logger logger
+         = Logger.getLogger(OperationSetBasicInstantMessagingZeroconfImpl.class);
+@@ -42,6 +43,11 @@
+     private ProtocolProviderServiceZeroconfImpl parentProvider = null;
+ 
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * Creates an instance of this operation set keeping a reference to the
+      * parent protocol provider and presence operation set.
+      *
+@@ -213,6 +219,27 @@
+         MessageDeliveredEvent evt
+             = new MessageDeliveredEvent(message, to, new Date());
+ 
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++
+         Iterator listeners = null;
+         synchronized (messageListeners)
+         {
+@@ -289,4 +316,35 @@
+         else
+            return false;
+     }
++    
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
+ }
+Index: src/net/java/sip/communicator/impl/protocol/zeroconf/ProtocolProviderServiceZeroconfImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/zeroconf/ProtocolProviderServiceZeroconfImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/zeroconf/ProtocolProviderServiceZeroconfImpl.java	(working copy)
+@@ -145,6 +145,10 @@
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 basicInstantMessaging);
+ 
++            supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                basicInstantMessaging);
++
+             //initialize the typing notifications operation set
+             OperationSetTypingNotifications typingNotifications =
+                 new OperationSetTypingNotificationsZeroconfImpl(
+Index: src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/jabber/OperationSetBasicInstantMessagingJabberImpl.java	(working copy)
+@@ -31,7 +31,8 @@
+  * @author Damian Minkov
+  */
+ public class OperationSetBasicInstantMessagingJabberImpl
+-    implements OperationSetBasicInstantMessaging
++    implements OperationSetBasicInstantMessaging,
++    OperationSetInstantMessageFiltering
+ {
+     private static final Logger logger =
+         Logger.getLogger(OperationSetBasicInstantMessagingJabberImpl.class);
+@@ -69,6 +70,11 @@
+     private Vector messageListeners = new Vector();
+ 
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * The provider that created us.
+      */
+     private ProtocolProviderServiceJabberImpl jabberProvider = null;
+@@ -323,6 +329,27 @@
+      */
+     private void fireMessageEvent(EventObject evt)
+     {
++    	// check if this event should be filtered out
++    	Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++    	
+         Iterator listeners = null;
+         synchronized (messageListeners)
+         {
+@@ -589,4 +616,35 @@
+             return true;
+         }        
+     }
++
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
+ }
+Index: src/net/java/sip/communicator/impl/protocol/jabber/ProtocolProviderServiceJabberImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/jabber/ProtocolProviderServiceJabberImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/jabber/ProtocolProviderServiceJabberImpl.java	(working copy)
+@@ -577,6 +577,10 @@
+             supportedOperationSets.put(
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 basicInstantMessaging);
++            
++            supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                basicInstantMessaging);
+ 
+             // TODO: add the feature, if any, corresponding to IM if someone
+             // knows
+Index: src/net/java/sip/communicator/impl/protocol/rss/ProtocolProviderServiceRssImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/rss/ProtocolProviderServiceRssImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/rss/ProtocolProviderServiceRssImpl.java	(working copy)
+@@ -130,6 +130,10 @@
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 basicInstantMessaging);
+ 
++            supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                basicInstantMessaging);
++
+             isInitialized = true;
+         }
+     }
+Index: src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/rss/OperationSetBasicInstantMessagingRssImpl.java	(working copy)
+@@ -7,6 +7,7 @@
+ package net.java.sip.communicator.impl.protocol.rss;
+ 
+ import java.util.*;
++
+ import net.java.sip.communicator.service.protocol.*;
+ import net.java.sip.communicator.service.protocol.event.*;
+ 
+@@ -20,7 +21,8 @@
+  */
+ public class OperationSetBasicInstantMessagingRssImpl
+     implements OperationSetBasicInstantMessaging,
+-               RegistrationStateChangeListener
++               RegistrationStateChangeListener,
++               OperationSetInstantMessageFiltering
+ {
+     private static final Logger logger
+         = Logger.getLogger(OperationSetBasicInstantMessagingRssImpl.class);
+@@ -51,6 +53,11 @@
+     final int PERIOD_REFRESH_RSS = 300000;
+ 
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * Creates an instance of this operation set keeping a reference to the
+      * parent protocol provider and presence operation set.
+      *
+@@ -355,6 +362,27 @@
+         MessageReceivedEvent evt
+             = new MessageReceivedEvent(message, from, new Date());
+ 
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++
+         Iterator listeners = null;
+         synchronized (messageListeners)
+         {
+@@ -452,5 +480,36 @@
+             timer = null;
+        }
+     }
++    
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
+ 
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
++
+ }
+Index: src/net/java/sip/communicator/impl/protocol/mock/MockProvider.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/mock/MockProvider.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/mock/MockProvider.java	(working copy)
+@@ -66,6 +66,10 @@
+         this.supportedOperationSets.put(
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 mockBImOpSet);
++
++        this.supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                mockBImOpSet);
+         
+         this.supportedOperationSets.put(
+                 OperationSetMultiUserChat.class.getName(),
+Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessaging.java	(working copy)
+@@ -18,7 +18,8 @@
+  * @author Emil Ivov
+  */
+ public class MockBasicInstantMessaging
+-    implements OperationSetBasicInstantMessaging
++    implements OperationSetBasicInstantMessaging,
++    OperationSetInstantMessageFiltering
+ {
+     /**
+      * Currently registered message listeners.
+@@ -36,6 +37,11 @@
+     private MockProvider parentProvider = null;
+ 
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * Creates an instance of this operation set keeping a reference to the
+      * parent protocol provider and presence operation set.
+      *
+@@ -124,6 +130,27 @@
+             = new MessageDeliveredEvent(
+                 message, to, new Date());
+ 
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(msgDeliveredEvt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++
+         Iterator iter = messageListeners.iterator();
+         while (iter.hasNext())
+         {
+@@ -187,4 +214,35 @@
+             listener.messageReceived(msgReceivedEvt);
+         }
+     }
++    
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
+ }
+\ No newline at end of file
+Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
+@@ -27,7 +27,8 @@
+  * @author Benoit Pradelle
+  */
+ public class OperationSetBasicInstantMessagingSipImpl
+-    implements OperationSetBasicInstantMessaging
++    implements OperationSetBasicInstantMessaging,
++    OperationSetInstantMessageFiltering
+ {
+     private static final Logger logger =
+         Logger.getLogger(OperationSetBasicInstantMessagingSipImpl.class);
+@@ -43,6 +44,11 @@
+     private Vector messageProcessors = new Vector();
+     
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * The provider that created us.
+      */
+     private ProtocolProviderServiceSipImpl sipProvider = null;
+@@ -665,6 +671,27 @@
+      */
+     private void fireMessageEvent(EventObject evt)
+     {
++    	// check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++    	
+         Iterator listeners = null;
+         synchronized (this.messageListeners)
+         {
+@@ -1148,5 +1175,36 @@
+             }
+         }
+     }
++    
++    /**
++     * Registeres a <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres a <tt>EventFilter</tt> so that it won't check any more 
++     * if a event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
+ }
+ 
+Index: src/net/java/sip/communicator/impl/protocol/sip/ProtocolProviderServiceSipImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/sip/ProtocolProviderServiceSipImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/sip/ProtocolProviderServiceSipImpl.java	(working copy)
+@@ -789,6 +789,10 @@
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 opSetBasicIM);
+             
++            this.supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                opSetBasicIM);
++            
+             // init DTMF (from JM Heitz)
+             OperationSetDTMF opSetDTMF = new OperationSetDTMFSipImpl(this);
+             this.supportedOperationSets.put(
+Index: src/net/java/sip/communicator/impl/protocol/icq/ProtocolProviderServiceIcqImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/icq/ProtocolProviderServiceIcqImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/icq/ProtocolProviderServiceIcqImpl.java	(working copy)
+@@ -517,6 +517,10 @@
+             supportedOperationSets.put(
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 basicInstantMessaging);
++            
++            supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                basicInstantMessaging);
+ 
+             //initialize the typing notifications operation set
+             OperationSetTypingNotifications typingNotifications =
+Index: src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/icq/OperationSetBasicInstantMessagingIcqImpl.java	(working copy)
+@@ -30,7 +30,8 @@
+  * @author Damian Minkov
+  */
+ public class OperationSetBasicInstantMessagingIcqImpl
+-    implements OperationSetBasicInstantMessaging
++    implements OperationSetBasicInstantMessaging,
++    OperationSetInstantMessageFiltering
+ {
+     private static final Logger logger =
+         Logger.getLogger(OperationSetBasicInstantMessagingIcqImpl.class);
+@@ -46,6 +47,11 @@
+     private Vector messageListeners = new Vector();
+ 
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * The icq provider that created us.
+      */
+     private ProtocolProviderServiceIcqImpl icqProvider = null;
+@@ -467,6 +473,27 @@
+      */
+     private void fireMessageEvent(EventObject evt)
+     {
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++
+         Iterator listeners = null;
+         synchronized (messageListeners)
+         {
+@@ -769,4 +796,35 @@
+ 
+         }
+     }
++
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
+ }
+Index: src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/ssh/OperationSetBasicInstantMessagingSSHImpl.java	(working copy)
+@@ -14,6 +14,7 @@
+ 
+ import java.io.*;
+ import java.util.*;
++
+ import net.java.sip.communicator.util.Logger;
+ 
+ import net.java.sip.communicator.service.protocol.*;
+@@ -25,7 +26,8 @@
+  * @author Shobhit Jindal
+  */
+ public class OperationSetBasicInstantMessagingSSHImpl
+-        implements OperationSetBasicInstantMessaging
++        implements OperationSetBasicInstantMessaging,
++        OperationSetInstantMessageFiltering
+ {
+     private static final Logger logger
+             = Logger.getLogger(OperationSetBasicInstantMessagingSSHImpl.class);
+@@ -49,8 +51,13 @@
+      * The protocol provider that created us.
+      */
+     private ProtocolProviderServiceSSHImpl parentProvider = null;
+-    
++
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * Creates an instance of this operation set keeping a reference to the
+      * parent protocol provider and presence operation set.
+      *
+@@ -351,7 +358,28 @@
+                 from,
+                 new Date(),
+                 ((ContactSSH)from).getMessageType());
+-        
++
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++
+         Iterator listeners = null;
+         synchronized (messageListeners)
+         {
+@@ -390,4 +418,35 @@
+         return MessageSSHImpl.contentType.equals(contentType);
+     }
+     
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
++    
+ }
+Index: src/net/java/sip/communicator/impl/protocol/ssh/ProtocolProviderServiceSSHImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/ssh/ProtocolProviderServiceSSHImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/ssh/ProtocolProviderServiceSSHImpl.java	(working copy)
+@@ -172,6 +172,10 @@
+                     OperationSetBasicInstantMessaging.class.getName(),
+                     basicInstantMessaging);
+             
++            supportedOperationSets.put(
++                    OperationSetInstantMessageFiltering.class.getName(),
++                    basicInstantMessaging);
++            
+             //initialze the file transfer operation set
+             fileTranfer = new OperationSetFileTransferSSHImpl(
+                     this);
+Index: src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/msn/OperationSetBasicInstantMessagingMsnImpl.java	(working copy)
+@@ -25,7 +25,8 @@
+  * @author Damian Minkov
+  */
+ public class OperationSetBasicInstantMessagingMsnImpl
+-    implements OperationSetBasicInstantMessaging
++    implements OperationSetBasicInstantMessaging,
++    OperationSetInstantMessageFiltering
+ {
+     private static final Logger logger =
+         Logger.getLogger(OperationSetBasicInstantMessagingMsnImpl.class);
+@@ -36,6 +37,11 @@
+     private Vector messageListeners = new Vector();
+ 
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++    
++    /**
+      * The provider that created us.
+      */
+     private ProtocolProviderServiceMsnImpl msnProvider = null;
+@@ -259,6 +265,27 @@
+      */
+     private void fireMessageEvent(EventObject evt)
+     {
++    	// check if this event should be filtered out
++    	Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++    	
+         Iterator listeners = null;
+         synchronized (messageListeners)
+         {
+@@ -382,5 +409,36 @@
+                                                       MsnContact contact)
+         {
+         }
+-    }    
++    }
++
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
+ }
+Index: src/net/java/sip/communicator/impl/protocol/msn/ProtocolProviderServiceMsnImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/msn/ProtocolProviderServiceMsnImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/msn/ProtocolProviderServiceMsnImpl.java	(working copy)
+@@ -342,6 +342,10 @@
+             supportedOperationSets.put(
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 basicInstantMessaging);
++            
++            supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                basicInstantMessaging);
+ 
+             //initialize the typing notifications operation set
+             typingNotifications =
+Index: src/net/java/sip/communicator/impl/protocol/gibberish/ProtocolProviderServiceGibberishImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/gibberish/ProtocolProviderServiceGibberishImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/gibberish/ProtocolProviderServiceGibberishImpl.java	(working copy)
+@@ -121,6 +121,10 @@
+                 OperationSetBasicInstantMessaging.class.getName(),
+                 basicInstantMessaging);
+ 
++            supportedOperationSets.put(
++                OperationSetInstantMessageFiltering.class.getName(),
++                basicInstantMessaging);
++
+             //initialize the typing notifications operation set
+             OperationSetTypingNotifications typingNotifications =
+                 new OperationSetTypingNotificationsGibberishImpl(
+Index: src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java
+===================================================================
+--- src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(revision 3556)
++++ src/net/java/sip/communicator/impl/protocol/gibberish/OperationSetBasicInstantMessagingGibberishImpl.java	(working copy)
+@@ -17,7 +17,8 @@
+  * @author Emil Ivov
+  */
+ public class OperationSetBasicInstantMessagingGibberishImpl
+-    implements OperationSetBasicInstantMessaging
++    implements OperationSetBasicInstantMessaging,
++    OperationSetInstantMessageFiltering
+ {
+     /**
+      * Currently registered message listeners.
+@@ -35,6 +36,11 @@
+     private ProtocolProviderServiceGibberishImpl parentProvider = null;
+ 
+     /**
++     * A list of filters registered for message events.
++     */
++    private Vector<EventFilter> eventFilters = new Vector<EventFilter>();
++
++    /**
+      * Creates an instance of this operation set keeping a reference to the
+      * parent protocol provider and presence operation set.
+      *
+@@ -207,6 +213,27 @@
+         MessageDeliveredEvent evt
+             = new MessageDeliveredEvent(message, to, new Date());
+ 
++        // check if this event should be filtered out
++        Iterator<EventFilter> filters = null;
++        synchronized (eventFilters)
++        {
++            filters = new ArrayList<EventFilter>(eventFilters).iterator();
++        }
++        // return if a filter has filtered this event out
++        boolean filtered = false;
++        while (filters.hasNext())
++        {
++            try
++            {
++                if (filters.next().filterEvent(evt))
++                {
++                    filtered = true;
++                }
++            }
++            catch(Exception e) {}
++        }
++        if (filtered) return;
++
+         Iterator listeners = null;
+         synchronized (messageListeners)
+         {
+@@ -282,4 +309,35 @@
+         else
+            return false;
+     }
++    
++    /**
++     * Registeres an <tt>EventFilter</tt> with this operation set so that 
++     * events, that do not need processing, are filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to register.
++     */
++    public void addEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            if(!eventFilters.contains(filter))
++            {
++                eventFilters.add(filter);
++            }
++        }
++    }
++
++    /**
++     * Unregisteres an <tt>EventFilter</tt> so that it won't check any more 
++     * if an event should be filtered out.
++     *
++     * @param filter the <tt>EventFilter</tt> to unregister.
++     */
++    public void removeEventFilter(EventFilter filter)
++    {
++        synchronized(eventFilters)
++        {
++            eventFilters.remove(filter);
++        }
++    }
+ }
