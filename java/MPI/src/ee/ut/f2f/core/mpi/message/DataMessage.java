@@ -1,6 +1,8 @@
 package ee.ut.f2f.core.mpi.message;
 
-public class DataMessage extends BasicMessage {
+import java.io.Serializable;
+
+public class DataMessage extends BasicMessage implements Serializable{
 	private static final long serialVersionUID = 2000011L;
 	Object data;
 	String mid;

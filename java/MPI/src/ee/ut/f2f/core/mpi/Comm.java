@@ -25,40 +25,29 @@ public class Comm {
 	private MessageHandler msgHandle;
 	protected int commID;
 	protected Group myGroup;
-	// protected RankTable rankTable;
 	protected MapRankTable mapRankTable;
 	protected Properties midLog = new Properties();
-
 	private int numReplica;
 	private int[] myReplica;
 	private static int MAX_REPLICA = 256;
 	private int numProc;
-	private int waitingTime;
-	// private boolean master;
-
 	private MessageIDLog sendLog;
 	private ArrayList<SendBufferInformation> backupMessage;
 
-	// Comm world construct
 	/**
 	 * Internal use
 	 */
 	public Comm(MessageHandler msgHandle, RankTable rankTable, int rank, int rankInList, int numRank, MapRankTable mapRankTable) {
 		sendLog = new MessageIDLog();
 		backupMessage = new ArrayList<SendBufferInformation>();
-
 		this.msgHandle = msgHandle;
 		this.msgHandle.setSendBackupAndLog(backupMessage, sendLog);
-
 		myGroup = new Group(msgHandle, rankTable, rank, rankInList, numRank, backupMessage, sendLog, mapRankTable);
-
 		commID = globalCommID;
 		globalCommID++;
-
 		// find my replica
 		myReplica = new int[MAX_REPLICA];
 		RankTable tmpTable = myGroup.__getCommTable();
-
 		MapRankTable tmpMapTable = myGroup.__getMapCommTable();
 		numProc = tmpMapTable.size();
 		int myRank = myGroup.Rank();
@@ -84,11 +73,8 @@ public class Comm {
 			}
 		}
 		msgHandle.getTask().setReplicaMaster(myMaster);
-		waitingTime = (((int) (Math.log(numProc) / Math.log(2)) * 3) * msgHandle.getTGossip() * 2) + msgHandle.getTMargin();
-
 	}
 
-	// construct from Group class
 	/**
 	 * Create a new communicator by group
 	 * 
@@ -98,10 +84,8 @@ public class Comm {
 	public Comm(Group group) {
 		myGroup = group;
 		this.msgHandle = group.__getMessageHandler();
-
 		commID = globalCommID;
 		globalCommID++;
-
 		// find my replica
 		myReplica = new int[MAX_REPLICA];
 		RankTable tmpTable = myGroup.__getCommTable();
@@ -135,7 +119,6 @@ public class Comm {
 		msgHandle.getTask().setReplicaMaster(myMaster);
 		sendLog = myGroup.__getLog();
 		backupMessage = myGroup.__getBackupMessage();
-		waitingTime = (((int) (Math.log(numProc) / Math.log(2)) * 3) * msgHandle.getTGossip() * 2) + msgHandle.getTMargin();
 	}
 
 	/**
@@ -270,33 +253,15 @@ public class Comm {
 		}
 
 		if (msgHandle.getTask().isMaster()) { // Master of replica
-			// Get IP:Port of Destination
 			RankTable commTable = myGroup.__getCommTable();
 			MapRankTable mapCommTable = myGroup.__getMapCommTable();
 			ArrayList<Integer> dstRIL = mapCommTable.getRankInListByRank(dest);
 			int numDest = dstRIL.size();
-
-			long start_sendtime;
-			long current_sendtime;
 			for (int i = 0; i < numDest; i++) {
 				int ril = dstRIL.get(i).intValue();
-				start_sendtime = System.currentTimeMillis();
 				while (commTable.isAlive(ril)) {
-					try {
-						msgHandle.getTask().sendMessage(commTable.getTaskID(ril), msg);
-						break;
-					} catch (Exception e) {
-						current_sendtime = System.currentTimeMillis();
-						if (((int) (current_sendtime - start_sendtime)) < waitingTime) {
-							try {
-								Thread.sleep(1000);
-							} catch (Exception ie) {
-							}
-						} else {
-							getMessageHandler().getTask().exit("** [Error] could not connect to " + commTable.getTaskID(ril) + ". Maybe a firewall blocks connection.");
-							getMessageHandler().getTask().isTerminated();
-						}
-					}
+					msgHandle.getTask().sendMessage(commTable.getTaskID(ril), msg);
+					break;
 				}
 			}
 
@@ -304,29 +269,14 @@ public class Comm {
 			UpdateStatusMessage updateMsg = new UpdateStatusMessage(messageID);
 			int repRIL;
 			int realRepRIL;
-			msgHandle.getTask().getMPIDebug().println(MPIDebug.SYSTEM - 5, "Strating sync to replica " + numReplica);
+			msgHandle.getTask().getMPIDebug().println(MPIDebug.SYSTEM - 5, "Starting sync to replica " + numReplica);
 			for (int i = 0; i < numReplica; i++) {
 				repRIL = myReplica[i];
 				realRepRIL = mapCommTable.getRankInList(myReplica[i]);
 				if (repRIL != myGroup.RankInList()) {
-					start_sendtime = System.currentTimeMillis();
 					while (commTable.isAlive(realRepRIL)) {
-						try {
-							msgHandle.getTask().getMPIDebug().println(MPIDebug.SYSTEM - 5, "message sent to " + commTable.getTaskID(realRepRIL));
-							msgHandle.getTask().sendMessage(commTable.getTaskID(realRepRIL), updateMsg);
-							break;
-						} catch (Exception e) {
-							current_sendtime = System.currentTimeMillis();
-							if (((int) (current_sendtime - start_sendtime)) < waitingTime) {
-								try {
-									Thread.sleep(1000);
-								} catch (Exception ie) {
-								}
-							} else {
-								getMessageHandler().getTask().exit("** [Error] could not connect to replica " + commTable.getTaskID(realRepRIL) + ". Maybe a firewall blocks connection.");
-								getMessageHandler().getTask().isTerminated();
-							}
-						}
+						msgHandle.getTask().sendMessage(commTable.getTaskID(realRepRIL), updateMsg);
+						break;
 					}
 				}
 			}
@@ -486,7 +436,6 @@ public class Comm {
 				obj_dst[i + srcOffset] = obj_src[i + dstOffset];
 			}
 			break;
-
 		case Datatype.STRING:
 			String[] str_src = (String[]) srcBuffer;
 			String[] str_dst = (String[]) dstBuffer;
@@ -536,7 +485,6 @@ public class Comm {
 			break;
 
 		}
-
 		// TODO: CHECK HERE
 		return (count * datatype.getBaseSize());
 	}

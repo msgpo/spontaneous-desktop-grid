@@ -1,6 +1,7 @@
 package ee.ut.f2f.core.mpi;
 
-import java.util.Vector;
+import java.util.ArrayList;
+import java.util.List;
 
 import ee.ut.f2f.core.mpi.common.MapRankTable;
 import ee.ut.f2f.core.mpi.common.RankTable;
@@ -252,7 +253,6 @@ public class IntraComm extends Comm {
 	 *            MPI rank of root node which maintain the result
 	 */
 	public void Reduce(Object sendBuffer, int sendOffset, Object recvBuffer, int recvOffset, int count, Datatype datatype, Op op, int root) {
-
 		if (Rank() == MPI.UNDEFINED) {
 			return;
 		}
@@ -1342,7 +1342,7 @@ public class IntraComm extends Comm {
 		Allgather(colorKey, 0, 2, MPI.INT, colorKeyTable, 0, 2, MPI.INT);
 
 		// find key of my color
-		Vector<int[]> keyRanks = new Vector<int[]>();
+		List<int[]> keyRanks = new ArrayList<int[]>();
 		for (int i = 0; i < size; i++) {
 			if (colorKeyTable[2 * i] == mycolor) {
 				int[] keyRank = new int[2];
@@ -1353,17 +1353,17 @@ public class IntraComm extends Comm {
 		}
 
 		// sort by key
-		Vector<int[]> sortedKeyRanks = new Vector<int[]>();
+		List<int[]> sortedKeyRanks = new ArrayList<int[]>();
 		int numKey = keyRanks.size();
 
 		while (numKey != 0) {
-			int[] keyRank = keyRanks.elementAt(0);
+			int[] keyRank = keyRanks.get(0);
 			int position = 0;
 			// search the least value of key
 			for (int j = 1; j < numKey; j++) {
-				if (keyRank[0] > (keyRanks.elementAt(j))[0]) {
+				if (keyRank[0] > (keyRanks.get(j))[0]) {
 					position = j;
-					keyRank = keyRanks.elementAt(j);
+					keyRank = keyRanks.get(j);
 				}
 			}
 			// add key to sortedKeyRanks
@@ -1378,7 +1378,7 @@ public class IntraComm extends Comm {
 		int[] myNewRanks = new int[memberSize];
 
 		for (int i = 0; i < memberSize; i++) {
-			myNewRanks[i] = (sortedKeyRanks.elementAt(i))[1];
+			myNewRanks[i] = (sortedKeyRanks.get(i))[1];
 		}
 		Group myNewGroup = Group().Incl(myNewRanks);
 		return Create(myNewGroup);

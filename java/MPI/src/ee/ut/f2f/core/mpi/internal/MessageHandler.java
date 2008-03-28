@@ -1,13 +1,11 @@
 package ee.ut.f2f.core.mpi.internal;
 
 import java.util.ArrayList;
-import java.util.Date;
 
 import ee.ut.f2f.core.mpi.MPIDebug;
 import ee.ut.f2f.core.mpi.MPITask;
 import ee.ut.f2f.core.mpi.common.RankTable;
 import ee.ut.f2f.core.mpi.common.Tag;
-import ee.ut.f2f.core.mpi.message.BasicMessage;
 import ee.ut.f2f.core.mpi.message.DataMessage;
 import ee.ut.f2f.core.mpi.message.MPIMessage;
 import ee.ut.f2f.core.mpi.message.MessageCmd;
@@ -26,14 +24,8 @@ public class MessageHandler {
 	private ArrayList<MPIMessage> MPIMessageSYN1 = new ArrayList<MPIMessage>();
 	private MessageIDLog recvLog; // to compare duplicate message
 	private int[] sequenceTo, sequenceFrom; // a counter for trakking message order
-
 	private ArrayList<SendBufferInformation> backupBuffer; // Send Part
 	private MessageIDLog sendLog; // backup log
-
-	private int t_gossip; // time for each gossip
-	private int t_margin; // margin time because starting counting heartbeat
-	// table
-	private int t_hang;
 
 	public MessageHandler(MPITask task) {
 		this.task = task;
@@ -52,15 +44,7 @@ public class MessageHandler {
 		}
 	}
 
-	public void setTHang(int t_hang) {
-		this.t_hang = t_hang;
-	}
-
-	public int getTHang() {
-		return t_hang;
-	}
-
-	public void messageReceived(BasicMessage message, String fromTaskID) {
+	public void messageReceived(Object message, String fromTaskID) {
 		String mid;
 		if (message instanceof MPIMessage) {
 			MPIMessage mpiMsg = (MPIMessage) message;
@@ -73,7 +57,6 @@ public class MessageHandler {
 				synchronized (task) {
 					task.notifyAll();
 				}
-				task.getMPIDebug().println(MPIDebug.SYSTEM, "n done " + new Date());
 				break;
 			case MessageCmd.MPI_SYN2:
 				ready = true;
@@ -81,9 +64,6 @@ public class MessageHandler {
 				task.setMyRankInList(mpiMsg.getRankInList());
 				task.setCommSize(mpiMsg.getSize());
 				task.setRankTable(mpiMsg.getCommTable());
-				t_gossip = mpiMsg.getTGossip();
-				t_margin = mpiMsg.getTMargin();
-				t_hang = mpiMsg.getTHang();
 				setSequence(task.getCommSize());
 				getTask().getMPIDebug().setName("F2F DEBUG WINDOW: Task - " + task.getTaskID() + " Rank - " + task.getMyRank());
 				synchronized (task) {
@@ -97,7 +77,7 @@ public class MessageHandler {
 			if (recvLog.isExist(mid) == -1) {
 				// If message ID is not exist Put it in Buffer
 				synchronized (messageBuffer) {
-					getTask().getMPIDebug().println(MPIDebug.SYSTEM - 1, "recived " + dataMsg.getSequence()+ " tag "+ dataMsg.getTag());
+					getTask().getMPIDebug().println(MPIDebug.SYSTEM - 1, "recived " + dataMsg.getSequence() + " tag " + dataMsg.getTag());
 					messageBuffer.add(dataMsg);
 				}
 				synchronized (recvLog) {
@@ -119,9 +99,7 @@ public class MessageHandler {
 				logIndex = sendLog.isExist(mid);
 			}
 			if (logIndex != -1) {
-				// If log is existed, it means that
-				// this process is faster than master
-				// then just remove log and backupBuffer
+				// If log is existed, it means that this process is faster than master then just remove log and backupBuffer
 				synchronized (sendLog) {
 					sendLog.remove(mid);
 				}
@@ -130,9 +108,7 @@ public class MessageHandler {
 				}
 
 			} else {
-				// log does not exist. it means that
-				// this process is slower than master
-				// then just add log
+				// log does not exist. it means that this process is slower than master then just add log
 				synchronized (sendLog) {
 					sendLog.add(mid);
 				}
@@ -145,7 +121,6 @@ public class MessageHandler {
 			}
 			task.exit("RequestQuitMessage from " + fromTaskID);
 		} else if (message instanceof NotifyMessage) {// some peer is dead must remove it
-			task.getMPIDebug().println(MPIDebug.SYSTEM, "Recived : NotifyMessage");
 			int index = task.getRankTable().getIndexByTaskID(((NotifyMessage) message).getDeadTaskID());
 			task.getMPIPresenceListener().peerDead(index);
 		} else if (message instanceof OutputMessage) {
@@ -177,7 +152,6 @@ public class MessageHandler {
 				boolean any_tag = tag == Tag.MPI_ANYTAG;
 				if ((match_dst || any_src) && (match_tag || any_tag) && tmp.getSequence() <= getSequenceFrom()[tmp.getFromRank()]) {
 					status.setStatus(tmp.getFromRank(), tmp.getTag());
-					task.getMPIDebug().println(MPIDebug.SYSTEM, "getDataFromBuffer from rank " + tmp.getFromRank() + " sequence = " + tmp.getSequence() + " limit was " + getSequenceFrom()[tmp.getFromRank()]);
 					return tmp.getData();
 				}
 			}
@@ -185,7 +159,6 @@ public class MessageHandler {
 		return null;
 	}
 
-	// TODO : performance may drop because we search 2 times
 	public void removeDataFromBuffer(int fromRank, int toRank, int tag) {
 		DataMessage tmp;
 		synchronized (messageBuffer) {
@@ -205,22 +178,6 @@ public class MessageHandler {
 				}
 			}
 		}
-	}
-
-	public void setTGossip(int t_gossip) {
-		this.t_gossip = t_gossip;
-	}
-
-	public void setTMargin(int t_margin) {
-		this.t_margin = t_margin;
-	}
-
-	public int getTGossip() {
-		return t_gossip;
-	}
-
-	public int getTMargin() {
-		return t_margin;
 	}
 
 	public MPITask getTask() {

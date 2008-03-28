@@ -6,16 +6,17 @@ import java.util.Collection;
 import java.util.Iterator;
 
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.core.F2FComputingException;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.mpi.common.MapRankTable;
 import ee.ut.f2f.core.mpi.common.RankTable;
 import ee.ut.f2f.core.mpi.common.Tag;
 import ee.ut.f2f.core.mpi.message.MPIMessage;
 import ee.ut.f2f.core.mpi.message.MessageCmd;
+import ee.ut.f2f.util.logging.Logger;
 
 public class MPI {
 
+	private final static Logger logger = Logger.getLogger(MPI.class);
 	/**
 	 * Primitive datatype
 	 */
@@ -143,13 +144,7 @@ public class MPI {
 				for (int i = 0; i < numOfJobsPerPeer || i < 1; i++) {
 					task.getJob().submitTasks(task.getClass().getName(), peers.size(), peers);
 				}
-			} catch (ClassNotFoundException e) {
-				throw new RuntimeException(e);
-			} catch (F2FComputingException e) {
-				throw new RuntimeException(e);
-			} catch (InstantiationException e) {
-				throw new RuntimeException(e);
-			} catch (IllegalAccessException e) {
+			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
 			task.getMPIDebug().println(MPIDebug.START_UP, "Info, et peerid on töö kätte saanud");
@@ -194,17 +189,16 @@ public class MPI {
 				mpiMsg.setRank(rankTable.getRank(i));
 				mpiMsg.setRankInList(i);
 				mpiMsg.setSize(maxRank);
-				mpiMsg.setTMargin(1000 * rankTable.size());
 				try {
 					task.getMPIDebug().println(MPIDebug.START_UP, "* send SYN2: " + rankTable.getTaskID(i));
 					task.sendMessage(rankTable.getTaskID(i), mpiMsg);
 				} catch (Exception e) {
+					logger.info("Sync with master faild", e);
 					task.getMPIDebug().println(MPIDebug.START_UP, "Sync with master faild");
 				}
 			}
-			task.getMPIDebug().println(MPIDebug.START_UP, "ended master");
+			task.getMPIDebug().println(MPIDebug.START_UP, "master up");
 		} else {
-			task.getMPIDebug().println(MPIDebug.START_UP, "Start slave");
 			mpiMsg = new MPIMessage(MessageCmd.MPI_SYN1);
 			mpiMsg.setTaskID(task.getTaskID());
 			try {
@@ -215,14 +209,11 @@ public class MPI {
 			// BLOCK for List and its rank in List from Rank 0
 			while (!task.getMessageHandler().isReady()) {
 				task.wait(1000);
-			}/*
-			 * try { task.println(MPIDebug.START_UP, "sleep for close start"); Thread.sleep(20 * 1000); task.println(MPIDebug.START_UP, "sleep for close end"); } catch (Exception e) { }//
-			 */
+			}
 			rankTable = task.getRankTable();
 			for (int i = 0; i < rankTable.size(); i++) {
 				mapRankTable.addMap(rankTable.getRank(i), i);
 			}
-			task.getMPIDebug().println(MPIDebug.START_UP, "ended slave");
 		}
 
 		// Create comm world

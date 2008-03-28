@@ -4,9 +4,8 @@ import java.io.Serializable;
 import java.util.ArrayList;
 
 public class RankTable implements Serializable {
-	private static final long serialVersionUID = 1000004L;
-
-	ArrayList<TableInfo> table;
+	private static final long serialVersionUID = 1200014L;
+	private ArrayList<TableInfo> table = null;
 
 	public RankTable() {
 		table = new ArrayList<TableInfo>();
@@ -92,38 +91,5 @@ public class RankTable implements Serializable {
 			}
 		}
 		return -1;
-	}
-
-	public class TableInfo implements Serializable {
-		private static final long serialVersionUID = 1000006L;
-		String taskID;
-		int rank;
-		boolean alive;
-
-		public TableInfo(String taskID, int rank, boolean alive) {
-			this.taskID = taskID;
-			this.rank = rank;
-			this.alive = alive;
-		}
-
-		public void setAlive(boolean alive) {
-			this.alive = alive;
-		}
-
-		public boolean isAlive() {
-			return alive;
-		}
-
-		public int getRank() {
-			return rank;
-		}
-
-		public String getTaskID() {
-			return taskID;
-		}
-
-		public void setTaskID(String taskID) {
-			this.taskID = taskID;
-		}
 	}
 }

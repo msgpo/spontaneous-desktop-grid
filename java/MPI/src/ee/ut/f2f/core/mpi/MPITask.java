@@ -1,11 +1,18 @@
 package ee.ut.f2f.core.mpi;
 
 import java.io.BufferedReader;
+import java.io.ByteArrayInputStream;
+import java.io.ByteArrayOutputStream;
+import java.io.IOException;
 import java.io.InputStream;
 import java.io.InputStreamReader;
+import java.io.ObjectInput;
+import java.io.ObjectInputStream;
+import java.io.ObjectOutput;
+import java.io.ObjectOutputStream;
+import java.io.StreamCorruptedException;
 import java.util.Date;
 
-import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
@@ -33,23 +40,24 @@ public abstract class MPITask extends Task {
 
 	public void messageReceivedEvent(String taskID) {
 		try {
-		Object msg = getTaskProxy(taskID).receiveMessage();
-
-		if (msg == null) {
-			getMPIDebug().println(MPIDebug.SYSTEM, "Message from " + taskID + " was null");
-		} else {
-			getMPIDebug().println(MPIDebug.SYSTEM, "A " + msg.getClass() + " message from " + taskID);
-			logger.info("A " + msg.getClass() + " message from " + taskID);
-			if (msg instanceof BasicMessage) {
-				getMessageHandler().messageReceived((BasicMessage) msg, taskID);
+			Object message = getTaskProxy(taskID).receiveMessage();
+			if (message == null) {
+				logger.debug("Message from " + taskID + " was null");
+			} else if (message instanceof byte[]) {
+				Object msg = deserializeObject((byte[]) message);
+				logger.debug("A " + msg.getClass() + " message from " + taskID);
+				if (msg instanceof BasicMessage) {
+					getMessageHandler().messageReceived((BasicMessage) msg, taskID);
+				} else {
+					getMessageHandler().messageReceived(msg, taskID);
+				}
+			} else {
+				logger.debug("Unknown type of message recived from : " + taskID);
 			}
-		}
 		} catch (Exception e) {
 			logger.error("messageReceived faild", e);
-		}
-		catch (Error e)
-		{
-			logger.error("Some ERROR with sendMessage!!",e );
+		} catch (Error e) {
+			logger.error("Some ERROR with sendMessage!!", e);
 		}
 	}
 
@@ -57,26 +65,39 @@ public abstract class MPITask extends Task {
 		TaskProxy tp = getTaskProxy(taskID);
 		if (tp != null) {
 			try {
-				getMPIDebug().println(MPIDebug.SYSTEM, "sendMessage from " + getTaskID() + " to " + tp.getRemoteTaskID());
-				tp.sendMessage(message);
+				byte[] msg = serializeObject(message);
+				tp.sendMessageBlocking(msg);
 			} catch (Exception e) {
-				logger.info("Send faild", e);
-				getMPIDebug().println(MPIDebug.SYSTEM + 20, "Error sendMessage to " + tp.getRemoteTaskID() + " retry");
-				try {
-					tp.sendMessage(message);
-				} catch (CommunicationFailedException ex) {
-					exit("Error communikating with task " + tp.getRemoteTaskID());
-					throw new MPIException();
-				}
-				getMPIDebug().println(MPIDebug.SYSTEM - 1, "sending done");
-			}
-			catch (Error e)
-			{
-				logger.error("Some ERROR with sendMessage!!",e );
+				logger.error("Send faild", e);
+			} catch (Error e) {
+				logger.error("Some ERROR with sendMessage!!", e);
 			}
 		} else {
-			getMPIDebug().println(MPIDebug.SYSTEM, "No proxy for task " + taskID);
+			logger.debug("No proxy for task " + taskID);
 		}
+	}
+
+	/**
+	 * We must serialize all our objects myself, because otherwise we get sometimes connection reset.
+	 * 
+	 * @param obj
+	 *            an object to serialize
+	 * @return
+	 * @throws IOException
+	 */
+	public byte[] serializeObject(Object obj) throws IOException {
+		ByteArrayOutputStream os = new ByteArrayOutputStream();
+		ObjectOutput oo;
+		oo = new ObjectOutputStream(os);
+		oo.writeObject(obj);
+		return os.toByteArray();
+	}
+
+	public Object deserializeObject(byte[] serializedObj) throws StreamCorruptedException, IOException, ClassNotFoundException {
+		InputStream is = new ByteArrayInputStream(serializedObj);
+		ObjectInput oi;
+		oi = new ObjectInputStream(is);
+		return oi.readObject();
 	}
 
 	public MessageHandler getMessageHandler() {
@@ -84,13 +105,17 @@ public abstract class MPITask extends Task {
 	}
 
 	public void addPeerPresenceListener() {
-		getMPIDebug().println(MPIDebug.SYSTEM, "add addPeerPresenceListener");
+		logger.debug("add addPeerPresenceListener");
 		if (listener == null) {
 			listener = new MPIPresenceListener(this);
 			F2FComputing.addPeerPresenceListener(listener);
 		} else {
-			getMPIDebug().println(MPIDebug.SYSTEM, "Listener exists!");
+			logger.debug("Listener exists!");
 		}
+	}
+
+	protected void taskStoppedEvent() {
+		exit("Someone told me to stop");
 	}
 
 	public void exit(String message) {

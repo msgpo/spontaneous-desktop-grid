@@ -5,7 +5,7 @@ import java.util.*;
 
 public class MapRankTable implements Serializable {
 	private static final long serialVersionUID = 1000000L;
-	Vector<MapTableInfo> mapTable;
+	private Vector<MapTableInfo> mapTable;
 
 	public MapRankTable() {
 		mapTable = new Vector<MapTableInfo>();

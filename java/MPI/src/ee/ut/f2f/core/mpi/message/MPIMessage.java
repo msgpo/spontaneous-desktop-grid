@@ -1,45 +1,21 @@
 package ee.ut.f2f.core.mpi.message;
 
+import java.io.Serializable;
+import java.lang.reflect.Method;
+
 import ee.ut.f2f.core.mpi.common.RankTable;
 
-public class MPIMessage extends BasicMessage {
-	private static final long serialVersionUID = 2000020L;
+public class MPIMessage implements Serializable {
+	private static final long serialVersionUID = 2090120L;
+	private RankTable comm = null;
+	private String taskID = null;
 	private int cmd;
-	private String taskID;
 	private int rank;
 	private int rankInList;
 	private int size;
-	private RankTable comm;
-	private int t_gossip;
-	private int t_margin;
-	private int t_hang;
 
 	public MPIMessage(int cmd) {
 		this.cmd = cmd;
-	}
-
-	public void setTHang(int t_hang) {
-		this.t_hang = t_hang;
-	}
-
-	public int getTHang() {
-		return t_hang;
-	}
-
-	public void setTGossip(int t_gossip) {
-		this.t_gossip = t_gossip;
-	}
-
-	public void setTMargin(int t_margin) {
-		this.t_margin = t_margin;
-	}
-
-	public int getTGossip() {
-		return t_gossip;
-	}
-
-	public int getTMargin() {
-		return t_margin;
 	}
 
 	public int getCmd() {
@@ -84,5 +60,19 @@ public class MPIMessage extends BasicMessage {
 
 	public void setTaskID(String taskID) {
 		this.taskID = taskID;
+	}
+
+	public String toString() {
+		StringBuffer content = new StringBuffer(getClass().getName());
+		Method[] metodo = this.getClass().getDeclaredMethods();
+		for (int i = 0; i < metodo.length; i++) {
+			if (!metodo[i].getName().equals("clone") && !metodo[i].getName().equals("toString") && metodo[i].getParameterTypes().length == 0) {
+				try {
+					content.append(" ").append(metodo[i].getName()).append("=").append(metodo[i].invoke(this, new Object[] {}));
+				} catch (Exception e) {
+				}
+			}
+		}
+		return content.toString();
 	}
 }
