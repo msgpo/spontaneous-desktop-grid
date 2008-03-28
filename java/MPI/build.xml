@@ -30,8 +30,7 @@
 			fork="yes"
 			source="1.5"
 			target="1.5"
-			includes="ee/ut/f2f/mpi/**"
-			excludes="ee/ut/f2f/mpi/examples/test/**"
+			includes="**"
 			>
 			<classpath refid="task.classpath"/>
 	  	</javac>
