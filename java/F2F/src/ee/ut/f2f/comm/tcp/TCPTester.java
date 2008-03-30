@@ -161,7 +161,17 @@ class TCPTester extends Thread implements Activity, F2FMessageListener
 		// ... and wait until the first of them exits, max 10 min
 		for (int i = 0; i < 1200; i++)
 		{
-			if (usedAddress != null) break;
+            boolean allTestsStopped = true;
+            for (TCPTestThread test: testThreads)
+            {
+                if (test.getState() != Thread.State.TERMINATED)
+                {
+                    allTestsStopped = false;
+                    break;
+                }
+            }
+            
+			if (usedAddress != null || allTestsStopped) break;
 			try
 			{
 				Thread.sleep(500);
