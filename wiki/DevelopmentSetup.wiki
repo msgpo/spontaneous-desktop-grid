@@ -4,19 +4,19 @@
 = Requirements =
 
  * jdk-6 (jdk-5 is not possible because we are using couple of methods from jdk-6)
- * eclipse >=3.2
+ * Eclipse >= 3.2
 
  _it is possible that we relax requirements to jdk-5 later_
 
-= sip-communicator =
+= SIP Communicator =
 
 == Checkout or download ==
 
-Checkout sip-communicator from the SIPc SVN repository or download latest version.
+Checkout SIP Communicator (SC) from the SC SVN repository or download latest version.
 
- * for checkout see [http://www.sip-communicator.org/index.php/Development/VersionControl SIPc SVN page]
-   # you need to become observer of SIPc project (send request via dev.java.net and wait for the project leader confirmation, may take time)
-   # in eclipse open https://sip-communicator.dev.java.net/svn/sip-communicator SVN repository
+ * for checkout see [http://www.sip-communicator.org/index.php/Development/VersionControl SC SVN page]
+   # you need to become observer of SC project (send request via dev.java.net and wait for the project leader confirmation, may take time)
+   # in Eclipse open https://sip-communicator.dev.java.net/svn/sip-communicator SVN repository
    # checkout trunk (may take up to 10 minutes)
      * it is suggested you rename it to 'sip-communicator'
  * *or* download latest version
@@ -41,12 +41,10 @@ Checkout sip-communicator from the SIPc SVN repository or download latest versio
 
  # checkout java/F2F from the [http://code.google.com/p/spontaneous-desktop-grid/source repository]
 
-== apply patch to SIPc project ==
+== apply patch to SC project ==
 
- # apply the patch file "Sip Communicator patch.txt" as a patch to SIPc project in Eclipse (project's context menu -> Team -> Apply patch)
-  ** check the box against `EventFilter.java` (so that this file will be created)
-     * I didn't see any checkbox there, but it worked anyway if I left it as it was. - Andres K
- # build SIPc
+ # apply the patch file "Sip Communicator patch.txt" as a patch to SC project in Eclipse (project's context menu -> Team -> Apply patch)
+ # build SC
  
 == compile ==
 
