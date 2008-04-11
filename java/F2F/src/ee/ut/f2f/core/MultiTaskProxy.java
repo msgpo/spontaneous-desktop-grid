@@ -33,7 +33,6 @@ public class MultiTaskProxy //extends TaskProxy
 	 * Timout will be default {@link #DEFAULT_POLLING_TIMEOUT}.
 	 * 
 	 * @param taskProxies the proxies to monitor.
-	 * @param pollingTimeInMillis time to wait while another task proxy is checked against the messages.
 	 */
 	public MultiTaskProxy(Collection<TaskProxy> taskProxies)
 	{

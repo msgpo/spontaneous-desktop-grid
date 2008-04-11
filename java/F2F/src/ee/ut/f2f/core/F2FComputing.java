@@ -135,7 +135,7 @@ public class F2FComputing
 	 * job by pressing "Start" button). The method asks if the given peers allow
 	 * to use their PC.
 	 * 
-	 * @param jarFiles
+	 * @param jarFileNames
 	 *            Jar files that contain an algorithm that has to be executed.
 	 * @param masterTaskClassName
 	 *            The name of class that contains the implementation of master
@@ -144,7 +144,7 @@ public class F2FComputing
 	 *            The peers that have been selected to be involved in the
 	 *            execution of the job.
 	 */
-	public static Job createJob(Collection<String> jarFilesNames,
+	public static Job createJob(Collection<String> jarFileNames,
 			String masterTaskClassName, Collection<F2FPeer> peers)
 			throws IOException, ClassNotFoundException, InstantiationException,
 			IllegalAccessException {
@@ -152,7 +152,7 @@ public class F2FComputing
 			return null;
 		// create a job
 		String jobID = newJobID();
-		Job job = new Job(rootDirectory, jobID, jarFilesNames, peers);
+		Job job = new Job(rootDirectory, jobID, jarFileNames, peers);
 		logger.info("Created new job with ID: " + jobID);
 		// add job to jobs map
 		jobs.put(jobID, job);
@@ -209,9 +209,8 @@ public class F2FComputing
 	 * tasks of the job are informed of new tasks so that they could
 	 * communicate.
 	 * 
-	 * @param jobID
-	 *            The ID of the job to which new tasks should be added. If the
-	 *            jobID is not valid the method throws RuntimeError.
+	 * @param job
+	 *            The job to which new tasks should be added.
 	 * @param className
 	 *            The name of the class that should be executed as new task.
 	 * @param taskCount
