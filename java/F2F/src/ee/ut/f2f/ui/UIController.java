@@ -127,7 +127,7 @@ public class UIController implements PeerPresenceListener, F2FMessageListener
 		});
 		createChatButton.setEnabled(false);
 		
-		friendsPanel.add(createChatButton);
+		//friendsPanel.add(createChatButton);
 			
 		JPanel consolePanel = new JPanel();
 		consolePanel.setLayout(new GridLayout(1,1));
