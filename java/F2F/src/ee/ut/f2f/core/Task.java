@@ -162,7 +162,7 @@ public abstract class Task extends Thread implements Activity
 	 * If framework sets this flag to TRUE, the task should stop the execution 
 	 * (exit the runTask method and stop all sub-threads).
 	 */
-	protected boolean bStopFlag = false;
+	private boolean bStopFlag = false;
 	public boolean isStopped() { return bStopFlag; }
 	/**
 	 * Framework uses this method to stop the thread. 
