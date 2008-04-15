@@ -61,7 +61,7 @@ public class PiMaster2 extends Task
 				
 		// show current result after each 10 seconds
 		// the loop is exited after enough results have been received from slaves
-		while (!bStopFlag && received.getUnSyncTotal() < maxpoints)
+		while (!isStopped() && received.getUnSyncTotal() < maxpoints)
 		{
 			F2FDebug.println("processed " + (int)(((float)received.getUnSyncTotal() / maxpoints)*100) + "%" );
 			F2FDebug.println("Pi is " + received.getUnSyncPositive() * 4.0 / received.getUnSyncTotal() );

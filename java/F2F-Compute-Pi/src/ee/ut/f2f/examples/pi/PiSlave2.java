@@ -40,7 +40,7 @@ public class PiSlave2 extends Task implements Serializable
 			} catch (InterruptedException e) {}
 			
 			// Test if stop message has been sent
-			if (bStopFlag) break;
+			if (isStopped()) break;
 				
 			F2FDebug.println("Stop-condition not met, sending back results. total: "
 					+ computedPoints.getUnSyncTotal() + " positives: " 
@@ -72,7 +72,7 @@ public class PiSlave2 extends Task implements Serializable
 		public void run()
 		{
 			MersenneTwisterRNG random = new MersenneTwisterRNG();
-			while(!bStopFlag)
+			while(!isStopped())
 			{
 				double x = random.nextDouble();
 				double y = random.nextDouble();

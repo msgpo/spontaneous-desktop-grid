@@ -35,7 +35,7 @@ public class PiSlaveTask extends Task
 		{
 			// Wait
 			Long stopcondition = (Long) masterProxy.receiveMessage(intervalms);
-			if (bStopFlag) break;
+			if (isStopped()) break;
 			// Test if stopcondition was sent
 			if ( stopcondition != null )
 				if ( stopcondition.longValue() == 0 )
@@ -61,7 +61,7 @@ public class PiSlaveTask extends Task
 	private class ComputePoints extends Thread
 	{
 		public void run() {
-			while(!bStopFlag)
+			while(!isStopped())
 			{
 				double x = random.nextDouble();
 				double y = random.nextDouble();
