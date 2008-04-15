@@ -61,7 +61,7 @@ public class TasksTableModel extends AbstractTableModel implements TaskListener
 		case 0: return task.getJob().getJobID();
 		case 1: return task.getTaskID();
 		case 2: return new TaskProgress(task, this);//task.getState() == Thread.State.TERMINATED ? "stopped" : "running";
-		case 3: return task.bStopFlag ? null : new StopTaskButton(task, this);
+		case 3: return task.isStopped() ? null : new StopTaskButton(task, this);
 		}
 		return null;
 	}
