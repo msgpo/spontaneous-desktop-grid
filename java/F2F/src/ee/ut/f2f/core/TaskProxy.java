@@ -47,22 +47,15 @@ public class TaskProxy
 		{
 			F2FMessage f2fMessage = 
 				new F2FMessage(
-						F2FMessage.Type.MESSAGE,
-						task.getJob().getJobID(),
-						remoteTaskDescription.getTaskID(),
-						task.getTaskID(),
-						message);
-			try
-			{
-				receiver.sendMessage(f2fMessage);
-				return;
-			}
-			catch (CommunicationFailedException e)
-			{
-				logger.warn("could not send a message to a tast directly, try to route via master");
-			}
+					F2FMessage.Type.MESSAGE,
+					task.getJob().getJobID(),
+					remoteTaskDescription.getTaskID(),
+					task.getTaskID(),
+					message);
+			receiver.sendMessage(f2fMessage);
+			return;
 		}
-		else logger.warn("could not find receiver peer!");
+		else throw new CommunicationFailedException("Task " + getRemoteTaskID() + " is not reachable!");
 	}
 
 	/** 
@@ -162,10 +155,8 @@ public class TaskProxy
 				}
 			}
 			Object message = messages.poll(); 
-			if(logger.isTraceEnabled()) {
-				logger.trace("PROXY of " + remoteTaskDescription.getTaskID()
-						+ ": read/removed message " + message);
-			}
+			logger.trace("PROXY of " + remoteTaskDescription.getTaskID()
+					+ ": read/removed message " + message);
 			return message;
 		}
 	}

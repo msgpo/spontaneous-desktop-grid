@@ -142,9 +142,9 @@ public abstract class Task extends Thread implements Activity
 	 * with ID remoteTaskID. The message can be read from the proper task proxy.
 	 * An implementation of the Task class that wants to be notified about 
 	 * incoming messages should overwrite this method and take the actions it
-	 * wants (probably read the message and process it). 
+	 * wants (probably read the message and process it).
 	 */
-	public void messageReceivedEvent(String remoteTaskID)
+	void messageReceivedEvent(String remoteTaskID)
 	{
 	}
 
@@ -158,11 +158,13 @@ public abstract class Task extends Thread implements Activity
 		return getJob();
 	}
 	
-	/**
-	 * If framework sets this flag to TRUE, the task should stop the execution 
-	 * (exit the runTask method and stop all sub-threads).
-	 */
 	private boolean bStopFlag = false;
+    /**
+     * This method returns TRUE until the framework allows the task 
+     * to run. If this method starts to return FALSE the task should 
+     * exit the runTask() method and stop all the sub-threads it 
+     * has started.
+     */
 	public boolean isStopped() { return bStopFlag; }
 	/**
 	 * Framework uses this method to stop the thread. 
@@ -170,13 +172,19 @@ public abstract class Task extends Thread implements Activity
 	public void stopTask()
 	{
 		bStopFlag = true;
-		taskStoppedEvent();
+        new Thread ()
+        {
+            public void run()
+            {
+		        taskStoppedEvent();
+            }
+        }.start();
 	}
 	/**
-	 * This method is called if the task shoult stop the execution.
+	 * This method is called if the task shoult stop its execution.
 	 * (exit the runTask method and stop all sub-threads).
-	 * Overwrite this method, if you want to react on the event that
-	 * turns on the bStopFlag.
+	 * Overwrite this method, if you want to react quickly on the event
+     * that asks the task to stop.
 	 */
 	protected void taskStoppedEvent()
 	{
@@ -198,7 +206,7 @@ public abstract class Task extends Thread implements Activity
 	 * This metod sets the progress value of the task and
 	 * informs the listeners about this event.
 	 * @param progress Value less than 0 means the progress is not determined
-	 * (GUI shows indeterminate progress bar in this case).
+	 * (the GUI does not show the progress bar in this case).
 	 * Value [0..100] means the task is 0..100% completed. 
 	 * Value greater than 100 is considered equal to 100.
 	 */
@@ -207,8 +215,16 @@ public abstract class Task extends Thread implements Activity
 		this.progress = progress;
 		synchronized (F2FComputing.taskListeners)
 		{
-			for (TaskListener listener: F2FComputing.taskListeners)
-				listener.taskProgressed(this);
+			for (final TaskListener listener: F2FComputing.taskListeners)
+            {
+                new Thread() 
+                {
+                    public void run()
+                    {
+				        listener.taskProgressed(Task.this);
+                    }
+                }.start();
+            }
 		}
 	}
 }
