@@ -20,7 +20,7 @@ class CPURequests extends Thread implements Activity
 	 * The time how long to wait for the answer(s) to a REQUEST_FOR_CPU before
 	 * throwing NotEnoughFriendsException.
 	 */
-	private static final long REQUEST_FOR_CPUS_TIMEOUT = 10000;	
+	private static final long REQUEST_FOR_CPUS_TIMEOUT = 60000;
 	
 	private Job job;
 	private Collection<F2FPeer> requestedPeers;
