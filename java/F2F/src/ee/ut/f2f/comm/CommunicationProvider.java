@@ -13,10 +13,10 @@ public interface CommunicationProvider
 	 * The greater the weight, the quicker/more reliable the connection should be.
 	 * 
 	 * For instance, the lowest priority communication provider should be 
-	 * the tagged IM connectin and the highest priority should be 
+	 * the tagged IM connection and the highest priority should be 
 	 * the socket connection. 
 	 * 
-	 * @return The weight/priority of a communicatin provider.
+	 * @return The weight/priority of a communication provider.
 	 */
 	int getWeight();
 	static final int SIP_IM_COMM_WEIGHT = 10;
