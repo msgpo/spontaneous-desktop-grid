@@ -46,7 +46,7 @@ public class F2FComputing
 	/**
 	 * Returns the job with the given ID or null if such a job is not known.
 	 */
-	public static Job getJob(String jobID) {
+	static Job getJob(String jobID) {
 		if (!isInitialized())
 			return null;
 		return jobs.get(jobID);
