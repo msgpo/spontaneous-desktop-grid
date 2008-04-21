@@ -144,7 +144,7 @@ public abstract class Task extends Thread implements Activity
 	 * incoming messages should overwrite this method and take the actions it
 	 * wants (probably read the message and process it).
 	 */
-	void messageReceivedEvent(String remoteTaskID)
+	protected void messageReceivedEvent(String remoteTaskID)
 	{
 	}
 
