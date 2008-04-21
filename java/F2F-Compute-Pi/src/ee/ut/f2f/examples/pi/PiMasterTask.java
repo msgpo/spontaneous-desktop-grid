@@ -4,8 +4,6 @@ import java.util.ArrayList;
 import java.util.Collection;
 
 import ee.ut.f2f.core.CommunicationFailedException;
-import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.util.F2FDebug;
@@ -25,25 +23,10 @@ public class PiMasterTask extends Task
 		long start = System.currentTimeMillis();
 		// submit slave tasks
 		try {
-			// HACK for running PiTest
-			// start 2 slaves in localhost if job is created without specifying friends
-			if (this.getJob().getPeers() == null || this.getJob().getPeers().size() == 0)
-			{
-				Collection<F2FPeer> peer = new ArrayList<F2FPeer>();
-				peer.add(F2FComputing.getLocalPeer());
-				for (int i = 0; i < 2; i++)
-					this.getJob().submitTasks(
-							"ee.ut.f2f.examples.pi.PiSlaveTask",
-							1,
-							peer);
-			}
-			else
-			{
-				this.getJob().submitTasks(
-					"ee.ut.f2f.examples.pi.PiSlaveTask",
-					this.getJob().getPeers().size(),
-					this.getJob().getPeers());
-			}
+			this.getJob().submitTasks(
+				"ee.ut.f2f.examples.pi.PiSlaveTask",
+				this.getJob().getPeers().size(),
+				this.getJob().getPeers());
 		} catch (Exception e) {
 			e.printStackTrace();
 			return;
