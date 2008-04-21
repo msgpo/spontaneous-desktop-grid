@@ -1086,7 +1086,7 @@ public class F2FComputing
 		}
 	}
 	
-	static class JobCreator extends JFrame
+	private static class JobCreator extends JFrame
 	{
 		private static final Logger logger = Logger.getLogger(JobCreator.class);
 		private static final long serialVersionUID = 1L;
