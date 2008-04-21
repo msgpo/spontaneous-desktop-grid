@@ -17,7 +17,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import ee.ut.xpp2p.blenderer.MasterBlenderer;
+import ee.ut.xpp2p.blenderer.BlenderMasterTask;
 import ee.ut.xpp2p.model.RenderJob;
 
 /**
@@ -49,14 +49,14 @@ public class MainWindow extends JFrame {
 	private Button exitButton = null;
 	public Button renderButton = null;
 	public InputValidator inputChecker = new InputValidator();
-	private MasterBlenderer master;
+	private BlenderMasterTask master;
 	private JProgressBar jProgressBar = null;
 	long frameCount = 0L;
 
 	/**
 	 * Initializes main window
 	 */
-	public MainWindow(MasterBlenderer master) {
+	public MainWindow(BlenderMasterTask master) {
 		this.master = master;
 		mainWindow = new JFrame("Specify parameters");
 		mainWindow.setSize(new Dimension(430, 300));

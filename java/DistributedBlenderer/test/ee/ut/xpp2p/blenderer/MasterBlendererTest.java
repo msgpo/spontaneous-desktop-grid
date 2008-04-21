@@ -4,7 +4,7 @@ import java.io.File;
 
 import junit.framework.TestCase;
 import ee.ut.f2f.core.F2FComputingException;
-import ee.ut.xpp2p.blenderer.MasterBlenderer;
+import ee.ut.xpp2p.blenderer.BlenderMasterTask;
 import ee.ut.xpp2p.model.RenderJob;
 
 /**
@@ -19,7 +19,7 @@ public class MasterBlendererTest extends TestCase {
 	 * Tests splitting job into tasks
 	 */
 	public void testSplit() {
-		MasterBlenderer master = new MasterBlenderer();
+		BlenderMasterTask master = new BlenderMasterTask();
 		
 		// test uneven split
 		long startFrame = 23L;
@@ -120,7 +120,7 @@ public class MasterBlendererTest extends TestCase {
 	 * Tests Counting the frames of given .blend file
 	 */
 	public void testCountFrames() {
-		long frames = new MasterBlenderer()
+		long frames = new BlenderMasterTask()
 				.countFrames("etc"+File.separator+"VictorDancing.blend");
 
 		assertEquals(frames, 24L);

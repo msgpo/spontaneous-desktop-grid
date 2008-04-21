@@ -10,14 +10,12 @@ import java.util.List;
 
 import javax.swing.JFrame;
 
-import ee.ut.f2f.core.CommunicationFailedException;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
-import ee.ut.f2f.util.F2FDebug;
 import ee.ut.xpp2p.exception.NothingRenderedException;
 import ee.ut.xpp2p.model.RenderJob;
 import ee.ut.xpp2p.model.RenderResult;
-import ee.ut.xpp2p.model.RenderTask;
 import ee.ut.xpp2p.ui.MainWindow;
 import ee.ut.xpp2p.util.FileUtil;
 
@@ -26,7 +24,7 @@ import ee.ut.xpp2p.util.FileUtil;
  * 
  * @author Andres, Madis, Jaan Neljandik, Vladimir Ðkarupelov
  */
-public class MasterBlenderer extends Task {
+public class BlenderMasterTask extends Task {
 
 	private String inputFile;
 	/**
@@ -34,7 +32,7 @@ public class MasterBlenderer extends Task {
 	 * @param args
 	 */
 	public static void main(String[] args) {
-		new MainWindow(new MasterBlenderer());
+		new MainWindow(new BlenderMasterTask());
 	}
 
 	private JFrame mainWindow;
@@ -111,7 +109,7 @@ public class MasterBlenderer extends Task {
 
 	/**
 	 * Splits the number of frames (from startFrame to endFrame) by the number
-	 * of parts. The parameter startFrame has to be a larger number than
+	 * of parts. The parameter startFrame has to be a smaller number than
 	 * endFrame
 	 * 
 	 * @param startFrame
@@ -151,14 +149,33 @@ public class MasterBlenderer extends Task {
 		new Thread() { public void run() {
 			try {
 			long start = System.currentTimeMillis();
+			
+			// PREPARE THE SLAVE TASKS
+			Collection<Task> tasks = new ArrayList<Task>();
+			String inputFileName = new File(job.getInputFileName()).getName();
+			byte[] inputFile = FileUtil.loadFile(job.getInputFileName());
+			long[] partLengths = splitTask(job.getStartFrame(), job.getEndFrame(), getJob().getPeers().size());
+			long startFrame = job.getStartFrame();
+			int i = 0;
+			for (F2FPeer peer: getJob().getPeers())
+			{
+				BlenderSlaveTask slaveTask = 
+					new BlenderSlaveTask(
+						inputFileName, 
+						inputFile, 
+						job.getOutputFormat(), 
+						startFrame, 
+						startFrame + partLengths[i] - 1);
+				tasks.add(slaveTask);
+				startFrame += partLengths[i++];
+			}
 
-			// submit slave tasks
-			getJob().submitTasks(SlaveBlenderer.class.getName(),
-					getJob().getPeers().size(), getJob().getPeers());
-
+			// SUBMIT THE SLAVE TASKS
+			getJob().submitTasks(tasks, getJob().getPeers());
+			
+			// WAIT UNTIL THE SLAVES HAVE RETURNED THE RESULTS
 			// get IDs of all the tasks that have been created
 			Collection<String> taskIDs = getJob().getTaskIDs();
-
 			// get proxies of slave tasks
 			Collection<TaskProxy> slaveProxies = new ArrayList<TaskProxy>();
 			for (String taskID : taskIDs) {
@@ -169,36 +186,8 @@ public class MasterBlenderer extends Task {
 				if (proxy != null)
 					slaveProxies.add(proxy);
 			}
-
-			long[] partLengths = splitTask(job.getStartFrame(), job
-					.getEndFrame(), getJob().getPeers().size());
-			long currentFrame = job.getStartFrame();
-			int i = 0;
-			byte[] input = FileUtil.loadFile(job.getInputFileName());
-			String inputFileName = new File(job.getInputFileName()).getName();
-			RenderTask task = new RenderTask();
-			task.setFileName(inputFileName);
-			task.setBlenderFile(input);
-			task.setFileFormat(job.getOutputFormat());
-			for (TaskProxy proxy : slaveProxies)
-			{
-				F2FDebug.println("task "+proxy.getRemoteTaskID()+" renders frames "+currentFrame+".."+(currentFrame + partLengths[i] - 1));
-				task.setStartFrame(currentFrame);
-				task.setEndFrame(currentFrame + partLengths[i] - 1);
-				try {
-					proxy.sendMessage(task);
-				} catch (CommunicationFailedException e) {
-					// TODO Auto-generated catch block
-					e.printStackTrace();
-				}
-
-				currentFrame += partLengths[i];
-				i++;
-			}
-
 			long replies = 0;
 			List<RenderResult> results = new ArrayList<RenderResult>();
-
 			while (replies < partLengths.length) {
 				for (TaskProxy proxy : slaveProxies) {
 					if (proxy.hasMessage()) {
@@ -213,6 +202,8 @@ public class MasterBlenderer extends Task {
 				}
 				// FIXME: Adapt to lost friends
 			}
+			
+			// COMPOSE THE RESULTING MOVIE
 			String fileName = FileUtil.generateOutputFileName(getInputFile(), job.getExtension());
 			FileUtil.composeFile(results, job.getOutputLocation(), fileName);
 

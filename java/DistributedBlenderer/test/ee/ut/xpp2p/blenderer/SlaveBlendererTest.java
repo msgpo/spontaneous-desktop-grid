@@ -33,7 +33,7 @@ public class SlaveBlendererTest extends TestCase {
 		task.setBlenderFile(fileBytes);
 		task.setEndFrame(13);
 
-		SlaveBlenderer slave = new SlaveBlenderer();
+		BlenderSlaveTask slave = new BlenderSlaveTask(task);
 		try {
 			slave.renderTask(task);
 		}

@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 
 import junit.framework.TestCase;
-import ee.ut.xpp2p.blenderer.MasterBlenderer;
+import ee.ut.xpp2p.blenderer.BlenderMasterTask;
 
 /**
  * @author Jürmo
@@ -127,7 +127,7 @@ public class InputValidatorTest extends TestCase {
 	}
 
 	protected void setUp() {
-		window = new MainWindow(new MasterBlenderer());
+		window = new MainWindow(new BlenderMasterTask());
 	}
 
 	protected void tearDown() {

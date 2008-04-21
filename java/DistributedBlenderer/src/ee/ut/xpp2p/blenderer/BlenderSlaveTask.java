@@ -4,6 +4,7 @@ import java.io.BufferedReader;
 import java.io.File;
 import java.io.IOException;
 import java.io.InputStreamReader;
+import java.io.Serializable;
 import java.util.Properties;
 
 import ee.ut.f2f.core.Task;
@@ -17,9 +18,27 @@ import ee.ut.xpp2p.util.FileUtil;
  * @author Jaan Neljandik, Vladimir Ðkarupelov
  * @created 05.11.2007
  */
-public class SlaveBlenderer extends Task {
+public class BlenderSlaveTask extends Task implements Serializable {
 
+	private static final long serialVersionUID = -7346794917518712565L;
 	String tempDir = null;
+	private RenderTask renderTask = null;
+	
+	public BlenderSlaveTask(String inputFileName, byte[] inputFile, String outputFormat, long startFrame, long endFrame)
+	{
+		renderTask = new RenderTask();
+		renderTask.setFileName(inputFileName);
+		renderTask.setBlenderFile(inputFile);
+		renderTask.setFileFormat(outputFormat);
+		renderTask.setStartFrame(startFrame);
+		renderTask.setEndFrame(endFrame);
+	}
+
+	public BlenderSlaveTask(RenderTask task)
+	{
+		renderTask = task;
+	}
+
 	/*
 	 * (non-Javadoc)
 	 * 
@@ -36,17 +55,13 @@ public class SlaveBlenderer extends Task {
 		{
 			tempDir += File.separator;
 		}
-		if (masterProxy == null)
-			throw new RuntimeException("Proxy of master task was not found!");
-
-		RenderTask receivedRenderTask = (RenderTask) masterProxy
-				.receiveMessage();
+		
 		try {
-			renderTask(receivedRenderTask);
+			renderTask(renderTask);
 			RenderResult result = new RenderResult();
-			result.setEndFrame(receivedRenderTask.getEndFrame());
-			result.setStartFrame(receivedRenderTask.getStartFrame());
-			String fileName = FileUtil.generateOutputFileName(receivedRenderTask.getStartFrame(), receivedRenderTask.getEndFrame(), receivedRenderTask.getExtension());
+			result.setEndFrame(renderTask.getEndFrame());
+			result.setStartFrame(renderTask.getStartFrame());
+			String fileName = FileUtil.generateOutputFileName(renderTask.getStartFrame(), renderTask.getEndFrame(), renderTask.getExtension());
 			result.setFileName(fileName);			
 			String outputFile = tempDir + fileName;
 			result.setRenderedPart(FileUtil.loadFile(outputFile));
