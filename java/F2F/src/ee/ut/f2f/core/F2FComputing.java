@@ -195,7 +195,7 @@ public class F2FComputing
 			throw new NotEnoughPeersException(taskCount, peers == null ? 0
 					: peers.size());
 		for (F2FPeer peer : peers)
-			if (!job.getPeers().contains(peer))
+			if (job.getPeers() == null || !job.getPeers().contains(peer))
 				throw new NotJobPeerException(peer, job);
 		return true;
 	}

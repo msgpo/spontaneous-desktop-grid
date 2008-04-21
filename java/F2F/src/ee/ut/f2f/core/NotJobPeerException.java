@@ -12,6 +12,6 @@ public class NotJobPeerException extends F2FComputingException
 {
 	NotJobPeerException(F2FPeer peer, Job job)
 	{
-		super("Peer "+peer.getDisplayName()+" was not listed/selected to take part in the job" + job.getJobID());
+		super("Peer "+peer.getDisplayName()+" was not listed/selected to take part in the job " + job.getJobID());
 	}
 }
