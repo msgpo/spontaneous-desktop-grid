@@ -94,13 +94,12 @@ public class JobSelector extends JFrame
 	{
 		this.setSize(new Dimension(560, 150));
 		this.setLocationRelativeTo(null);
-		this.setTitle("Start a F2F application");
+		this.setTitle("Start an F2F application");
 		this.setResizable(false);
 		
 		layout = new SpringLayout();
 		mainPanel = new JPanel(layout);
 		mainPanel.setSize(new Dimension(560, 150));
-		
 	}
 	
 	private void initFileChooser()
