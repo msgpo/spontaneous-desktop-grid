@@ -72,7 +72,6 @@ public class GroupChatWindow extends JFrame {
 	private FriendModel<ChatMember> chatMembers = null;
 	
 	private UIController mainWindow;
-	private JobSelector jobSelect;
 	private String chatId;
 	private boolean isCreator;
 	private F2FPeer creator;	 
@@ -193,10 +192,7 @@ public class GroupChatWindow extends JFrame {
 		JButton startJobButton  = new JButton("Job...");
 		startJobButton.addActionListener(new ActionListener() {
 			public void actionPerformed(ActionEvent e) {
-				if(jobSelect != null) {
-					jobSelect.dispose();
-				}
-				jobSelect = new JobSelector(f2fMembers);
+				F2FComputing.startJob(f2fMembers.getPeers());
 			}
 		}); 
 		

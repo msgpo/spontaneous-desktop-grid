@@ -8,7 +8,7 @@ import javax.swing.JButton;
 
 import org.osgi.framework.ServiceReference;
 
-import ee.ut.f2f.ui.JobSelector;
+import ee.ut.f2f.core.F2FComputing;
 
 import net.java.sip.communicator.service.contactlist.MetaContact;
 import net.java.sip.communicator.service.contactlist.MetaContactGroup;
@@ -24,8 +24,7 @@ class SipIMChatF2FButton
     PluginComponent
 {
 	private F2FMultiOperationSetMultiUserChat multiUserChat = null;
-	private JobSelector jobSelector = null;
-    private JButton button = null;
+	private JButton button = null;
 	
 	SipIMChatF2FButton(F2FMultiOperationSetMultiUserChat chat)
 	{
@@ -59,8 +58,7 @@ class SipIMChatF2FButton
 		{
 			if (uiService.getChat(room).equals(chat) && room.getOwner() == null)
 			{// the owner of the room wants to start a job
-				if(jobSelector != null) jobSelector.dispose();
-				jobSelector = new JobSelector(room.getF2FPeers());
+				F2FComputing.startJob(room.getF2FPeers());
 			}
 		}
 	}
