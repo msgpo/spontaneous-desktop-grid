@@ -1114,8 +1114,12 @@ public class F2FComputing
 			for (F2FPeer peer: tmpPeers)
 				if (peer != null && !peers.contains(peer)) peers.add(peer);
 			
-			if (btnSlave != null && btnSlave.isSelected() && !peers.contains(F2FComputing.getLocalPeer()))
-				peers.add(F2FComputing.getLocalPeer());
+			if (btnSlave != null)
+			{
+				if (btnSlave.isSelected() && !peers.contains(F2FComputing.getLocalPeer()))
+					peers.add(F2FComputing.getLocalPeer());
+				else peers.remove(F2FComputing.getLocalPeer());
+			}
 			
 			return peers;
 		}
