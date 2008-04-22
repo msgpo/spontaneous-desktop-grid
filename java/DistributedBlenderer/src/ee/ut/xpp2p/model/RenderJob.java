@@ -1,6 +1,9 @@
 package ee.ut.xpp2p.model;
 
 import java.io.File;
+import java.io.IOException;
+
+import ee.ut.xpp2p.util.FileUtil;
 
 /**
  * Class that represents one rendering job
@@ -10,9 +13,10 @@ import java.io.File;
  */
 public class RenderJob {
 
-	private String inputFile;
-	private String outputLocation;
-	private String outputFormat;
+	private String inputFileName = null;
+	private byte[] inputFile = null;
+	private String outputLocation = null;
+	private String outputFormat = null;
 	private long startFrame;
 	private long endFrame;
 	private int participants;
@@ -22,23 +26,27 @@ public class RenderJob {
 	 * Returns the absolute pathname.
 	 */
 	public String getInputFileName() {
+		return inputFileName;
+	}
+
+	public void setInputFileName(String fileName) throws IOException
+	{
+		inputFileName = new File(fileName).getName();
+		inputFile = FileUtil.loadFile(fileName);
+	}
+
+	public byte[] getInputFile()
+	{
 		return inputFile;
 	}
-
-	public void setInputFileName(String inputFile) {
-		this.inputFile = inputFile;
-	}
-
+	
 	public String getOutputLocation() {
 		return outputLocation;
 	}
 
 	public void setOutputLocation(String outputLocation) {
 		this.outputLocation = outputLocation;
-		if (!this.outputLocation.endsWith(File.separator))
-		{
-			this.outputLocation += File.separator;
-		}
+		if (!this.outputLocation.endsWith(File.separator)) this.outputLocation += File.separator;
 	}
 
 	public String getOutputFormat() {

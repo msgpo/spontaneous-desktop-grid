@@ -125,7 +125,7 @@ public class FileUtilTest extends TestCase {
 			list.add(result1);
 
 			// Execute
-			boolean fileCreated = FileUtil.composeFile(list,"", dir + fileName);
+			boolean fileCreated = FileUtil.composeResult(list,"", dir + "victorDancing.blend", "avi");
 			assertTrue(fileCreated);
 
 		} catch (IOException e) {

@@ -26,8 +26,7 @@ public class MasterBlendererTest extends TestCase {
 		long endFrame = 126L;
 		int parts = 5;
 
-		long[] partLengths = master.splitTask(startFrame,
-				endFrame, parts);
+		long[] partLengths = master.splitTask(endFrame - startFrame + 1, parts);
 
 		assertEquals(partLengths[0], 21L);
 		assertEquals(partLengths[1], 21L);
@@ -40,7 +39,7 @@ public class MasterBlendererTest extends TestCase {
 		endFrame = 122L;
 		parts = 5;
 
-		partLengths = master.splitTask(startFrame, endFrame, parts);
+		partLengths = master.splitTask(endFrame - startFrame + 1, parts);
 
 		assertEquals(partLengths[0], 20L);
 		assertEquals(partLengths[1], 20L);
@@ -53,7 +52,7 @@ public class MasterBlendererTest extends TestCase {
 		endFrame = 23L;
 		parts = 5;
 
-		partLengths = master.splitTask(startFrame, endFrame, parts);
+		partLengths = master.splitTask(endFrame - startFrame + 1, parts);
 
 		assertEquals(partLengths[0], 1L);
 		assertEquals(partLengths[1], 0L);
@@ -66,7 +65,7 @@ public class MasterBlendererTest extends TestCase {
 		endFrame = 25L;
 		parts = 5;
 
-		partLengths = master.splitTask(startFrame, endFrame, parts);
+		partLengths = master.splitTask(endFrame - startFrame + 1, parts);
 
 		assertEquals(partLengths[0], 1L);
 		assertEquals(partLengths[1], 1L);
@@ -79,7 +78,7 @@ public class MasterBlendererTest extends TestCase {
 		endFrame = 27L;
 		parts = 5;
 
-		partLengths = master.splitTask(startFrame, endFrame, parts);
+		partLengths = master.splitTask(endFrame - startFrame + 1, parts);
 
 		assertEquals(partLengths[0], 1L);
 		assertEquals(partLengths[1], 1L);

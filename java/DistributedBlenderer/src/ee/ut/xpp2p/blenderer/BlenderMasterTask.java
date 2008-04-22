@@ -10,7 +10,6 @@ import java.util.List;
 
 import javax.swing.JFrame;
 
-import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.xpp2p.exception.NothingRenderedException;
@@ -26,7 +25,6 @@ import ee.ut.xpp2p.util.FileUtil;
  */
 public class BlenderMasterTask extends Task {
 
-	private String inputFile;
 	/**
 	 * Executable
 	 * @param args
@@ -63,7 +61,6 @@ public class BlenderMasterTask extends Task {
 	 * @return number of frames in given file
 	 */
 	public long countFrames(String inputFile) {
-		setInputFile(inputFile);
 		String[] cmdarr = { "blender", "-b", inputFile, "-o", "frameCount",
 				"-F", "AVIJPEG", "-a", "-x", "1" };
 		try {
@@ -109,24 +106,19 @@ public class BlenderMasterTask extends Task {
 
 	/**
 	 * Splits the number of frames (from startFrame to endFrame) by the number
-	 * of parts. The parameter startFrame has to be a smaller number than
-	 * endFrame
+	 * of parts.
 	 * 
-	 * @param startFrame
-	 *            the frame to start from when splitting
-	 * @param endFrame
-	 *            the frame to finish with when splitting
+	 * @param numberOfFrames
+	 *            the frames to split
 	 * @param parts
 	 *            the number of parts the task must be split into
 	 * @return an array with the lengths of the parts of the task. The length of
 	 *         the array is the number of parts
 	 * 
 	 */
-	public long[] splitTask(long startFrame, long endFrame, int parts) {
-		long numberOfFrames = endFrame - startFrame + 1;
+	public long[] splitTask(long numberOfFrames, int parts) {
 		long remainder = numberOfFrames % parts;
-		long exact = numberOfFrames - remainder;
-		long exactPartLength = exact / parts;
+		long exactPartLength = (numberOfFrames - remainder) / parts;
 		long[] partLengths = new long[parts];
 
 		for (int i = 0; i < parts; i++) {
@@ -139,6 +131,8 @@ public class BlenderMasterTask extends Task {
 		return partLengths;
 	}
 
+	// here the master collects the results the slave tasks have render 
+	private List<RenderResult> renderedResults = new ArrayList<RenderResult>();
 	/**
 	 * Splits given job into tasks and renders it
 	 * 
@@ -150,68 +144,44 @@ public class BlenderMasterTask extends Task {
 			try {
 			long start = System.currentTimeMillis();
 			
-			// PREPARE THE SLAVE TASKS
+			// prepare the slave tasks
 			Collection<Task> tasks = new ArrayList<Task>();
-			String inputFileName = new File(job.getInputFileName()).getName();
-			byte[] inputFile = FileUtil.loadFile(job.getInputFileName());
-			long[] partLengths = splitTask(job.getStartFrame(), job.getEndFrame(), getJob().getPeers().size());
+			long[] partLengths = splitTask(job.getEndFrame() - job.getStartFrame() + 1, getJob().getPeers().size());
 			long startFrame = job.getStartFrame();
-			int i = 0;
-			for (F2FPeer peer: getJob().getPeers())
+			for (int i = 0; i < getJob().getPeers().size(); i++)
 			{
 				BlenderSlaveTask slaveTask = 
 					new BlenderSlaveTask(
-						inputFileName, 
-						inputFile, 
+						job.getInputFileName(), 
+						job.getInputFile(), 
 						job.getOutputFormat(), 
 						startFrame, 
 						startFrame + partLengths[i] - 1);
 				tasks.add(slaveTask);
-				startFrame += partLengths[i++];
+				startFrame += partLengths[i];
 			}
 
-			// SUBMIT THE SLAVE TASKS
+			// submit the slave tasks
 			getJob().submitTasks(tasks, getJob().getPeers());
 			
-			// WAIT UNTIL THE SLAVES HAVE RETURNED THE RESULTS
-			// get IDs of all the tasks that have been created
-			Collection<String> taskIDs = getJob().getTaskIDs();
-			// get proxies of slave tasks
-			Collection<TaskProxy> slaveProxies = new ArrayList<TaskProxy>();
-			for (String taskID : taskIDs) {
-				// do not get proxy of master task
-				if (taskID == getTaskID())
-					continue;
-				TaskProxy proxy = getTaskProxy(taskID);
-				if (proxy != null)
-					slaveProxies.add(proxy);
+			// wait until the slaves have rendered and returned the movie clips
+			// the messageReceivedEvent() method collects the results
+			synchronized (renderedResults)
+			{
+				renderedResults.wait();
 			}
-			long replies = 0;
-			List<RenderResult> results = new ArrayList<RenderResult>();
-			while (replies < partLengths.length) {
-				for (TaskProxy proxy : slaveProxies) {
-					if (proxy.hasMessage()) {
-						replies++;
-						results.add((RenderResult) proxy.receiveMessage());
-					}
-				}
-				try {
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {
-					e.printStackTrace();
-				}
-				// FIXME: Adapt to lost friends
-			}
-			
-			// COMPOSE THE RESULTING MOVIE
-			String fileName = FileUtil.generateOutputFileName(getInputFile(), job.getExtension());
-			FileUtil.composeFile(results, job.getOutputLocation(), fileName);
+						
+			// compose the resulting movie
+			FileUtil.composeResult(
+					renderedResults,
+					job.getOutputLocation(),
+					job.getInputFileName(),
+					job.getExtension());
 
 			long end = System.currentTimeMillis();
 			System.out.println("Took " + (end - start) / 1000 + "s");
 			} catch (Exception e) {
 				e.printStackTrace();
-				// TODO: Handle exception
 			}
 			synchronized (mainWindow)
 			{
@@ -219,14 +189,19 @@ public class BlenderMasterTask extends Task {
 			}
 		}}.start();
 	}
-
-
-	public String getInputFile() {
-		return inputFile;
-	}
-
-
-	public void setInputFile(String inputFile) {
-		this.inputFile = inputFile;
+	
+	// handle messages from the slave tasks
+	// this means collecting the rendered parts 
+	public void messageReceivedEvent(String remoteTaskID)
+	{
+		TaskProxy proxy = getTaskProxy(remoteTaskID);
+		if (!proxy.hasMessage()) return;
+		RenderResult renderResult = (RenderResult) proxy.receiveMessage();
+		synchronized (renderedResults)
+		{
+			renderedResults.add(renderResult);
+			if (renderedResults.size() == getJob().getPeers().size())
+				renderedResults.notifyAll();
+		}
 	}
 }

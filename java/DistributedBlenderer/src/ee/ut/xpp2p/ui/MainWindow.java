@@ -9,6 +9,7 @@ import java.awt.Rectangle;
 import java.awt.event.ActionEvent;
 import java.awt.event.ActionListener;
 import java.awt.event.KeyEvent;
+import java.io.IOException;
 
 import javax.swing.JFrame;
 import javax.swing.JLabel;
@@ -289,14 +290,18 @@ public class MainWindow extends JFrame {
 			renderButton.setEnabled(false);
 			renderButton.addActionListener(new ActionListener() {
 				public void actionPerformed(ActionEvent event) {
-					renderButtonPressed();
+					try {
+						renderButtonPressed();
+					} catch (IOException e) {
+						e.printStackTrace();
+					}
 				}
 			});
 		}
 		return renderButton;
 	}
 
-	private void renderButtonPressed() {
+	private void renderButtonPressed() throws IOException {
 		if (inputChecker.validate(this)) {
 			RenderJob job = new RenderJob();
 			job.setInputFileName(inputFileTextField.getText());

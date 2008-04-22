@@ -93,24 +93,22 @@ public class FileUtil {
 	 *            name of the file to compose
 	 * @return true if file is created, false otherwise
 	 */
-	public static boolean composeFile(List<RenderResult> partContents,
-			String outputLocation, String fileName) throws IOException {
+	public static boolean composeResult(List<RenderResult> partContents,
+			String outputLocation, String inputFileName, String extension) throws IOException {
+		String outputFileName = generateOutputFileName(inputFileName, extension);
 		Collections.sort(partContents);
 		String[] inputFileURLs = new String[partContents.size()];
 		for (int i = 0; i < partContents.size(); i++) {
 			byte[] partBytes = partContents.get(i).getRenderedPart();
 			Properties props = System.getProperties();
 			String tempDir = props.getProperty("java.io.tmpdir");
-			if (!tempDir.endsWith(File.separator))
-			{
-				tempDir += File.separator;
-			}
+			if (!tempDir.endsWith(File.separator)) tempDir += File.separator;
 			String partName = tempDir + partContents.get(i).getFileName();
 			File part = saveFile(partBytes, partName);
 			inputFileURLs[i] = URL_FILE_PREFIX + part.getAbsolutePath();
 		}
 		boolean filesConcatinated = Concat.concatinateVideoFiles(
-				URL_FILE_PREFIX + outputLocation + fileName, inputFileURLs);
+				URL_FILE_PREFIX + outputLocation + outputFileName, inputFileURLs);
 		if (filesConcatinated)
 			deleteFiles(inputFileURLs);
 		return filesConcatinated;

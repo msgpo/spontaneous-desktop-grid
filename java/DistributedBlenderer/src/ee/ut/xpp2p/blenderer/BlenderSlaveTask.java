@@ -51,10 +51,7 @@ public class BlenderSlaveTask extends Task implements Serializable {
 				.getMasterTaskID());
 		Properties props = System.getProperties();
 		tempDir = props.getProperty("java.io.tmpdir");
-		if (!tempDir.endsWith(File.separator))
-		{
-			tempDir += File.separator;
-		}
+		if (!tempDir.endsWith(File.separator)) tempDir += File.separator;
 		
 		try {
 			renderTask(renderTask);
@@ -62,7 +59,7 @@ public class BlenderSlaveTask extends Task implements Serializable {
 			result.setEndFrame(renderTask.getEndFrame());
 			result.setStartFrame(renderTask.getStartFrame());
 			String fileName = FileUtil.generateOutputFileName(renderTask.getStartFrame(), renderTask.getEndFrame(), renderTask.getExtension());
-			result.setFileName(fileName);			
+			result.setFileName(fileName);
 			String outputFile = tempDir + fileName;
 			result.setRenderedPart(FileUtil.loadFile(outputFile));
 			masterProxy.sendMessage(result);
@@ -91,10 +88,7 @@ public class BlenderSlaveTask extends Task implements Serializable {
 		{
 			Properties props = System.getProperties();
 			tempDir = props.getProperty("java.io.tmpdir");
-			if (!tempDir.endsWith(File.separator))
-			{
-				tempDir += File.separator;
-			}
+			if (!tempDir.endsWith(File.separator)) tempDir += File.separator;
 		}
 		String fullBlenderFileName = tempDir + blenderFileName;
 		System.out.println("Filename = " + fullBlenderFileName);
