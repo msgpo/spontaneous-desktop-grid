@@ -14,7 +14,6 @@ public class RenderTask implements Serializable {
 	
 	private String fileName;
 	private byte[] blenderFile;
-	private String outputLocation;
 	private String fileFormat;
 	private long startFrame;
 	private long endFrame;

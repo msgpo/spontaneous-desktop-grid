@@ -128,5 +128,4 @@ public class BlenderSlaveTask extends Task implements Serializable {
 		}
 		proc.destroy();
 	}
-
 }
