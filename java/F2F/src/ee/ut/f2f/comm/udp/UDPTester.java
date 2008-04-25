@@ -150,7 +150,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	
 	public void run()
 	{
-		// do not start TCP tests before SocketComm providers are initialized
+		// do not start UDP tests before UDPComm providers are initialized
 		if (!UDPCommInitiator.isInitialized()) return;
 		
 		F2FComputing.addMessageListener(UDPTestMessage.class, this);
