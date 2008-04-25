@@ -474,7 +474,7 @@ public class UDPConnection extends Thread implements Activity{
 				
 				byte[] receivedBytes = receive();
 				
-				if (receivedBytes.length <= connectionId.toString().getBytes().length){
+				//if (receivedBytes.length <= connectionId.toString().getBytes().length){
 					log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");
 					String rs = new String(receivedBytes);
 					log.debug("Received string [" + rs + "]");
@@ -483,7 +483,7 @@ public class UDPConnection extends Thread implements Activity{
 					} else {
 					
 					}
-				} else {
+				/*} else {
 					//Testing data transfer
 					BufferedOutputStream bos = null;
 					try{
@@ -494,6 +494,7 @@ public class UDPConnection extends Thread implements Activity{
 						log.error("Unable to write file",e);
 					}
 				}
+				*/
 				errors = 0;
 				timeouts = 0;
 				this.status = Status.CONNECTION_ESTABLISHED;
