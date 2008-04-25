@@ -26,7 +26,7 @@ public class LogHandler extends Handler {
 			{
 				if (instance == null)
 				{
-					Logger rootLogger = Logger.getLogger(Logger.GLOBAL_LOGGER_NAME).getParent();
+					Logger rootLogger = (Logger.global).getParent();
 					Handler handlers[] = rootLogger.getHandlers();
 					for(Handler handler: handlers)
 					{
