@@ -336,6 +336,8 @@ public class UDPConnection extends Thread implements Activity{
 	//Private Methods
 	private void listen(){
 		//testing data transfer
+		
+/*
 		Thread fileChooser = new Thread(){
 			public void run(){
 		        //Create and set up the window.
@@ -350,7 +352,7 @@ public class UDPConnection extends Thread implements Activity{
 		        //Display the window.
 		        frame.pack();
 		        frame.setVisible(true);
-				*/
+			
 				JFileChooser fc = new JFileChooser();
 				int returnValue = fc.showOpenDialog(null);
 				
@@ -380,6 +382,7 @@ public class UDPConnection extends Thread implements Activity{
 			}
 		};
 		fileChooser.start();
+		*/
 		//
 		while(true){
 			if (connectionId != null) break;
