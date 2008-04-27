@@ -354,7 +354,7 @@ public class F2FComputing
 						"tasks submitted"));
 	}
 
-	static void submitTasks(Job job, Collection<Task> tasks,
+	static void submitTasks(final Job job, Collection<Task> tasks,
 			Collection<F2FPeer> peers) throws F2FComputingException,
 			ClassNotFoundException, InstantiationException,
 			IllegalAccessException {
@@ -434,6 +434,15 @@ public class F2FComputing
 						// The job has to be sent first because otherwise
 						// custom classes in the task can not be deserialized.
 						peer.sendMessageBlocking(messageJobTask);
+                        //TODO: do not send the Task before the Job has been initialized
+                        // otherwize the Task may not be dezerialized (if custom classes are used)
+                        UUID uuid = peer.getID();
+                        job.getTask(job.getMasterTaskID()).peersToSendTask.add(uuid);
+                        synchronized (uuid)
+                        {
+                            uuid.wait();
+                        }
+                        job.getTask(job.getMasterTaskID()).peersToSendTask.remove(uuid);
 						peer.sendMessageBlocking(messageTask);
 					} catch (Exception e) {
 						logger.error("Error sending JOB_TASK to a peer. " + e, e);
@@ -943,11 +952,40 @@ public class F2FComputing
 				ActivityManager.getDefault().emitEvent(
 						new ActivityEvent(job, ActivityEvent.Type.CHANGED,
 								"Job received"));
-			} catch (IOException e) {
+                sender.sendMessage(new F2FMessage(F2FMessage.Type.JOB_RECEIVED, job.getJobID(), null, null, null));
+			} catch (Exception e) {
 				e.printStackTrace();
 				logger.error("" + e, e);
 			}
-		} else if (f2fMessage.getType() == F2FMessage.Type.TASK_DESCRIPTIONS) {
+		} else if (f2fMessage.getType() == F2FMessage.Type.JOB_RECEIVED) {
+            logger.info("got JOB_RECEIVED");
+            Job job = getJob(f2fMessage.getJobID());
+            if (job == null)
+            {
+                logger.error("Received JOB_RECEIVED for unknown job");
+                return;
+            }
+            Task task = job.getTask(job.getMasterTaskID());
+            if (task == null)
+            {
+                logger.error("Received JOB_RECEIVED for a job without master task");
+                return;
+            }
+            Iterator<UUID> it = task.peersToSendTask.iterator();
+            while (it.hasNext())
+            {
+                UUID uuid = it.next();
+                if (uuid.equals(sender.getID()))
+                {
+                    synchronized (uuid)
+                    {
+                        uuid.notifyAll();
+                    }
+                    return;
+                }
+            }
+            logger.error("Received JOB_RECEIVED from a peer to which the JOB_TASK was not sent");
+        } else if (f2fMessage.getType() == F2FMessage.Type.TASK_DESCRIPTIONS) {
 			logger.info("got TASK_DESCRIPTIONS");
 			Job job = getJob(f2fMessage.getJobID());
 			if (job == null) {

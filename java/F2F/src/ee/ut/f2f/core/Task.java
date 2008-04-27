@@ -1,8 +1,10 @@
 package ee.ut.f2f.core;
 
+import java.util.ArrayList;
 import java.util.Collection;
 import java.util.HashMap;
 import java.util.Map;
+import java.util.UUID;
 
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
@@ -227,4 +229,7 @@ public abstract class Task extends Thread implements Activity
             }
 		}
 	}
+    
+    //master task specific list
+    Collection<UUID> peersToSendTask = new ArrayList<UUID>();
 }
