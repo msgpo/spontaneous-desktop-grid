@@ -20,9 +20,10 @@
 package ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.section2.sor;
 
 import java.util.Random;
+
 import ee.ut.f2f.core.mpi.MPI;
-import ee.ut.f2f.core.mpi.MPIException;
 import ee.ut.f2f.core.mpi.MPITask;
+import ee.ut.f2f.core.mpi.exceptions.MPIException;
 
 public class JGFSORBench extends SOR {
 

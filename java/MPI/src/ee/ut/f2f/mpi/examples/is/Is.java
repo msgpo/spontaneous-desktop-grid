@@ -572,7 +572,7 @@ public class Is extends MPITask {
 		ai[0] = a;
 		randlc(ai, a);
 
-		MPI().Init(this, 4, 2);
+		MPI().Init(4, 2);
 		comm_size = MPI().COMM_WORLD().Size();
 		my_rank = MPI().COMM_WORLD().Rank();
 

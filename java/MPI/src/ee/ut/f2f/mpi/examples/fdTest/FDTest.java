@@ -10,7 +10,7 @@ public class FDTest extends MPITask {
 		int BUF_SIZE = 10000;
 		int numloop = 0;
 
-		MPI().Init(this, 3);
+		MPI().Init(3);
 		int myRank = MPI().COMM_WORLD().Rank();
 
 		long[] sendBuf = new long[BUF_SIZE];

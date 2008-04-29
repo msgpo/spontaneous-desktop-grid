@@ -335,7 +335,6 @@ public class Comm {
 	public Status Sendrecv(Object sendBuffer, int sendOffset, int sendCount, Datatype sendType, int dest, int sendTag, Object recvBuffer, int recvOffset, int recvCount, Datatype recvType, int source, int recvTag) {
 		Request req = Irecv(recvBuffer, recvOffset, recvCount, recvType, source, recvTag);
 		Send(sendBuffer, sendOffset, sendCount, sendType, dest, sendTag);
-
 		return req.Wait(); // return status
 	}
 

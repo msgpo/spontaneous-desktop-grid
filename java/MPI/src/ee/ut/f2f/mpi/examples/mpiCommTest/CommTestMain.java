@@ -32,7 +32,7 @@ public abstract class CommTestMain extends MPITask {
 	}
 
 	public void runTask() {
-		MPI().Init(this);
+		MPI().Init();
 		rank = MPI().COMM_WORLD().Rank();
 		size = MPI().COMM_WORLD().Size();
 		getMPIDebug().setDebugLevel(0);

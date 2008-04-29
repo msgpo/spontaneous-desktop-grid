@@ -25,8 +25,8 @@
 package ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.section3.moldyn;
 
 import ee.ut.f2f.core.mpi.MPI;
-import ee.ut.f2f.core.mpi.MPIException;
 import ee.ut.f2f.core.mpi.MPITask;
+import ee.ut.f2f.core.mpi.exceptions.MPIException;
 import ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.jgfutil.JGFSection3;
 
 public abstract class md extends JGFSection3 {

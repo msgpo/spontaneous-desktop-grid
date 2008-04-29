@@ -38,8 +38,8 @@ package ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.section2.crypt;
 import java.util.Random;
 
 import ee.ut.f2f.core.mpi.MPI;
-import ee.ut.f2f.core.mpi.MPIException;
 import ee.ut.f2f.core.mpi.MPITask;
+import ee.ut.f2f.core.mpi.exceptions.MPIException;
 import ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.jgfutil.JGFSection2;
 
 abstract class IDEATest extends JGFSection2 

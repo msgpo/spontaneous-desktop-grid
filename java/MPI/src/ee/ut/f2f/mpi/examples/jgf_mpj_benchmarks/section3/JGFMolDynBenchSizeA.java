@@ -26,7 +26,7 @@ public class JGFMolDynBenchSizeA extends JGFMolDynBench {
 	public void runTask() {
 		getMPIDebug().setDebugLevel(0);
 		/* Initialise MPI */
-		MPI().Init(this);
+		MPI().Init();
 		rank = MPI().COMM_WORLD().Rank();
 		nprocess = MPI().COMM_WORLD().Size();
 

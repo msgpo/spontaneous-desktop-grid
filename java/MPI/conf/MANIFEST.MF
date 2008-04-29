@@ -1,2 +1,2 @@
 Manifest-Version: 1.0
-F2F-MasterTask: ee.ut.f2f.mpi.examples.is.Is
+F2F-MasterTask: ee.ut.f2f.mpi.examples.games.Moving

@@ -148,7 +148,7 @@ public class Floyd extends MPITask {
 		int p; /* Number of processes */
 		int a[][]; /* matrix block */
 
-		MPI().Init(this,3,2);
+		MPI().Init(3, 2);
 		p = MPI().COMM_WORLD().Size();
 		id = MPI().COMM_WORLD().Rank();
 

@@ -11,7 +11,7 @@ public class RemoteDataTest extends MPITask {
 		getMPIDebug().setDebugLevel(0);
 		int rank;
 
-		MPI().Init(this);
+		MPI().Init();
 
 		rank = MPI().COMM_WORLD().Rank();
 

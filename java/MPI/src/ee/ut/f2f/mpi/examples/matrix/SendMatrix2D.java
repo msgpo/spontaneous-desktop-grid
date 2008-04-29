@@ -9,7 +9,7 @@ public class SendMatrix2D extends MPITask {
 		int x[][] = new int[10][10];
 		int y[][] = new int[10][10];
 
-		MPI().Init(this, 4, 2);
+		MPI().Init(4, 2);
 		int rank = MPI().COMM_WORLD().Rank();
 		// Generate value for matrix X
 		for (int i = 0; i < 10; i++) {

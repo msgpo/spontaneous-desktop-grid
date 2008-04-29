@@ -23,7 +23,7 @@ import ee.ut.f2f.mpi.examples.mpiCommTest.individual.SendRecv;
 public class CommTestIndividual extends MPITask {
 
 	public void runTask() {
-		MPI().Init(this);
+		MPI().Init();
 		getMPIDebug().setDebugLevel(0);
 		getMPIDebug().println((new Date()) + " ************************************** Starting Allgather");
 		(new Allgather(this)).taskBody();

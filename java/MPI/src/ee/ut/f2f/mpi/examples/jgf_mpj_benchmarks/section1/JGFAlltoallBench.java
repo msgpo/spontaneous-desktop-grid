@@ -21,8 +21,8 @@
 package ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.section1;
 
 import ee.ut.f2f.core.mpi.MPI;
-import ee.ut.f2f.core.mpi.MPIException;
 import ee.ut.f2f.core.mpi.MPITask;
+import ee.ut.f2f.core.mpi.exceptions.MPIException;
 import ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.jgfutil.JGFSection1;
 
 public class JGFAlltoallBench extends JGFSection1 {
@@ -200,7 +200,7 @@ public class JGFAlltoallBench extends JGFSection1 {
 
 	public void runTask() {
 		/* Initialise MPI */
-		MPI().Init(this);
+		MPI().Init();
 		rank = MPI().COMM_WORLD().Rank();
 
 		nprocess = MPI().COMM_WORLD().Size();

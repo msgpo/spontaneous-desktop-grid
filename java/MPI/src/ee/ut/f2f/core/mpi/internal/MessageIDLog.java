@@ -40,10 +40,4 @@ public class MessageIDLog {
 			}
 		}
 	}
-
-	public void printInfo() {
-		int numLog = log.size();
-		for (int i = 0; i < numLog; i++)
-			System.out.println("MID = " + log.get(i));
-	}
 }

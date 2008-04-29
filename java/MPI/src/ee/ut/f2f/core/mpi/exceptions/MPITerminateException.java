@@ -1,4 +1,4 @@
-package ee.ut.f2f.core.mpi;
+package ee.ut.f2f.core.mpi.exceptions;
 /**
  * This exception is thrown when we have lost a peer 
  * so that we can't complete the job.

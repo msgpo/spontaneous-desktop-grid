@@ -19,7 +19,7 @@
  **************************************************************************/
 package ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.section3;
 
-import ee.ut.f2f.core.mpi.MPIException;
+import ee.ut.f2f.core.mpi.exceptions.MPIException;
 import ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.jgfutil.JGFSection3;
 import ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.section3.moldyn.JGFMolDynBench;
 import ee.ut.f2f.mpi.examples.jgf_mpj_benchmarks.section3.raytracer.JGFRayTracerBench;
@@ -29,7 +29,7 @@ public class JGFAllSizeB extends JGFSection3 {
 	public void runTask() {
 		getMPIDebug().setDebugLevel(0);
 		/* Initialise MPI */
-		MPI().Init(this);
+		MPI().Init();
 		rank = MPI().COMM_WORLD().Rank();
 		nprocess = MPI().COMM_WORLD().Size();
 

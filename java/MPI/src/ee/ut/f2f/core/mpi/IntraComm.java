@@ -45,42 +45,17 @@ public class IntraComm extends Comm {
 	}
 
 	/**
-	 * Barrier "flat" implementation : rank 0 waits for all other processes to send * 1 msg and sends an answer back.
-	 */
-	private void BarrierFlatImpl() {
-		if (Rank() == MPI.UNDEFINED) {
-			return;
-		}
-		byte[] dummy = new byte[1];
-		if (Rank() == 0) {
-			for (int i = 1; i < Size(); i++) {
-				Recv(dummy, 0, 1, MPI.BYTE, i, systemTAG);
-			}
-			for (int i = 1; i < Size(); i++) {
-				Send(dummy, 0, 1, MPI.BYTE, i, systemTAG);
-			}
-		} else {
-			Send(dummy, 0, 1, MPI.BYTE, 0, systemTAG);
-			Recv(dummy, 0, 1, MPI.BYTE, 0, systemTAG);
-		}
-		systemTAG++;
-	}
-
-	/**
 	 * Barrier Tree implementation : use MPJExpress code for a fair comparison
 	 * 
 	 */
 	private void BarrierTreeImpl() {
 		ProcTree procTree = new ProcTree();
 		procTree.buildTree(Rank(), Size());
-
 		int offset = 0;
 		Datatype type = MPI.BYTE;
 		byte[] dummy = new byte[1];
 		int count = 1;
-
 		// ------------------anti-bcast-------------------
-
 		getMessageHandler().getTask().getMPIDebug().println(MPIDebug.SYSTEM, "BarrierTree start " + procTree.isRoot + " " + procTree.child.length + " " + procTree.numChildren + " " + procTree.parent + " " + systemTAG);
 		if (procTree.isRoot) {
 			for (int i = 0; i < procTree.child.length; i++) {
@@ -89,19 +64,14 @@ public class IntraComm extends Comm {
 				}
 			}
 		} else {
-			if (procTree.parent == -1) {
-				// System.out.println("non root's node parent doesn't exist");
-			}
 			for (int i = 0; i < procTree.child.length; i++) {
 				if (procTree.child[i] != -1) {
 					Recv(dummy, offset, count, type, procTree.child[i], systemTAG - procTree.child[i]);
 				}
 			}
-
 			Send(dummy, offset, count, type, procTree.parent, systemTAG - Rank());
 		}
 		// ------------------bcast-------------------
-
 		if (procTree.isRoot) {
 			for (int i = 0; i < procTree.child.length; i++) {
 				if (procTree.child[i] != -1) {
@@ -109,12 +79,7 @@ public class IntraComm extends Comm {
 				}
 			}
 		} else {
-			if (procTree.parent == -1) {
-				// System.out.println("non root's node parent doesn't exist");
-			}
-
 			Recv(dummy, offset, count, type, procTree.parent, systemTAG - Rank());
-
 			for (int i = 0; i < procTree.child.length; i++) {
 				if (procTree.child[i] != -1) {
 					Send(dummy, offset, count, type, procTree.child[i], systemTAG - procTree.child[i]);
@@ -122,7 +87,6 @@ public class IntraComm extends Comm {
 			}
 		}
 		getMessageHandler().getTask().getMPIDebug().println(MPIDebug.SYSTEM, "BarrierTree end");
-
 	}
 
 	/**
@@ -147,40 +111,10 @@ public class IntraComm extends Comm {
 	 *            MPI Rank of root node
 	 */
 	public void Bcast(Object buffer, int offset, int count, Datatype datatype, int root) {
-
 		if (Rank() == MPI.UNDEFINED) {
 			return;
 		}
 		BcastBinomial(buffer, offset, count, datatype, root);
-	}
-
-	/**
-	 * Broadcast a message to all MPI processes with flat tree method
-	 * 
-	 * @param buffer
-	 *            Send object
-	 * @param offset
-	 *            Offset of send object
-	 * @param count
-	 *            Number of elements
-	 * @param datatype
-	 *            Type of send object
-	 * @param root
-	 *            MPI Rank of root node
-	 */
-	private void BcastFlat(Object buffer, int offset, int count, Datatype datatype, int root) {
-		if (Rank() == root) {
-			// If I'm a root so I broadcast the message
-			for (int i = 0; i < Size(); i++) {
-				if (i != root) {
-					Send(buffer, offset, count, datatype, i, systemTAG);
-				}
-			}
-		} else {
-			// I'm not root so I wait for message
-			Recv(buffer, offset, count, datatype, root, systemTAG);
-		}
-		systemTAG++;
 	}
 
 	/**
@@ -202,15 +136,12 @@ public class IntraComm extends Comm {
 		BinomialTree bt = new BinomialTree(numNode);
 		int maxDegree = bt.getMaxDegree();
 		int[] children = new int[maxDegree + 1];
-
 		int visualRank = Rank() - root;
 		// Rotate Rank
 		if (visualRank < 0) {
 			visualRank += Size();
 		}
-
 		int parent = bt.getParentChildrenInverse(visualRank, children);
-
 		// Recv from Parent
 		// If parent == -1, then it's a root node
 		if (parent != -1) {
@@ -218,7 +149,6 @@ public class IntraComm extends Comm {
 			parent = (parent + root) % numNode;
 			Recv(buffer, offset, count, datatype, parent, systemTAG);
 		}
-
 		// Send to Children
 		int i = 0;
 		while (true) {
@@ -228,7 +158,6 @@ public class IntraComm extends Comm {
 			Send(buffer, offset, count, datatype, ((children[i] + root) % numNode), systemTAG);
 			i++;
 		}
-
 		systemTAG++;
 	}
 
@@ -256,7 +185,6 @@ public class IntraComm extends Comm {
 		if (Rank() == MPI.UNDEFINED) {
 			return;
 		}
-
 		if (op.isCommute()) {
 			ReduceBinomial(sendBuffer, sendOffset, recvBuffer, recvOffset, count, datatype, op, root);
 		} else {
@@ -289,16 +217,13 @@ public class IntraComm extends Comm {
 		BinomialTree bt = new BinomialTree(numNode);
 		int maxDegree = bt.getMaxDegree();
 		int[] children = new int[maxDegree + 1];
-
 		int visualRank = Rank() - root;
 		// Rotate Rank
 		if (visualRank < 0) {
 			visualRank += Size();
 		}
-
 		int parent = bt.getParentChildren(visualRank, children);
 		int baseType = datatype.getBaseType();
-
 		// Convert visualRank to real Rank
 		if (parent != -1) {
 			parent = (parent + root) % Size();
@@ -310,7 +235,6 @@ public class IntraComm extends Comm {
 			}
 			children[i] = (children[i] + root) % Size();
 		}
-
 		Object result = null;
 		Object tmpRecv = null;
 		int dispSeqLen = datatype.getDisplacementSequence().length;
@@ -373,25 +297,18 @@ public class IntraComm extends Comm {
 			tmpRecv = d_tmpRecv;
 			break;
 		}
-
 		// Recv from Childrens
 		int i = 0;
 		while (true) {
 			if (children[i] == -1)
 				break;
-
 			// recv from a child to recvOffer
 			Recv(tmpRecv, 0, count, datatype, children[i], systemTAG);
-			// Recv(recvBuffer, recvOffset, count, datatype, children[i],
-			// systemTAG);
-
 			// do operation between recvBuffer and the result buffer
 			// op.Call(recvBuffer, recvOffset, result, 0, count, datatype);
 			op.Call(tmpRecv, 0, result, 0, count, datatype);
-
 			i++;
 		}
-
 		// Send a result buffer to Parent
 		if (parent != -1) {
 			Send(result, 0, count, datatype, parent, systemTAG);
@@ -399,9 +316,7 @@ public class IntraComm extends Comm {
 			// copy result to recvBuffer
 			copyBuffer(result, 0, recvBuffer, recvOffset, count, datatype);
 		}
-
 		systemTAG++;
-
 	}
 
 	/**
@@ -425,7 +340,6 @@ public class IntraComm extends Comm {
 	 *            MPI rank of root node which maintain the result
 	 */
 	private void ReduceFlat(Object sendBuffer, int sendOffset, Object recvBuffer, int recvOffset, int count, Datatype datatype, Op op, int root) {
-
 		if (Rank() != root) {
 			// If i'm not root, send my sendBuffer to root
 			Send(sendBuffer, sendOffset, count, datatype, root, systemTAG);
@@ -464,7 +378,6 @@ public class IntraComm extends Comm {
 					}
 				}
 				break;
-
 			case Datatype.CHAR:
 				// Put root value in recv
 				char[] ch_send = (char[]) sendBuffer;
@@ -495,7 +408,6 @@ public class IntraComm extends Comm {
 					}
 				}
 				break;
-
 			case Datatype.SHORT:
 				short[] sh_send = (short[]) sendBuffer;
 				short[] sh_recv = (short[]) recvBuffer;
@@ -525,7 +437,6 @@ public class IntraComm extends Comm {
 					}
 				}
 				break;
-
 			case Datatype.INT:
 				int[] i_send = (int[]) sendBuffer;
 				int[] i_recv = (int[]) recvBuffer;
@@ -556,7 +467,6 @@ public class IntraComm extends Comm {
 					}
 				}
 				break;
-
 			case Datatype.LONG:
 				long[] l_send = (long[]) sendBuffer;
 				long[] l_recv = (long[]) recvBuffer;
@@ -587,7 +497,6 @@ public class IntraComm extends Comm {
 					}
 				}
 				break;
-
 			case Datatype.FLOAT:
 				float[] f_send = (float[]) sendBuffer;
 				float[] f_recv = (float[]) recvBuffer;
@@ -617,9 +526,7 @@ public class IntraComm extends Comm {
 					}
 				}
 				break;
-
 			case Datatype.DOUBLE:
-
 				double[] d_send = (double[]) sendBuffer;
 				double[] d_recv = (double[]) recvBuffer;
 				double[] d_tmpBuffer = new double[count * datatype.Extent()];
@@ -675,10 +582,8 @@ public class IntraComm extends Comm {
 		if (Rank() == MPI.UNDEFINED) {
 			return;
 		}
-
 		// Call Reduce by using process rank 0 as root
 		Reduce(sendBuffer, sendOffset, recvBuffer, recvOffset, count, datatype, op, 0);
-
 		// Broadcast a result from reduce operation to all ranks
 		Bcast(recvBuffer, recvOffset, count, datatype, 0);
 	}
@@ -712,92 +617,25 @@ public class IntraComm extends Comm {
 			return;
 		}
 		AlltoallvAsynRotate(sendBuffer, sendOffset, sendCount, sdispls, sendType, recvBuffer, recvOffset, recvCount, rdispls, recvType);
-
-	}
-
-	private void AlltoallvPairWiseSyn(Object sendBuffer, int sendOffset, int[] sendCount, int[] sdispls, Datatype sendType, Object recvBuffer, int recvOffset, int[] recvCount, int[] rdispls, Datatype recvType) {
-		int myRank = Rank();
-		int size = Size();
-		int myPair;
-		for (int i = 1; i < size; i++) {
-			myPair = myRank ^ i;
-			Send(sendBuffer, sendOffset + sdispls[myPair], sendCount[myPair], sendType, myPair, systemTAG);
-			Recv(recvBuffer, recvOffset + rdispls[myPair], recvCount[myPair], recvType, myPair, systemTAG);
-		}
-
-		// Copy sendBuffer to recvBuffer
-		copyBuffer(sendBuffer, sendOffset + sdispls[myRank], recvBuffer, recvOffset + rdispls[myRank], recvCount[myRank], recvType);
 	}
 
 	private void AlltoallvAsynRotate(Object sendBuffer, int sendOffset, int[] sendCount, int[] sdispls, Datatype sendType, Object recvBuffer, int recvOffset, int[] recvCount, int[] rdispls, Datatype recvType) {
 		int myRank = Rank();
 		int mySize = Size();
-
 		// Send to (rank+i)%size
 		int sendTo;
 		for (int i = 1; i < mySize; i++) {
 			sendTo = (myRank + i) % mySize;
 			Send(sendBuffer, sendOffset + sdispls[sendTo], sendCount[sendTo], sendType, sendTo, systemTAG);
 		}
-
 		// Recv from (size + (rank-i))%size
 		int recvFrom;
 		for (int i = 1; i < mySize; i++) {
 			recvFrom = (mySize + (myRank - i)) % mySize;
 			Recv(recvBuffer, recvOffset + rdispls[recvFrom], recvCount[recvFrom], recvType, recvFrom, systemTAG);
 		}
-
 		// Copy sendBuffer to recvBuffer
 		copyBuffer(sendBuffer, sendOffset + sdispls[myRank], recvBuffer, recvOffset + rdispls[myRank], recvCount[myRank], recvType);
-	}
-
-	private void AlltoallvAsyn(Object sendBuffer, int sendOffset, int[] sendCount, int[] sdispls, Datatype sendType, Object recvBuffer, int recvOffset, int[] recvCount, int[] rdispls, Datatype recvType) {
-		int myRank = Rank();
-		// Send
-		for (int sendTo = 0; sendTo < Size(); sendTo++) {
-			if (sendTo != myRank) {
-				Send(sendBuffer, sendOffset + sdispls[sendTo], sendCount[sendTo], sendType, sendTo, systemTAG);
-			}
-		}
-
-		// Recv
-		for (int recvFrom = 0; recvFrom < Size(); recvFrom++) {
-			if (recvFrom != myRank) {
-				Recv(recvBuffer, recvOffset + rdispls[recvFrom], recvCount[recvFrom], recvType, recvFrom, systemTAG);
-			}
-		}
-
-		// Copy sendBuffer to recvBuffer
-		copyBuffer(sendBuffer, sendOffset + sdispls[myRank], recvBuffer, recvOffset + rdispls[myRank], recvCount[myRank], recvType);
-	}
-
-	private void AlltoallvLinear(Object sendBuffer, int sendOffset, int[] sendCount, int[] sdispls, Datatype sendType, Object recvBuffer, int recvOffset, int[] recvCount, int[] rdispls, Datatype recvType) {
-		int sendRank;
-		int sendToRank;
-
-		int sendLoop = 0;
-		int recvLoop = 0;
-
-		for (sendRank = 0; sendRank < Size(); sendRank++) {
-			for (sendToRank = 0; sendToRank < Size(); sendToRank++) {
-				if (sendRank == Rank()) {
-					if (sendToRank == Rank()) {
-						copyBuffer(sendBuffer, sendOffset + sdispls[sendLoop], recvBuffer, recvOffset + rdispls[recvLoop], recvCount[sendLoop], recvType);
-					} else {
-						Send(sendBuffer, sendOffset + sdispls[sendLoop], sendCount[sendLoop], sendType, sendToRank, systemTAG);
-					}
-				} else {
-					if (sendToRank == Rank()) {
-						Recv(recvBuffer, recvOffset + rdispls[recvLoop], recvCount[recvLoop], recvType, sendRank, systemTAG);
-					}
-				}
-
-				sendLoop++;
-
-			}
-			recvLoop++;
-			sendLoop = 0;
-		}
 	}
 
 	/**
@@ -825,40 +663,6 @@ public class IntraComm extends Comm {
 			return;
 		}
 		AlltoallAsynRotate(sendBuffer, sendOffset, sendCount, sendType, recvBuffer, recvOffset, recvCount, recvType);
-		// AlltoallAsyn(sendBuffer, sendOffset, sendCount, sendType, recvBuffer,
-		// recvOffset, recvCount, recvType);
-		// AlltoallLinear(sendBuffer, sendOffset, sendCount, sendType,
-		// recvBuffer, recvOffset, recvCount, recvType);
-
-	}
-
-	private void AlltoallPairWiseAsyn(Object sendBuffer, int sendOffset, int sendCount, Datatype sendType, Object recvBuffer, int recvOffset, int recvCount, Datatype recvType) {
-		int myRank = Rank();
-		int size = Size();
-		int myPair;
-		for (int i = 1; i < size; i++) {
-			myPair = myRank ^ i;
-			Send(sendBuffer, sendOffset + (sendCount * myPair), sendCount, sendType, myPair, systemTAG);
-		}
-		for (int i = 1; i < size; i++) {
-			myPair = myRank ^ i;
-			Recv(recvBuffer, recvOffset + (recvCount * myPair), recvCount, recvType, myPair, systemTAG);
-		}
-		// Copy its sendBuffer to recvBuffer
-		copyBuffer(sendBuffer, sendOffset + (myRank * sendCount), recvBuffer, recvOffset + (myRank * recvCount), recvCount, recvType);
-	}
-
-	private void AlltoallPairWiseSyn(Object sendBuffer, int sendOffset, int sendCount, Datatype sendType, Object recvBuffer, int recvOffset, int recvCount, Datatype recvType) {
-		int myRank = Rank();
-		int size = Size();
-		int myPair;
-		for (int i = 1; i < size; i++) {
-			myPair = myRank ^ i;
-			Send(sendBuffer, sendOffset + (sendCount * myPair), sendCount, sendType, myPair, systemTAG);
-			Recv(recvBuffer, recvOffset + (recvCount * myPair), recvCount, recvType, myPair, systemTAG);
-		}
-		// Copy its sendBuffer to recvBuffer
-		copyBuffer(sendBuffer, sendOffset + (myRank * sendCount), recvBuffer, recvOffset + (myRank * recvCount), sendCount, sendType);
 	}
 
 	private void AlltoallAsynRotate(Object sendBuffer, int sendOffset, int sendCount, Datatype sendType, Object recvBuffer, int recvOffset, int recvCount, Datatype recvType) {
@@ -873,7 +677,6 @@ public class IntraComm extends Comm {
 			sendOffsetCount = sendTo * sendCount;
 			Send(sendBuffer, sendOffset + sendOffsetCount, sendCount, sendType, sendTo, systemTAG);
 		}
-
 		// Recv from (size + (rank - i))%size
 		int recvFrom;
 		for (int i = 1; i < mySize; i++) {
@@ -881,71 +684,8 @@ public class IntraComm extends Comm {
 			recvOffsetCount = recvFrom * recvCount;
 			Recv(recvBuffer, recvOffset + recvOffsetCount, recvCount, recvType, recvFrom, systemTAG);
 		}
-
 		// Copy its sendBuffer to recvBuffer
 		copyBuffer(sendBuffer, sendOffset + (myRank * sendCount), recvBuffer, recvOffset + (myRank * recvCount), recvCount, recvType);
-	}
-
-	private void AlltoallAsyn(Object sendBuffer, int sendOffset, int sendCount, Datatype sendType, Object recvBuffer, int recvOffset, int recvCount, Datatype recvType) {
-		int sendOffsetCount = 0;
-		int recvOffsetCount = 0;
-		int myRank = Rank();
-		// Send
-		for (int sendTo = 0; sendTo < Size(); sendTo++) {
-			if (sendTo != myRank) {
-				Send(sendBuffer, sendOffset + sendOffsetCount, sendCount, sendType, sendTo, systemTAG);
-			}
-			sendOffsetCount += sendCount;
-		}
-
-		// Recv
-		for (int recvFrom = 0; recvFrom < Size(); recvFrom++) {
-			if (recvFrom != myRank) {
-				Recv(recvBuffer, recvOffset + recvOffsetCount, recvCount, recvType, recvFrom, systemTAG);
-			}
-			recvOffsetCount += recvCount;
-		}
-
-		// Copy its sendBuffer to recvBuffer
-		copyBuffer(sendBuffer, sendOffset + (myRank * sendCount), recvBuffer, recvOffset + (myRank * recvCount), recvCount, recvType);
-	}
-
-	// Send Element i-th of all sendBuffer to recvBuffer of rank i
-	private void AlltoallLinear(Object sendBuffer, int sendOffset, int sendCount, Datatype sendType, Object recvBuffer, int recvOffset, int recvCount, Datatype recvType)
-
-	{
-		int sendRank;
-		int sendToRank;
-
-		int sendOffsetCount = 0;
-		int recvOffsetCount = 0;
-
-		// loop for all rank to send
-		for (sendRank = 0; sendRank < Size(); sendRank++) {
-			// loop for all rank as the destination
-			for (sendToRank = 0; sendToRank < Size(); sendToRank++) {
-				// If I am a sender
-				if (sendRank == Rank()) {
-					// and I'm a receiver then just copy to buffer
-					if (sendToRank == Rank()) {
-						copyBuffer(sendBuffer, sendOffset + sendOffsetCount, recvBuffer, recvOffset + recvOffsetCount, recvCount, recvType);
-					} else {
-						Send(sendBuffer, sendOffset + sendOffsetCount, sendCount, sendType, sendToRank, systemTAG);
-					}
-
-				} else {
-					if (sendToRank == Rank()) {
-						Recv(recvBuffer, recvOffset + recvOffsetCount, recvCount, recvType, sendRank, systemTAG);
-					}
-				}
-
-				sendOffsetCount += sendCount;
-
-			}
-			recvOffsetCount += recvCount;
-			sendOffsetCount = 0;
-		}
-
 	}
 
 	/**
@@ -1110,7 +850,6 @@ public class IntraComm extends Comm {
 	private void AllGathervSimple(Object sendBuffer, int sendOffset, int sendCount, Datatype sendType, Object recvBuffer, int recvOffset, int[] recvCount, int[] displs, Datatype recvType) {
 		// Gather to rank 0
 		Gatherv(sendBuffer, sendOffset, sendCount, sendType, recvBuffer, recvOffset, recvCount, displs, recvType, 0);
-
 		// Bcast with size of recvCount
 		int counter = displs[displs.length - 1] + recvCount[recvCount.length - 1];
 		Bcast(recvBuffer, recvOffset, counter, recvType, 0);
@@ -1306,7 +1045,6 @@ public class IntraComm extends Comm {
 	 * @param op
 	 *            operation
 	 */
-
 	public void Scan(Object sendbuf, int sendoffset, Object recvbuf, int recvoffset, int count, Datatype datatype, Op op) {
 		if (Rank() == 0) {
 			// Copy send buffer to recv buffer
@@ -1317,30 +1055,23 @@ public class IntraComm extends Comm {
 			// Do operation
 			op.Call(sendbuf, sendoffset, recvbuf, recvoffset, count, datatype);
 		}
-
 		// If it's not a last RANK send "recvbuf" to rank+1
 		if (Rank() < Size() - 1) {
 			Send(recvbuf, recvoffset, count, datatype, Rank() + 1, systemTAG);
 		}
-
 		systemTAG++;
 	}
 
 	public IntraComm Split(int color, int key) {
 		int mycolor = color;
 		int mykey = key;
-
 		int size = Size();
-
 		int[] colorKey = new int[2];
 		colorKey[0] = mycolor;
 		colorKey[1] = mykey;
-
 		int[] colorKeyTable = new int[2 * size];
-
 		// Collect all colors and keys (AllReduce is faster)
 		Allgather(colorKey, 0, 2, MPI.INT, colorKeyTable, 0, 2, MPI.INT);
-
 		// find key of my color
 		List<int[]> keyRanks = new ArrayList<int[]>();
 		for (int i = 0; i < size; i++) {
@@ -1373,7 +1104,6 @@ public class IntraComm extends Comm {
 
 			numKey = keyRanks.size();
 		}
-
 		int memberSize = sortedKeyRanks.size();
 		int[] myNewRanks = new int[memberSize];
 

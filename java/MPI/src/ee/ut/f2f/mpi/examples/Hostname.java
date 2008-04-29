@@ -9,7 +9,7 @@ public class Hostname extends MPITask {
 	 */
 	public void runTask() {
 		int rank, size;
-		MPI().Init(this);
+		MPI().Init();
 
 		rank = MPI().COMM_WORLD().Rank();
 		size = MPI().COMM_WORLD().Size();

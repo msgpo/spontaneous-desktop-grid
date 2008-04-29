@@ -29,7 +29,7 @@ public class ElectionLCR extends MPITask {
 		int TAGUID = 1;
 		int TAGSTATE = 2;
 
-		MPI().Init(this);
+		MPI().Init();
 		double startTime;
 		Request req = null;
 		Status status = null;

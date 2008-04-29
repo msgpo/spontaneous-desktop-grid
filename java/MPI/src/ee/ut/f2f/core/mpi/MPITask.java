@@ -17,6 +17,7 @@ import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.Task;
 import ee.ut.f2f.core.TaskProxy;
 import ee.ut.f2f.core.mpi.common.RankTable;
+import ee.ut.f2f.core.mpi.exceptions.MPITerminateException;
 import ee.ut.f2f.core.mpi.internal.MPIPresenceListener;
 import ee.ut.f2f.core.mpi.internal.MessageHandler;
 import ee.ut.f2f.core.mpi.message.BasicMessage;
@@ -35,7 +36,7 @@ public abstract class MPITask extends Task {
 	private int myRank; // Rank in MPI
 	private int myRankInList; // Rank in Comm Table
 	private int replicaMaster; // Master Rank of this replica
-	private MPI mpi = new MPI();
+	private MPI mpi = new MPI(this);
 	MPIDebug mpiDebug = null;
 
 	public void messageReceivedEvent(String taskID) {

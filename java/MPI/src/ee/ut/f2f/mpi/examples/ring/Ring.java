@@ -8,7 +8,7 @@ public class Ring extends MPITask {
 		int rank, size, i;
 		int MSGTYPE = 1;
 
-		MPI().Init(this);
+		MPI().Init();
 		double startTime = MPI().Wtime();
 
 		size = MPI().COMM_WORLD().Size();

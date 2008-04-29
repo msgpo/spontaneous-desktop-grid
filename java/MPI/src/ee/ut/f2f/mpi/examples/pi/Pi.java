@@ -12,7 +12,7 @@ public class Pi extends MPITask {
 		int rank, size;
 		double PI25DT = 3.141592653589793238462643;
 		double h, sum, x;
-		MPI().Init(this, 4, 2);
+		MPI().Init(4, 2);
 		size = MPI().COMM_WORLD().Size();
 		rank = MPI().COMM_WORLD().Rank();
 
@@ -36,7 +36,8 @@ public class Pi extends MPITask {
 		}
 		mypi[0] = h * sum;
 
-		MPI().COMM_WORLD().Reduce(mypi, 0, pi, 0, 1, MPI.DOUBLE, MPI.SUM, 0);// Collect results
+		// Collect results
+		MPI().COMM_WORLD().Reduce(mypi, 0, pi, 0, 1, MPI.DOUBLE, MPI.SUM, 0);
 
 		getMPIDebug().println("My part of Pi was " + mypi);
 		if (rank == 0) {

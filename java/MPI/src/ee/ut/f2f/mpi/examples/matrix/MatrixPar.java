@@ -27,7 +27,7 @@ public class MatrixPar extends MPITask {
 
 		long[] computeTime = new long[1];
 		long[] maxComputeTime = new long[1];
-		MPI().Init(this, 4, 2);
+		MPI().Init(4, 2);
 		taskid = MPI().COMM_WORLD().Rank();
 		numtasks = MPI().COMM_WORLD().Size();
 		numworkers = numtasks - 1;

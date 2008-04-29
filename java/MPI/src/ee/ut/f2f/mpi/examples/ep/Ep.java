@@ -57,7 +57,7 @@ public class Ep extends MPITask {
       x = new double [2*nk];
       q = new double [nq];   // [0:nq-1];
 
-      MPI().Init(this);
+      MPI().Init();
       no_nodes = MPI().COMM_WORLD().Size();
       node     = MPI().COMM_WORLD().Rank();
 

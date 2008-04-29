@@ -10,6 +10,8 @@ import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.mpi.common.MapRankTable;
 import ee.ut.f2f.core.mpi.common.RankTable;
 import ee.ut.f2f.core.mpi.common.Tag;
+import ee.ut.f2f.core.mpi.exceptions.MPIAlreadyInitializedException;
+import ee.ut.f2f.core.mpi.exceptions.MPINotInitializedException;
 import ee.ut.f2f.core.mpi.message.MPIMessage;
 import ee.ut.f2f.core.mpi.message.MessageCmd;
 import ee.ut.f2f.util.logging.Logger;
@@ -61,7 +63,8 @@ public class MPI {
 	 * MPI_COMM_WORLD
 	 */
 	private IntraComm COMM_WORLD = null;
-
+	private MPITask task = null;
+	
 	static {
 		// Initialized Basic Datatype
 		BYTE = new Datatype(Datatype.BYTE);
@@ -99,25 +102,30 @@ public class MPI {
 		MINLOC = new Op(Op.MINLOC);
 	}
 
-	public void Init(MPITask task) {
-		Init(task, 0, 0);
+	public MPI(MPITask task) {
+		this.task = task;
 	}
 
-	public void Init(MPITask task, int maxRank) {
-		Init(task, maxRank, 0);
+	public void Init() {
+		Init(0, 0);
+	}
+
+	public void Init(int maxRank) {
+		Init(maxRank, 0);
 	}
 
 	/**
 	 * Initialization the MPI program
 	 * 
-	 * @param task
-	 *            MPITask for F2F integration
 	 * @param maxRank
-	 *            How many ranks to make (master + peers) (if it is 0 then we make 1 rank per peer)
+	 *            An optional parameter, says how many different slave processes we need in calculation. If it is 0, then the value is ignored. If there are more peers then maxRank then the remaining peers will be synchronized peers for backup. 
 	 * @param numOfJobsPerPeer
-	 *            How many processes to make per peer (min 1)
+	 *            An optional parameter, says how many slave processes we submit per peer. If it is 0, then the value is ignored. This value can be used to make virtual peers, so if you have just a few computers in your disposal then the program handles one peer as it where numOfJobsPerPeer different peers. 
 	 */
-	public void Init(MPITask task, int maxRank, int numOfJobsPerPeer) {
+	public void Init(int maxRank, int numOfJobsPerPeer) {
+		if (Initialized()) {
+			throw new MPIAlreadyInitializedException();
+		}
 		task.addPeerPresenceListener();
 		MPIMessage mpiMsg = null;
 		RankTable rankTable = new RankTable();
@@ -235,6 +243,15 @@ public class MPI {
 			throw new MPINotInitializedException();
 		}
 		return COMM_WORLD;
+	}
+	
+	/**
+	 * Says if MPI has been initialized or not
+	 * 
+	 * @return a boolean
+	 */
+	public boolean Initialized() {
+		return COMM_WORLD != null;
 	}
 
 	/**

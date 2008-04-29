@@ -11,3 +11,4 @@ F2F-MasterTask: ee.ut.f2f.mpi.examples.pi.Pi
 F2F-MasterTask: ee.ut.f2f.mpi.examples.ring.ElectionLCR
 F2F-MasterTask: ee.ut.f2f.mpi.examples.ring.Ring
 F2F-MasterTask: ee.ut.f2f.mpi.examples.Hostname
+F2F-MasterTask: ee.ut.f2f.mpi.examples.games.Moving

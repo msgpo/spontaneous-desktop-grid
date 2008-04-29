@@ -14,7 +14,7 @@ import ee.ut.f2f.mpi.examples.mpiCommTest.perfTest.TestSendRecv;
 public class CommTestPref extends MPITask {
 
 	public void runTask() {
-		MPI().Init(this);
+		MPI().Init();
 		getMPIDebug().setDebugLevel(0);
 		getMPIDebug().println((new Date()) + " ************************************** Starting AlltoAll");
 		(new AlltoAll(this)).taskBody();
