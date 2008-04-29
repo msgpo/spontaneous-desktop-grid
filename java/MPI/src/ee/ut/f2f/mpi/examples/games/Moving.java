@@ -27,7 +27,7 @@ public class Moving extends MPITask {
 			dead[i] = 0;
 		}
 		int h = 0;
-		int alive = size;
+		int alive = size - 1;
 		if (rank == 0) {// Master (Server)
 			getMPIDebug().println("Number of players : " + (size - 1));
 			int[][] cor = new int[size][2];
@@ -71,7 +71,7 @@ public class Moving extends MPITask {
 			getMPIDebug().println("The game is over");
 			for (int i = 1; i < size; i++) {
 				if (dead[i] == 0) {
-					getMPIDebug().println("Player " + i + " is survived");
+					getMPIDebug().println("Player " + i + " survived");
 				}
 			}
 		} else {// Slaves (Players)
@@ -107,7 +107,7 @@ public class Moving extends MPITask {
 					}
 				}
 				if (alive == 1) {
-					getMPIDebug().println("all Dead");
+					getMPIDebug().println("Round " + h + " Game over");
 					if (dead[rank] == 0) {
 						getMPIDebug().println("I am the Winner");
 					}
