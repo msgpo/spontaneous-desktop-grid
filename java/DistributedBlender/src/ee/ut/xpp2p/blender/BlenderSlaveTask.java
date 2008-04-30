@@ -1,4 +1,4 @@
-package ee.ut.xpp2p.blenderer;
+package ee.ut.xpp2p.blender;
 
 import java.io.BufferedReader;
 import java.io.File;

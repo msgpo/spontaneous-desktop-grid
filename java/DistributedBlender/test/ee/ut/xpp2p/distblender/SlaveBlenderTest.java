@@ -5,7 +5,7 @@ import java.io.FileInputStream;
 import java.io.InputStream;
 
 import junit.framework.TestCase;
-import ee.ut.xpp2p.blenderer.BlenderSlaveTask;
+import ee.ut.xpp2p.blender.BlenderSlaveTask;
 import ee.ut.xpp2p.exception.NothingRenderedException;
 import ee.ut.xpp2p.model.RenderTask;
 
@@ -15,7 +15,7 @@ import ee.ut.xpp2p.model.RenderTask;
  * @author Jürmo, Andres, Jaan
  * 
  */
-public class SlaveBlendererTest extends TestCase {
+public class SlaveBlenderTest extends TestCase {
 
 	/**
 	 * Tests rendering frames 10 to 13 of a Blender file to the specified output

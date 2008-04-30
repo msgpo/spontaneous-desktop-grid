@@ -18,7 +18,7 @@ import javax.swing.JProgressBar;
 import javax.swing.JTextField;
 import javax.swing.SwingUtilities;
 
-import ee.ut.xpp2p.blenderer.BlenderMasterTask;
+import ee.ut.xpp2p.blender.BlenderMasterTask;
 import ee.ut.xpp2p.model.RenderJob;
 
 /**

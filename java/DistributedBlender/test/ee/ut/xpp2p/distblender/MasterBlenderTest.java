@@ -4,7 +4,7 @@ import java.io.File;
 
 import junit.framework.TestCase;
 import ee.ut.f2f.core.F2FComputingException;
-import ee.ut.xpp2p.blenderer.BlenderMasterTask;
+import ee.ut.xpp2p.blender.BlenderMasterTask;
 import ee.ut.xpp2p.model.RenderJob;
 
 /**
@@ -13,7 +13,7 @@ import ee.ut.xpp2p.model.RenderJob;
  * @author J�rmo, Andres, Jaan
  * 
  */
-public class MasterBlendererTest extends TestCase {
+public class MasterBlenderTest extends TestCase {
 
 	/**
 	 * Tests splitting job into tasks

@@ -4,7 +4,7 @@ import java.awt.event.ActionEvent;
 import java.io.File;
 
 import junit.framework.TestCase;
-import ee.ut.xpp2p.blenderer.BlenderMasterTask;
+import ee.ut.xpp2p.blender.BlenderMasterTask;
 
 /**
  * @author Jürmo
