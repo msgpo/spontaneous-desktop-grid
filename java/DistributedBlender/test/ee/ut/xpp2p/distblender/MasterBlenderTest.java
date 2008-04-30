@@ -8,10 +8,7 @@ import ee.ut.xpp2p.blender.BlenderMasterTask;
 import ee.ut.xpp2p.model.RenderJob;
 
 /**
- * Test case for MasterBlenderer
- * 
- * @author J�rmo, Andres, Jaan
- * 
+ * Test case for BlenderMasterTask
  */
 public class MasterBlenderTest extends TestCase {
 
@@ -102,7 +99,7 @@ public class MasterBlenderTest extends TestCase {
 		job.setEndFrame(14);
 		job.setParticipants(2);
 
-		new MasterBlenderer().renderJob(job);
+		new BlenderMasterTask().renderJob(job);
 
 		File output1 = new File(job.getOutputLocation() + "0010_0012.avi");
 		File output2 = new File(job.getOutputLocation() + "0013_0014.avi");

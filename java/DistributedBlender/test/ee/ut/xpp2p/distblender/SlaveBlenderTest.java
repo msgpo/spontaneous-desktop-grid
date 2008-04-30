@@ -10,10 +10,7 @@ import ee.ut.xpp2p.exception.NothingRenderedException;
 import ee.ut.xpp2p.model.RenderTask;
 
 /**
- * Test case for MasterBlenderer
- * 
- * @author Jürmo, Andres, Jaan
- * 
+ * Test case for BlenderSlaveTask
  */
 public class SlaveBlenderTest extends TestCase {
 
