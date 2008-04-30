@@ -1,2 +1,0 @@
-To speed up this process they create in their instant messenger a chat group and 
-start the dynamic GRID to carry out the distributed rendering task. Extensions 

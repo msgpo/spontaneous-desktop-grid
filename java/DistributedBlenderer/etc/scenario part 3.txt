@@ -1,2 +1,0 @@
-to this scenarios will make use of rendering static scenes with povray 
-http://www.povray.org/ or support video or sound encoding.
