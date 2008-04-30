@@ -1,5 +1,5 @@
 ﻿<?xml version="1.0" encoding="UTF-8"?>
-<project name="F2F-Distributed-Blenderer" default="buildTask" basedir=".">
+<project name="F2F-Distributed-Blender" default="buildTask" basedir=".">
 
 	<!-- Import the proerties file -->
 	<property file="build.xml.properties"/>

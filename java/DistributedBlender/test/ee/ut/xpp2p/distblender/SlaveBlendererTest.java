@@ -1,10 +1,11 @@
-package ee.ut.xpp2p.blenderer;
+package ee.ut.xpp2p.distblender;
 
 import java.io.File;
 import java.io.FileInputStream;
 import java.io.InputStream;
 
 import junit.framework.TestCase;
+import ee.ut.xpp2p.blenderer.BlenderSlaveTask;
 import ee.ut.xpp2p.exception.NothingRenderedException;
 import ee.ut.xpp2p.model.RenderTask;
 

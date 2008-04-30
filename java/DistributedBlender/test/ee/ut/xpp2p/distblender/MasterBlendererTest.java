@@ -1,4 +1,4 @@
-package ee.ut.xpp2p.blenderer;
+package ee.ut.xpp2p.distblender;
 
 import java.io.File;
 
