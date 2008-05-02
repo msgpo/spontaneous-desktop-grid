@@ -117,8 +117,9 @@ class TCPPeer implements Activity
 							if (message instanceof BlockingMessage)
 							{
 								BlockingMessage msg = (BlockingMessage) message;
+                                //NB! send reply before forwarding the message to Core for processing
+                                sendMessage(new BlockingReply(msg));
 								F2FComputing.messageReceived(msg.data, id);
-								sendMessage(new BlockingReply(msg));
 							}
 							else if (message instanceof BlockingReply)
 							{

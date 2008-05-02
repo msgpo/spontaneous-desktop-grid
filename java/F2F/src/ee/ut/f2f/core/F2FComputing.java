@@ -433,11 +433,11 @@ public class F2FComputing
 					try {
 						// The job has to be sent first because otherwise
 						// custom classes in the task can not be deserialized.
-						peer.sendMessageBlocking(messageJobTask);
-                        //TODO: do not send the Task before the Job has been initialized
-                        // otherwize the Task may not be dezerialized (if custom classes are used)
                         UUID uuid = peer.getID();
                         job.getTask(job.getMasterTaskID()).peersToSendTask.add(uuid);
+						peer.sendMessageBlocking(messageJobTask);
+                        // do not send the Task before the Job has been initialized
+                        // otherwize the Task may not be dezerialized (if custom classes are used)
                         synchronized (uuid)
                         {
                             uuid.wait();

@@ -674,8 +674,9 @@ public class SipIMCommunicationProvider
 						if (message instanceof BlockingMessage)
 						{
 							BlockingMessage msg = (BlockingMessage) message;
-							F2FComputing.messageReceived(msg.data, sipPeers.get(evt.getSourceContact().getAddress()).id);
-							sendIMmessage(sipPeers.get(evt.getSourceContact().getAddress()).peer, new BlockingReply(msg));
+//                          NB! send reply before forwarding the message to Core for processing
+                            sendIMmessage(sipPeers.get(evt.getSourceContact().getAddress()).peer, new BlockingReply(msg));
+                            F2FComputing.messageReceived(msg.data, sipPeers.get(evt.getSourceContact().getAddress()).id);
 						}
 						else if (message instanceof BlockingReply)
 						{
