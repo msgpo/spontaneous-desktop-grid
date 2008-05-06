@@ -1030,13 +1030,13 @@ public class IntraComm extends Comm {
 	/**
 	 * Computes the scan (partial reductions) of data on a collection of processes
 	 * 
-	 * @param sendbuf
+	 * @param sendBuffer
 	 *            send buffer
-	 * @param sendoffset
+	 * @param sendOffset
 	 *            send buffer offset
-	 * @param recvbuf
+	 * @param recvBuffer
 	 *            receive buffer
-	 * @param recvoffset
+	 * @param recvOffset
 	 *            receive buffer offset
 	 * @param count
 	 *            number of elements
@@ -1045,19 +1045,19 @@ public class IntraComm extends Comm {
 	 * @param op
 	 *            operation
 	 */
-	public void Scan(Object sendbuf, int sendoffset, Object recvbuf, int recvoffset, int count, Datatype datatype, Op op) {
+	public void Scan(Object sendBuffer, int sendOffset, Object recvBuffer, int recvOffset, int count, Datatype datatype, Op op) {
 		if (Rank() == 0) {
 			// Copy send buffer to recv buffer
-			copyBuffer(sendbuf, sendoffset, recvbuf, recvoffset, count, datatype);
+			copyBuffer(sendBuffer, sendOffset, recvBuffer, recvOffset, count, datatype);
 		} else {
 			// Wait message of rank-1
-			Recv(recvbuf, recvoffset, count, datatype, Rank() - 1, systemTAG);
+			Recv(recvBuffer, recvOffset, count, datatype, Rank() - 1, systemTAG);
 			// Do operation
-			op.Call(sendbuf, sendoffset, recvbuf, recvoffset, count, datatype);
+			op.Call(sendBuffer, sendOffset, recvBuffer, recvOffset, count, datatype);
 		}
 		// If it's not a last RANK send "recvbuf" to rank+1
 		if (Rank() < Size() - 1) {
-			Send(recvbuf, recvoffset, count, datatype, Rank() + 1, systemTAG);
+			Send(recvBuffer, recvOffset, count, datatype, Rank() + 1, systemTAG);
 		}
 		systemTAG++;
 	}
