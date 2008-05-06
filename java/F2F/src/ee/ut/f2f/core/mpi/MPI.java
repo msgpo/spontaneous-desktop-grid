@@ -1,11 +1,8 @@
 package ee.ut.f2f.core.mpi;
 
 import java.net.InetAddress;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Iterator;
 
-import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.mpi.common.MapRankTable;
 import ee.ut.f2f.core.mpi.common.RankTable;
