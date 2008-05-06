@@ -128,7 +128,7 @@ public abstract class MPITask extends Task {
 			getMPIDebug().println(MPIDebug.SYSTEM, "Another try for " + msg);
 			return;
 		}
-		getMPIDebug().println(MPIDebug.SYSTEM + 20, msg);
+		getMPIDebug().println(MPIDebug.SYSTEM + 5, msg);
 		F2FComputing.removePeerPresenceListener(listener);
 		terminated = msg;
 		// If master has done then send nodes a message to quit.

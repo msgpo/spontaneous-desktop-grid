@@ -132,19 +132,9 @@ public class MPI {
 		MapRankTable mapRankTable = new MapRankTable();
 		task.getMPIDebug().println(MPIDebug.START_UP, "task.getJob().getMasterTaskID() = " + task.getJob().getMasterTaskID() + " task.getTaskID() = " + task.getTaskID());
 		if (task.getTaskID().equals(task.getJob().getMasterTaskID())) {
-			// remove local peer
-			F2FPeer peer = F2FComputing.getLocalPeer();
-			Collection<F2FPeer> peers = new ArrayList<F2FPeer>();
-			Collection<F2FPeer> temp = task.getJob().getPeers();
-			Iterator<F2FPeer> it = temp.iterator();
-			while (it.hasNext()) {
-				F2FPeer p = it.next();
-				if (!peer.getID().equals(p.getID())) {
-					peers.add(p);
-				}
-			}
+			Collection<F2FPeer> peers = task.getJob().getPeers();
 			if (maxRank < 1) {
-				maxRank = temp.size();
+				maxRank = peers.size() + 1;
 			}
 			task.getMessageHandler().setSequence(maxRank + 1);
 			task.getMPIDebug().println(MPIDebug.START_UP, "Start master with " + peers.size() + " peers");

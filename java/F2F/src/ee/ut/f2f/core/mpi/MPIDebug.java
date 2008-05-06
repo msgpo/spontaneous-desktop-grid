@@ -8,6 +8,9 @@ import javax.swing.JPanel;
 import javax.swing.JScrollPane;
 import javax.swing.JTextArea;
 
+/**
+ * A debugging util for MPI. If used then each process will have on window.
+ */
 public class MPIDebug {
 	public static int START_UP = 30, SYSTEM = 40, DEFAULT = 50;
 	private int debugLevel = DEFAULT;
@@ -16,6 +19,7 @@ public class MPIDebug {
 	private JPanel panel;
 	private JTextArea console;
 	private StringBuffer line = new StringBuffer();
+	boolean setVisible = true;
 
 	MPIDebug(MPITask task) {
 		frame = new JFrame("F2F DEBUG WINDOW: Task - " + task.getTaskID());
@@ -32,7 +36,7 @@ public class MPIDebug {
 		JScrollPane consoleScroller = new JScrollPane(console);
 		panel.add(consoleScroller);
 
-		frame.setVisible(true);// Kohe nähtavaks
+		frame.setVisible(false);
 	}
 
 	public synchronized void println(String msg) {
@@ -45,6 +49,10 @@ public class MPIDebug {
 
 	public synchronized void println(int level, String msg) {
 		if (level >= getDebugLevel()) {
+			if (setVisible) {
+				setVisible = false;
+				frame.setVisible(true);
+			}
 			try {
 				console.append(level + " " + (new Date()) + " " + line.toString() + msg);
 				line = new StringBuffer();
@@ -58,6 +66,7 @@ public class MPIDebug {
 	}
 
 	public void show(boolean bShow) {
+		setVisible = false;
 		frame.setVisible(bShow);
 		frame.requestFocus();
 	}
