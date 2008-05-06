@@ -17,7 +17,7 @@ public class Moving extends MPITask {
 	public void runTask() {
 		getMPIDebug().println("Starting MPI commands example game");
 		int rank, size;
-		MPI().Init(5, 4);
+		MPI().Init();
 		size = MPI().COMM_WORLD().Size();// Number of players + 1
 		rank = MPI().COMM_WORLD().Rank();
 		Object[] buf = new Object[1];
