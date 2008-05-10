@@ -374,7 +374,7 @@ public class UDPConnection extends Thread implements Activity{
 				content = new UDPPacket(packet.getData());
 			} catch (SocketTimeoutException e) {
 				//if counter == 10 -> send ping
-				if (counter == 10 && this.status == Status.IDLE) {
+				if (counter == 10) {
 					counter = 0;
 					try {
 						send(this.connectionId.toString().getBytes());
