@@ -241,41 +241,40 @@ public class UDPConnection extends Thread implements Activity{
 		
 		//try to send SYN packet
 		this.status = Status.SENDING;
-        int localGenSYN = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
-		UDPPacket content = null;
-		DatagramPacket packet = null;
-		try {
-            byte[] integer = new byte[4]; 
-            integer[0]=(byte)((localGenSYN & 0xff000000)>>>24);
-            integer[1]=(byte)((localGenSYN & 0x00ff0000)>>>16);
-            integer[2]=(byte)((localGenSYN & 0x0000ff00)>>>8);
-            integer[3]=(byte)((localGenSYN & 0x000000ff));
-            content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
-            packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
-			localSocket.send(packet);
-			log.debug("Sent SYN");
-		} catch (IOException e){
-			log.debug("Unable to send SYN packet", e);
-			this.status = Status.CLOSING;
-			return;
-		}
-        
-        try {
-            localSocket.setSoTimeout(5000);
-        } catch (Exception e){
-            log.debug("Unable to set SO_TIMEOUT --> 5000");
-        }
-        synGen = localGenSYN;
-        try
+        synGen = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
+        synchronized(synGen)
         {
-            synchronized(synGen)
+    		UDPPacket content = null;
+    		DatagramPacket packet = null;
+    		try {
+                byte[] integer = new byte[4]; 
+                integer[0]=(byte)((synGen & 0xff000000)>>>24);
+                integer[1]=(byte)((synGen & 0x00ff0000)>>>16);
+                integer[2]=(byte)((synGen & 0x0000ff00)>>>8);
+                integer[3]=(byte)((synGen & 0x000000ff));
+                content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
+                packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
+    			localSocket.send(packet);
+    			log.debug("Sent SYN");
+    		} catch (IOException e){
+    			log.debug("Unable to send SYN packet", e);
+    			this.status = Status.CLOSING;
+    			return;
+    		}
+            
+            try {
+                localSocket.setSoTimeout(5000);
+            } catch (Exception e){
+                log.debug("Unable to set SO_TIMEOUT --> 5000");
+            }
+            try
             {
-            	log.debug("Starting waiting for SYN-ACK");
+                log.debug("Starting waiting for SYN-ACK");
                 synGen.wait();
                 log.debug("Stopping waiting for SYN-ACK");
-            }
-        } catch (InterruptedException e1){}
-        synGen = null;
+            } catch (InterruptedException e1){}
+            synGen = null;
+        }
 		
 		log.debug("Received SYN-ACK");
 		log.debug("Sending [" + Arrays.toString(bytes) + "]");
