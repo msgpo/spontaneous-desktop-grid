@@ -327,15 +327,23 @@ public class UDPConnection extends Thread implements Activity{
 				//if counter == 10 -> send ping
 				if (counter == 10) {
 					counter = 0;
-					try {
-                        log.debug("Sending ID-PING ...");
-						send(this.connectionId.toString().getBytes());
-						log.debug("Sent ID-PING");
-						continue;
-					} catch (CommunicationFailedException e1) {
-						log.error("Unable to send PING",e1);
-                        continue;
-					}
+				    log.debug("Sending ID-PING ...");
+                    
+                    new Thread ()
+                    {
+                        public void run()
+                        {
+					        try
+                            {
+                                send(connectionId.toString().getBytes());
+                            } catch (CommunicationFailedException e)
+                            {
+                                log.warn("error Sending ID-PING ...", e);
+                            }
+                        }
+                    }.start();
+					log.debug("Sent ID-PING");
+					continue;
 				} else {
 					counter++;
 					log.debug("counter [" + counter + "]");
