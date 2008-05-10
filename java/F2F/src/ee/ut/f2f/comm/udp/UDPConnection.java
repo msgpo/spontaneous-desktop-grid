@@ -270,7 +270,9 @@ public class UDPConnection extends Thread implements Activity{
         {
             synchronized(synGen)
             {
+            	log.debug("Starting waiting for SYN-ACK");
                 synGen.wait();
+                log.debug("Stopping waiting for SYN-ACK");
             }
         } catch (InterruptedException e1){}
         synGen = null;
