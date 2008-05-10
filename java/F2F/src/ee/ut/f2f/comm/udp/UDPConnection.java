@@ -243,9 +243,6 @@ public class UDPConnection extends Thread implements Activity{
 		UDPPacket content = null;
 		DatagramPacket packet = null;
 		try {
-			if (localSocket.getSoTimeout() != RECEIVE_SO_TIMEOUT){
-				localSocket.setSoTimeout(RECEIVE_SO_TIMEOUT);
-			}
             byte[] integer = new byte[4]; 
             integer[0]=(byte)((localGenSYN & 0xff000000)>>>24);
             integer[1]=(byte)((localGenSYN & 0x00ff0000)>>>16);
