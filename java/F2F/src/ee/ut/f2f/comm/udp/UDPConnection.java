@@ -79,9 +79,9 @@ public class UDPConnection extends Thread implements Activity{
 	private enum Status{
 		INIT,
 		GOT_MAPPED_ADDRESS,
-		HOLE_PUNCHING,
-		HOLE_PUNCHING_TIMEOUT,
+		//HOLE_PUNCHING_TIMEOUT,
 		CONNECTION_ESTABLISHED,
+        READY_TO_LISTEN,
         IDLE,
 		CLOSING,
 		SENDING,
@@ -171,7 +171,7 @@ public class UDPConnection extends Thread implements Activity{
 				log.warn("Illegal message type at this moment [" + udpm.type + "]"
 							+ " status [" + this.status + "]");
 			}
-		} else if (this.status == Status.HOLE_PUNCHING) {
+		} else if (this.status == Status.GOT_MAPPED_ADDRESS) {
 			if (udpm.type == UDPTestMessage.Type.RECEIVED_PING){
 				this.status = Status.CONNECTION_ESTABLISHED;
 			} else if (udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS){
@@ -181,7 +181,8 @@ public class UDPConnection extends Thread implements Activity{
 							 + " Illegal message type at this moment [" 
 							 + udpm.type + "]"
 							 + " status [" + this.status + "]");
-			}			
+			}
+        } else if (this.status == Status.CONNECTION_ESTABLISHED) {
  		} else {
 			log.warn(" " + getName() 
 						 + " Illegal message type at this moment [" 
@@ -279,8 +280,8 @@ public class UDPConnection extends Thread implements Activity{
 	}
 
 	//Private Methods
-	private void listen(){
-
+	private void listen()
+    {
         ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.CHANGED,
 				"ID [" + connectionId.toString() + "] listening for incoming packets"));
@@ -695,7 +696,7 @@ public class UDPConnection extends Thread implements Activity{
 		
 		//start Hole Punching
 		punchHole();
-		if (this.status == Status.HOLE_PUNCHING_TIMEOUT){
+		if (this.status != Status.CONNECTION_ESTABLISHED){
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 					ActivityEvent.Type.FINISHED,
 					"test failed"));
@@ -707,7 +708,7 @@ public class UDPConnection extends Thread implements Activity{
 					"closed"));
 			log.warn(((connectionId == null) ? " UDPTest " : ("UDP Connedtion ID ["
 						+ connectionId.toString() + "]")) + " closed");
-		} else if (this.status == Status.CONNECTION_ESTABLISHED){
+		} else {
 			//connection established, start listening
 			exchangeID();
             this.status = Status.IDLE;
@@ -715,14 +716,13 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
+    private boolean holePunchTimeout = false;
 	private void punchHole(){
 		log.debug(getActivityName() + "Hole Punching");
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.CHANGED,
 				"Hole Punching"));
-		
-		this.status = Status.HOLE_PUNCHING;
-		
+				
 		try {
 			localSocket.setSoTimeout(HOLE_PUNCHING_SO_TIMEOUT);
 		} catch (SocketException e2) {
@@ -736,7 +736,7 @@ public class UDPConnection extends Thread implements Activity{
 				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1];
 				int counter = 1;
 				for( int n = 0; n < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT && 
-					  status != Status.HOLE_PUNCHING_TIMEOUT && 
+					  !holePunchTimeout && 
 					  status != Status.CLOSING;
 					  /* status != Status.CONNECTION_ESTABLISHED */ ){	
 					try {
@@ -775,11 +775,11 @@ public class UDPConnection extends Thread implements Activity{
 						  ) {
 							counter++;
 							if (counter == AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT){
-								status = Status.HOLE_PUNCHING_TIMEOUT;
+                                holePunchTimeout = true;
 							}
 						} else {
 							log.warn("Hole punching timeout, no result, stopping thread");
-							status = Status.HOLE_PUNCHING_TIMEOUT;
+                            holePunchTimeout = true;
 						}
 					} catch (Exception e) {
 						log.warn("Exception receiving PING packet",e);
@@ -791,7 +791,7 @@ public class UDPConnection extends Thread implements Activity{
 		int port = this.remoteMappedAddress.getPort();
 		for (int afcr = 0, c = 0, counter = 0; 
 			   afcr < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT &&
-			   status != Status.HOLE_PUNCHING_TIMEOUT && 
+			   !holePunchTimeout && 
 			   status != Status.CLOSING; 
 			 c++){
 			   /* status != Status.CONNECTION_ESTABLISHED; */
@@ -809,7 +809,7 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (IllegalArgumentException e){
 				if (p > 65535 || p < 1024){
 					log.error("Remote Port number out of range [" + p + "]", e);
-					status = Status.HOLE_PUNCHING_TIMEOUT;
+                    holePunchTimeout = true;
 				}
 			} catch (SocketException e1) {
 				log.error(getActivityName() +  " " + e1.getMessage(),e1);
@@ -817,7 +817,6 @@ public class UDPConnection extends Thread implements Activity{
 			if (sendPacket == null){
 				continue;
 			}
-			
 			
 			try{
 					localSocket.send(sendPacket);
@@ -847,6 +846,10 @@ public class UDPConnection extends Thread implements Activity{
 				c = 0;
 			}
 		}
+        try
+        {
+            udpListener.join();
+        } catch (InterruptedException e){}
 	}
 	
 	private void exchangeMappedAddress() throws CommunicationFailedException{
