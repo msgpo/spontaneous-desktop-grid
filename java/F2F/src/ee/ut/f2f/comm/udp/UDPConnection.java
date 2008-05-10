@@ -1,9 +1,5 @@
 package ee.ut.f2f.comm.udp;
 
-import java.io.BufferedInputStream;
-import java.io.BufferedOutputStream;
-import java.io.FileInputStream;
-import java.io.FileOutputStream;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
@@ -20,9 +16,6 @@ import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
 import java.util.UUID;
-
-import javax.swing.JFileChooser;
-import javax.swing.JOptionPane;
 
 import de.javawi.jstun.attribute.ChangeRequest;
 import de.javawi.jstun.attribute.MappedAddress;
@@ -272,6 +265,7 @@ public class UDPConnection extends Thread implements Activity{
 		//wait for SYN-ACK packet
 		try {
 			localSocket.receive(packet);
+			//log.debug("Received [" + Arrays.toString(packet.getData()) + "]");
 			content = new UDPPacket(packet.getData());
 		} catch (IOException e){
 			log.debug("Unable to receive packet", e);
@@ -335,55 +329,7 @@ public class UDPConnection extends Thread implements Activity{
 	
 	//Private Methods
 	private void listen(){
-		//testing data transfer
-		
-/*
-		Thread fileChooser = new Thread(){
-			public void run(){
-		        //Create and set up the window.
-		       /*
-				JFrame frame = new JFrame("Temp");
-		        frame.setDefaultCloseOperation(JFrame.EXIT_ON_CLOSE);
 
-		        JLabel emptyLabel = new JLabel("");
-		        emptyLabel.setPreferredSize(new Dimension(175, 100));
-		        frame.getContentPane().add(emptyLabel, BorderLayout.CENTER);
-
-		        //Display the window.
-		        frame.pack();
-		        frame.setVisible(true);
-			
-				JFileChooser fc = new JFileChooser();
-				int returnValue = fc.showOpenDialog(null);
-				
-				 if(returnValue == JFileChooser.APPROVE_OPTION) {
-				       log.debug("You chose to open this file: " +
-				            fc.getSelectedFile().getName());
-				       BufferedInputStream bios = null;
-				       try{
-				    	   bios = new BufferedInputStream(new FileInputStream(fc.getSelectedFile()));
-				    	   byte[] bytes = new byte[bios.available()];
-				    	   bios.read(bytes);
-				    	   bios.close();
-				    	   log.debug("Total bytes [" + bytes.length + "]");
-				    	   //
-				    	   Object[] options = { "OK", "CANCEL" };
-				    	   JOptionPane.showOptionDialog(null, "Click OK to continue", "Warning",
-
-				    	               JOptionPane.DEFAULT_OPTION, JOptionPane.WARNING_MESSAGE,
-
-				    	               null, options, options[0]);
-				    	   //
-				    	   send(bytes);
-				       } catch (Exception e) {
-				    	   log.error("Unable to send selected file",e);
-				       }
-				 }
-			}
-		};
-		fileChooser.start();
-		*/
-		//
 		while(true){
 			if (connectionId != null) break;
 			try{
@@ -478,27 +424,13 @@ public class UDPConnection extends Thread implements Activity{
                 // deserialize the data and 
                 // forward received object to the Core
 				
-				//if (receivedBytes.length <= connectionId.toString().getBytes().length){
-					log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");
-					String rs = new String(receivedBytes);
-					log.debug("Received string [" + rs + "]");
-					if (this.connectionId.toString().equals(rs)){
-						log.debug("Received ID-PING from paired connection");
-					} else {
-					
-					}
-				/*} else {
-					//Testing data transfer
-					BufferedOutputStream bos = null;
-					try{
-						bos = new BufferedOutputStream(new FileOutputStream("./received.tmp",true));
-						bos.write(receivedBytes);
-						bos.close();
-					} catch (IOException e){
-						log.error("Unable to write file",e);
-					}
+				log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");
+				String rs = new String(receivedBytes);
+				log.debug("Received string [" + rs + "]");
+				if (this.connectionId.toString().equals(rs)){
+					log.debug("Received ID-PING from paired connection");
 				}
-				*/
+				
 				errors = 0;
 				timeouts = 0;
 				this.status = Status.CONNECTION_ESTABLISHED;
@@ -1224,8 +1156,8 @@ public class UDPConnection extends Thread implements Activity{
 				"Port Mapping Rule Discovery"));
 		this.status = Status.DISCOVERING_PORT_MAPPING_RULE;
 		
-		Collection<InetSocketAddress> stunServers = LocalStunInfo.getInstance().getStunServers(this.localSocket.getLocalAddress());
-		Collections.shuffle((List<InetSocketAddress>) stunServers);
+		Collection<InetSocketAddress> stunServers = Collections.synchronizedCollection(LocalStunInfo.getInstance().getStunServers(this.localSocket.getLocalAddress()));
+		//Collections.shuffle(stunServers);
 		
 		Integer rule = null;
 		int previousMappedPort = -1;
