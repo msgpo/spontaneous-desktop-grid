@@ -44,7 +44,7 @@ public class UDPConnection extends Thread implements Activity{
 	//SO Timeouts
 	private final static int RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT = 1000;
 	private final static int HOLE_PUNCHING_SO_TIMEOUT = 10000;
-	private final static int SEND_SO_TIMEOUT = 500;
+	private final static int SEND_SO_TIMEOUT = 3000;
 	private final static int RECEIVE_SO_TIMEOUT = 0;
 	
 	//Connection failed after ...
