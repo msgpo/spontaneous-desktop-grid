@@ -318,7 +318,9 @@ public class UDPConnection extends Thread implements Activity{
 			UDPPacket content = null;
 			//try to receive
 			try {
+                log.debug("Receive Starting >>>>>>");
                 receive(packet);
+                log.debug("Receive Stopping <<<<<<");
 				content = new UDPPacket(packet.getData());
 			} catch (SocketTimeoutException e) {
 				//if counter == 10 -> send ping
