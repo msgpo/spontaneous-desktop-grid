@@ -608,6 +608,13 @@ public class UDPConnection extends Thread implements Activity{
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.STARTED,
 				"Init"));
+		
+		try{
+			localSocket.setSoTimeout(5000);
+		} catch (Exception e){
+			
+		}
+		
 		// if behind Symmetric firewall try to guess the allocated port
 		if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()){
 			while(LocalStunInfo.getInstance().getStunServers(
@@ -923,7 +930,9 @@ public class UDPConnection extends Thread implements Activity{
 		//listen for incoming packets
 		try{	
 			DatagramPacket receiveDp = new DatagramPacket(new byte[200], 200);
+			log.debug("STUN SERVER MAPPED ADDRESS REQUEST >>>>>");
 			receive(receiveDp);
+			log.debug("STUN SERVER MAPPED ADDRESS REQUEST <<<<<");
 			receiveMh = MessageHeader.parseHeader(receiveDp.getData());
 		} catch (SocketTimeoutException e){
 			log.warn(getActivityName() 
@@ -1072,7 +1081,9 @@ public class UDPConnection extends Thread implements Activity{
 		
 		for(InetSocketAddress stunServer : stunServers){
 			try {
+				log.debug("RESOLVE MAPPED ADDRESS >>>>>>>");
 				InetSocketAddress mappedAddress = resolveMappedAddress(localSocket, stunServer);
+				log.debug("RESOLVE MAPPED ADDRESS <<<<<<<");
 				if ( rule == null && previousMappedPort == -1){
 					previousMappedPort = mappedAddress.getPort();	
 				} else if (rule == null && previousMappedPort > -1){ 
