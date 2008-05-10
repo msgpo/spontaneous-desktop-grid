@@ -232,52 +232,53 @@ public class UDPConnection extends Thread implements Activity{
 	
     private Integer synGen = null;
 	//Main Send Bytes method
-    synchronized void send(final byte[] bytes) throws CommunicationFailedException {
-        synchronized(synGen)
+    synchronized void send(final byte[] bytes) throws CommunicationFailedException
+    {
+        //check if Connection is established
+		if (status != Status.IDLE){
+			throw new CommunicationFailedException("UDP Connection is not established");
+		}
+		
+		//try to send SYN packet
+		this.status = Status.SENDING;
+        int localGenSYN = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
+		UDPPacket content = null;
+		DatagramPacket packet = null;
+		try {
+            byte[] integer = new byte[4]; 
+            integer[0]=(byte)((localGenSYN & 0xff000000)>>>24);
+            integer[1]=(byte)((localGenSYN & 0x00ff0000)>>>16);
+            integer[2]=(byte)((localGenSYN & 0x0000ff00)>>>8);
+            integer[3]=(byte)((localGenSYN & 0x000000ff));
+            content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
+            packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
+			localSocket.send(packet);
+			log.debug("Sent SYN");
+		} catch (IOException e){
+			log.debug("Unable to send SYN packet", e);
+			this.status = Status.CLOSING;
+			return;
+		}
+        
+        try {
+            localSocket.setSoTimeout(5000);
+        } catch (Exception e){
+            log.debug("Unable to set SO_TIMEOUT --> 5000");
+        }
+        synGen = localGenSYN;
+        try
         {
-            //check if Connection is established
-    		if (status != Status.IDLE){
-    			throw new CommunicationFailedException("UDP Connection is not established");
-    		}
-    		
-    		//try to send SYN packet
-    		this.status = Status.SENDING;
-            int localGenSYN = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
-    		UDPPacket content = null;
-    		DatagramPacket packet = null;
-    		try {
-                byte[] integer = new byte[4]; 
-                integer[0]=(byte)((localGenSYN & 0xff000000)>>>24);
-                integer[1]=(byte)((localGenSYN & 0x00ff0000)>>>16);
-                integer[2]=(byte)((localGenSYN & 0x0000ff00)>>>8);
-                integer[3]=(byte)((localGenSYN & 0x000000ff));
-                content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
-                packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
-    			localSocket.send(packet);
-    			log.debug("Sent SYN");
-    		} catch (IOException e){
-    			log.debug("Unable to send SYN packet", e);
-    			this.status = Status.CLOSING;
-    			return;
-    		}
-            
-            try {
-                localSocket.setSoTimeout(5000);
-            } catch (Exception e){
-                log.debug("Unable to set SO_TIMEOUT --> 5000");
-            }
-            synGen = localGenSYN;
-            try
+            synchronized(synGen)
             {
                 synGen.wait();
-            } catch (InterruptedException e1){}
-            synGen = null;
-    		
-    		log.debug("Received SYN-ACK");
-    		log.debug("Sending [" + Arrays.toString(bytes) + "]");
-    		send(bytes,0,bytes.length,false,false);
-    		this.status = Status.IDLE;
-        }
+            }
+        } catch (InterruptedException e1){}
+        synGen = null;
+		
+		log.debug("Received SYN-ACK");
+		log.debug("Sending [" + Arrays.toString(bytes) + "]");
+		send(bytes,0,bytes.length,false,false);
+		this.status = Status.IDLE;
 	}
 
 	//Private Methods
