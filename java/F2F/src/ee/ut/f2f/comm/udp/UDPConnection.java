@@ -828,7 +828,7 @@ public class UDPConnection extends Thread implements Activity{
 		
 		Thread udpListener = new Thread(){
 			public void run(){
-				byte[] receiveContent = new byte["PING".getBytes().length];
+				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1];
 				int counter = 1;
 				for( int n = 0; n < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT && 
 					  status != Status.HOLE_PUNCHING_TIMEOUT && 
