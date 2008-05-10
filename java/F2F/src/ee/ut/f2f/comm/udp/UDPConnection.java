@@ -352,19 +352,20 @@ public class UDPConnection extends Thread implements Activity{
             if (content == null) continue;
             
 			//if received SYN packet
-            synchronized (synGen)
+            
+			if (content.getType() == UDPPacket.SYN)
             {
-    			if (content.getType() == UDPPacket.SYN)
+                if (synGen == null)
                 {
-                    if (synGen == null)
-                    {
-                        receivedSYN();
-                        errors = 0;
-                        timeouts = 0;
-                        this.status = Status.IDLE;
-                        continue;
-                    }
-                    else
+                    receivedSYN();
+                    errors = 0;
+                    timeouts = 0;
+                    this.status = Status.IDLE;
+                    continue;
+                }
+                else
+                {
+                    synchronized (synGen)
                     {
                         log.debug("SYN collision. local gen " + synGen);
                         byte[] integer = content.getData();
@@ -380,8 +381,11 @@ public class UDPConnection extends Thread implements Activity{
                             synGen.notifyAll();
                         }
                     }
-    			}
-                if (content.getType() == UDPPacket.SYN_ACK)
+                }
+			}
+            if (content.getType() == UDPPacket.SYN_ACK)
+            {
+                synchronized (synGen)
                 {
                     synGen.notifyAll();
                 }
