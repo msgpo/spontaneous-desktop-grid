@@ -142,7 +142,7 @@ public class MPI {
 			} catch (Exception e) {
 				throw new RuntimeException(e);
 			}
-			task.getMPIDebug().println(MPIDebug.START_UP, "Info, et peerid on töö kätte saanud");
+			task.getMPIDebug().println(MPIDebug.START_UP, "Info, the peers have got their work");
 			rankTable.addProcess(0, task.getTaskID()); // add self for rank 0
 			mapRankTable.addMap(0, 0);
 			int assignRank = 1;
