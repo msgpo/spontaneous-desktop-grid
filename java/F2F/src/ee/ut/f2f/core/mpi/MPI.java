@@ -59,7 +59,7 @@ public class MPI {
 	/**
 	 * MPI_COMM_WORLD
 	 */
-	private IntraComm COMM_WORLD = null;
+	private TypelessComm COMM_WORLD = null;
 	private MPITask task = null;
 	
 	static {
@@ -212,7 +212,7 @@ public class MPI {
 		}
 
 		// Create comm world
-		COMM_WORLD = new IntraComm(task.getMessageHandler(), rankTable, task.getMyRank(), task.getMyRankInList(), task.getCommSize(), mapRankTable);
+		COMM_WORLD = new TypelessComm(task.getMessageHandler(), rankTable, task.getMyRank(), task.getMyRankInList(), task.getCommSize(), mapRankTable);
 		COMM_WORLD().Barrier();
 	}
 
@@ -225,7 +225,7 @@ public class MPI {
 		COMM_WORLD = null;
 	}
 
-	public IntraComm COMM_WORLD() {
+	public TypelessComm COMM_WORLD() {
 		if (COMM_WORLD == null) {
 			throw new MPINotInitializedException();
 		}
