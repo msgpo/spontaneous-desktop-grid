@@ -842,7 +842,7 @@ public class UDPConnection extends Thread implements Activity{
 			log.error("Unable to set hole punching so_timeout", e2);
 			return;
 		}
-		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 5;
+		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 0;
 		
 		Thread udpListener = new Thread(){
 			public void run(){
