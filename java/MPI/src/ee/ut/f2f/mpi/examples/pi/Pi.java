@@ -12,7 +12,7 @@ public class Pi extends MPITask {
 		int rank, size;
 		double PI25DT = 3.141592653589793238462643;
 		double h, sum, x;
-		MPI().Init(4, 2);
+		MPI().Init();
 		size = MPI().COMM_WORLD().Size();
 		rank = MPI().COMM_WORLD().Rank();
 
@@ -39,7 +39,7 @@ public class Pi extends MPITask {
 		// Collect results
 		MPI().COMM_WORLD().Reduce(mypi, 0, pi, 0, 1, MPI.DOUBLE, MPI.SUM, 0);
 
-		getMPIDebug().println("My part of Pi was " + mypi);
+		getMPIDebug().println("My part of Pi was " + mypi[0]);
 		if (rank == 0) {
 			getMPIDebug().println("Pi is approximately " + pi[0]);
 			getMPIDebug().println("Error is " + (pi[0] - PI25DT));
