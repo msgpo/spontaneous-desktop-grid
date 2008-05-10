@@ -83,7 +83,11 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		this.udpConnections.put(udpConnection.getConnectionId(),udpConnection);
         // if the first connection is made notify the Core about it
         // it means UDP connection can be used!
-        //TODO
+        if (UDPCommProvider.getInstance().getConnection(remotePeer.getID()) == null)
+        {
+            UDPCommProvider.getInstance().setConnection(remotePeer.getID(), 
+                    udpConnections.values().iterator().next());
+        }
 	}
 	
 	public void removeConnection(UDPConnection udpConnection){
@@ -91,7 +95,22 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		this.udpConnections.remove(udpConnection.getConnectionId());
         // if the last connection is removed notify the Core about it
         // it means UDP connection can not be used!
-        //TODO
+        if (UDPCommProvider.getInstance().getConnection(remotePeer.getID()) == udpConnection)
+        {
+            // if the removed connection is the used one
+            // try to replace it with a new one
+            if (udpConnections.isEmpty())
+            {
+                // no UDP connection any more
+                UDPCommProvider.getInstance().setConnection(remotePeer.getID(), null);
+                //TODO: start tester again?
+            }
+            else
+            {
+                UDPCommProvider.getInstance().setConnection(remotePeer.getID(), 
+                        udpConnections.values().iterator().next());
+            }
+        }
 	}
 	
 	public void sendUDPTestMessage(UDPTestMessage udpTestMessage) throws CommunicationFailedException{
