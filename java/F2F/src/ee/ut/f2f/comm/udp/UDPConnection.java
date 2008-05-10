@@ -229,104 +229,57 @@ public class UDPConnection extends Thread implements Activity{
 					ActivityEvent.Type.FAILED, e.getMessage()));
 		}
 	}
-		
+	
+    private Integer synGen = null;
 	//Main Send Bytes method
     synchronized void send(final byte[] bytes) throws CommunicationFailedException {
-		//check if Connection is established
-		if (status != Status.IDLE){
-			throw new CommunicationFailedException("UDP Connection is not established");
-		}
-		
-		//try to send SYN packet
-		this.status = Status.SENDING;
-        int localGenSYN = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
-		UDPPacket content = null;
-		DatagramPacket packet = null;
-		try {
-            byte[] integer = new byte[4]; 
-            integer[0]=(byte)((localGenSYN & 0xff000000)>>>24);
-            integer[1]=(byte)((localGenSYN & 0x00ff0000)>>>16);
-            integer[2]=(byte)((localGenSYN & 0x0000ff00)>>>8);
-            integer[3]=(byte)((localGenSYN & 0x000000ff));
-            content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
-            packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
-			localSocket.send(packet);
-			log.debug("Sent SYN");
-		} catch (IOException e){
-			log.debug("Unable to send SYN packet", e);
-			this.status = Status.CLOSING;
-			return;
-		}
-		
-		//wait for SYN-ACK packet
-		try {
-			try{
-				localSocket.setSoTimeout(5000);
-			} catch (Exception e){
-				log.debug("Unable to set SO_TIMEOUT --> 5000");
-			}
-			localSocket.receive(packet);
-			//log.debug("Received [" + Arrays.toString(packet.getData()) + "]");
-			content = new UDPPacket(packet.getData());
-		} catch (IOException e){
-			log.debug("Unable to receive packet", e);
-            this.status = Status.CLOSING;
-			return;
-		} catch (UDPPacketParseException e) {
-			log.debug("Unable to parse UDP Packet", e);
-            this.status = Status.CLOSING;
-			return;
-		}
-		
-        if (content.getType() == UDPPacket.SYN)
+        synchronized(synGen)
         {
-            log.debug("SYN collision. local gen " + localGenSYN);
-            byte[] integer = content.getData();
-            int remoteGenSyn = 0;
-            for (int i = 0; i < 4; i++) {
-                int shift = (4 - 1 - i) * 8;
-                remoteGenSyn += (integer[i] & 0x000000FF) << shift;
+            //check if Connection is established
+    		if (status != Status.IDLE){
+    			throw new CommunicationFailedException("UDP Connection is not established");
+    		}
+    		
+    		//try to send SYN packet
+    		this.status = Status.SENDING;
+            int localGenSYN = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
+    		UDPPacket content = null;
+    		DatagramPacket packet = null;
+    		try {
+                byte[] integer = new byte[4]; 
+                integer[0]=(byte)((localGenSYN & 0xff000000)>>>24);
+                integer[1]=(byte)((localGenSYN & 0x00ff0000)>>>16);
+                integer[2]=(byte)((localGenSYN & 0x0000ff00)>>>8);
+                integer[3]=(byte)((localGenSYN & 0x000000ff));
+                content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
+                packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
+    			localSocket.send(packet);
+    			log.debug("Sent SYN");
+    		} catch (IOException e){
+    			log.debug("Unable to send SYN packet", e);
+    			this.status = Status.CLOSING;
+    			return;
+    		}
+            
+            try {
+                localSocket.setSoTimeout(5000);
+            } catch (Exception e){
+                log.debug("Unable to set SO_TIMEOUT --> 5000");
             }
-            log.debug("SYN collision. remote gen " + remoteGenSyn);
-            if (localGenSYN > remoteGenSyn)
+            synGen = localGenSYN;
+            try
             {
-                // wait for SYN-ACK packet
-                try {
-                    localSocket.receive(packet);
-                    //log.debug("Received [" + Arrays.toString(packet.getData()) + "]");
-                    content = new UDPPacket(packet.getData());
-                } catch (IOException e){
-                    log.debug("Unable to receive packet", e);
-                    this.status = Status.CLOSING;
-                    return;
-                } catch (UDPPacketParseException e) {
-                    log.debug("Unable to parse UDP Packet", e);
-                    this.status = Status.CLOSING;
-                    return;
-                }
-            }
-            else if (localGenSYN < remoteGenSyn)
-            {
-                receivedSYN();
-                send(bytes);
-                return;
-            }
-        }
-		if (content.getType() == UDPPacket.SYN_ACK){
-			log.debug("Received SYN-ACK");
-			log.debug("Sending [" + Arrays.toString(bytes) + "]");
-			send(bytes,0,bytes.length,false,false);
-			this.status = Status.IDLE;
-		}
-        else
-        {
-            this.status = Status.CLOSING;
-            return;
+                synGen.wait();
+            } catch (InterruptedException e1){}
+            synGen = null;
+    		
+    		log.debug("Received SYN-ACK");
+    		log.debug("Sending [" + Arrays.toString(bytes) + "]");
+    		send(bytes,0,bytes.length,false,false);
+    		this.status = Status.IDLE;
         }
 	}
-	
 
-	
 	//Private Methods
 	private void listen(){
 
@@ -366,7 +319,7 @@ public class UDPConnection extends Thread implements Activity{
 			UDPPacket content = null;
 			//try to receive
 			try {
-				localSocket.receive(packet);
+                receive(packet);
 				content = new UDPPacket(packet.getData());
 			} catch (SocketTimeoutException e) {
 				//if counter == 10 -> send ping
@@ -396,20 +349,53 @@ public class UDPConnection extends Thread implements Activity{
 			}
             
             // at this point we have received something!!!
-			
+            if (content == null) continue;
+            
 			//if received SYN packet
-			if (content != null && content.getType() == UDPPacket.SYN) {
-                receivedSYN();
-                errors = 0;
-                timeouts = 0;
-                this.status = Status.IDLE;
-                continue;
-			}
+            synchronized (synGen)
+            {
+    			if (content.getType() == UDPPacket.SYN)
+                {
+                    if (synGen == null)
+                    {
+                        receivedSYN();
+                        errors = 0;
+                        timeouts = 0;
+                        this.status = Status.IDLE;
+                        continue;
+                    }
+                    else
+                    {
+                        log.debug("SYN collision. local gen " + synGen);
+                        byte[] integer = content.getData();
+                        int remoteGenSyn = 0;
+                        for (int i = 0; i < 4; i++) {
+                            int shift = (4 - 1 - i) * 8;
+                            remoteGenSyn += (integer[i] & 0x000000FF) << shift;
+                        }
+                        log.debug("SYN collision. remote gen " + remoteGenSyn);
+                        if (synGen.intValue() < remoteGenSyn)
+                        {
+                            receivedSYN();
+                            synGen.notifyAll();
+                        }
+                    }
+    			}
+                if (content.getType() == UDPPacket.SYN_ACK)
+                {
+                    synGen.notifyAll();
+                }
+            }
 		}
 	}
 	
 	
-	private void receivedSYN()
+	synchronized private void receive(DatagramPacket packet) throws IOException
+    {
+        localSocket.receive(packet);
+    }
+
+    private void receivedSYN()
     {
         log.debug("Received SYN");
         //send confirmation
@@ -504,7 +490,7 @@ public class UDPConnection extends Thread implements Activity{
 			DatagramPacket rDp = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			try{
-				localSocket.receive(rDp);
+				receive(rDp);
 				content = new UDPPacket(rDp.getData());
 			} catch (SocketTimeoutException e) {
 				log.warn("Timeout waiting for ACK");
@@ -567,7 +553,7 @@ public class UDPConnection extends Thread implements Activity{
 			}
 			//try to receive
 			try{
-				localSocket.receive(packet);
+				receive(packet);
 			} catch (IOException e){
 				log.error("Unable to receive packet", e);
                 this.status = Status.CLOSING;
@@ -712,93 +698,6 @@ public class UDPConnection extends Thread implements Activity{
 			listen();
 		}
 	}
-
-	/*
-	private void passivePing(){
-		while(true){
-			if (connectionId != null) break;
-			try{
-				Thread.sleep(500);
-			} catch (InterruptedException e) {}
-		}
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-				ActivityEvent.Type.CHANGED,
-				"ID [" + connectionId.toString() + "] passive ping"));
-		setName("UDP Connection ID [" + connectionId.toString() + "]");
-		log.info("UDP Connection established, ID [" + connectionId.toString() + "]");
-		log.debug("Entering passive ping mode");
-		
-		final String name = this.getName();
-		Thread listener = new Thread(){
-			public void run(){
-				this.setName(name + " Passive Ping Thread");
-				byte[] receiveContent = new byte[connectionId.toString().getBytes().length];
-				while(status != Status.CLOSING){
-					try{
-						//Send passive ping
-						byte[] sendContent = connectionId.toString().getBytes();
-						DatagramPacket sendPacket = null;
-						try {
-							sendPacket = new DatagramPacket(sendContent,
-															sendContent.length,remoteMappedAddress);
-							
-						} catch (SocketException e1) {
-							log.error(getActivityName() +  " " + e1.getMessage(),e1);
-						}
-						if (sendPacket == null){
-							continue;
-						}
-						
-						try{
-							try{
-								localSocket.send(sendPacket);
-								log.debug(" " + getName() 
-										  + " -> ["
-										  + remoteMappedAddress.getAddress().getHostAddress()
-										  + ":"
-										  + remoteMappedAddress.getPort()
-										  + "]");
-							} catch (IOException e){
-								log.warn(" " + getName() + " Unable to send passive ping to", e);
-							}
-							Thread.sleep(5000);
-						} catch (InterruptedException e) {}
-						
-						DatagramPacket receivePacket = new DatagramPacket(receiveContent,
-																		  receiveContent.length);
-						//Receive input
-						localSocket.receive(receivePacket);
-						String receivedString = new String(receivePacket.getData());
-						UUID receivedId = null;
-						
-						try {
-							receivedId = UUID.fromString(receivedString);
-						} catch (IllegalArgumentException e){
-							log.warn(" " + getName() + " Received [" + new String(receiveContent) + "]");
-						}
-						
-						if (connectionId.equals(receivedId)){
-								log.debug(" " 
-										  + getName()
-										  + " <- ["
-										  + receivePacket.getAddress().getHostAddress()
-										  + ":"
-										  + receivePacket.getPort()
-										  + "]");
-						}
-					} catch (SocketTimeoutException e) {
-						//@TODO
-						
-					} catch (IOException e) {
-						log.warn("I/O Exception receiving PING packet",e);
-					}
-				}
-			}
-		};
-		
-		listener.start();
-	}
-	*/
 	
 	private void punchHole(){
 		log.debug(getActivityName() + "Hole Punching");
@@ -826,7 +725,7 @@ public class UDPConnection extends Thread implements Activity{
 					  /* status != Status.CONNECTION_ESTABLISHED */ ){	
 					try {
 						DatagramPacket receivePacket = new DatagramPacket(receiveContent,receiveContent.length);
-						localSocket.receive(receivePacket);
+						receive(receivePacket);
                         UDPPacket udpp = new UDPPacket(receivePacket.getData());
 						if (UDPPacket.PING == udpp.getType()){
 							log.debug("Received PING packet from ["
@@ -1024,7 +923,7 @@ public class UDPConnection extends Thread implements Activity{
 		//listen for incoming packets
 		try{	
 			DatagramPacket receiveDp = new DatagramPacket(new byte[200], 200);
-			localSocket.receive(receiveDp);
+			receive(receiveDp);
 			receiveMh = MessageHeader.parseHeader(receiveDp.getData());
 		} catch (SocketTimeoutException e){
 			log.warn(getActivityName() 
