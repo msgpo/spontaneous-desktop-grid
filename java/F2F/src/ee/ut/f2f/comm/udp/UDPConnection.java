@@ -252,7 +252,7 @@ public class UDPConnection extends Thread implements Activity{
                 content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
                 packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
     			localSocket.send(packet);
-    			log.debug("Sent SYN");
+    			log.debug("Sent SYN: " + content);
     		} catch (IOException e){
     			log.debug("Unable to send SYN packet", e);
     			this.status = Status.CLOSING;
