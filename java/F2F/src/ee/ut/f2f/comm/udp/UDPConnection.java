@@ -263,6 +263,11 @@ public class UDPConnection extends Thread implements Activity{
 		
 		//wait for SYN-ACK packet
 		try {
+			try{
+				localSocket.setSoTimeout(5000);
+			} catch (Exception e){
+				log.debug("Unable to set SO_TIMEOUT --> 5000");
+			}
 			localSocket.receive(packet);
 			//log.debug("Received [" + Arrays.toString(packet.getData()) + "]");
 			content = new UDPPacket(packet.getData());
