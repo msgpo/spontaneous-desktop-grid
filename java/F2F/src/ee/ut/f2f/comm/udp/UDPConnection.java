@@ -971,11 +971,11 @@ public class UDPConnection extends Thread implements Activity{
 		for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){
 			try{
                 sendUDPTestMessage(new UDPTestMessage(this.mappedAddress,this.portMappingRule));
-				if (this.mappedAddress != null) return;
+				if (this.remoteMappedAddress != null) return;
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {}
 		}
-		if( this.mappedAddress == null){
+		if( this.remoteMappedAddress == null){
 			log.error("Timeout while waiting mapped address");
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 					ActivityEvent.Type.FAILED,
