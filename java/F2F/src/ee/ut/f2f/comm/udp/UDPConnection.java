@@ -280,12 +280,14 @@ public class UDPConnection extends Thread implements Activity{
 		
         if (content.getType() == UDPPacket.SYN)
         {
+            log.debug("SYN collision. local gen " + localGenSYN);
             byte[] integer = content.getData();
             int remoteGenSyn = 0;
             for (int i = 0; i < 4; i++) {
                 int shift = (4 - 1 - i) * 8;
                 remoteGenSyn += (integer[i] & 0x000000FF) << shift;
             }
+            log.debug("SYN collision. remote gen " + remoteGenSyn);
             if (localGenSYN > remoteGenSyn)
             {
                 // wait for SYN-ACK packet
