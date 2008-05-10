@@ -375,6 +375,7 @@ public class UDPConnection extends Thread implements Activity{
                     {
                         log.debug("SYN collision. local gen " + synGen);
                         byte[] integer = content.getData();
+                        log.debug("Collision Generated Int size [" + integer.length + "] content [" + Arrays.toString(integer) + "]");
                         int remoteGenSyn = 0;
                         for (int i = 0; i < 4; i++) {
                             int shift = (4 - 1 - i) * 8;
