@@ -231,7 +231,7 @@ public class UDPConnection extends Thread implements Activity{
 
 	
 	//Main Send Bytes method
-	void send(final byte[] bytes) throws CommunicationFailedException {
+	synchronized void send(final byte[] bytes) throws CommunicationFailedException {
 		//check if Connection is established
 		if (status != Status.IDLE){
 			throw new CommunicationFailedException("UDP Connection is not established");
@@ -377,6 +377,7 @@ public class UDPConnection extends Thread implements Activity{
 				if (counter == 10) {
 					counter = 0;
 					try {
+                        log.debug("Sending ID-PING ...");
 						send(this.connectionId.toString().getBytes());
 						log.debug("Sent ID-PING");
 						continue;
@@ -1408,7 +1409,11 @@ public class UDPConnection extends Thread implements Activity{
 			if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
 				throw new UDPPacketParseException("Message to Short");
 			if (bytes[HASH_LENGTH] < ACK || bytes[HASH_LENGTH] > NAK) 
+            {
+                log.error("received packet with wrong MORE field: "+bytes[HASH_LENGTH]);
+                log.debug(Arrays.toString(bytes));
 				throw new UDPPacketParseException("MORE Field Invalid");
+            }
 			this.bytes = trimByteArray(bytes, 0, bytes.length); 
 		}
 		
