@@ -473,6 +473,10 @@ public class UDPConnection extends Thread implements Activity{
 				}
 				
 				byte[] receivedBytes = receive();
+                
+                //TODO: 
+                // deserialize the data and 
+                // forward received object to the Core
 				
 				//if (receivedBytes.length <= connectionId.toString().getBytes().length){
 					log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");

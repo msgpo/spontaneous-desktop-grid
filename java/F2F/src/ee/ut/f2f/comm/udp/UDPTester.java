@@ -81,11 +81,17 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	public void addConnection(UDPConnection udpConnection){
 		if (udpConnection == null) throw new NullPointerException("udpConnection == null");
 		this.udpConnections.put(udpConnection.getConnectionId(),udpConnection);
+        // if the first connection is made notify the Core about it
+        // it means UDP connection can be used!
+        //TODO
 	}
 	
 	public void removeConnection(UDPConnection udpConnection){
 		if (udpConnection == null) throw new NullPointerException("udpConnection == null");
 		this.udpConnections.remove(udpConnection.getConnectionId());
+        // if the last connection is removed notify the Core about it
+        // it means UDP connection can not be used!
+        //TODO
 	}
 	
 	public void sendUDPTestMessage(UDPTestMessage udpTestMessage) throws CommunicationFailedException{
@@ -263,7 +269,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		}
 		
 		//if one of the sides has open access
-		if(remoteStunInfo.isOpenAccess() || localStunInfo.isOpenAccess()){
+		/*if(remoteStunInfo.isOpenAccess() || localStunInfo.isOpenAccess()){
 			//UDP communication not needed -> At least one of the sides has open access 
 			//TCP communication should be possible
 			log.warn("UDP communication not needed -> At least one of the sides has open access - > " 
@@ -271,7 +277,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(
 					this,ActivityEvent.Type.FINISHED, "UDP Communication not needed"));
 			return;
-		}
+		}*/
 		
 		initUDPTests();
 	
