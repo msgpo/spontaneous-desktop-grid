@@ -862,7 +862,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	private InetSocketAddress resolveMappedAddress(DatagramSocket localSocket, InetSocketAddress stunServer) throws MappedAddressResolvingException{
+	private InetSocketAddress resolveMappedAddress(DatagramSocket soc, InetSocketAddress stunServer) throws MappedAddressResolvingException{
 		byte[] bytes = new byte[0];
 		MessageHeader sendMh = null;
 		try{
@@ -893,8 +893,8 @@ public class UDPConnection extends Thread implements Activity{
 		DatagramPacket sendDp = new DatagramPacket(bytes,bytes.length);
 		
 		try{
-			localSocket.connect(stunServer);
-			localSocket.send(sendDp);
+			soc.connect(stunServer);
+			soc.send(sendDp);
 		} catch (SocketException e){
 			log.warn(getActivityName() 
 						+ " "
@@ -903,22 +903,22 @@ public class UDPConnection extends Thread implements Activity{
 						+ ":"
 						+ stunServer.getPort()
 						+ "] from local Socket ["
-						+ localSocket.getLocalAddress().getHostAddress()
+						+ soc.getLocalAddress().getHostAddress()
 						+ ":"
-						+ localSocket.getLocalPort()
+						+ soc.getLocalPort()
 						+ "]",e);
 			throw new MappedAddressResolvingException(e);
 		} catch (IOException e){
 			log.warn(getActivityName()
 					+ " "
 					+ "Unable to send Packet to StunServer ["
-					+ localSocket.getInetAddress().getHostAddress()
+					+ soc.getInetAddress().getHostAddress()
 					+ ":"
-					+ localSocket.getPort()
+					+ soc.getPort()
 					+ "] from local Socket ["
-					+ localSocket.getLocalAddress().getHostAddress()
+					+ soc.getLocalAddress().getHostAddress()
 					+ ":"
-					+ localSocket.getLocalPort()
+					+ soc.getLocalPort()
 					+ "]",e);
 			//skip this server
 			throw new MappedAddressResolvingException(e);
@@ -931,25 +931,25 @@ public class UDPConnection extends Thread implements Activity{
 		try{	
 			DatagramPacket receiveDp = new DatagramPacket(new byte[200], 200);
 			log.debug("STUN SERVER MAPPED ADDRESS REQUEST >>>>>");
-			this.localSocket.receive(receiveDp);
+			soc.receive(receiveDp);
 			log.debug("STUN SERVER MAPPED ADDRESS REQUEST <<<<<");
 			receiveMh = MessageHeader.parseHeader(receiveDp.getData());
 		} catch (SocketTimeoutException e){
 			log.warn(getActivityName() 
 					+ " "
 					+ "Socket Timeout waiting answer from ["
-					+ localSocket.getInetAddress().getHostAddress()
+					+ soc.getInetAddress().getHostAddress()
 					+ ":"
-					+ localSocket.getPort()
+					+ soc.getPort()
 					+ "]");
 			throw new MappedAddressResolvingException(e);
 		} catch (IOException e){
 			log.warn(getActivityName() 
 					+ " "
 					+ "IOException while listening on ["
-					+ localSocket.getInetAddress().getHostAddress()
+					+ soc.getInetAddress().getHostAddress()
 					+ ":"
-					+ localSocket.getPort()
+					+ soc.getPort()
 					+ "]",e);
 			throw new MappedAddressResolvingException(e);
 		} catch (MessageAttributeParsingException e1) {
@@ -992,7 +992,7 @@ public class UDPConnection extends Thread implements Activity{
 				throw new MappedAddressResolvingException("Unable to get mapped address from received packet");
 			}
 			InetSocketAddress mappedAddress = new InetSocketAddress(mappedIas, mappedPort);
-			localSocket.disconnect();
+			soc.disconnect();
 			return mappedAddress;
 		} else {
 			log.error(getActivityName() 
