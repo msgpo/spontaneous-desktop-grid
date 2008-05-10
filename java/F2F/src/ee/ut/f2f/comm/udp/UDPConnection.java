@@ -234,10 +234,6 @@ public class UDPConnection extends Thread implements Activity{
 	//Main Send Bytes method
     synchronized void send(final byte[] bytes) throws CommunicationFailedException
     {
-        //check if Connection is established
-		if (status != Status.IDLE){
-			throw new CommunicationFailedException("UDP Connection is not established");
-		}
 		
 		//try to send SYN packet
 		this.status = Status.SENDING;
