@@ -143,8 +143,9 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 				status = Status.GOT_STUN_INFO;
 			}
 		} else if (this.status == Status.INIT_UDP_TESTS) {
+			if( runningTest == null ) return;
 			if(msg.type == UDPTestMessage.Type.MAPPED_ADDRESS) {
-				if (runningTest != null) runningTest.receivedUDPTestMessage(msg);
+				runningTest.receivedUDPTestMessage(msg);
 			} else if (msg.type == UDPTestMessage.Type.CONNECTION_ID) {
 				this.runningTest.setConnectionId(msg.id);
 				log.debug("NEW UDP Connection Established ID ["
