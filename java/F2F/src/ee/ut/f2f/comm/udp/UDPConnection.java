@@ -163,6 +163,7 @@ public class UDPConnection extends Thread implements Activity{
 	public void receivedUDPTestMessage(UDPTestMessage udpm){
 		if(this.status == Status.INIT){
 			if(udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS){
+                if (udpm.mappedAddress == null) return;
 				this.remoteMappedAddress = udpm.mappedAddress;
 				this.remotePortMappingRule = udpm.portMappingRule;
 				this.status = Status.GOT_MAPPED_ADDRESS;
@@ -970,11 +971,11 @@ public class UDPConnection extends Thread implements Activity{
 		for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){
 			try{
                 sendUDPTestMessage(new UDPTestMessage(this.mappedAddress,this.portMappingRule));
-				if (this.status != Status.INIT) return;
+				if (this.mappedAddress != null) return;
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {}
 		}
-		if( this.status != Status.GOT_MAPPED_ADDRESS){
+		if( this.mappedAddress == null){
 			log.error("Timeout while waiting mapped address");
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 					ActivityEvent.Type.FAILED,
