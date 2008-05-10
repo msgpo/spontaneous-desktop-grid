@@ -313,7 +313,7 @@ public class UDPConnection extends Thread implements Activity{
 				continue;
 			}
 			
-			byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1];
+			byte[] buffer = new byte[UDPPacket.MAX_PACKET_SIZE];
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			//try to receive
