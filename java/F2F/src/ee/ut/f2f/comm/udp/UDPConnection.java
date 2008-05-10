@@ -1062,27 +1062,27 @@ public class UDPConnection extends Thread implements Activity{
 		Integer rule = null;
 		int previousMappedPort = -1;
 		
-		DatagramSocket localSocket = null;
+		DatagramSocket socket = null;
 		try{
-			localSocket = new DatagramSocket(new InetSocketAddress(this.localSocket.getLocalAddress(),0));
-			if (localSocket != null && localSocket.isBound()){
-				localSocket.setReuseAddress(true);
+			socket = new DatagramSocket(new InetSocketAddress(this.localSocket.getLocalAddress(),0));
+			if (socket != null && socket.isBound()){
+				socket.setReuseAddress(true);
 			}
 		} catch (SocketException e){
 			log.error("Unable to bind DatagramSocket on localIp [" 
-							+ localSocket.getLocalAddress().getHostAddress()
+							+ socket.getLocalAddress().getHostAddress()
 							+ "]");
 		}
-		if( localSocket == null ){
+		if( socket == null ){
 			throw new PortMappingRuleDiscoveryException("Unable to bind DatagramSocket on localIp [" 
-					+ localSocket.getLocalAddress().getHostAddress()
+					+ socket.getLocalAddress().getHostAddress()
 					+ "]");
 		}
 		
 		for(InetSocketAddress stunServer : stunServers){
 			try {
 				log.debug("RESOLVE MAPPED ADDRESS >>>>>>>");
-				InetSocketAddress mappedAddress = resolveMappedAddress(localSocket, stunServer);
+				InetSocketAddress mappedAddress = resolveMappedAddress(socket, stunServer);
 				log.debug("RESOLVE MAPPED ADDRESS <<<<<<<");
 				if ( rule == null && previousMappedPort == -1){
 					previousMappedPort = mappedAddress.getPort();	
@@ -1100,8 +1100,8 @@ public class UDPConnection extends Thread implements Activity{
 								+ "]");
 					*/		
 					if (rule.intValue() == (mappedAddress.getPort() - previousMappedPort)){
-						localSocket.disconnect();
-						localSocket.close();
+						socket.disconnect();
+						socket.close();
 						return rule.intValue();
 					} else {
 						rule = new Integer(mappedAddress.getPort() - previousMappedPort);
@@ -1117,9 +1117,9 @@ public class UDPConnection extends Thread implements Activity{
 						+ ":"
 						+ mappedAddress.getPort()
 						+ "] <- ["
-						+ localSocket.getLocalAddress().getHostAddress()
+						+ socket.getLocalAddress().getHostAddress()
 						+ ":"
-						+ localSocket.getLocalPort()
+						+ socket.getLocalPort()
 						+ "] rule:"
 						+ rule
 						+ "]");
@@ -1128,7 +1128,7 @@ public class UDPConnection extends Thread implements Activity{
 			}
 		}
 			throw new PortMappingRuleDiscoveryException("Unable to discover Port Mapping rule [" 
-					+ localSocket.getLocalAddress().getHostAddress()
+					+ socket.getLocalAddress().getHostAddress()
 					+ "]");
 	}
 	
