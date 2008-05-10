@@ -323,6 +323,7 @@ public class UDPConnection extends Thread implements Activity{
                 log.debug("Receive Stopping <<<<<<");
 				content = new UDPPacket(packet.getData());
 			} catch (SocketTimeoutException e) {
+				log.debug("Receive Stopping <<<<<<");
 				//if counter == 10 -> send ping
 				if (counter == 10) {
 					counter = 0;
@@ -334,6 +335,7 @@ public class UDPConnection extends Thread implements Activity{
                         {
 					        try
                             {
+					        	log.debug("Status Before sending [" + status + "]");
                                 send(connectionId.toString().getBytes());
                             } catch (CommunicationFailedException e)
                             {
