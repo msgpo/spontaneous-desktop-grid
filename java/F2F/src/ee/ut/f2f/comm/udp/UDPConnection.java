@@ -353,6 +353,7 @@ public class UDPConnection extends Thread implements Activity{
             
             // at this point we have received something!!!
             if (content == null) continue;
+            log.debug("UDP listener received " + content);
             
 			if (content.getType() == UDPPacket.SYN)
             {
@@ -1336,9 +1337,15 @@ public class UDPConnection extends Thread implements Activity{
 			sb.append("UDPPacket :\nType: [");
 			if (bytes[HASH_LENGTH] == ACK) {
 				sb.append("ACK");
-			} else if (bytes[HASH_LENGTH] == NAK){
-				sb.append("NAK");
-			}
+            } else if (bytes[HASH_LENGTH] == NAK){
+                sb.append("NAK");
+            } else if (bytes[HASH_LENGTH] == SYN){
+                sb.append("SYN");
+            } else if (bytes[HASH_LENGTH] == SYN_ACK){
+                sb.append("SYN_ACK");
+            } else if (bytes[HASH_LENGTH] == PING){
+                sb.append("PING");
+            }
 			sb.append("]\nData: [" + (bytes.length - HASH_LENGTH - 1) + "] bytes\n");
 			sb.append("MD5 hash [" + byteArrayToHexString(bytes, 0, HASH_LENGTH) + "]\n");
 			sb.append("Total [" + bytes.length + "] bytes\n");
