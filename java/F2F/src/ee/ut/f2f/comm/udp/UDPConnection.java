@@ -855,7 +855,11 @@ public class UDPConnection extends Thread implements Activity{
 							log.warn("Received " + new String(receivePacket.getData()));
 						}
 					} catch (SocketTimeoutException e) {
-						if(
+						if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone() &&
+								udpTester.getRemoteStunInfo().isSymmetricCone()){
+							//
+						}
+						else if(
 								(LocalStunInfo.getInstance().getStunInfo().isSymmetricCone() &&
 								!udpTester.getRemoteStunInfo().isSymmetricCone()) 
 							||
