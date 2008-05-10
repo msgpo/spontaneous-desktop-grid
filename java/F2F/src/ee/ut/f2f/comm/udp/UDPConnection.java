@@ -79,8 +79,6 @@ public class UDPConnection extends Thread implements Activity{
 		GOT_MAPPED_ADDRESS,
 		HOLE_PUNCHING,
 		HOLE_PUNCHING_TIMEOUT,
-		DISCOVERING_PORT_MAPPING_RULE,
-		DISCOVERED_PORT_MAPPING_RULE,
 		CONNECTION_ESTABLISHED,
         IDLE,
 		CLOSING,
@@ -1175,7 +1173,6 @@ public class UDPConnection extends Thread implements Activity{
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.CHANGED,
 				"Port Mapping Rule Discovery"));
-		this.status = Status.DISCOVERING_PORT_MAPPING_RULE;
 		
 		Collection<InetSocketAddress> stunServers = Collections.synchronizedCollection(LocalStunInfo.getInstance().getStunServers(this.localSocket.getLocalAddress()));
 		//Collections.shuffle(stunServers);
