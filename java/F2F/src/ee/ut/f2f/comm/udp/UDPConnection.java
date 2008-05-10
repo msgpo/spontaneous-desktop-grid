@@ -351,8 +351,6 @@ public class UDPConnection extends Thread implements Activity{
             // at this point we have received something!!!
             if (content == null) continue;
             
-			//if received SYN packet
-            
 			if (content.getType() == UDPPacket.SYN)
             {
                 if (synGen == null)
