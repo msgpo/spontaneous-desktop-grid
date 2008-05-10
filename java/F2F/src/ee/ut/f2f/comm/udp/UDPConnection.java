@@ -374,7 +374,7 @@ public class UDPConnection extends Thread implements Activity{
 						log.debug("Sent ID-PING");
 						continue;
 					} catch (CommunicationFailedException e1) {
-						log.error("Unable to send PING",e);
+						log.error("Unable to send PING",e1);
                         continue;
 					}
 				} else {
