@@ -61,7 +61,7 @@ public class UDPConnection extends Thread implements Activity{
 	private UDPTester udpTester = null;
 	private DatagramSocket localSocket = null;
 	private UUID connectionId = null;
-	private Status status = null;
+	private Status status = Status.INIT;
 	
 	//
 	private InetSocketAddress mappedAddress = null;
@@ -76,13 +76,13 @@ public class UDPConnection extends Thread implements Activity{
 	
 	private enum Status{
 		INIT,
-		WAITING_MAPPED_ADDRESS,
 		GOT_MAPPED_ADDRESS,
 		HOLE_PUNCHING,
 		HOLE_PUNCHING_TIMEOUT,
 		DISCOVERING_PORT_MAPPING_RULE,
 		DISCOVERED_PORT_MAPPING_RULE,
 		CONNECTION_ESTABLISHED,
+        IDLE,
 		CLOSING,
 		SENDING,
 		RECEIVING	
@@ -110,22 +110,20 @@ public class UDPConnection extends Thread implements Activity{
 	
 	
 	//
-	public void exchangeID(){
+	private void exchangeID(){
 		if (this.udpTester.getRunningTest() == this){
 			//connection ready
 			//generate id
 			UUID id = UUID.randomUUID();
 			//send ID and wait for response
-			for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){
-				if (i < DEFAULT_WAITING_TIMEOUT - 5 && 
-						this.connectionId != null) 
-					i = DEFAULT_WAITING_TIMEOUT - 5;
-				try{
-					sendUDPTestMessage(new UDPTestMessage(id));
-					Thread.sleep(1000);
-				} catch (CommunicationFailedException e) {}
-				  catch (InterruptedException e1) {}
-			}
+			for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++)
+            {
+                try {
+                    sendUDPTestMessage(new UDPTestMessage(id));
+                    if (this.connectionId != null) break;
+                    Thread.sleep(1000);
+                } catch (Exception e) {}
+            }
 			if (this.connectionId == null){
 				log.error(" " + getActivityName() + " Timeout waiting for remote ID");
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
@@ -163,7 +161,7 @@ public class UDPConnection extends Thread implements Activity{
 	}
 
 	public void receivedUDPTestMessage(UDPTestMessage udpm){
-		if(this.status == Status.WAITING_MAPPED_ADDRESS){
+		if(this.status == Status.INIT){
 			if(udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS){
 				this.remoteMappedAddress = udpm.mappedAddress;
 				this.remotePortMappingRule = udpm.portMappingRule;
@@ -234,9 +232,9 @@ public class UDPConnection extends Thread implements Activity{
 
 	
 	//Main Send Bytes method
-	public void send(final byte[] bytes) throws CommunicationFailedException {
+	void send(final byte[] bytes) throws CommunicationFailedException {
 		//check if Connection is established
-		if (status != Status.CONNECTION_ESTABLISHED){
+		if (status != Status.IDLE){
 			throw new CommunicationFailedException("UDP Connection is not established");
 		}
 		
@@ -254,11 +252,11 @@ public class UDPConnection extends Thread implements Activity{
 			log.debug("Sent SYN");
 		} catch (IOException e){
 			log.debug("Unable to send SYN packet", e);
-			this.status = Status.CONNECTION_ESTABLISHED;
+			this.status = Status.CLOSING;
 			return;
 		} catch (UDPPacketParseException e) {
 			log.debug("Unable to create SYN Packet", e);
-			this.status = Status.CONNECTION_ESTABLISHED;
+            this.status = Status.CLOSING;
 			return;
 		}
 		
@@ -269,11 +267,11 @@ public class UDPConnection extends Thread implements Activity{
 			content = new UDPPacket(packet.getData());
 		} catch (IOException e){
 			log.debug("Unable to receive packet", e);
-			this.status = Status.CONNECTION_ESTABLISHED;
+            this.status = Status.CLOSING;
 			return;
 		} catch (UDPPacketParseException e) {
 			log.debug("Unable to parse UDP Packet", e);
-			this.status = Status.CONNECTION_ESTABLISHED;
+            this.status = Status.CLOSING;
 			return;
 		}
 		
@@ -292,11 +290,11 @@ public class UDPConnection extends Thread implements Activity{
 				log.debug("Sent FIN");
 			} catch (IOException e){
 				log.debug("Unable to send FIN packet", e);
-				this.status = Status.CONNECTION_ESTABLISHED;
+				this.status = Status.CLOSING;
 				return;
 			} catch (UDPPacketParseException e) {
 				log.debug("Unable to create FIN Packet", e);
-				this.status = Status.CONNECTION_ESTABLISHED;
+				this.status = Status.CLOSING;
 				return;
 			}
 			
@@ -306,23 +304,30 @@ public class UDPConnection extends Thread implements Activity{
 				content = new UDPPacket(packet.getData());
 			} catch (IOException e){
 				log.debug("Unable to receive packet", e);
-				this.status = Status.CONNECTION_ESTABLISHED;
+				this.status = Status.CLOSING;
 				return;
 			} catch (UDPPacketParseException e) {
 				log.debug("Unable to parse UDP Packet", e);
-				this.status = Status.CONNECTION_ESTABLISHED;
+				this.status = Status.CLOSING;
 				return;
 			}
 			
 			if (content.getType() == UDPPacket.FIN_ACK){
 				log.debug("Received FIN-ACK");
-				this.status = Status.CONNECTION_ESTABLISHED;
+				this.status = Status.IDLE;
 				return;
 			}
+            else
+            {
+                this.status = Status.CLOSING;
+                return;
+            }
 		}
-		//@TODO
-		this.status = Status.CONNECTION_ESTABLISHED;
-		return;
+        else
+        {
+            this.status = Status.CLOSING;
+            return;
+        }
 	}
 	
 
@@ -330,13 +335,7 @@ public class UDPConnection extends Thread implements Activity{
 	//Private Methods
 	private void listen(){
 
-		while(true){
-			if (connectionId != null) break;
-			try{
-				Thread.sleep(500);
-			} catch (InterruptedException e) {}
-		}
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+        ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.CHANGED,
 				"ID [" + connectionId.toString() + "] listening for incoming packets"));
 		setName("UDP Connection ID [" + connectionId.toString() + "]");
@@ -376,7 +375,7 @@ public class UDPConnection extends Thread implements Activity{
 				content = new UDPPacket(packet.getData());
 			} catch (SocketTimeoutException e) {
 				//if counter == 10 -> send ping
-				if (counter == 10 && this.status == Status.CONNECTION_ESTABLISHED) {
+				if (counter == 10 && this.status == Status.IDLE) {
 					counter = 0;
 					try {
 						send(this.connectionId.toString().getBytes());
@@ -384,10 +383,12 @@ public class UDPConnection extends Thread implements Activity{
 						continue;
 					} catch (CommunicationFailedException e1) {
 						log.error("Unable to send PING",e);
+                        continue;
 					}
 				} else {
 					counter++;
 					log.debug("counter [" + counter + "]");
+                    continue;
 				}
 			} catch (IOException e) {
 				log.error("Unable to receive packet", e);
@@ -396,7 +397,9 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (UDPPacketParseException e) {
 				log.debug("Unable to parse UDP Packet",e);
 				continue;
-			} 
+			}
+            
+            // at this point we have received something!!!
 			
 			//if received SYN packet
 			if (content != null && content.getType() == UDPPacket.SYN) {
@@ -433,14 +436,14 @@ public class UDPConnection extends Thread implements Activity{
 				
 				errors = 0;
 				timeouts = 0;
-				this.status = Status.CONNECTION_ESTABLISHED;
+				this.status = Status.IDLE;
 			}
 			
 			//if received FIN packet
 			if (content != null && content.getType() == UDPPacket.FIN) {
 				log.debug("Received FIN");
 				//send confirmation
-				this.status = Status.CONNECTION_ESTABLISHED;
+				this.status = Status.IDLE;
 				try {
 					content = new UDPPacket (UDPPacket.FIN_ACK);
 					packet = new DatagramPacket(content.getBytes(), 
@@ -499,14 +502,17 @@ public class UDPConnection extends Thread implements Activity{
 				log.error("Unable to send [" + length + "] bytes ["
 						+ e.getMessage() + "]");
 				errors++;
+                this.status = Status.CLOSING;
 				continue;
 			} catch (SocketException e) {
 				log.error("Unable to send [" + length + "] bytes", e);
 				errors++;
+                this.status = Status.CLOSING;
 				continue;
 			} catch (IOException e) {
 				log.error("Unable to send [" + length + "] bytes", e);
 				errors++;
+                this.status = Status.CLOSING;
 				continue;
 			}			
 			//set SO_timeout
@@ -515,9 +521,7 @@ public class UDPConnection extends Thread implements Activity{
 					localSocket.setSoTimeout(SEND_SO_TIMEOUT);
 				}
 			} catch (SocketException e) {
-				log.error("Unable to set SEND_SO_TIMEOUT [" + SEND_SO_TIMEOUT + "]",e);
-				errors++;
-				continue;
+				log.debug("Unable to set SEND_SO_TIMEOUT [" + SEND_SO_TIMEOUT + "]",e);
 			}
 			// wait for answer
 			byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1];
@@ -529,15 +533,21 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (SocketTimeoutException e) {
 				log.warn("Timeout waiting for ACK");
 				timeouts++;
-				if (length == 1) continue;
+				if (length == 1)
+                {
+                    this.status = Status.CLOSING;
+                    continue;
+                }
 				send(bytes,offset,length,hasMore,true);
 				return;
 			} catch (IOException e){
 				log.error("Unable to receive ACK", e);
 				errors++;
+                this.status = Status.CLOSING;
 				continue;
 			} catch (UDPPacketParseException e) {
 				log.debug("Unable to parse UDP Packet", e);
+                this.status = Status.CLOSING;
 				continue;
 			} 
 			
@@ -548,6 +558,7 @@ public class UDPConnection extends Thread implements Activity{
 				send(bytes, offset, length, hasMore, true);
 				return;
 			}
+            this.status = Status.CLOSING;
 			//log.debug("Errors [" + errors + "]");
 			//errors++;
 		}
@@ -564,6 +575,8 @@ public class UDPConnection extends Thread implements Activity{
 			if (errors > MAX_SEND_ERRORS){
 				log.info("Max send errors reached, closing thread");
 				this.status = Status.CLOSING;
+                //TODO: do not close the connection
+                // order the remote peer to start the sending again
 				break;
 			}
 			//try to set SO_TIMEOUT
@@ -581,7 +594,7 @@ public class UDPConnection extends Thread implements Activity{
 				localSocket.receive(packet);
 			} catch (IOException e){
 				log.error("Unable to receive packet", e);
-				errors++;
+                this.status = Status.CLOSING;
 				continue;
 			}
 			//try to get data
@@ -592,12 +605,13 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (UDPPacketParseException e){
 				log.error("Unable to parse received udp packet [" 
 							+ packet.getData().length + "] bytes", e);
-				continue;
+                this.status = Status.CLOSING;
+                continue;
 			}
-			//if hash OK 
-			//append received data
+			// check if hash OK 
 			if (udpp != null && udpp.checkHash()){
-				returnData = mergeByteArrays(returnData, udpp.getData());
+                //append received data
+                returnData = mergeByteArrays(returnData, udpp.getData());
 				pData = new byte[] {UDPPacket.ACK};
 			} else {
 				log.warn("Hash check failed");
@@ -615,15 +629,20 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (IOException e){
 				log.error("Unable to send response",e);
 				errors++;
+                this.status = Status.CLOSING;
 				continue;
 			} catch (UDPPacketParseException e) {
 				log.debug("Unable to create response UDP Packet", e);
+                this.status = Status.CLOSING;
 				continue;
 			} 
-			if ( pData[0] == UDPPacket.ACK && !hasMore) return returnData;
+			if ( pData[0] == UDPPacket.ACK && !hasMore)
+            {
+                log.debug("Stop receiving, return [" + returnData.length + "] bytes");
+                return returnData;
+            }
 		}
-		log.debug("Stop receiving, return [" + returnData.length + "] bytes");
-		return returnData;
+		return null;
 	}
 	
 	private void testProcess() throws CommunicationFailedException{
@@ -631,7 +650,6 @@ public class UDPConnection extends Thread implements Activity{
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.STARTED,
 				"Init"));
-		this.status = Status.INIT;
 		// if behind Symmetric firewall try to guess the allocated port
 		if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()){
 			while(LocalStunInfo.getInstance().getStunServers(
@@ -718,6 +736,7 @@ public class UDPConnection extends Thread implements Activity{
 		} else if (this.status == Status.CONNECTION_ESTABLISHED){
 			//connection established, start listening
 			exchangeID();
+            this.status = Status.IDLE;
 			listen();
 		}
 	}
@@ -948,13 +967,10 @@ public class UDPConnection extends Thread implements Activity{
 				ActivityEvent.Type.CHANGED,
 				"Mapped Address Exchange"));
 		//exchange mapped addresses
-		this.status = Status.WAITING_MAPPED_ADDRESS;
 		for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){
 			try{
-				if (this.status != Status.WAITING_MAPPED_ADDRESS && i < DEFAULT_WAITING_TIMEOUT-3){
-					i = DEFAULT_WAITING_TIMEOUT-3;
-				}
-				sendUDPTestMessage(new UDPTestMessage(this.mappedAddress,this.portMappingRule));
+                sendUDPTestMessage(new UDPTestMessage(this.mappedAddress,this.portMappingRule));
+				if (this.status != Status.INIT) return;
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {}
 		}
