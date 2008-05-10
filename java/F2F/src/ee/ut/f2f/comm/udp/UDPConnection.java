@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Random;
 import java.util.UUID;
 
 import de.javawi.jstun.attribute.ChangeRequest;
@@ -29,6 +30,7 @@ import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.CommunicationFailedException;
+import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.stun.LocalStunInfo;
 
@@ -227,11 +229,9 @@ public class UDPConnection extends Thread implements Activity{
 					ActivityEvent.Type.FAILED, e.getMessage()));
 		}
 	}
-	
-
-	
+		
 	//Main Send Bytes method
-	synchronized void send(final byte[] bytes) throws CommunicationFailedException {
+    synchronized void send(final byte[] bytes) throws CommunicationFailedException {
 		//check if Connection is established
 		if (status != Status.IDLE){
 			throw new CommunicationFailedException("UDP Connection is not established");
@@ -239,14 +239,20 @@ public class UDPConnection extends Thread implements Activity{
 		
 		//try to send SYN packet
 		this.status = Status.SENDING;
+        int localGenSYN = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
 		UDPPacket content = null;
 		DatagramPacket packet = null;
 		try {
 			if (localSocket.getSoTimeout() != RECEIVE_SO_TIMEOUT){
 				localSocket.setSoTimeout(RECEIVE_SO_TIMEOUT);
 			}
-			content = new UDPPacket(UDPPacket.SYN);
-			packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
+            byte[] integer = new byte[4]; 
+            integer[0]=(byte)((localGenSYN & 0xff000000)>>>24);
+            integer[1]=(byte)((localGenSYN & 0x00ff0000)>>>16);
+            integer[2]=(byte)((localGenSYN & 0x0000ff00)>>>8);
+            integer[3]=(byte)((localGenSYN & 0x000000ff));
+            content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
+            packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
 			localSocket.send(packet);
 			log.debug("Sent SYN");
 		} catch (IOException e){
@@ -270,49 +276,43 @@ public class UDPConnection extends Thread implements Activity{
 			return;
 		}
 		
+        if (content.getType() == UDPPacket.SYN)
+        {
+            byte[] integer = content.getData();
+            int remoteGenSyn = 0;
+            for (int i = 0; i < 4; i++) {
+                int shift = (4 - 1 - i) * 8;
+                remoteGenSyn += (integer[i] & 0x000000FF) << shift;
+            }
+            if (localGenSYN > remoteGenSyn)
+            {
+                // wait for SYN-ACK packet
+                try {
+                    localSocket.receive(packet);
+                    //log.debug("Received [" + Arrays.toString(packet.getData()) + "]");
+                    content = new UDPPacket(packet.getData());
+                } catch (IOException e){
+                    log.debug("Unable to receive packet", e);
+                    this.status = Status.CLOSING;
+                    return;
+                } catch (UDPPacketParseException e) {
+                    log.debug("Unable to parse UDP Packet", e);
+                    this.status = Status.CLOSING;
+                    return;
+                }
+            }
+            else if (localGenSYN < remoteGenSyn)
+            {
+                receivedSYN();
+                send(bytes);
+                return;
+            }
+        }
 		if (content.getType() == UDPPacket.SYN_ACK){
 			log.debug("Received SYN-ACK");
 			log.debug("Sending [" + Arrays.toString(bytes) + "]");
 			send(bytes,0,bytes.length,false,false);
-			//try to send FIN packet
-			try {
-				if (localSocket.getSoTimeout() != RECEIVE_SO_TIMEOUT){
-					localSocket.setSoTimeout(RECEIVE_SO_TIMEOUT);
-				}
-				content = new UDPPacket(UDPPacket.FIN);
-				packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
-				localSocket.send(packet);
-				log.debug("Sent FIN");
-			} catch (IOException e){
-				log.debug("Unable to send FIN packet", e);
-				this.status = Status.CLOSING;
-				return;
-			}
-			
-			//wait for FIN-ACK packet
-			try {
-				localSocket.receive(packet);
-				content = new UDPPacket(packet.getData());
-			} catch (IOException e){
-				log.debug("Unable to receive packet", e);
-				this.status = Status.CLOSING;
-				return;
-			} catch (UDPPacketParseException e) {
-				log.debug("Unable to parse UDP Packet", e);
-				this.status = Status.CLOSING;
-				return;
-			}
-			
-			if (content.getType() == UDPPacket.FIN_ACK){
-				log.debug("Received FIN-ACK");
-				this.status = Status.IDLE;
-				return;
-			}
-            else
-            {
-                this.status = Status.CLOSING;
-                return;
-            }
+			this.status = Status.IDLE;
 		}
         else
         {
@@ -395,61 +395,47 @@ public class UDPConnection extends Thread implements Activity{
 			
 			//if received SYN packet
 			if (content != null && content.getType() == UDPPacket.SYN) {
-				log.debug("Received SYN");
-				//send confirmation
-				this.status = Status.RECEIVING;
-				try {
-					content = new UDPPacket (UDPPacket.SYN_ACK);
-					packet = new DatagramPacket(content.getBytes(), 
-												content.getBytes().length, remoteMappedAddress);
-					localSocket.send(packet);
-					log.debug("Sent SYN-ACK");
-				} catch (IOException e) {
-					log.error("Unable to send SYN_ACK", e);
-					errors++;
-					continue;
-				}
-				
-				byte[] receivedBytes = receive();
-                
-                //TODO: 
-                // deserialize the data and 
-                // forward received object to the Core
-				
-				log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");
-				String rs = new String(receivedBytes);
-				log.debug("Received string [" + rs + "]");
-				if (this.connectionId.toString().equals(rs)){
-					log.debug("Received ID-PING from paired connection");
-				}
-				
-				errors = 0;
-				timeouts = 0;
-				this.status = Status.IDLE;
-			}
-			
-			//if received FIN packet
-			if (content != null && content.getType() == UDPPacket.FIN) {
-				log.debug("Received FIN");
-				//send confirmation
-				this.status = Status.IDLE;
-				try {
-					content = new UDPPacket (UDPPacket.FIN_ACK);
-					packet = new DatagramPacket(content.getBytes(), 
-												content.getBytes().length, remoteMappedAddress);
-					localSocket.send(packet);
-					log.debug("Sent FIN-ACK");
-				} catch (IOException e) {
-					log.error("Unable to seng FIN_ACK", e);
-					errors++;
-					continue;
-				}
+                receivedSYN();
+                errors = 0;
+                timeouts = 0;
+                this.status = Status.IDLE;
+                continue;
 			}
 		}
 	}
 	
 	
-	//recursive method
+	private void receivedSYN()
+    {
+        log.debug("Received SYN");
+        //send confirmation
+        this.status = Status.RECEIVING;
+        try {
+            UDPPacket content = new UDPPacket (UDPPacket.SYN_ACK);
+            DatagramPacket packet = new DatagramPacket(content.getBytes(), 
+                                        content.getBytes().length, remoteMappedAddress);
+            localSocket.send(packet);
+            log.debug("Sent SYN-ACK");
+        } catch (IOException e) {
+            log.error("Unable to send SYN_ACK", e);
+            return;
+        }
+        
+        byte[] receivedBytes = receive();
+        
+        //TODO:
+        // deserialize the data and 
+        // forward received object to the Core
+        
+        log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");
+        String rs = new String(receivedBytes);
+        log.debug("Received string [" + rs + "]");
+        if (this.connectionId.toString().equals(rs)){
+            log.debug("Received ID-PING from paired connection");
+        }
+    }
+
+    //recursive method
 	private void send(byte[] bytes, int offset, int length, boolean hasMore, boolean split){	
 		//If message is larger then MAX size split in two
 		if (length > UDPPacket.MAX_MESSAGE_SIZE) {
@@ -1347,7 +1333,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	public class UDPPacket{
+	class UDPPacket{
 		/* Packet Structure
 		 * |-------------|-------------DATA----------------------|
 		 * |    HASH     |  TYPE   |   MESSAGE                   |
@@ -1359,9 +1345,7 @@ public class UDPConnection extends Thread implements Activity{
 		final static byte NAK = 11;		//NAK if failed
 		final static byte SYN = 7;		//SYN initializes transfer
 		final static byte SYN_ACK = 8;	//SYN-ACK confirms initialization
-		final static byte FIN = 9;		//FIN finalizes transfer
-		final static byte FIN_ACK = 10; //FIN-ACK confirms finalization
-        final static byte PING = 12;    //hole punching ping
+		final static byte PING = 12;    //hole punching ping
 		
 		final static int HASH_LENGTH = 16;
 		
@@ -1371,13 +1355,13 @@ public class UDPConnection extends Thread implements Activity{
 		byte[] bytes = new byte[0];
 		
 		
-		public UDPPacket(byte type) {
+		UDPPacket(byte type) {
 			bytes = new byte[HASH_LENGTH +1];
 			setType(type);
 			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
 		}
 		
-		public UDPPacket(byte[] data, int offset, int length, boolean more) 
+		UDPPacket(byte[] data, int offset, int length, boolean more) 
 							throws UDPPacketParseException {
 			if (length == 0 || data.length == 0) 
 				throw new UDPPacketParseException("No Data, array length == 0");
@@ -1387,8 +1371,16 @@ public class UDPConnection extends Thread implements Activity{
 			setData(data, offset, length);
 			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
 		}
+        
+        UDPPacket(byte type, byte[] data, int offset, int length, boolean more) 
+                            {
+            bytes = new byte[1 + HASH_LENGTH + length];
+            setType(type);
+            setData(data, offset, length);
+            setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
+        }
 		
-		public UDPPacket(byte[] bytes) throws UDPPacketParseException{
+		UDPPacket(byte[] bytes) throws UDPPacketParseException{
 			if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
 				throw new UDPPacketParseException("Message to Short");
 			if (bytes[HASH_LENGTH] < ACK || bytes[HASH_LENGTH] > PING) 
@@ -1450,7 +1442,7 @@ public class UDPConnection extends Thread implements Activity{
 			setBytes(hash, 0, hash.length, 0);
 		}
 		
-		private void setData(byte[] data, int offset, int length) throws UDPPacketParseException{
+		private void setData(byte[] data, int offset, int length) {
 			setBytes(data, offset, length, (HASH_LENGTH + 1));
 			/*
 			byte[] hash = hashByteArray(data, offset, length);
