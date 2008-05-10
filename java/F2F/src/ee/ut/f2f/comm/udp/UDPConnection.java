@@ -931,7 +931,7 @@ public class UDPConnection extends Thread implements Activity{
 		try{	
 			DatagramPacket receiveDp = new DatagramPacket(new byte[200], 200);
 			log.debug("STUN SERVER MAPPED ADDRESS REQUEST >>>>>");
-			receive(receiveDp);
+			this.localSocket.receive(receiveDp);
 			log.debug("STUN SERVER MAPPED ADDRESS REQUEST <<<<<");
 			receiveMh = MessageHeader.parseHeader(receiveDp.getData());
 		} catch (SocketTimeoutException e){
