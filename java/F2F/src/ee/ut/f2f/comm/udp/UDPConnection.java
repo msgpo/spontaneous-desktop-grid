@@ -116,10 +116,7 @@ public class UDPConnection extends Thread implements Activity{
             {
                 try {
                     sendUDPTestMessage(new UDPTestMessage(id));
-                    if (this.connectionId != null &&
-                    		i < (DEFAULT_WAITING_TIMEOUT -3)){
-                    	i = DEFAULT_WAITING_TIMEOUT - 3;
-                    }
+                    if (this.connectionId != null) break;
                     Thread.sleep(1000);
                 } catch (Exception e) {}
             }
@@ -700,7 +697,7 @@ public class UDPConnection extends Thread implements Activity{
 			//else if ()
 		}
 		
-		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 1;
+		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 3;
 		
 		Thread udpListener = new Thread(){
 			public void run(){
