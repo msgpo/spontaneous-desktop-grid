@@ -272,6 +272,7 @@ public class UDPConnection extends Thread implements Activity{
 		this.status = Status.IDLE;
 	}
 
+    private Boolean pingLock = new Boolean(true);
 	private void listen()
     {
         ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
@@ -292,6 +293,10 @@ public class UDPConnection extends Thread implements Activity{
 			//try to receive
 			try {
                 log.debug("Receive Starting >>>>>>");
+                synchronized(pingLock)
+                {
+                	pingLock.notifyAll();
+                }
                 receive(packet);
                 log.debug("Receive Stopping <<<<<<");
 				content = new UDPPacket(packet.getData());
@@ -308,15 +313,20 @@ public class UDPConnection extends Thread implements Activity{
                         {
 					        try
                             {
-					        	log.debug("Status Before sending [" + status + "]");
+					        	synchronized(pingLock)
+				                {
+					        		pingLock.wait();
+				                }
+					        	Thread.sleep(500);
+					        	log.debug("Status Before sending ID-PING [" + status + "]");
                                 send(connectionId.toString().getBytes());
-                            } catch (CommunicationFailedException e)
+            					log.debug("Sent ID-PING");
+                            } catch (Exception e)
                             {
                                 log.warn("error Sending ID-PING ...", e);
                             }
                         }
                     }.start();
-					log.debug("Sent ID-PING");
 					continue;
 				} else {
 					counter++;
