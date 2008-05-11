@@ -125,7 +125,7 @@ public class UDPConnection extends Thread implements Activity{
                     Thread.sleep(1000);
                 } catch (Exception e) {}
             }
-			if (this.localConnectionId == null){
+			if (this.remoteConnectionId == null){
 				log.error(" " + getActivityName() + " Timeout waiting for remote ID");
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 						ActivityEvent.Type.FAILED,
@@ -197,7 +197,7 @@ public class UDPConnection extends Thread implements Activity{
 	UUID getConnectionId(){
 		return localConnectionId;
 	}
-		
+	
 	Status getStatus(){
 		return status;
 	}
@@ -275,10 +275,10 @@ public class UDPConnection extends Thread implements Activity{
 
     private void listen()
     {
-        ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+    	setName("UDP Connection ID [" + localConnectionId.toString() + "]");
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.CHANGED,
 				"ID [" + localConnectionId.toString() + "] listening for incoming packets"));
-		setName("UDP Connection ID [" + localConnectionId.toString() + "]");
 		log.info("UDP Connection established, ID [" + localConnectionId.toString() + "]");
 		log.debug("Listening for incoming packets");
 		runPingThread();

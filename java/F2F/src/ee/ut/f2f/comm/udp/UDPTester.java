@@ -36,9 +36,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		INIT,
 		WAITING_STUN_INFO,
 		GOT_STUN_INFO,
-		INIT_UDP_TESTS,
 		STOPPING
-		
 	}
 	private Status status = null;
 	
@@ -142,21 +140,9 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 				remoteStunInfo = msg.stunInfo; 
 				status = Status.GOT_STUN_INFO;
 			}
-		} else if (this.status == Status.INIT_UDP_TESTS) {
-			if( runningTest == null ) return;
-			if(msg.type == UDPTestMessage.Type.MAPPED_ADDRESS) {
+		} else if (this.status == Status.GOT_STUN_INFO) {
+			if( runningTest != null )
 				runningTest.receivedUDPTestMessage(msg);
-			} else if (msg.type == UDPTestMessage.Type.CONNECTION_ID) {
-				this.runningTest.receivedUDPTestMessage(msg);
-			} else if (msg.type == UDPTestMessage.Type.RECEIVED_PING) {
-				runningTest.receivedUDPTestMessage(msg);
-			} else {
-				log.error(" " + getName() + " Illegal message type [" + msg.type.toString() + "] at this moment"
-							+ " [" + this.status + "]");
-			}
-		} else {	
-			log.error(" " + getName() + " Illegal message type [" + msg.type.toString() + "] at this moment"
-					+ " [" + this.status + "]");
 		}
 	}
 	
@@ -317,8 +303,6 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(
 				this,ActivityEvent.Type.CHANGED, 
 				"Initiating UDP Tests"));
-		
-		this.status = Status.INIT_UDP_TESTS;
 		
 		InetAddress localIas = null;
 		InetAddress remoteIas = null;
