@@ -778,7 +778,7 @@ public class UDPConnection extends Thread implements Activity{
 			attackOnRemotePort = attackOnRemotePort + this.remotePortMappingRule;
 		}
 		for (int afterConnnect = 0, ping_counter = 0, port_increment_counter = 0; 
-			   afterConnnect < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT &&
+			   afterConnnect < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT + 10 &&
 			   !holePunchTimeout && 
 			   status != Status.CLOSING; 
 			 ping_counter++){
