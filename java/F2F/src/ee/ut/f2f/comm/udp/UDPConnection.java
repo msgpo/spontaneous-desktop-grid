@@ -55,7 +55,7 @@ public class UDPConnection extends Thread implements Activity{
 	private final static int DEFAULT_PORT_MAPPING_RULE = 1;  
 	
 	//
-	final static String HASH_ALGORITHM = "MD5";
+	private final static String HASH_ALGORITHM = "MD5";
 	
 	
 	//Member fields
@@ -66,11 +66,11 @@ public class UDPConnection extends Thread implements Activity{
 	private Status status = Status.INIT;
 	
 	//
-	private InetSocketAddress mappedAddress = null;
+	private InetSocketAddress localMappedAddress = null;
 	private InetSocketAddress remoteMappedAddress = null;
 	
 	//
-	private Integer portMappingRule = null;
+	private Integer localPortMappingRule = null;
 	private Integer remotePortMappingRule = null;
 	
 	//
@@ -89,7 +89,7 @@ public class UDPConnection extends Thread implements Activity{
 	}
 
 	//Constructors
-	public UDPConnection(DatagramSocket localSocket,
+	private UDPConnection(DatagramSocket localSocket,
 				   InetAddress remoteIp,
 				   UDPTester parent,
 				   String hashAlgorithm) throws NoSuchAlgorithmException {
@@ -102,14 +102,12 @@ public class UDPConnection extends Thread implements Activity{
 		this.md = MessageDigest.getInstance(hashAlgorithm);
 	}
 	
-	public UDPConnection (DatagramSocket localSocket,
+	UDPConnection (DatagramSocket localSocket,
 				   InetAddress remoteIp,
 				   UDPTester parent) throws NoSuchAlgorithmException {
 		this (localSocket, remoteIp, parent, HASH_ALGORITHM);
 	}
 	
-	
-	//
 	private void exchangeID(){
 		if (this.udpTester.getRunningTest() == this){
 			//connection ready
@@ -145,22 +143,22 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	public void testFailed(){
+	private void testFailed(){
 		status = Status.CLOSING;
 		this.udpTester.resetRunningTest();
 	}
 	
-	public void sendUDPTestMessage(UDPTestMessage udpTestMessage) throws CommunicationFailedException{
+	private void sendUDPTestMessage(UDPTestMessage udpTestMessage) throws CommunicationFailedException{
 		this.udpTester.sendUDPTestMessage(udpTestMessage);
 	}
 	
-	public void close(){
+	void close(){
 		log.info("Received stop signal, closing connection");
 		this.status = Status.CLOSING;
 		this.udpTester.removeConnection(this);
 	}
 
-	public void receivedUDPTestMessage(UDPTestMessage udpm){
+	void receivedUDPTestMessage(UDPTestMessage udpm){
 		if(this.status == Status.INIT){
 			if(udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS){
                 if (udpm.mappedAddress == null) return;
@@ -191,20 +189,20 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	public UUID getConnectionId(){
+	UUID getConnectionId(){
 		return connectionId;
 	}
 	
-	public void setConnectionId(UUID id){
+	void setConnectionId(UUID id){
 		this.connectionId = id;
 	}
 	
-	public Status getStatus(){
+	Status getStatus(){
 		return status;
 	}
 	
 	public InetSocketAddress getMappedAddress(){
-		return mappedAddress;
+		return localMappedAddress;
 	}
 
 	public String getActivityName() {
@@ -214,7 +212,6 @@ public class UDPConnection extends Thread implements Activity{
 	public Activity getParentActivity() {
 		return this.udpTester;
 	}
-
 	
 	public void run(){
 		// just for information catch any exceptions that may occur
@@ -279,7 +276,6 @@ public class UDPConnection extends Thread implements Activity{
 		this.status = Status.IDLE;
 	}
 
-	//Private Methods
 	private void listen()
     {
         ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
@@ -404,7 +400,6 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	
 	synchronized private void receive(DatagramPacket packet) throws IOException
     {
         localSocket.receive(packet);
@@ -426,7 +421,7 @@ public class UDPConnection extends Thread implements Activity{
             return;
         }
         
-        byte[] receivedBytes = receive();
+        byte[] receivedBytes = receiveData();
         
         //TODO:
         // deserialize the data and 
@@ -541,13 +536,15 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	private byte[] receive(){
+	private byte[] receiveData()
+	{
 		//Final data array
 		byte[] returnData = new byte[0];
 		byte[] pData = new byte[UDPPacket.MAX_PACKET_SIZE];
 		DatagramPacket packet = new DatagramPacket(pData, pData.length);
 		int errors = 0;
-		while (this.status != Status.CLOSING){
+		while (this.status != Status.CLOSING)
+		{
 			//Check counters
 			if (errors > MAX_SEND_ERRORS){
 				log.info("Max send errors reached, closing thread");
@@ -562,7 +559,7 @@ public class UDPConnection extends Thread implements Activity{
 					localSocket.setSoTimeout(RECEIVE_SO_TIMEOUT);
 				}
 			} catch (SocketException e){
-				log.error("Unable to set RECEIVE_SO_TIMEOUT [" + RECEIVE_SO_TIMEOUT + "]",e);
+				log.error("Unable to set RECEIVE_SO_TIMEOUT",e);
 				errors++;
 				continue;
 			}
@@ -648,13 +645,13 @@ public class UDPConnection extends Thread implements Activity{
 				}
 			}
 			log.debug("Discovered Port Allocation Rules :[" + rules + "]");
-			portMappingRule = getMostFrequentElem(rules);
-			if (portMappingRule == null){
-				portMappingRule = DEFAULT_PORT_MAPPING_RULE;
+			localPortMappingRule = getMostFrequentElem(rules);
+			if (localPortMappingRule == null){
+				localPortMappingRule = DEFAULT_PORT_MAPPING_RULE;
 			}
-			log.debug("Using discovered Rule [" + portMappingRule + "]");
+			log.debug("Using discovered Rule [" + localPortMappingRule + "]");
 		} else {
-			portMappingRule = 0;
+			localPortMappingRule = 0;
 		}
 		// discover mapped IP address and port
 		InetSocketAddress ias = null;
@@ -663,10 +660,10 @@ public class UDPConnection extends Thread implements Activity{
 		} catch (MappedAddressResolvingException e) {
 			log.error("Unable to resolve Mapped Address",e);
 		}
-		this.mappedAddress = new InetSocketAddress(ias.getAddress(),ias.getPort() 
-									+ portMappingRule);
+		this.localMappedAddress = new InetSocketAddress(ias.getAddress(),ias.getPort() 
+									+ localPortMappingRule);
 		
-		if( mappedAddress == null ){
+		if( localMappedAddress == null ){
 			log.error("Mapped address is not resolved");
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 					ActivityEvent.Type.FAILED,
@@ -676,9 +673,9 @@ public class UDPConnection extends Thread implements Activity{
 		
 		log.info(getActivityName() 
 				   + "Mapped address\t["
-				   + this.mappedAddress.getAddress().getHostAddress()
+				   + this.localMappedAddress.getAddress().getHostAddress()
 				   + ":"
-				   + this.mappedAddress.getPort()
+				   + this.localMappedAddress.getPort()
 				   + "]");
 		//exchange MappedAddress
 		exchangeMappedAddress();
@@ -865,7 +862,7 @@ public class UDPConnection extends Thread implements Activity{
 		//exchange mapped addresses
 		for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){
 			try{
-                sendUDPTestMessage(new UDPTestMessage(this.mappedAddress,this.portMappingRule));
+                sendUDPTestMessage(new UDPTestMessage(this.localMappedAddress,this.localPortMappingRule));
 				if (this.remoteMappedAddress != null) return;
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {}
@@ -1201,12 +1198,9 @@ public class UDPConnection extends Thread implements Activity{
 		return returnBytes;
 	}
 	
-	//Private Exceptions
-	
-	private class MappedAddressResolvingException extends Exception{
-		
-		private static final long serialVersionUID = -4728460267462164203L;
-
+	@SuppressWarnings("serial")
+	private class MappedAddressResolvingException extends Exception
+	{
 		MappedAddressResolvingException() {
 			super();
 		}
@@ -1224,9 +1218,9 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	private class PortMappingRuleDiscoveryException extends Exception{
-		private static final long serialVersionUID = 131585482074418044L;
-		
+	@SuppressWarnings("serial")
+	private class PortMappingRuleDiscoveryException extends Exception
+	{
 		PortMappingRuleDiscoveryException(){
 			super();
 		}
@@ -1244,9 +1238,9 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	private class UDPPacketParseException extends Exception{
-		private static final long serialVersionUID = -6764517470407708849L;
-		
+	@SuppressWarnings("serial")
+	private class UDPPacketParseException extends Exception
+	{
 		UDPPacketParseException(){
 			super();
 		}
@@ -1264,13 +1258,13 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	class UDPPacket{
+	private class UDPPacket
+	{
 		/* Packet Structure
 		 * |-------------|-------------DATA----------------------|
 		 * |    HASH     |  TYPE   |   MESSAGE                   |
 		 * |  16 bytes   |  1 byte |   MAX_MESSAGE_SIZE			 |
 		 */
-		
 		
 		final static byte ACK = 6;		//ACK if successfully received
 		final static byte NAK = 11;		//NAK if failed
@@ -1284,7 +1278,6 @@ public class UDPConnection extends Thread implements Activity{
 		final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1;//one for MORE byte
 		
 		byte[] bytes = new byte[0];
-		
 		
 		UDPPacket(byte type) {
 			bytes = new byte[HASH_LENGTH +1];
