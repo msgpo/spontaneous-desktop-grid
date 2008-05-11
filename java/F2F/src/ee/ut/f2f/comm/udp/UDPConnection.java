@@ -44,8 +44,6 @@ public class UDPConnection extends Thread implements Activity{
 	//SO Timeouts
 	private final static int RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT = 1000;
 	private final static int HOLE_PUNCHING_SO_TIMEOUT = 10000;
-	private final static int SEND_SO_TIMEOUT = 3000;
-	private final static int RECEIVE_SO_TIMEOUT = 0;
 	
 	//Connection failed after ...
 	private final static int MAX_SEND_ERRORS = 10;
@@ -232,7 +230,6 @@ public class UDPConnection extends Thread implements Activity{
 	//Main Send Bytes method
     synchronized void send(final byte[] bytes) throws CommunicationFailedException
     {
-		
 		//try to send SYN packet
 		this.status = Status.SENDING;
         synGen = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
@@ -256,8 +253,7 @@ public class UDPConnection extends Thread implements Activity{
     			return;
     		}
             
-    		setLocalSocketTimeout(5000);
-            try
+    		try
             {
                 log.debug("Starting waiting for SYN-ACK");
                 synGen.wait();
@@ -268,12 +264,13 @@ public class UDPConnection extends Thread implements Activity{
 		
 		log.debug("Received SYN-ACK");
 		log.debug("Sending [" + Arrays.toString(bytes) + "]");
-		send(bytes,0,bytes.length,false,false);
-		this.status = Status.IDLE;
+		if (send(bytes,0,bytes.length,false,false))
+			this.status = Status.IDLE;
+		else 
+			this.status = Status.CLOSING;
 	}
 
-    private Boolean pingLock = new Boolean(true);
-	private void listen()
+    private void listen()
     {
         ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.CHANGED,
@@ -281,11 +278,11 @@ public class UDPConnection extends Thread implements Activity{
 		setName("UDP Connection ID [" + connectionId.toString() + "]");
 		log.info("UDP Connection established, ID [" + connectionId.toString() + "]");
 		log.debug("Listening for incoming packets");
-		int counter = 10;
+		runPingThread();
 		while (this.status != Status.CLOSING)
 		{
 			//try to set socket timeout
-			setLocalSocketTimeout(SEND_SO_TIMEOUT);
+			setLocalSocketTimeout(0);
 						
 			byte[] buffer = new byte[UDPPacket.MAX_PACKET_SIZE];
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
@@ -293,46 +290,12 @@ public class UDPConnection extends Thread implements Activity{
 			//try to receive
 			try {
                 log.debug("Receive Starting >>>>>>");
-                synchronized(pingLock)
-                {
-                	pingLock.notifyAll();
-                }
                 receive(packet);
                 log.debug("Receive Stopping <<<<<<");
 				content = new UDPPacket(packet.getData());
 			} catch (SocketTimeoutException e) {
-				log.debug("Receive Stopping <<<<<<");
-				//if counter == 10 -> send ping
-				if (counter == 10) {
-					counter = 0;
-				    log.debug("Sending ID-PING ...");
-                    
-                    new Thread ()
-                    {
-                        public void run()
-                        {
-					        try
-                            {
-					        	synchronized(pingLock)
-				                {
-					        		pingLock.wait();
-				                }
-					        	Thread.sleep(500);
-					        	log.debug("Status Before sending ID-PING [" + status + "]");
-                                send(connectionId.toString().getBytes());
-            					log.debug("Sent ID-PING");
-                            } catch (Exception e)
-                            {
-                                log.warn("error Sending ID-PING ...", e);
-                            }
-                        }
-                    }.start();
-					continue;
-				} else {
-					counter++;
-					log.debug("counter [" + counter + "]");
-                    continue;
-				}
+				log.debug("Receive Stopping <<<<<< SocketTimeoutException");
+				continue;
 			} catch (IOException e) {
 				log.error("Unable to receive packet", e);
 				continue;
@@ -384,6 +347,30 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
+	private void runPingThread()
+	{
+		new Thread ()
+        {
+            public void run()
+            {
+		        try
+                {
+		        	Thread.sleep(10000);
+		        	log.debug("Status Before sending ID-PING [" + status + "]");
+		        	if (status == Status.IDLE)
+		        	{
+		        		log.debug("Send ID-PING...");
+		        		send(connectionId.toString().getBytes());
+		        		log.debug("Sent ID-PING");
+		        	}
+                } catch (Exception e)
+                {
+                    log.warn("error Sending ID-PING ...", e);
+                }
+            }
+        }.start();
+	}
+
 	private void setLocalSocketTimeout(int sendSoTimeout)
 	{
 		try {
@@ -431,18 +418,18 @@ public class UDPConnection extends Thread implements Activity{
     }
 
     //recursive method
-	private void send(byte[] bytes, int offset, int length, boolean hasMore, boolean split){	
+	private boolean send(byte[] bytes, int offset, int length, boolean hasMore, boolean split)
+	{	
 		//If message is larger then MAX size split in two
 		if (length > UDPPacket.MAX_MESSAGE_SIZE) {
 			log.debug("Message to large, split in two");
-			send(bytes, offset, length, false, true);
-			return;
+			return send(bytes, offset, length, false, true);
 		}
 		if (split) {
 			int half_size = (int)(length/2d);
-			send(bytes, offset, half_size, true, false);
-			send(bytes, (offset + half_size), (length - half_size), hasMore, false);
-			return;
+			return 
+				send(bytes, offset, half_size, true, false) &&
+				send(bytes, (offset + half_size), (length - half_size), hasMore, false);
 		}
 		log.debug("Sending [" + length + "] bytes");
 		int errors = 0, timeouts = 0;
@@ -450,13 +437,11 @@ public class UDPConnection extends Thread implements Activity{
 			//Check counters
 			if (errors > MAX_SEND_ERRORS){
 				log.info("Max send errors reached, closing thread");
-				this.status = Status.CLOSING;
-				break;
+				return false;
 			}
 			if (timeouts > MAX_SEND_TIMEOUTS){
 				log.info("Max send timeouts reached, closing thread");
-				this.status = Status.CLOSING;
-				break;
+				return false;
 			}
 			
 			// Try to send packet
@@ -474,16 +459,15 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (SocketException e) {
 				log.error("Unable to send [" + length + "] bytes", e);
 				errors++;
-                this.status = Status.CLOSING;
-				continue;
+                return false;
 			} catch (IOException e) {
 				log.error("Unable to send [" + length + "] bytes", e);
 				errors++;
-                this.status = Status.CLOSING;
-				continue;
+                return false;
 			}			
-			//set SO_timeout
-			setLocalSocketTimeout(SEND_SO_TIMEOUT);
+			//set socket timeout
+			// we wait 1 second for ACK/NAK
+			setLocalSocketTimeout(1000);
 			
 			// wait for answer
 			byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1];
@@ -497,33 +481,26 @@ public class UDPConnection extends Thread implements Activity{
 				timeouts++;
 				if (length == 1)
                 {
-                    this.status = Status.CLOSING;
-                    continue;
+                    return false;
                 }
-				send(bytes,offset,length,hasMore,true);
-				return;
+				return send(bytes,offset,length,hasMore,true);
 			} catch (IOException e){
 				log.error("Unable to receive ACK", e);
 				errors++;
-                this.status = Status.CLOSING;
-				continue;
+                return false;
 			} catch (UDPPacketParseException e) {
 				log.debug("Unable to parse UDP Packet", e);
-                this.status = Status.CLOSING;
-				continue;
+                return false;
 			} 
 			
 			if(content != null && content.getType() == UDPPacket.ACK){
-				return;
+				return true;
 			}
 			if(content != null && content.getType() == UDPPacket.NAK){
-				send(bytes, offset, length, hasMore, true);
-				return;
+				return send(bytes, offset, length, hasMore, true);
 			}
-            this.status = Status.CLOSING;
-			//log.debug("Errors [" + errors + "]");
-			//errors++;
 		}
+		return false;
 	}
 	
 	private byte[] receiveData()
@@ -543,8 +520,8 @@ public class UDPConnection extends Thread implements Activity{
                 // order the remote peer to start the sending again
 				break;
 			}
-			//try to set SO_TIMEOUT
-			setLocalSocketTimeout(RECEIVE_SO_TIMEOUT);
+			//try to set socket timeout
+			setLocalSocketTimeout(0);
 			
 			//try to receive
 			try{
