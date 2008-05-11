@@ -116,7 +116,9 @@ public class UDPConnection extends Thread implements Activity{
             {
                 try {
                     sendUDPTestMessage(new UDPTestMessage(id));
-                    if (this.connectionId != null) break;
+                    if (this.connectionId != null){
+                    	i = DEFAULT_WAITING_TIMEOUT - 3;
+                    }
                     Thread.sleep(1000);
                 } catch (Exception e) {}
             }
