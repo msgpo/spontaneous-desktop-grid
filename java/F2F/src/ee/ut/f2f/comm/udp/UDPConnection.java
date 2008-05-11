@@ -700,16 +700,13 @@ public class UDPConnection extends Thread implements Activity{
 			//else if ()
 		}
 		
-		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 1;
+		final int AFTER_CONNECTION_ESTABLISHED_PING_AMOUNT = 10;
 		
 		Thread udpListener = new Thread(){
 			public void run(){
 				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1];
-				int counter = 1;
-				for( int n = 0; n < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT && 
-					  !holePunchTimeout && 
-					  status != Status.CLOSING;
-					  /* status != Status.CONNECTION_ESTABLISHED */ ){	
+				while(  !holePunchTimeout && status != Status.CLOSING &&
+							status != Status.CONNECTION_ESTABLISHED ){	
 					try {
 						DatagramPacket receivePacket = new DatagramPacket(receiveContent,receiveContent.length);
 						receive(receivePacket);
@@ -740,12 +737,13 @@ public class UDPConnection extends Thread implements Activity{
 							}
 							try {
 								sendUDPTestMessage(new UDPTestMessage(UDPTestMessage.Type.RECEIVED_PING));
-								if (status == Status.CONNECTION_ESTABLISHED) n++;
+								
 							} catch (CommunicationFailedException e) {}
 						} else {
 							log.warn("Received " + new String(receivePacket.getData()));
 						}
 					} catch (SocketTimeoutException e) {
+						/*
 						if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone() &&
 								udpTester.getRemoteStunInfo().isSymmetricCone()){
 							//
@@ -765,6 +763,7 @@ public class UDPConnection extends Thread implements Activity{
 							log.warn("Hole punching timeout, no result, stopping thread");
                             holePunchTimeout = true;
 						}
+						*/
 					} catch (Exception e) {
 						log.warn("Exception receiving PING packet",e);
 					}
@@ -778,7 +777,7 @@ public class UDPConnection extends Thread implements Activity{
 			attackOnRemotePort = attackOnRemotePort + this.remotePortMappingRule;
 		}
 		for (int afterConnnect = 0, ping_counter = 0, port_increment_counter = 0; 
-			   afterConnnect < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT + 10 &&
+			   afterConnnect < AFTER_CONNECTION_ESTABLISHED_PING_AMOUNT &&
 			   !holePunchTimeout && 
 			   status != Status.CLOSING; 
 			 ping_counter++){
