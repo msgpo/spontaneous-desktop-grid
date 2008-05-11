@@ -769,6 +769,7 @@ public class UDPConnection extends Thread implements Activity{
 						log.warn("Exception receiving PING packet",e);
 					}
 				}
+				log.debug("HOLE Punching Receive Thread is STOPPING");
 			}
 		};
 		udpListener.start();
@@ -841,6 +842,7 @@ public class UDPConnection extends Thread implements Activity{
         {
             udpListener.join();
         } catch (InterruptedException e){}
+        log.debug("Hole Punching Method is STOPPING");
 	}
 	
 	private void exchangeMappedAddress() throws CommunicationFailedException{
