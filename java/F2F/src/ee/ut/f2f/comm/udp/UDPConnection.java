@@ -60,8 +60,12 @@ public class UDPConnection extends Thread implements Activity{
 	//
 	private UDPTester udpTester = null;
 	private DatagramSocket localSocket = null;
-	private UUID connectionId = null;
+	
 	private Status status = Status.INIT;
+	
+	//
+	private UUID localConnectionId = null;
+	private UUID remoteConnectionId = null;
 	
 	//
 	private InetSocketAddress localMappedAddress = null;
@@ -107,32 +111,32 @@ public class UDPConnection extends Thread implements Activity{
 	}
 	
 	private void exchangeID(){
+		log.debug("Start Excahnging ID");
 		if (this.udpTester.getRunningTest() == this){
 			//connection ready
 			//generate id
-			UUID id = UUID.randomUUID();
+			this.localConnectionId = UUID.randomUUID();
 			//send ID and wait for response
 			for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++)
             {
                 try {
-                    sendUDPTestMessage(new UDPTestMessage(id));
-                    if (this.connectionId != null) break;
+                    sendUDPTestMessage(new UDPTestMessage(localConnectionId));
+                    if (this.remoteConnectionId != null) break;
                     Thread.sleep(1000);
                 } catch (Exception e) {}
             }
-			if (this.connectionId == null){
+			if (this.localConnectionId == null){
 				log.error(" " + getActivityName() + " Timeout waiting for remote ID");
 				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 						ActivityEvent.Type.FAILED,
 						"Timeout waiting for remote ID"));
 				testFailed();
 				return;
+			} else {
+				log.debug("Local connection ID [" + localConnectionId + "]");
+				log.debug("Remote connection ID [" + remoteConnectionId + "]");
 			}
 			
-			//choose ID
-			if (this.connectionId.compareTo(id) != -1){
-				this.connectionId = id;
-			}
 			//add new UDP connection and start next test 
 			this.udpTester.addConnection(this);
 			this.udpTester.resetRunningTest();
@@ -179,6 +183,9 @@ public class UDPConnection extends Thread implements Activity{
 							 + " status [" + this.status + "]");
 			}
         } else if (this.status == Status.CONNECTION_ESTABLISHED) {
+        	if (udpm.type == UDPTestMessage.Type.CONNECTION_ID){
+        		this.remoteConnectionId = udpm.id;
+        	}
  		} else {
 			log.warn(" " + getName() 
 						 + " Illegal message type at this moment [" 
@@ -188,13 +195,9 @@ public class UDPConnection extends Thread implements Activity{
 	}
 	
 	UUID getConnectionId(){
-		return connectionId;
+		return localConnectionId;
 	}
-	
-	void setConnectionId(UUID id){
-		this.connectionId = id;
-	}
-	
+		
 	Status getStatus(){
 		return status;
 	}
@@ -274,9 +277,9 @@ public class UDPConnection extends Thread implements Activity{
     {
         ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.CHANGED,
-				"ID [" + connectionId.toString() + "] listening for incoming packets"));
-		setName("UDP Connection ID [" + connectionId.toString() + "]");
-		log.info("UDP Connection established, ID [" + connectionId.toString() + "]");
+				"ID [" + localConnectionId.toString() + "] listening for incoming packets"));
+		setName("UDP Connection ID [" + localConnectionId.toString() + "]");
+		log.info("UDP Connection established, ID [" + localConnectionId.toString() + "]");
 		log.debug("Listening for incoming packets");
 		runPingThread();
 		while (this.status != Status.CLOSING)
@@ -360,7 +363,7 @@ public class UDPConnection extends Thread implements Activity{
 		        	if (status == Status.IDLE)
 		        	{
 		        		log.debug("Send ID-PING...");
-		        		send(connectionId.toString().getBytes());
+		        		send(localConnectionId.toString().getBytes());
 		        		log.debug("Sent ID-PING");
 		        	}
                 } catch (Exception e)
@@ -412,7 +415,7 @@ public class UDPConnection extends Thread implements Activity{
         log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");
         String rs = new String(receivedBytes);
         log.debug("Received string [" + rs + "]");
-        if (this.connectionId.toString().equals(rs)){
+        if (this.remoteConnectionId.toString().equals(rs)){
             log.debug("Received ID-PING from paired connection");
         }
     }
@@ -664,8 +667,8 @@ public class UDPConnection extends Thread implements Activity{
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 					ActivityEvent.Type.FINISHED,
 					"closed"));
-			log.warn(((connectionId == null) ? " UDPTest " : ("UDP Connedtion ID ["
-						+ connectionId.toString() + "]")) + " closed");
+			log.warn(((localConnectionId == null) ? " UDPTest " : ("UDP Connedtion ID ["
+						+ localConnectionId.toString() + "]")) + " closed");
 		} else {
 			//connection established, start listening
 			exchangeID();
@@ -697,7 +700,7 @@ public class UDPConnection extends Thread implements Activity{
 			//else if ()
 		}
 		
-		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 3;
+		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 1;
 		
 		Thread udpListener = new Thread(){
 			public void run(){

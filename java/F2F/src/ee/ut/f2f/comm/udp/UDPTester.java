@@ -147,10 +147,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			if(msg.type == UDPTestMessage.Type.MAPPED_ADDRESS) {
 				runningTest.receivedUDPTestMessage(msg);
 			} else if (msg.type == UDPTestMessage.Type.CONNECTION_ID) {
-				this.runningTest.setConnectionId(msg.id);
-				log.debug("NEW UDP Connection Established ID ["
-							+ this.runningTest.getConnectionId().toString()
-							+ "]");
+				this.runningTest.receivedUDPTestMessage(msg);
 			} else if (msg.type == UDPTestMessage.Type.RECEIVED_PING) {
 				runningTest.receivedUDPTestMessage(msg);
 			} else {
