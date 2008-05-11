@@ -674,6 +674,9 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
+	private Integer coneToSymPortRangePing = 0;
+	private Integer attackOnRemotePort = 0;
+	
     private boolean holePunchTimeout = false;
 	private void punchHole(){
 		log.debug(getActivityName() + "Hole Punching");
@@ -682,6 +685,17 @@ public class UDPConnection extends Thread implements Activity{
 				"Hole Punching"));
 				
 		setLocalSocketTimeout(HOLE_PUNCHING_SO_TIMEOUT);
+		
+		synchronized (attackOnRemotePort) {
+			attackOnRemotePort = this.remoteMappedAddress.getPort();
+		}
+		synchronized (coneToSymPortRangePing) {
+			if (this.udpTester.getRemoteStunInfo().isSymmetricCone() &&
+				!LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()) {
+				coneToSymPortRangePing = 1;
+			}
+			//else if ()
+		}
 		
 		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 1;
 		
@@ -703,10 +717,23 @@ public class UDPConnection extends Thread implements Activity{
 										+ ":"
 										+ receivePacket.getPort()
 										+ "]");
+							
 							if (!(remoteMappedAddress.getAddress().equals(receivePacket.getAddress()) &&
 								remoteMappedAddress.getPort() == receivePacket.getPort())){	
+								//multiple subnetworks case
+								//ping received from different remote address
+								//change the target IP and port for ping
 								remoteMappedAddress = new InetSocketAddress(receivePacket.getAddress(),
 																		receivePacket.getPort());
+								//change the currently used target port
+								//stop the range attack
+								synchronized (attackOnRemotePort ) {
+									attackOnRemotePort = receivePacket.getPort();
+								}
+								synchronized (coneToSymPortRangePing) {
+									coneToSymPortRangePing = 0;
+								}
+								
 							}
 							try {
 								sendUDPTestMessage(new UDPTestMessage(UDPTestMessage.Type.RECEIVED_PING));
@@ -742,20 +769,25 @@ public class UDPConnection extends Thread implements Activity{
 			}
 		};
 		udpListener.start();
-		int port = this.remoteMappedAddress.getPort();
-		for (int afcr = 0, c = 0, counter = 0; 
-			   afcr < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT &&
+		//first try with remote mapping rule
+		synchronized (attackOnRemotePort){
+			attackOnRemotePort = attackOnRemotePort + this.remotePortMappingRule;
+		}
+		for (int afterConnnect = 0, ping_counter = 0, port_increment_counter = 0; 
+			   afterConnnect < AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT &&
 			   !holePunchTimeout && 
 			   status != Status.CLOSING; 
-			 c++){
+			 ping_counter++){
 			   /* status != Status.CONNECTION_ESTABLISHED; */
 			
 			byte[] sendContent = (new UDPPacket(UDPPacket.PING)).getBytes();
-			DatagramPacket sendPacket = null;			
-			int p = port + (this.remotePortMappingRule *
-										counter *
-										((int) Math.pow((-1), counter))
-						   );
+			DatagramPacket sendPacket = null;
+			//next if there is cone -> symmetric case
+			//try to ping a range of ports on symmetric side 
+			int p = attackOnRemotePort + (	coneToSymPortRangePing *
+											port_increment_counter *
+											((int) Math.pow((-1), port_increment_counter))
+										 );
 			
 			try {
 				InetSocketAddress ias = new InetSocketAddress(remoteMappedAddress.getAddress(),p);
@@ -792,12 +824,14 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (InterruptedException e) {}
 			
 			if(status == Status.CONNECTION_ESTABLISHED){
-				afcr++;
+				afterConnnect++;
 			}
-			if(c > 3){
-				port = p;
-				counter++;
-				c = 0;
+			if(ping_counter > 3){
+				synchronized (attackOnRemotePort){
+					attackOnRemotePort = p;
+				}
+				port_increment_counter++;
+				ping_counter = 5;
 			}
 		}
         try
