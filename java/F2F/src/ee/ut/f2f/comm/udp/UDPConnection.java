@@ -256,11 +256,7 @@ public class UDPConnection extends Thread implements Activity{
     			return;
     		}
             
-            try {
-                localSocket.setSoTimeout(5000);
-            } catch (Exception e){
-                log.debug("Unable to set SO_TIMEOUT --> 5000");
-            }
+    		setLocalSocketTimeout(5000);
             try
             {
                 log.debug("Starting waiting for SYN-ACK");
@@ -284,31 +280,12 @@ public class UDPConnection extends Thread implements Activity{
 		setName("UDP Connection ID [" + connectionId.toString() + "]");
 		log.info("UDP Connection established, ID [" + connectionId.toString() + "]");
 		log.debug("Listening for incoming packets");
-		int errors = 0, timeouts = 0, counter = 10;
-		while (this.status != Status.CLOSING) {
-			//Check counters
-			if (errors > MAX_SEND_ERRORS){
-				log.info("Max send errors reached, closing thread");
-				this.status = Status.CLOSING;
-				break;
-			}
-			if (timeouts > MAX_SEND_TIMEOUTS) {
-				log.info("Max send timeouts reached, closing thread");
-				this.status = Status.CLOSING;
-				break;
-			}
-			
-			//try to set send timeout
-			try {
-				if (localSocket.getSoTimeout() != SEND_SO_TIMEOUT) {
-					localSocket.setSoTimeout(SEND_SO_TIMEOUT);
-				}
-			} catch (SocketException e){
-				log.error("Unable to set SEND_SO_TIMEOUT", e);
-				errors++;
-				continue;
-			}
-			
+		int counter = 10;
+		while (this.status != Status.CLOSING)
+		{
+			//try to set socket timeout
+			setLocalSocketTimeout(SEND_SO_TIMEOUT);
+						
 			byte[] buffer = new byte[UDPPacket.MAX_PACKET_SIZE];
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
@@ -348,7 +325,6 @@ public class UDPConnection extends Thread implements Activity{
 				}
 			} catch (IOException e) {
 				log.error("Unable to receive packet", e);
-				errors++;
 				continue;
 			} catch (UDPPacketParseException e) {
 				log.debug("Unable to parse UDP Packet",e);
@@ -364,8 +340,6 @@ public class UDPConnection extends Thread implements Activity{
                 if (synGen == null)
                 {
                     receivedSYN();
-                    errors = 0;
-                    timeouts = 0;
                     this.status = Status.IDLE;
                     continue;
                 }
@@ -400,6 +374,17 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
+	private void setLocalSocketTimeout(int sendSoTimeout)
+	{
+		try {
+			if (localSocket.getSoTimeout() != sendSoTimeout) {
+				localSocket.setSoTimeout(sendSoTimeout);
+			}
+		} catch (SocketException e){
+			log.error("Unable to set socket timeout to "+sendSoTimeout, e);
+		}
+	}
+
 	synchronized private void receive(DatagramPacket packet) throws IOException
     {
         localSocket.receive(packet);
@@ -488,13 +473,8 @@ public class UDPConnection extends Thread implements Activity{
 				continue;
 			}			
 			//set SO_timeout
-			try{
-				if (localSocket.getSoTimeout() != SEND_SO_TIMEOUT) {
-					localSocket.setSoTimeout(SEND_SO_TIMEOUT);
-				}
-			} catch (SocketException e) {
-				log.debug("Unable to set SEND_SO_TIMEOUT [" + SEND_SO_TIMEOUT + "]",e);
-			}
+			setLocalSocketTimeout(SEND_SO_TIMEOUT);
+			
 			// wait for answer
 			byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1];
 			DatagramPacket rDp = new DatagramPacket(buffer, buffer.length);
@@ -554,15 +534,8 @@ public class UDPConnection extends Thread implements Activity{
 				break;
 			}
 			//try to set SO_TIMEOUT
-			try{
-				if (localSocket.getSoTimeout() != RECEIVE_SO_TIMEOUT){
-					localSocket.setSoTimeout(RECEIVE_SO_TIMEOUT);
-				}
-			} catch (SocketException e){
-				log.error("Unable to set RECEIVE_SO_TIMEOUT",e);
-				errors++;
-				continue;
-			}
+			setLocalSocketTimeout(RECEIVE_SO_TIMEOUT);
+			
 			//try to receive
 			try{
 				receive(packet);
@@ -621,11 +594,7 @@ public class UDPConnection extends Thread implements Activity{
 				ActivityEvent.Type.STARTED,
 				"Init"));
 		
-		try{
-			localSocket.setSoTimeout(5000);
-		} catch (Exception e){
-			
-		}
+		setLocalSocketTimeout(5000);
 		
 		// if behind Symmetric firewall try to guess the allocated port
 		if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()){
@@ -725,12 +694,8 @@ public class UDPConnection extends Thread implements Activity{
 				ActivityEvent.Type.CHANGED,
 				"Hole Punching"));
 				
-		try {
-			localSocket.setSoTimeout(HOLE_PUNCHING_SO_TIMEOUT);
-		} catch (SocketException e2) {
-			log.error("Unable to set hole punching so_timeout", e2);
-			return;
-		}
+		setLocalSocketTimeout(HOLE_PUNCHING_SO_TIMEOUT);
+		
 		final int AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT = 1;
 		
 		Thread udpListener = new Thread(){
@@ -1037,18 +1002,8 @@ public class UDPConnection extends Thread implements Activity{
 		Collections.shuffle((List<InetSocketAddress>) stunServers);
 		//log.info("Got total [" + stunServers.size() + "] STUN server addresses for localIp");
 		
-		//set socket Timeout 300
-		try{
-			this.localSocket.setSoTimeout(RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT);
-		} catch (SocketException e){
-			log.error(getActivityName() 
-					+ " "
-					+ "Unable to set Socket timeout",e);
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-					ActivityEvent.Type.FAILED,
-					"Unable to resolve Mapped Address"));
-			throw new MappedAddressResolvingException("Unable to set Socket timeout",e);
-		}
+		//set socket timeout
+		setLocalSocketTimeout(RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT);
 		
 		//loop over stunServers, ask for mapped address
 		for(InetSocketAddress stunServer : stunServers){
