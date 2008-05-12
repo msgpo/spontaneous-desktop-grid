@@ -397,7 +397,7 @@ public class UDPConnection extends Thread implements Activity{
     }
 	
 	private Boolean sendLock = true;
-	synchronized private void sendFromLocalSocket(DatagramPacket packet) throws IOException
+	private void sendFromLocalSocket(DatagramPacket packet) throws IOException
     {
 		synchronized (sendLock)
 		{
@@ -439,7 +439,7 @@ public class UDPConnection extends Thread implements Activity{
 
     //recursive method
 	private boolean send(byte[] bytes, int offset, int length, boolean hasMore, boolean split)
-	{	
+	{
 		//If message is larger then MAX size split in two
 		if (length > UDPPacket.MAX_MESSAGE_SIZE) {
 			log.debug("Message to large, split in two");
