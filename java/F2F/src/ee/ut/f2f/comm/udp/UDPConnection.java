@@ -388,6 +388,7 @@ public class UDPConnection extends Thread implements Activity{
 	private Boolean receiveLock = true;
 	private void receiveFromLocalSocket(DatagramPacket packet) throws IOException
     {
+		log.debug("aquire  receiveLock ...");
 		synchronized (receiveLock)
 		{
 			log.debug("UDP SOCKET receive ...");
@@ -399,6 +400,7 @@ public class UDPConnection extends Thread implements Activity{
 	private Boolean sendLock = true;
 	private void sendFromLocalSocket(DatagramPacket packet) throws IOException
     {
+		log.debug("aquire  sendLock ...");
 		synchronized (sendLock)
 		{
 			log.debug("UDP SOCKET send ...");
