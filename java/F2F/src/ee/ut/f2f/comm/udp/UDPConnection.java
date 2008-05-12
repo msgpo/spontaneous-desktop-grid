@@ -454,8 +454,8 @@ public class UDPConnection extends Thread implements Activity{
             return false;
         }
         
-        byte[] receivedBytes = null;
-        if (!receiveData(receivedBytes)) return false;
+        byte[] receivedBytes = receiveData();
+        if (receivedBytes == null) return false;
         
         //TODO:
         // deserialize the data and 
@@ -556,7 +556,7 @@ public class UDPConnection extends Thread implements Activity{
 		return false;
 	}
 	
-	private boolean receiveData(byte[] receivedBytes)
+	private byte[] receiveData()
 	{
 		//Final data array
 		byte[] returnData = new byte[0];
@@ -568,7 +568,7 @@ public class UDPConnection extends Thread implements Activity{
 			//Check counters
 			if (errors > MAX_SEND_ERRORS){
 				log.info("Max send errors reached, closing thread");
-				return false;
+				return null;
                 //TODO: do not close the connection
                 // order the remote peer to start the sending again
 			}
@@ -580,7 +580,7 @@ public class UDPConnection extends Thread implements Activity{
 				receiveFromLocalSocket(packet);
 			} catch (IOException e){
 				log.error("Unable to receive packet", e);
-                return false;
+                return null;
 			}
 			//try to get data
 			UDPPacket udpp = null;
@@ -590,7 +590,7 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (UDPPacketParseException e){
 				log.error("Unable to parse received udp packet [" 
 							+ packet.getData().length + "] bytes", e);
-                return false;
+                return null;
 			}
 			log.debug("received some data");
 			// check if hash OK 
@@ -617,16 +617,15 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (IOException e){
 				log.error("Unable to send response",e);
 				errors++;
-                return false;
+                return null;
 			}
 			if ( pData[0] == UDPPacket.ACK && !hasMore)
             {
                 log.debug("Stop receiving, return [" + returnData.length + "] bytes");
-                receivedBytes = returnData; 
-                return true;
+                return returnData;
             }
 		}
-		return false;
+		return null;
 	}
 	
 	private void testProcess() throws CommunicationFailedException{
