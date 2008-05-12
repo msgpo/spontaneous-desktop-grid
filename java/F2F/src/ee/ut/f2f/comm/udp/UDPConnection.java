@@ -248,7 +248,7 @@ public class UDPConnection extends Thread implements Activity{
                 integer[3]=(byte)((synGen & 0x000000ff));
                 content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
                 packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
-    			localSocket.send(packet);
+    			sendFromLocalSocket(packet);
     			log.debug("Sent SYN: " + content);
     		} catch (IOException e){
     			log.debug("Unable to send SYN packet", e);
@@ -293,7 +293,7 @@ public class UDPConnection extends Thread implements Activity{
 			//try to receive
 			try {
                 log.debug("Receive Starting >>>>>>");
-                receive(packet);
+                receiveFromLocalSocket(packet);
                 log.debug("Receive Stopping <<<<<<");
 				content = new UDPPacket(packet.getData());
 			} catch (SocketTimeoutException e) {
@@ -385,9 +385,18 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 
-	synchronized private void receive(DatagramPacket packet) throws IOException
+	synchronized private void receiveFromLocalSocket(DatagramPacket packet) throws IOException
     {
+		log.debug("UDP SOCKET receive ...");
         localSocket.receive(packet);
+		log.debug("UDP SOCKET received");
+    }
+	
+	synchronized private void sendFromLocalSocket(DatagramPacket packet) throws IOException
+    {
+		log.debug("UDP SOCKET send ...");
+        localSocket.send(packet);
+		log.debug("UDP SOCKET sent");
     }
 
     private void receivedSYN()
@@ -399,7 +408,7 @@ public class UDPConnection extends Thread implements Activity{
             UDPPacket content = new UDPPacket (UDPPacket.SYN_ACK);
             DatagramPacket packet = new DatagramPacket(content.getBytes(), 
                                         content.getBytes().length, remoteMappedAddress);
-            localSocket.send(packet);
+            sendFromLocalSocket(packet);
             log.debug("Sent SYN-ACK");
         } catch (IOException e) {
             log.error("Unable to send SYN_ACK", e);
@@ -452,7 +461,7 @@ public class UDPConnection extends Thread implements Activity{
 				UDPPacket udpp = new UDPPacket(bytes, offset, length, hasMore);
 				DatagramPacket sDp = new DatagramPacket(udpp.getBytes(), udpp
 						.getBytes().length, remoteMappedAddress);
-				localSocket.send(sDp);
+				sendFromLocalSocket(sDp);
 			} catch (UDPPacketParseException e) {
 				log.error("Unable to send [" + length + "] bytes ["
 						+ e.getMessage() + "]");
@@ -477,7 +486,7 @@ public class UDPConnection extends Thread implements Activity{
 			DatagramPacket rDp = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			try{
-				receive(rDp);
+				receiveFromLocalSocket(rDp);
 				content = new UDPPacket(rDp.getData());
 			} catch (SocketTimeoutException e) {
 				log.warn("Timeout waiting for ACK");
@@ -528,7 +537,7 @@ public class UDPConnection extends Thread implements Activity{
 			
 			//try to receive
 			try{
-				receive(packet);
+				receiveFromLocalSocket(packet);
 			} catch (IOException e){
 				log.error("Unable to receive packet", e);
                 this.status = Status.CLOSING;
@@ -562,7 +571,7 @@ public class UDPConnection extends Thread implements Activity{
 				UDPPacket content = new UDPPacket(pData[0]);
 				packet = new DatagramPacket(content.getBytes(), 
 											content.getBytes().length, remoteMappedAddress);
-				localSocket.send(packet);
+				sendFromLocalSocket(packet);
 			} catch (IOException e){
 				log.error("Unable to send response",e);
 				errors++;
@@ -709,7 +718,7 @@ public class UDPConnection extends Thread implements Activity{
 							status != Status.CONNECTION_ESTABLISHED ){	
 					try {
 						DatagramPacket receivePacket = new DatagramPacket(receiveContent,receiveContent.length);
-						receive(receivePacket);
+						receiveFromLocalSocket(receivePacket);
                         UDPPacket udpp = new UDPPacket(receivePacket.getData());
 						if (UDPPacket.PING == udpp.getType()){
 							log.debug("Received PING packet from ["
@@ -808,7 +817,7 @@ public class UDPConnection extends Thread implements Activity{
 			}
 			
 			try{
-					localSocket.send(sendPacket);
+					sendFromLocalSocket(sendPacket);
 					log.debug("Sent PING packet to ["
 							   + sendPacket.getAddress().getHostAddress()
 							   + " "
