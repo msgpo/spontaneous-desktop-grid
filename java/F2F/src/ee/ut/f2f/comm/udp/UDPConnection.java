@@ -230,6 +230,8 @@ public class UDPConnection extends Thread implements Activity{
 	}
 	
     private Integer synGen = null;
+    private byte[] bytesToSend = null;
+    private CommunicationFailedException sendException = null;
 	//Main Send Bytes method
     void send(final byte[] bytes) throws CommunicationFailedException
     {
@@ -239,6 +241,7 @@ public class UDPConnection extends Thread implements Activity{
         log.debug("aquire synGen");
         synchronized (synGen)
         {
+        	bytesToSend = bytes;
     		UDPPacket content = null;
     		DatagramPacket packet = null;
     		try {
@@ -255,24 +258,20 @@ public class UDPConnection extends Thread implements Activity{
     		} catch (IOException e){
     			log.debug("Unable to send SYN packet", e);
     			this.status = Status.CLOSING;
-    			return;
+    			throw new CommunicationFailedException(e);
     		}
             
     		try
             {
+    			// wait until the data has been transfered
                 log.debug("synGen.wait()...");
                 synGen.wait();
                 log.debug("synGen.wait() ended");
             } catch (InterruptedException e1){}
             synGen = null;
+            bytesToSend = null;
+            if (sendException != null) throw sendException;
         }
-		
-		log.debug("Received SYN-ACK");
-		log.debug("Sending data [" + Arrays.toString(bytes) + "]");
-		if (send(bytes,0,bytes.length,false,false))
-			this.status = Status.IDLE;
-		else 
-			this.status = Status.CLOSING;
 	}
 
     private void listen()
@@ -285,16 +284,13 @@ public class UDPConnection extends Thread implements Activity{
 		log.debug("Listening for incoming packets");
 		runPingThread();
 		while (this.status != Status.CLOSING)
-		{
-			//try to set socket timeout
-			setLocalSocketTimeout(0);
-						
+		{						
 			byte[] buffer = new byte[UDPPacket.MAX_PACKET_SIZE];
 			DatagramPacket packet = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			//try to receive
 			try {
-                log.debug("Receive Starting >>>>>>");
+                log.debug("UDP listening...");
                 receiveFromLocalSocket(packet);
                 log.debug("Receive Stopping <<<<<<");
 				content = new UDPPacket(packet.getData());
@@ -317,8 +313,13 @@ public class UDPConnection extends Thread implements Activity{
             {
                 if (synGen == null)
                 {
-                    receivedSYN();
-                    this.status = Status.IDLE;
+                    if (receivedSYN())
+                    {
+                    	//try to set socket timeout
+                    	setLocalSocketTimeout(0);
+                    	this.status = Status.IDLE;
+                    }
+                    else this.status = Status.CLOSING;
                     continue;
                 }
                 else
@@ -337,15 +338,28 @@ public class UDPConnection extends Thread implements Activity{
                         log.debug("SYN collision. remote gen " + remoteGenSyn);
                         if (synGen.intValue() < remoteGenSyn)
                         {
+                        	// first receive the remote data
                             receivedSYN();
-                            synGen.notifyAll();
+                            // then continue to send the local data
+                            try {
+								send(bytesToSend);
+							} catch (CommunicationFailedException e) {
+								sendException = e;
+								synGen.notifyAll();
+							}
                         }
                     }
                 }
 			}
             if (content.getType() == UDPPacket.SYN_ACK)
             {
-                log.debug("aquire synGen");
+        		log.debug("Received SYN-ACK");
+        		log.debug("Sending data [" + Arrays.toString(bytesToSend) + "]");
+            	if (send(bytesToSend,0,bytesToSend.length,false,false))
+        			this.status = Status.IDLE;
+        		else 
+        			this.status = Status.CLOSING;
+        		log.debug("aquire synGen");
                 synchronized (synGen)
                 {
                     synGen.notifyAll();
@@ -413,7 +427,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
     }
 
-    private void receivedSYN()
+    private boolean receivedSYN()
     {
         log.debug("Received SYN");
         //send confirmation
@@ -427,10 +441,11 @@ public class UDPConnection extends Thread implements Activity{
             log.debug("Sent SYN-ACK");
         } catch (IOException e) {
             log.error("Unable to send SYN_ACK", e);
-            return;
+            return false;
         }
         
-        byte[] receivedBytes = receiveData();
+        byte[] receivedBytes = null;
+        if (!receiveData(receivedBytes)) return false;
         
         //TODO:
         // deserialize the data and 
@@ -442,6 +457,7 @@ public class UDPConnection extends Thread implements Activity{
         if (this.remoteConnectionId.toString().equals(rs)){
             log.debug("Received ID-PING from paired connection");
         }
+        return true;
     }
 
     //recursive method
@@ -530,7 +546,7 @@ public class UDPConnection extends Thread implements Activity{
 		return false;
 	}
 	
-	private byte[] receiveData()
+	private boolean receiveData(byte[] receivedBytes)
 	{
 		//Final data array
 		byte[] returnData = new byte[0];
@@ -542,10 +558,9 @@ public class UDPConnection extends Thread implements Activity{
 			//Check counters
 			if (errors > MAX_SEND_ERRORS){
 				log.info("Max send errors reached, closing thread");
-				this.status = Status.CLOSING;
+				return false;
                 //TODO: do not close the connection
                 // order the remote peer to start the sending again
-				break;
 			}
 			//try to set socket timeout
 			setLocalSocketTimeout(0);
@@ -555,8 +570,7 @@ public class UDPConnection extends Thread implements Activity{
 				receiveFromLocalSocket(packet);
 			} catch (IOException e){
 				log.error("Unable to receive packet", e);
-                this.status = Status.CLOSING;
-				continue;
+                return false;
 			}
 			//try to get data
 			UDPPacket udpp = null;
@@ -566,8 +580,7 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (UDPPacketParseException e){
 				log.error("Unable to parse received udp packet [" 
 							+ packet.getData().length + "] bytes", e);
-                this.status = Status.CLOSING;
-                continue;
+                return false;
 			}
 			log.debug("received some data");
 			// check if hash OK 
@@ -594,16 +607,16 @@ public class UDPConnection extends Thread implements Activity{
 			} catch (IOException e){
 				log.error("Unable to send response",e);
 				errors++;
-                this.status = Status.CLOSING;
-				continue;
+                return false;
 			}
 			if ( pData[0] == UDPPacket.ACK && !hasMore)
             {
                 log.debug("Stop receiving, return [" + returnData.length + "] bytes");
-                return returnData;
+                receivedBytes = returnData; 
+                return true;
             }
 		}
-		return null;
+		return false;
 	}
 	
 	private void testProcess() throws CommunicationFailedException{
@@ -611,8 +624,6 @@ public class UDPConnection extends Thread implements Activity{
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.STARTED,
 				"Init"));
-		
-		setLocalSocketTimeout(5000);
 		
 		// if behind Symmetric firewall try to guess the allocated port
 		if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()){
