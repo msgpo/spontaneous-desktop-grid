@@ -249,7 +249,8 @@ public class UDPConnection extends Thread implements Activity{
                 integer[3]=(byte)((synGen & 0x000000ff));
                 content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
                 packet = new DatagramPacket(content.getBytes(), content.getBytes().length, remoteMappedAddress);
-    			sendFromLocalSocket(packet);
+                log.debug("Send SYN...");
+                sendFromLocalSocket(packet);
     			log.debug("Sent SYN: " + content);
     		} catch (IOException e){
     			log.debug("Unable to send SYN packet", e);
@@ -388,7 +389,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 
-	private Boolean receiveLock = true;
+	private Boolean receiveLock = new Boolean(true);
 	private void receiveFromLocalSocket(DatagramPacket packet) throws IOException
     {
 		log.debug("aquire  receiveLock ...");
@@ -400,7 +401,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
     }
 	
-	private Boolean sendLock = true;
+	private Boolean sendLock = new Boolean(true);
 	private void sendFromLocalSocket(DatagramPacket packet) throws IOException
     {
 		log.debug("aquire  sendLock ...");
@@ -421,6 +422,7 @@ public class UDPConnection extends Thread implements Activity{
             UDPPacket content = new UDPPacket (UDPPacket.SYN_ACK);
             DatagramPacket packet = new DatagramPacket(content.getBytes(), 
                                         content.getBytes().length, remoteMappedAddress);
+            log.debug("Send SYN-ACK...");
             sendFromLocalSocket(packet);
             log.debug("Sent SYN-ACK");
         } catch (IOException e) {
