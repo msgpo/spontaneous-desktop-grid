@@ -283,6 +283,8 @@ public class UDPConnection extends Thread implements Activity{
 		log.info("UDP Connection established, ID [" + localConnectionId.toString() + "]");
 		log.debug("Listening for incoming packets");
 		runPingThread();
+		//try to set socket timeout to 0
+    	setLocalSocketTimeout(0);
 		while (this.status != Status.CLOSING)
 		{						
 			byte[] buffer = new byte[UDPPacket.MAX_PACKET_SIZE];
@@ -313,14 +315,14 @@ public class UDPConnection extends Thread implements Activity{
             {
                 if (synGen == null)
                 {
-                    if (receivedSYN())
+                    if (!receivedSYN())
                     {
-                    	//try to set socket timeout
-                    	setLocalSocketTimeout(0);
-                    	this.status = Status.IDLE;
+                    	this.status = Status.CLOSING;
+                    	return;
                     }
-                    else this.status = Status.CLOSING;
-                    continue;
+                	//try to set socket timeout back to 0
+                	setLocalSocketTimeout(0);
+                	this.status = Status.IDLE;
                 }
                 else
                 {
@@ -339,7 +341,13 @@ public class UDPConnection extends Thread implements Activity{
                         if (synGen.intValue() < remoteGenSyn)
                         {
                         	// first receive the remote data
-                            receivedSYN();
+                            if (!receivedSYN())
+                            {
+                            	this.status = Status.CLOSING;
+                            	continue;
+                            }
+                            //try to set socket timeout back to 0
+                        	setLocalSocketTimeout(0);
                             // then continue to send the local data
                             try {
 								send(bytesToSend);
@@ -364,6 +372,8 @@ public class UDPConnection extends Thread implements Activity{
                 {
                     synGen.notifyAll();
                 }
+                //try to set socket timeout back to 0
+            	setLocalSocketTimeout(0);
             }
 		}
 	}
