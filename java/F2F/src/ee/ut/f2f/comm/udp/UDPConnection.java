@@ -358,7 +358,7 @@ public class UDPConnection extends Thread implements Activity{
             {
 		        try
                 {
-		        	Thread.sleep(10000);
+		        	Thread.sleep(3000);
 		        	log.debug("Status Before sending ID-PING [" + status + "]");
 		        	if (status == Status.IDLE)
 		        	{
