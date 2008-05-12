@@ -825,7 +825,7 @@ public class UDPConnection extends Thread implements Activity{
 			}
 			
 			try{
-					sendFromLocalSocket(sendPacket);
+					localSocket.send(sendPacket);
 					log.debug("Sent PING packet to ["
 							   + sendPacket.getAddress().getHostAddress()
 							   + " "
