@@ -80,7 +80,10 @@ public class UDPCommProvider implements CommunicationProvider, Activity
             byte[] raw_msg = Util.serializeObject(message);
             // compress message
             raw_msg = Util.zip(raw_msg);
-            conn.send(raw_msg);
+            synchronized (conn)
+            {
+                conn.send(raw_msg);
+            }
         }
         catch (Exception e)
         {

@@ -231,12 +231,13 @@ public class UDPConnection extends Thread implements Activity{
 	
     private Integer synGen = null;
 	//Main Send Bytes method
-    synchronized void send(final byte[] bytes) throws CommunicationFailedException
+    void send(final byte[] bytes) throws CommunicationFailedException
     {
 		//try to send SYN packet
 		this.status = Status.SENDING;
         synGen = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
-        synchronized(synGen)
+        log.debug("aquire synGen");
+        synchronized (synGen)
         {
     		UDPPacket content = null;
     		DatagramPacket packet = null;
@@ -321,6 +322,7 @@ public class UDPConnection extends Thread implements Activity{
                 }
                 else
                 {
+                    log.debug("aquire synGen");
                     synchronized (synGen)
                     {
                         log.debug("SYN collision. local gen " + synGen);
@@ -342,6 +344,7 @@ public class UDPConnection extends Thread implements Activity{
 			}
             if (content.getType() == UDPPacket.SYN_ACK)
             {
+                log.debug("aquire synGen");
                 synchronized (synGen)
                 {
                     synGen.notifyAll();
