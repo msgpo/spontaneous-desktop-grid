@@ -385,18 +385,26 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 
-	synchronized private void receiveFromLocalSocket(DatagramPacket packet) throws IOException
+	private Boolean receiveLock = true;
+	private void receiveFromLocalSocket(DatagramPacket packet) throws IOException
     {
-		log.debug("UDP SOCKET receive ...");
-        localSocket.receive(packet);
-		log.debug("UDP SOCKET received");
+		synchronized (receiveLock)
+		{
+			log.debug("UDP SOCKET receive ...");
+        	localSocket.receive(packet);
+			log.debug("UDP SOCKET received");
+		}
     }
 	
+	private Boolean sendLock = true;
 	synchronized private void sendFromLocalSocket(DatagramPacket packet) throws IOException
     {
-		log.debug("UDP SOCKET send ...");
-        localSocket.send(packet);
-		log.debug("UDP SOCKET sent");
+		synchronized (sendLock)
+		{
+			log.debug("UDP SOCKET send ...");
+	        localSocket.send(packet);
+			log.debug("UDP SOCKET sent");
+		}
     }
 
     private void receivedSYN()
@@ -817,7 +825,7 @@ public class UDPConnection extends Thread implements Activity{
 			}
 			
 			try{
-					localSocket.send(sendPacket);
+					sendFromLocalSocket(sendPacket);
 					log.debug("Sent PING packet to ["
 							   + sendPacket.getAddress().getHostAddress()
 							   + " "
