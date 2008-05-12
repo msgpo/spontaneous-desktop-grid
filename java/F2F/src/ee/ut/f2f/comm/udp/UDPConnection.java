@@ -260,15 +260,15 @@ public class UDPConnection extends Thread implements Activity{
             
     		try
             {
-                log.debug("Starting waiting for SYN-ACK");
+                log.debug("synGen.wait()...");
                 synGen.wait();
-                log.debug("Stopping waiting for SYN-ACK");
+                log.debug("synGen.wait() ended");
             } catch (InterruptedException e1){}
             synGen = null;
         }
 		
 		log.debug("Received SYN-ACK");
-		log.debug("Sending [" + Arrays.toString(bytes) + "]");
+		log.debug("Sending data [" + Arrays.toString(bytes) + "]");
 		if (send(bytes,0,bytes.length,false,false))
 			this.status = Status.IDLE;
 		else 
@@ -569,14 +569,17 @@ public class UDPConnection extends Thread implements Activity{
                 this.status = Status.CLOSING;
                 continue;
 			}
+			log.debug("received some data");
 			// check if hash OK 
 			if (udpp != null && udpp.checkHash()){
                 //append received data
                 returnData = mergeByteArrays(returnData, udpp.getData());
 				pData = new byte[] {UDPPacket.ACK};
+				log.debug("respond ACK ...");
 			} else {
 				log.warn("Hash check failed");
 				pData = new byte[] {UDPPacket.NAK};
+				log.debug("respond NAK ...");
 			}
 			//check more field
 			boolean hasMore = udpp.hasMore();
@@ -587,6 +590,7 @@ public class UDPConnection extends Thread implements Activity{
 				packet = new DatagramPacket(content.getBytes(), 
 											content.getBytes().length, remoteMappedAddress);
 				sendFromLocalSocket(packet);
+				log.debug("responded");
 			} catch (IOException e){
 				log.error("Unable to send response",e);
 				errors++;
