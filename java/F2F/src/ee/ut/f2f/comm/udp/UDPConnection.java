@@ -81,13 +81,11 @@ public class UDPConnection extends Thread implements Activity{
 	private enum Status{
 		INIT,
 		GOT_MAPPED_ADDRESS,
-		//HOLE_PUNCHING_TIMEOUT,
 		CONNECTION_ESTABLISHED,
-        READY_TO_LISTEN,
         IDLE,
-		CLOSING,
 		SENDING,
-		RECEIVING	
+		RECEIVING,
+        CLOSING
 	}
 
 	//Constructors
@@ -145,48 +143,68 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	private void testFailed(){
-		status = Status.CLOSING;
+	private void testFailed()
+    {
+		this.status = Status.CLOSING;
 		this.udpTester.resetRunningTest();
 	}
 	
-	private void sendUDPTestMessage(UDPTestMessage udpTestMessage) throws CommunicationFailedException{
+	private void sendUDPTestMessage(UDPTestMessage udpTestMessage) throws CommunicationFailedException
+    {
 		this.udpTester.sendUDPTestMessage(udpTestMessage);
 	}
 	
-	void close(){
+	void close()
+    {
 		log.info("Received stop signal, closing connection");
 		this.status = Status.CLOSING;
 		this.udpTester.removeConnection(this);
 	}
 
-	void receivedUDPTestMessage(UDPTestMessage udpm){
-		if(this.status == Status.INIT){
-			if(udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS){
+	void receivedUDPTestMessage(UDPTestMessage udpm)
+    {
+		if(this.status == Status.INIT)
+        {
+			if(udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS)
+            {
                 if (udpm.mappedAddress == null) return;
 				this.remoteMappedAddress = udpm.mappedAddress;
 				this.remotePortMappingRule = udpm.portMappingRule;
 				this.status = Status.GOT_MAPPED_ADDRESS;
-			} else {
+			}
+            else
+            {
 				log.warn("Illegal message type at this moment [" + udpm.type + "]"
 							+ " status [" + this.status + "]");
 			}
-		} else if (this.status == Status.GOT_MAPPED_ADDRESS) {
-			if (udpm.type == UDPTestMessage.Type.RECEIVED_PING){
+		}
+        else if (this.status == Status.GOT_MAPPED_ADDRESS)
+        {
+			if (udpm.type == UDPTestMessage.Type.RECEIVED_PING)
+            {
 				this.status = Status.CONNECTION_ESTABLISHED;
-			} else if (udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS){
+			}
+            else if (udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS)
+            {
 				this.remoteMappedAddress = udpm.mappedAddress;
-			} else {
+			}
+            else
+            {
 				log.warn(" " + getName() 
 							 + " Illegal message type at this moment [" 
 							 + udpm.type + "]"
 							 + " status [" + this.status + "]");
 			}
-        } else if (this.status == Status.CONNECTION_ESTABLISHED) {
-        	if (udpm.type == UDPTestMessage.Type.CONNECTION_ID){
+        }
+        else if (this.status == Status.CONNECTION_ESTABLISHED)
+        {
+        	if (udpm.type == UDPTestMessage.Type.CONNECTION_ID)
+            {
         		this.remoteConnectionId = udpm.id;
         	}
- 		} else {
+ 		}
+        else
+        {
 			log.warn(" " + getName() 
 						 + " Illegal message type at this moment [" 
 						 + udpm.type + "]"
@@ -194,27 +212,18 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
-	UUID getConnectionId(){
-		return localConnectionId;
-	}
+	UUID getConnectionId() { return this.localConnectionId; }
 	
-	Status getStatus(){
-		return status;
-	}
+	Status getStatus() { return this.status;	}
 	
-	public InetSocketAddress getMappedAddress(){
-		return localMappedAddress;
-	}
+	public InetSocketAddress getMappedAddress() { return this.localMappedAddress; }
 
-	public String getActivityName() {
-		return getName();
-	}
+	public String getActivityName() { return getName(); }
 
-	public Activity getParentActivity() {
-		return this.udpTester;
-	}
+	public Activity getParentActivity() { return this.udpTester; }
 	
-	public void run(){
+	public void run()
+    {
 		// just for information catch any exceptions that may occur
 		try
 		{
@@ -229,20 +238,22 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
+    private Boolean synLock = new Boolean(true);
     private Integer synGen = null;
     private byte[] bytesToSend = null;
     private CommunicationFailedException sendException = null;
 	//Main Send Bytes method
     void send(final byte[] bytes) throws CommunicationFailedException
     {
-		//try to send SYN packet
-		this.status = Status.SENDING;
-        synGen = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
-        log.debug("aquire synGen");
-        synchronized (synGen)
+        log.debug("aquire synLock send()");
+        synchronized (synLock)
         {
-        	bytesToSend = bytes;
-    		UDPPacket content = null;
+    		//first send the SYN packet to initialize data transfer
+    		this.status = Status.SENDING;
+            synGen = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
+            bytesToSend = bytes;
+    		
+            UDPPacket content = null;
     		DatagramPacket packet = null;
     		try {
                 byte[] integer = new byte[4]; 
@@ -261,17 +272,19 @@ public class UDPConnection extends Thread implements Activity{
     			throw new CommunicationFailedException(e);
     		}
             
+            // wait until the data has been transfered
+            // the Listener thread sends the data after SYN-ACK has been received
     		try
             {
-    			// wait until the data has been transfered
-                log.debug("synGen.wait()...");
-                synGen.wait();
-                log.debug("synGen.wait() ended");
-            } catch (InterruptedException e1){}
+    		    log.debug("synLock.wait()...");
+                synLock.wait();
+                log.debug("synLock.wait() ended");
+            } catch (InterruptedException e){}
             synGen = null;
             bytesToSend = null;
             if (sendException != null) throw sendException;
         }
+        log.debug("release synLock send()");
 	}
 
     private void listen()
@@ -313,25 +326,24 @@ public class UDPConnection extends Thread implements Activity{
             
 			if (content.getType() == UDPPacket.SYN)
             {
-                if (synGen == null)
+                synchronized (synLock)
                 {
-                    if (!receivedSYN())
+                    if (synGen == null)
                     {
-                    	this.status = Status.CLOSING;
-                    	return;
+                        if (!sendSynAck())
+                        {
+                        	this.status = Status.CLOSING;
+                        	return;
+                        }
+                    	//try to set socket timeout back to 0
+                    	setLocalSocketTimeout(0);
+                    	this.status = Status.IDLE;
                     }
-                	//try to set socket timeout back to 0
-                	setLocalSocketTimeout(0);
-                	this.status = Status.IDLE;
-                }
-                else
-                {
-                    log.debug("aquire synGen");
-                    synchronized (synGen)
+                    else
                     {
                         log.debug("SYN collision. local gen " + synGen);
                         byte[] integer = content.getData();
-                        log.debug("Collision Generated Int size [" + integer.length + "] content [" + Arrays.toString(integer) + "]");
+                        //log.debug("Collision Generated Int size [" + integer.length + "] content [" + Arrays.toString(integer) + "]");
                         int remoteGenSyn = 0;
                         for (int i = 0; i < 4; i++) {
                             int shift = (4 - 1 - i) * 8;
@@ -341,25 +353,33 @@ public class UDPConnection extends Thread implements Activity{
                         if (synGen.intValue() < remoteGenSyn)
                         {
                         	// first receive the remote data
-                            if (!receivedSYN())
+                            if (!sendSynAck())
                             {
                             	this.status = Status.CLOSING;
-                            	continue;
+                            	return;
                             }
                             //try to set socket timeout back to 0
                         	setLocalSocketTimeout(0);
                             // then continue to send the local data
-                            try {
-								send(bytesToSend);
-							} catch (CommunicationFailedException e) {
-								sendException = e;
-								synGen.notifyAll();
-							}
+                            new Thread()
+                            {
+                                public void run()
+                                {
+                                    try {
+        								send(bytesToSend);
+        							} catch (CommunicationFailedException e) {
+                                        // notify the original sender thread about the exception
+                                        UDPConnection.this.status = Status.CLOSING;
+                                        UDPConnection.this.sendException = e;
+                                        UDPConnection.this.synGen.notifyAll();
+        							}
+                                }
+                            }.start();
                         }
                     }
                 }
 			}
-            if (content.getType() == UDPPacket.SYN_ACK)
+            else if (content.getType() == UDPPacket.SYN_ACK)
             {
         		log.debug("Received SYN-ACK");
         		log.debug("Sending data [" + Arrays.toString(bytesToSend) + "]");
@@ -368,9 +388,10 @@ public class UDPConnection extends Thread implements Activity{
         		else 
         			this.status = Status.CLOSING;
         		log.debug("aquire synGen");
-                synchronized (synGen)
+                synchronized (synLock)
                 {
-                    synGen.notifyAll();
+                    // release the the original sender thread 
+                    synLock.notifyAll();
                 }
                 //try to set socket timeout back to 0
             	setLocalSocketTimeout(0);
@@ -390,10 +411,10 @@ public class UDPConnection extends Thread implements Activity{
 	                {
 			        	Thread.sleep(3000);
 			        	log.debug("Status Before sending ID-PING [" + status + "]");
-			        	if (status == Status.IDLE)
+			        	if (UDPConnection.this.status == Status.IDLE)
 			        	{
 			        		log.debug("Send ID-PING...");
-			        		send(localConnectionId.toString().getBytes());
+			        		send(UDPConnection.this.localConnectionId.toString().getBytes());
 			        		log.debug("Sent ID-PING");
 			        	}
 	                } catch (Exception e)
@@ -440,11 +461,11 @@ public class UDPConnection extends Thread implements Activity{
 		}
     }
 
-    private boolean receivedSYN()
+    private boolean sendSynAck()
     {
+        this.status = Status.RECEIVING;
         log.debug("Received SYN");
         //send confirmation
-        this.status = Status.RECEIVING;
         try {
             UDPPacket content = new UDPPacket (UDPPacket.SYN_ACK);
             DatagramPacket packet = new DatagramPacket(content.getBytes(), 
@@ -756,8 +777,9 @@ public class UDPConnection extends Thread implements Activity{
 		Thread udpListener = new Thread(){
 			public void run(){
 				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1];
-				while(  !holePunchTimeout && status != Status.CLOSING &&
-							status != Status.CONNECTION_ESTABLISHED ){	
+				while(  !UDPConnection.this.holePunchTimeout && 
+                        UDPConnection.this.status != Status.CLOSING &&
+                        UDPConnection.this.status != Status.CONNECTION_ESTABLISHED ){	
 					try {
 						DatagramPacket receivePacket = new DatagramPacket(receiveContent,receiveContent.length);
 						receiveFromLocalSocket(receivePacket);
@@ -769,20 +791,20 @@ public class UDPConnection extends Thread implements Activity{
 										+ receivePacket.getPort()
 										+ "]");
 							
-							if (!(remoteMappedAddress.getAddress().equals(receivePacket.getAddress()) &&
-								remoteMappedAddress.getPort() == receivePacket.getPort())){	
+							if (!(UDPConnection.this.remoteMappedAddress.getAddress().equals(receivePacket.getAddress()) &&
+                                  UDPConnection.this.remoteMappedAddress.getPort() == receivePacket.getPort())){	
 								//multiple subnetworks case
 								//ping received from different remote address
 								//change the target IP and port for ping
-								remoteMappedAddress = new InetSocketAddress(receivePacket.getAddress(),
+                                UDPConnection.this.remoteMappedAddress = new InetSocketAddress(receivePacket.getAddress(),
 																		receivePacket.getPort());
 								//change the currently used target port
 								//stop the range attack
-								synchronized (attackOnRemotePort ) {
-									attackOnRemotePort = receivePacket.getPort();
+								synchronized (UDPConnection.this.attackOnRemotePort ) {
+                                    UDPConnection.this.attackOnRemotePort = receivePacket.getPort();
 								}
-								synchronized (coneToSymPortRangePing) {
-									coneToSymPortRangePing = 0;
+								synchronized (UDPConnection.this.coneToSymPortRangePing) {
+                                    UDPConnection.this.coneToSymPortRangePing = 0;
 								}
 								
 							}
