@@ -384,20 +384,23 @@ public class UDPConnection extends Thread implements Activity{
         {
             public void run()
             {
-		        try
-                {
-		        	Thread.sleep(3000);
-		        	log.debug("Status Before sending ID-PING [" + status + "]");
-		        	if (status == Status.IDLE)
-		        	{
-		        		log.debug("Send ID-PING...");
-		        		send(localConnectionId.toString().getBytes());
-		        		log.debug("Sent ID-PING");
-		        	}
-                } catch (Exception e)
-                {
-                    log.warn("error Sending ID-PING ...", e);
-                }
+            	while (UDPConnection.this.status != Status.CLOSING)
+            	{
+			        try
+	                {
+			        	Thread.sleep(3000);
+			        	log.debug("Status Before sending ID-PING [" + status + "]");
+			        	if (status == Status.IDLE)
+			        	{
+			        		log.debug("Send ID-PING...");
+			        		send(localConnectionId.toString().getBytes());
+			        		log.debug("Sent ID-PING");
+			        	}
+	                } catch (Exception e)
+	                {
+	                    log.warn("error Sending ID-PING ...", e);
+	                }
+            	}
             }
         }.start();
 	}
