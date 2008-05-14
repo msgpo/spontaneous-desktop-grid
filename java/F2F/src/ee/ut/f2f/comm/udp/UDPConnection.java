@@ -305,18 +305,18 @@ public class UDPConnection extends Thread implements Activity{
 			UDPPacket content = null;
 			//try to receive
 			try {
-                log.debug("UDP listening...");
+                log.debug("UDP listening for a packet...");
                 receiveFromLocalSocket(packet);
-                log.debug("Receive Stopping <<<<<<");
+                log.debug("UDP received a packet");
 				content = new UDPPacket(packet.getData());
 			} catch (SocketTimeoutException e) {
-				log.debug("Receive Stopping <<<<<< SocketTimeoutException");
+				log.warn("UDP listening stopped for SocketTimeoutException");
 				continue;
 			} catch (IOException e) {
 				log.error("Unable to receive packet", e);
-				continue;
+				return;
 			} catch (UDPPacketParseException e) {
-				log.debug("Unable to parse UDP Packet",e);
+				log.warn("Received not a UDPPacket",e);
 				continue;
 			}
             
@@ -745,7 +745,13 @@ public class UDPConnection extends Thread implements Activity{
 			//connection established, start listening
 			exchangeID();
             this.status = Status.IDLE;
+            ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+                    ActivityEvent.Type.CHANGED,
+                    "started to listen"));
 			listen();
+            ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+                    ActivityEvent.Type.CHANGED,
+                    "stopped to listen"));
 		}
 	}
 	
@@ -1319,26 +1325,26 @@ public class UDPConnection extends Thread implements Activity{
 		 * |  16 bytes   |  1 byte |   MAX_MESSAGE_SIZE			 |
 		 */
 		
-		final static byte ACK = 6;		//ACK if successfully received
-		final static byte NAK = 11;		//NAK if failed
-		final static byte SYN = 7;		//SYN initializes transfer
-		final static byte SYN_ACK = 8;	//SYN-ACK confirms initialization
-		final static byte PING = 12;    //hole punching ping
+        private final static byte ACK = 6;		//ACK if successfully received
+        private final static byte NAK = 7;		//NAK if failed
+        private final static byte SYN = 8;		//SYN initializes transfer
+        private final static byte SYN_ACK = 9;	//SYN-ACK confirms initialization
+        private final static byte PING = 10;    //hole punching ping
 		
-		final static int HASH_LENGTH = 16;
+        private final static int HASH_LENGTH = 16;
 		
-		final static int MAX_PACKET_SIZE = 65507;
-		final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1;//one for MORE byte
+        private final static int MAX_PACKET_SIZE = 65507;
+        private final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1;//one for TYPE byte
 		
-		byte[] bytes = new byte[0];
+        private byte[] bytes = new byte[0];
 		
-		UDPPacket(byte type) {
+        private UDPPacket(byte type) {
 			bytes = new byte[HASH_LENGTH +1];
 			setType(type);
 			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
 		}
 		
-		UDPPacket(byte[] data, int offset, int length, boolean more) 
+        private UDPPacket(byte[] data, int offset, int length, boolean more) 
 							throws UDPPacketParseException {
 			if (length == 0 || data.length == 0) 
 				throw new UDPPacketParseException("No Data, array length == 0");
@@ -1349,7 +1355,7 @@ public class UDPConnection extends Thread implements Activity{
 			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
 		}
         
-        UDPPacket(byte type, byte[] data, int offset, int length, boolean more) 
+        private UDPPacket(byte type, byte[] data, int offset, int length, boolean more) 
                             {
             bytes = new byte[1 + HASH_LENGTH + length];
             setType(type);
@@ -1357,35 +1363,43 @@ public class UDPConnection extends Thread implements Activity{
             setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
         }
 		
-		UDPPacket(byte[] bytes) throws UDPPacketParseException{
+        private UDPPacket(byte[] bytes) throws UDPPacketParseException
+        {
+            // check the message size
 			if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
 				throw new UDPPacketParseException("Message to Short");
+            // check the TYPE field
 			if (bytes[HASH_LENGTH] < ACK || bytes[HASH_LENGTH] > PING) 
             {
-                log.error("received packet with wrong MORE field: "+bytes[HASH_LENGTH]);
-                log.debug(Arrays.toString(bytes));
-				throw new UDPPacketParseException("MORE Field Invalid");
+                //log.error("received packet with wrong TYPE field: "+bytes[HASH_LENGTH]);
+                //log.debug(Arrays.toString(bytes));
+				throw new UDPPacketParseException("Invalid TYPE Field");
             }
-			this.bytes = trimByteArray(bytes, 0, bytes.length); 
-		}
+            // check the hash
+			this.bytes = trimByteArray(bytes, 0, bytes.length);
+            if (!checkHash())
+            {
+                throw new UDPPacketParseException("Invalid HASH, corrupted UDPPacket");
+            }
+        }
 		
-		public boolean hasMore(){
+        private boolean hasMore(){
 			return bytes[0] == ACK;
 		}
 		
-		public byte getType(){
+        private byte getType(){
 			return bytes[HASH_LENGTH];
 		}
  		
-		public byte[] getBytes(){
+        private byte[] getBytes(){
 			return bytes;	
 		}
 		
-		public byte[] getHash(){
+        private byte[] getHash(){
 			return getBytes(0,HASH_LENGTH);
 		}
 		
-		public byte[] getData(){
+        private byte[] getData(){
 			return getBytes((HASH_LENGTH + 1), (bytes.length - HASH_LENGTH -1));
 		}
 		
@@ -1410,7 +1424,7 @@ public class UDPConnection extends Thread implements Activity{
 			return sb.toString();
 		}
 		
-		public boolean checkHash(){
+        private boolean checkHash(){
 			boolean b = false;
 			byte[] hash = hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH));
 			b = MessageDigest.isEqual(hash, getHash());
