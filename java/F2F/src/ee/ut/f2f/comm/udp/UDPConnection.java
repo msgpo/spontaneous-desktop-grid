@@ -258,7 +258,7 @@ public class UDPConnection extends Thread implements Activity{
             integer[1]=(byte)((synGen & 0x00ff0000)>>>16);
             integer[2]=(byte)((synGen & 0x0000ff00)>>>8);
             integer[3]=(byte)((synGen & 0x000000ff));
-            UDPPacket content = new UDPPacket(UDPPacket.SYN, integer, 0, integer.length, false);
+            UDPPacket content = new UDPPacket(UDPPacket.SYN, integer);
             try
             {
                 DatagramPacket sendPacket = createDatagramPacketOut(content);
@@ -295,6 +295,7 @@ public class UDPConnection extends Thread implements Activity{
 		log.info("UDP Connection established, ID [" + localConnectionId.toString() + "]");
 		log.debug("Listening for incoming packets");
 		runPingThread();
+        udpTester.addConnection(this);
 		//try to set socket timeout to 0
     	setLocalSocketTimeout(0);
 		while (this.status != Status.CLOSING)
@@ -324,7 +325,7 @@ public class UDPConnection extends Thread implements Activity{
             
             // at this point we have received something!!!
             if (content == null) continue;
-            log.debug("UDP listener received " + content);
+            //log.debug("UDP listener received " + content);
             if (content.getType() == UDPPacket.PING)
             {
                 continue;
@@ -414,17 +415,17 @@ public class UDPConnection extends Thread implements Activity{
             	{
 			        try
 	                {
-			        	Thread.sleep(3000);
-			        	log.debug("Status Before sending ID-PING [" + status + "]");
+			        	Thread.sleep(10000);
+			        	//log.debug("Status Before sending ID-PING [" + status + "]");
 			        	if (UDPConnection.this.status == Status.IDLE)
 			        	{
-			        		log.debug("Send PING...");
+			        		//log.debug("Send PING...");
                             sendFromLocalSocket(createDatagramPacketOut(new UDPPacket(UDPPacket.PING)));
-			        		log.debug("Sent PING");
+			        		//log.debug("Sent PING");
 			        	}
 	                } catch (Exception e)
 	                {
-	                    log.warn("error Sending ID-PING ...", e);
+	                    //log.warn("error Sending ID-PING ...", e);
 	                }
             	}
             }
@@ -758,6 +759,7 @@ public class UDPConnection extends Thread implements Activity{
                     ActivityEvent.Type.CHANGED,
                     "started to listen"));
 			listen();
+            close();
             ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
                     ActivityEvent.Type.CHANGED,
                     "stopped to listen"));
@@ -1374,25 +1376,38 @@ public class UDPConnection extends Thread implements Activity{
 			bytes = new byte[HASH_LENGTH +1];
 			setType(type);
 			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
+            if (!checkHash())
+            {
+                log.error("HASH is wrong!");
+            }
 		}
 		
         private UDPPacket(byte[] data, int offset, int length, boolean more) 
-							throws UDPPacketParseException {
+							throws UDPPacketParseException 
+        {
 			if (length == 0 || data == null || data.length == 0) 
 				throw new UDPPacketParseException("No data");
-			bytes = new byte[HASH_LENGTH + 1 + 1 + length];
+			bytes = new byte[HASH_LENGTH + 1 + length];
 			if (more) setType(ACK);
             else setType(NAK);
             setData(data, offset, length);
 			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
+            if (!checkHash())
+            {
+                log.error("HASH is wrong!");
+            }
 		}
         
-        private UDPPacket(byte type, byte[] data, int offset, int length, boolean more) 
-                            {
-            bytes = new byte[1 + HASH_LENGTH + length];
+        private UDPPacket(byte type, byte[] data) 
+        {
+            bytes = new byte[HASH_LENGTH + 1 + data.length];
             setType(type);
-            setData(data, offset, length);
+            setData(data, 0, data.length);
             setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
+            if (!checkHash())
+            {
+                log.error("HASH is wrong!");
+            }
         }
 		
         private UDPPacket(byte[] bytes) throws UDPPacketParseException, UDPPacketHashException
