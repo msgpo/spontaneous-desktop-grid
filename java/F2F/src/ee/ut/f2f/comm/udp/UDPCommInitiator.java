@@ -63,6 +63,7 @@ public class UDPCommInitiator extends Thread implements PeerPresenceListener
 	{
 		synchronized (udpTesters)
 		{
+            if (!udpTesters.containsKey(peer)) return;
 			UDPTester test = udpTesters.get(peer);
 			test.stopTesting();
 			udpTesters.remove(peer);
