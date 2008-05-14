@@ -63,4 +63,5 @@ Checkout SIP Communicator (SC) from the SC SVN repository or download latest ver
 -Dnet.java.sip.communicator.SC_HOME_DIR_NAME=01
 -Djava.library.path=lib/native/linux
 -Dee.ut.f2f.F2F_PROPERTIES_FILE=../F2F/conf/F2FComputing.properties
+-Xmx512m
 }}}
