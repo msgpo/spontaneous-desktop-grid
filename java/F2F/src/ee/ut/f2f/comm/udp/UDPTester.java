@@ -428,7 +428,7 @@ class UDPTestMessage implements Serializable
 		INIT,
 		STUN_INFO,
 		MAPPED_ADDRESS,
-		CONNECTION_ID,
+		//CONNECTION_ID,
 		RECEIVED_PING
 	}
 	
@@ -447,10 +447,10 @@ class UDPTestMessage implements Serializable
 	InetSocketAddress mappedAddress = null;
 	Integer portMappingRule = null;
 	
-	UDPTestMessage(UUID id){
+	/*UDPTestMessage(UUID id){
 		this.id = id;
 		this.type = Type.CONNECTION_ID;
-	}
+	}*/
 	
 	UDPTestMessage (InetSocketAddress mAddress, Integer mRule){
 		this.mappedAddress = mAddress;
