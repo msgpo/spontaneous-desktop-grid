@@ -316,7 +316,7 @@ public class UDPConnection extends Thread implements Activity{
     	setLocalSocketTimeout(0);
 		while (this.status != Status.CLOSING)
 		{						
-			byte[] buffer = new byte[UDPPacket.MAX_PACKET_SIZE];
+			byte[] buffer = new byte[UDPPacket.HASH_LENGTH+1+4+4];//length + SYN id
 			DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			//try to receive
@@ -564,7 +564,7 @@ public class UDPConnection extends Thread implements Activity{
 			setLocalSocketTimeout(1000);
 			
 			// wait for answer
-			byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1];
+			byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1 + 4];
 			DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			try{
@@ -808,7 +808,7 @@ public class UDPConnection extends Thread implements Activity{
         {
 			public void run()
             {
-				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1];
+				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1 + 4];
 				while(  !UDPConnection.this.holePunchTimeout && 
                         UDPConnection.this.status != Status.CLOSING
                         /*UDPConnection.this.status != Status.CONNECTION_ESTABLISHED*/)
@@ -1428,7 +1428,7 @@ public class UDPConnection extends Thread implements Activity{
         private UDPPacket(byte[] bytes) throws UDPPacketParseException, UDPPacketHashException
         {
             // check the message size
-			if (bytes.length + 4 < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
+			if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
 				throw new UDPPacketParseException("Message too Short");
             // check the TYPE field
 			if (bytes[HASH_LENGTH] < ACK || bytes[HASH_LENGTH] > PING) 
@@ -1437,18 +1437,10 @@ public class UDPConnection extends Thread implements Activity{
                 //log.debug(Arrays.toString(bytes));
 				throw new UDPPacketParseException("Invalid TYPE Field");
             }
-			if (bytes.length > HASH_LENGTH + 1 + 4)
-			{
-				int size = bytesToInt(trimByteArray(bytes, HASH_LENGTH+1, 4));
-				if (size > MAX_MESSAGE_SIZE) 
-					throw new UDPPacketParseException("Data too long");
-				this.bytes = trimByteArray(bytes, 0, HASH_LENGTH+1+4+size);
-			}
-			else
-			{
-				this.bytes = new byte[HASH_LENGTH + 1 + 4];
-				this.bytes = bytes;
-			}
+			int size = bytesToInt(trimByteArray(bytes, HASH_LENGTH+1, 4));
+			if (size > MAX_MESSAGE_SIZE) 
+				throw new UDPPacketParseException("Data too long");
+			this.bytes = trimByteArray(bytes, 0, HASH_LENGTH+1+4+size);
 
             // check the hash
             if (!checkHash())
