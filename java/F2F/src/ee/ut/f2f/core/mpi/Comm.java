@@ -173,6 +173,7 @@ public class Comm {
 	 *            message tag
 	 */
 	public int Send(Object sendBuffer, int offset, int count, Datatype datatype, int dest, int tag) {
+		msgHandle.getTask().isTerminated();
 		if (Rank() == MPI.UNDEFINED) {
 			return -1;
 		}

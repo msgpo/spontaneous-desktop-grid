@@ -228,6 +228,7 @@ public class MPI {
 	}
 
 	public TypelessComm COMM_WORLD() {
+		task.isTerminated();
 		if (COMM_WORLD == null) {
 			throw new MPINotInitializedException();
 		}
