@@ -1479,7 +1479,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
 		
         private byte[] getData(){
-			return getBytes((HASH_LENGTH + 1), (bytes.length - HASH_LENGTH -1));
+			return getBytes(HASH_LENGTH + 1 + 4, getDataLenght());
 		}
 		
 		public String toString(){
@@ -1519,7 +1519,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
 		
 		private void setData(byte[] data, int offset, int length) {
-			setBytes(data, offset, length, (HASH_LENGTH + 1));
+			setBytes(data, offset, length, HASH_LENGTH + 1 + 4);
 			/*
 			byte[] hash = hashByteArray(data, offset, length);
 			if (hash.length != HASH_LENGTH) throw new UDPPacketParseException("Unable to hash data");
