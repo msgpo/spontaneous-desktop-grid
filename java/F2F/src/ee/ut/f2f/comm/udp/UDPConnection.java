@@ -644,8 +644,6 @@ public class UDPConnection extends Thread implements Activity{
                 response = new UDPPacket(UDPPacket.NAK);
                 log.debug("respond NAK ...");
             }
-			//check more field
-			boolean hasMore = udpp.hasMore();
 			
 			//try send the response
 			try {
@@ -656,7 +654,7 @@ public class UDPConnection extends Thread implements Activity{
 				//errors++;
                 return null;
 			}
-			if (response.getType() == UDPPacket.ACK && !hasMore)
+			if (response.getType() == UDPPacket.ACK && !udpp.hasMore())
             {
                 log.debug("Stop receiving, return [" + returnData.length + "] bytes");
                 return returnData;
