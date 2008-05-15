@@ -31,6 +31,7 @@ import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.util.Util;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.stun.LocalStunInfo;
 
@@ -497,11 +498,20 @@ public class UDPConnection extends Thread implements Activity{
         byte[] receivedBytes = receiveData();
         if (receivedBytes == null) return false;
         
-        //TODO:
+        log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");
+        
         // deserialize the data and 
         // forward received object to the Core
+        try {
+			byte[] raw_msg = Util.unzip(receivedBytes);
+			Object obj = Util.deserializeObject(raw_msg);
+			F2FComputing.messageReceived(obj,this.udpTester.getRemotePeer().getID());
+		} catch (Exception e) {
+			// TODO Auto-generated catch block
+			e.printStackTrace();
+			return false;
+		}
         
-        log.debug("Received bytes [" + Arrays.toString(receivedBytes) + "]");
         return true;
     }
 
@@ -1428,7 +1438,7 @@ public class UDPConnection extends Thread implements Activity{
         // constructor of incoming packet
         private UDPPacket(byte[] bytes) throws UDPPacketParseException, UDPPacketHashException
         {
-        	log.debug("forming UDPPacket: "+ Arrays.toString(bytes));
+        	//log.debug("forming UDPPacket: "+ Arrays.toString(bytes));
             // check the message size
 			if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
 				throw new UDPPacketParseException("Message too Short");

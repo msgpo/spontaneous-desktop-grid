@@ -30,6 +30,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	final private static int DEFAULT_WAITING_TIMEOUT = 600;
 	
 	private F2FPeer remotePeer = null;
+	F2FPeer getRemotePeer() { return remotePeer; }
 	
 	private enum Status
 	{
