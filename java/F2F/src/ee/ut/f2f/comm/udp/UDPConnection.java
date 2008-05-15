@@ -1437,10 +1437,10 @@ public class UDPConnection extends Thread implements Activity{
                 //log.debug(Arrays.toString(bytes));
 				throw new UDPPacketParseException("Invalid TYPE Field");
             }
-			int size = bytesToInt(trimByteArray(bytes, HASH_LENGTH+1, 4));
+			int size = bytesToInt(getSubSequence(bytes, HASH_LENGTH+1, 4));
 			if (size > MAX_MESSAGE_SIZE) 
 				throw new UDPPacketParseException("Data too long");
-			this.bytes = trimByteArray(bytes, 0, HASH_LENGTH+1+4+size);
+			this.bytes = getSubSequence(bytes, 0, HASH_LENGTH+1+4+size);
 
             // check the hash
             if (!checkHash())
@@ -1456,7 +1456,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
         private int getDataLenght()
         {
-        	return bytesToInt(trimByteArray(bytes, HASH_LENGTH+1, 4));
+        	return bytesToInt(getSubSequence(bytes, HASH_LENGTH+1, 4));
         }
 		
         private boolean hasMore()
