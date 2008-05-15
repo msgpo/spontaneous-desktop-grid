@@ -36,7 +36,7 @@ public class MPIPresenceListener implements PeerPresenceListener {
 		Collection<TaskProxy> taskProxies = task.getTaskProxies();
 		for (TaskProxy tp : taskProxies) {
 			task.getMPIDebug().println(MPIDebug.SYSTEM, "taskPeers " + tp.getRemoteTaskDescription().getPeerID() + " " + tp.getRemoteTaskID());
-			if (peer.getID().equals(tp.getRemoteTaskDescription().getPeerID()) && (task.getTaskID().equals(task.getJob().getMasterTaskID()) || tp.getRemoteTaskID().equals(task.getJob().getMasterTaskID()))) {
+			if (task.getRankTable() != null && peer.getID().equals(tp.getRemoteTaskDescription().getPeerID()) && (task.getTaskID().equals(task.getJob().getMasterTaskID()) || tp.getRemoteTaskID().equals(task.getJob().getMasterTaskID()))) {
 				peerDead(task.getRankTable().getIndexByTaskID(tp.getRemoteTaskID()));
 			}
 		}
