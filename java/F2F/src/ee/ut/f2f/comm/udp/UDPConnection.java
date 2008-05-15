@@ -253,11 +253,7 @@ public class UDPConnection extends Thread implements Activity{
             synGen = new Random(F2FComputing.getLocalPeer().getID().getLeastSignificantBits()+System.currentTimeMillis()).nextInt();
             bytesToSend = bytes;
     		
-            byte[] integer = new byte[4]; 
-            integer[0]=(byte)((synGen & 0xff000000)>>>24);
-            integer[1]=(byte)((synGen & 0x00ff0000)>>>16);
-            integer[2]=(byte)((synGen & 0x0000ff00)>>>8);
-            integer[3]=(byte)((synGen & 0x000000ff));
+            byte[] integer = intToBytes(synGen);
             UDPPacket content = new UDPPacket(UDPPacket.SYN, integer);
             try
             {
@@ -285,6 +281,26 @@ public class UDPConnection extends Thread implements Activity{
         }
         log.debug("release synLock send()");
 	}
+    
+    private static int bytesToInt(byte[] bytes)
+    {
+    	if (bytes.length != 4) return 0;
+    	int intValue = 0;
+        for (int i = 0; i < 4; i++) {
+            int shift = (4 - 1 - i) * 8;
+            intValue += (bytes[i] & 0x000000FF) << shift;
+        }
+        return intValue;
+    }
+    private static byte[] intToBytes(int intValue)
+    {
+    	byte[] byteValue = new byte[4]; 
+    	byteValue[0]=(byte)((intValue & 0xff000000)>>>24);
+    	byteValue[1]=(byte)((intValue & 0x00ff0000)>>>16);
+    	byteValue[2]=(byte)((intValue & 0x0000ff00)>>>8);
+    	byteValue[3]=(byte)((intValue & 0x000000ff));
+    	return byteValue;
+    }
 
     private void listen()
     {
@@ -350,11 +366,7 @@ public class UDPConnection extends Thread implements Activity{
                         log.debug("SYN collision. local gen " + synGen);
                         byte[] integer = content.getData();
                         //log.debug("Collision Generated Int size [" + integer.length + "] content [" + Arrays.toString(integer) + "]");
-                        int remoteGenSyn = 0;
-                        for (int i = 0; i < 4; i++) {
-                            int shift = (4 - 1 - i) * 8;
-                            remoteGenSyn += (integer[i] & 0x000000FF) << shift;
-                        }
+                        int remoteGenSyn = bytesToInt(integer);
                         log.debug("SYN collision. remote gen " + remoteGenSyn);
                         if (synGen.intValue() < remoteGenSyn)
                         {
@@ -530,7 +542,7 @@ public class UDPConnection extends Thread implements Activity{
 			try {
 				UDPPacket content = new UDPPacket(bytes, offset, length, hasMore);
 				DatagramPacket sendPacket = createDatagramPacketOut(content);
-				log.debug("Sending data: "+ Arrays.toString(content.getBytes()));
+				log.debug("Sending data: "+ content.toString());
 				sendFromLocalSocket(sendPacket);
 			} catch (UDPPacketParseException e) {
 				log.error("Unable to send [" + length + "] bytes ["
@@ -1346,17 +1358,17 @@ public class UDPConnection extends Thread implements Activity{
     @SuppressWarnings("serial")
     private class UDPPacketHashException extends Exception
     {
-        UDPPacketHashException(byte[] bytes){
-            super("Hash failure: " + Arrays.toString(bytes));
+        UDPPacketHashException(UDPPacket packet){
+            super("Hash failure: " + packet.toString());
         }
     }
 	
 	private class UDPPacket
 	{
 		/* Packet Structure
-		 * |-------------|----------------------------------|
-		 * |    HASH     |  TYPE / MORE  | DATA             |
-		 * |  16 bytes   |  1 byte       | MAX_MESSAGE_SIZE	|
+		 * |-------------|------------------------------------------------|
+		 * |    HASH     |  TYPE / MORE  |DATA LENGTH |  DATA             |
+		 * |  16 bytes   |  1 byte       | 4 bytes    |  MAX_MESSAGE_SIZE |
 		 */
 		
         private final static byte ACK = 6;		//ACK if successfully received
@@ -1368,28 +1380,30 @@ public class UDPConnection extends Thread implements Activity{
         private final static int HASH_LENGTH = 16;
 		
         private final static int MAX_PACKET_SIZE = 65507;
-        private final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1;//one for TYPE/MORE byte
+        private final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1 - 4;//1 for TYPE/MORE byte, 4 for length
 		
         private byte[] bytes = null;
 		
+        // constructors for outgoing packet
         private UDPPacket(byte type) {
-			bytes = new byte[HASH_LENGTH +1];
+			bytes = new byte[HASH_LENGTH +1+4];
 			setType(type);
+            setDataLenght(0);
 			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
             if (!checkHash())
             {
                 log.error("HASH is wrong!");
             }
 		}
-		
-        private UDPPacket(byte[] data, int offset, int length, boolean more) 
+		private UDPPacket(byte[] data, int offset, int length, boolean more) 
 							throws UDPPacketParseException 
         {
 			if (length == 0 || data == null || data.length == 0) 
 				throw new UDPPacketParseException("No data");
-			bytes = new byte[HASH_LENGTH + 1 + length];
+			bytes = new byte[HASH_LENGTH + 1 + 4 + length];
 			if (more) setType(ACK);
             else setType(NAK);
+            setDataLenght(length);
             setData(data, offset, length);
 			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
             if (!checkHash())
@@ -1397,12 +1411,12 @@ public class UDPConnection extends Thread implements Activity{
                 log.error("HASH is wrong!");
             }
 		}
-        
         private UDPPacket(byte type, byte[] data) 
         {
-            bytes = new byte[HASH_LENGTH + 1 + data.length];
+            bytes = new byte[HASH_LENGTH + 1 + 4 + data.length];
             setType(type);
             setData(data, 0, data.length);
+            setDataLenght(data.length);
             setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
             if (!checkHash())
             {
@@ -1410,11 +1424,12 @@ public class UDPConnection extends Thread implements Activity{
             }
         }
 		
+        // constructor of incoming packet
         private UDPPacket(byte[] bytes) throws UDPPacketParseException, UDPPacketHashException
         {
             // check the message size
 			if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
-				throw new UDPPacketParseException("Message to Short");
+				throw new UDPPacketParseException("Message too Short");
             // check the TYPE field
 			if (bytes[HASH_LENGTH] < ACK || bytes[HASH_LENGTH] > PING) 
             {
@@ -1422,12 +1437,26 @@ public class UDPConnection extends Thread implements Activity{
                 //log.debug(Arrays.toString(bytes));
 				throw new UDPPacketParseException("Invalid TYPE Field");
             }
+			int size = bytesToInt(trimByteArray(bytes, HASH_LENGTH+1, 4));
+			if (size > MAX_MESSAGE_SIZE) 
+				throw new UDPPacketParseException("Data too long");
+			this.bytes = trimByteArray(bytes, 0, HASH_LENGTH+1+4+size);
+
             // check the hash
-			this.bytes = trimByteArray(bytes, 0, bytes.length);
             if (!checkHash())
             {
-                throw new UDPPacketHashException(bytes);
+                throw new UDPPacketHashException(this);
             }
+        }
+		
+        private void setDataLenght(int i)
+        {
+			byte[] lenght = intToBytes(i);
+			setBytes(lenght, 0, 4, HASH_LENGTH + 1);
+		}
+        private int getDataLenght()
+        {
+        	return bytesToInt(trimByteArray(bytes, HASH_LENGTH+1, 4));
         }
 		
         private boolean hasMore()
@@ -1465,7 +1494,7 @@ public class UDPConnection extends Thread implements Activity{
             } else if (bytes[HASH_LENGTH] == PING){
                 sb.append("PING");
             }
-			sb.append("]\nData: [" + (bytes.length - HASH_LENGTH - 1) + "] bytes\n");
+			sb.append("]\nData: [" + getDataLenght() + "] bytes\n");
 			sb.append("MD5 hash [" + byteArrayToHexString(bytes, 0, HASH_LENGTH) + "]\n");
 			sb.append("Total [" + bytes.length + "] bytes\n");
 			
