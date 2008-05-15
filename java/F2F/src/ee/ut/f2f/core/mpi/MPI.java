@@ -3,6 +3,7 @@ package ee.ut.f2f.core.mpi;
 import java.net.InetAddress;
 import java.util.Collection;
 
+import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.core.mpi.common.MapRankTable;
 import ee.ut.f2f.core.mpi.common.RankTable;
@@ -11,6 +12,7 @@ import ee.ut.f2f.core.mpi.exceptions.MPIAlreadyInitializedException;
 import ee.ut.f2f.core.mpi.exceptions.MPINotInitializedException;
 import ee.ut.f2f.core.mpi.message.MPIMessage;
 import ee.ut.f2f.core.mpi.message.MessageCmd;
+import ee.ut.f2f.util.LocalAddresses;
 import ee.ut.f2f.util.logging.Logger;
 
 public class MPI {
@@ -283,7 +285,13 @@ public class MPI {
 	 */
 	public String Get_processor_name() {
 		try {
-			return (InetAddress.getLocalHost().getHostName());
+			LocalAddresses la = LocalAddresses.getInstance();
+			StringBuffer sb = new StringBuffer();
+			for (InetAddress ia : la.getLocalIPv4Addresses()) {
+				sb.append(ia.getHostName()).append("_");
+			}
+			sb.append(F2FComputing.getLocalPeer().getID());
+			return (sb.toString());
 		} catch (Exception e) {
 			return null;
 		}
