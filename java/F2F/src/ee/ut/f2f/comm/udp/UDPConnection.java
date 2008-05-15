@@ -530,6 +530,7 @@ public class UDPConnection extends Thread implements Activity{
 			try {
 				UDPPacket content = new UDPPacket(bytes, offset, length, hasMore);
 				DatagramPacket sendPacket = createDatagramPacketOut(content);
+				log.debug("Sending data: "+ Arrays.toString(content.getBytes()));
 				sendFromLocalSocket(sendPacket);
 			} catch (UDPPacketParseException e) {
 				log.error("Unable to send [" + length + "] bytes ["
@@ -641,6 +642,7 @@ public class UDPConnection extends Thread implements Activity{
             }
             catch (Exception e)
             {
+            	log.warn(e);
                 response = new UDPPacket(UDPPacket.NAK);
                 log.debug("respond NAK ...");
             }
