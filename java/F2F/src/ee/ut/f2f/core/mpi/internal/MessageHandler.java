@@ -119,10 +119,14 @@ public class MessageHandler {
 				Thread.sleep(5 * 1000);
 			} catch (Exception e) {
 			}
-			task.exit("RequestQuitMessage from " + fromTaskID);
+			if (!task.isStopped()) {
+				task.exit("RequestQuitMessage from " + fromTaskID);
+			}
 		} else if (message instanceof NotifyMessage) {// some peer is dead must remove it
-			int index = task.getRankTable().getIndexByTaskID(((NotifyMessage) message).getDeadTaskID());
-			task.getMPIPresenceListener().peerDead(index);
+			if (!task.isStopped()) {
+				int index = task.getRankTable().getIndexByTaskID(((NotifyMessage) message).getDeadTaskID());
+				task.getMPIPresenceListener().peerDead(index);
+			}
 		} else if (message instanceof OutputMessage) {
 			OutputMessage outputMsg = (OutputMessage) message;
 			task.getMPIDebug().println(MPIDebug.SYSTEM, outputMsg.getOutput());

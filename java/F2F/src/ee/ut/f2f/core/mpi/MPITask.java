@@ -21,6 +21,7 @@ import ee.ut.f2f.core.mpi.exceptions.MPITerminateException;
 import ee.ut.f2f.core.mpi.internal.MPIPresenceListener;
 import ee.ut.f2f.core.mpi.internal.MessageHandler;
 import ee.ut.f2f.core.mpi.message.BasicMessage;
+import ee.ut.f2f.core.mpi.message.NotifyMessage;
 import ee.ut.f2f.core.mpi.message.RequestQuitMessage;
 import ee.ut.f2f.util.logging.Logger;
 
@@ -116,6 +117,11 @@ public abstract class MPITask extends Task {
 	}
 
 	protected void taskStoppedEvent() {
+		if (terminated == null) {
+			getMPIDebug().println(MPIDebug.SYSTEM, "Sending note to master");
+			NotifyMessage message = new NotifyMessage(getTaskID());
+			sendMessage(getJob().getMasterTaskID(), message);
+		}
 		exit("Someone told me to stop");
 	}
 
