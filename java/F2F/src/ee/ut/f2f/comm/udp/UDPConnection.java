@@ -1275,6 +1275,7 @@ public class UDPConnection extends Thread implements Activity{
 		}
 	}
 	
+	@SuppressWarnings("unused")
 	private byte[] trimByteArray(byte[] bytes, int offset, int length){
 		return getSubSequence(bytes, offset, getDataLength(bytes, offset, length));
 	}
@@ -1427,6 +1428,7 @@ public class UDPConnection extends Thread implements Activity{
         // constructor of incoming packet
         private UDPPacket(byte[] bytes) throws UDPPacketParseException, UDPPacketHashException
         {
+        	log.debug("forming UDPPacket: "+ Arrays.toString(bytes));
             // check the message size
 			if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
 				throw new UDPPacketParseException("Message too Short");
@@ -1438,8 +1440,8 @@ public class UDPConnection extends Thread implements Activity{
 				throw new UDPPacketParseException("Invalid TYPE Field");
             }
 			int size = bytesToInt(getSubSequence(bytes, HASH_LENGTH+1, 4));
-			if (size > MAX_MESSAGE_SIZE) 
-				throw new UDPPacketParseException("Data too long");
+			if (size > MAX_MESSAGE_SIZE)
+				throw new UDPPacketParseException("Data too long, " + size);
 			this.bytes = getSubSequence(bytes, 0, HASH_LENGTH+1+4+size);
 
             // check the hash
