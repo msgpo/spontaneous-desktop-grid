@@ -1344,8 +1344,8 @@ public class UDPConnection extends Thread implements Activity{
     @SuppressWarnings("serial")
     private class UDPPacketHashException extends Exception
     {
-        UDPPacketHashException(){
-            super();
+        UDPPacketHashException(byte[] bytes){
+            super("Hash failure: " + Arrays.toString(bytes));
         }
     }
 	
@@ -1424,7 +1424,7 @@ public class UDPConnection extends Thread implements Activity{
 			this.bytes = trimByteArray(bytes, 0, bytes.length);
             if (!checkHash())
             {
-                throw new UDPPacketHashException();
+                throw new UDPPacketHashException(bytes);
             }
         }
 		
