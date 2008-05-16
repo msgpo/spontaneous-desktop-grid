@@ -433,9 +433,23 @@ public class F2FComputing
 					try {
 						// The job has to be sent first because otherwise
 						// custom classes in the task can not be deserialized.
-                        UUID uuid = peer.getID();
+                        final UUID uuid = peer.getID();
                         job.getTask(job.getMasterTaskID()).peersToSendTask.add(uuid);
-						peer.sendMessageBlocking(messageJobTask);
+                        new Thread ()
+                        {
+                            public void run()
+                            {
+                                try
+                                {
+                                    peer.sendMessage(messageJobTask);
+                                } catch (CommunicationFailedException e)
+                                {
+                                    // TODO notify the submitter, that all the tasks were not submitted
+                                    uuid.notifyAll();
+                                }
+                                
+                            }
+                        }.start();
                         // do not send the Task before the Job has been initialized
                         // otherwize the Task may not be dezerialized (if custom classes are used)
                         synchronized (uuid)
@@ -445,7 +459,8 @@ public class F2FComputing
                         job.getTask(job.getMasterTaskID()).peersToSendTask.remove(uuid);
 						peer.sendMessageBlocking(messageTask);
 					} catch (Exception e) {
-						logger.error("Error sending JOB_TASK to a peer. " + e, e);
+						logger.error("Error sending JOB_TASK to a peer. ", e);
+                        //TODO: notify the submitter, that all the tasks were not submitted
 					}
 				}
 			};
