@@ -509,10 +509,24 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
         // forward received object to the Core
         try {
 			byte[] raw_msg = Util.unzip(receivedBytes);
-			Object message = Util.deserializeObject(raw_msg);
-            messageReceived(message, this.udpTester.getRemotePeer().getID());
+			final Object message = Util.deserializeObject(raw_msg);
+            // run in separate thread, because messageReceived() might want to 
+            // send something out (BlockingReply), but then no thread is listening
+            // on the UDP port
+            new Thread()
+            {
+                public void run()
+                {
+                    try
+                    {
+                        messageReceived(message, UDPConnection.this.udpTester.getRemotePeer().getID());
+                    } catch (CommunicationFailedException e)
+                    {
+                        e.printStackTrace();
+                    }
+                }
+            }.start();
 		} catch (Exception e) {
-			// TODO Auto-generated catch block
 			e.printStackTrace();
 			return false;
 		}
