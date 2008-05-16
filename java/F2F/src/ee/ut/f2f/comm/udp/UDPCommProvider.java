@@ -11,7 +11,6 @@ import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.CommunicationProvider;
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
-import ee.ut.f2f.util.Util;
 import ee.ut.f2f.util.logging.Logger;
 
 public class UDPCommProvider implements CommunicationProvider, Activity
@@ -74,28 +73,33 @@ public class UDPCommProvider implements CommunicationProvider, Activity
         UDPConnection conn = udpConnections.get(destinationPeer);
         if (conn == null)
             throw new CommunicationFailedException("Can not use UDP connection to " + destinationPeer);
+        //conn.sendMessage(message);
         try
         {
-            // serialize message
-            byte[] raw_msg = Util.serializeObject(message);
-            // compress message
-            raw_msg = Util.zip(raw_msg);
-            synchronized (conn)
-            {
-                conn.send(raw_msg);
-            }
+            conn.sendMessage(message);
         }
         catch (Exception e)
         {
             e.printStackTrace();
-            logger.error("UDP: error while sending a message to peer " + destinationPeer);
+            logger.error("UDP: error in sendMessage() while sending a message to peer " + destinationPeer, e);
             throw new CommunicationFailedException(e);
         }
 	}
 	public void sendMessageBlocking(UUID destinationPeer, Object message, long timeout, boolean countTimeout) throws CommunicationFailedException, InterruptedException
 	{
-        if (!udpConnections.containsKey(destinationPeer))
+        UDPConnection conn = udpConnections.get(destinationPeer);
+        if (conn == null)
             throw new CommunicationFailedException("Can not use UDP connection to " + destinationPeer);
-		// TODO Auto-generated method stub
+        //conn.sendMessageBlocking(message, timeout, countTimeout);
+        try
+        {
+            conn.sendMessageBlocking(message, timeout, countTimeout);
+        }
+        catch (Exception e)
+        {
+            e.printStackTrace();
+            logger.error("UDP: error in sendMessageBlocking() while sending a message to peer " + destinationPeer, e);
+            throw new CommunicationFailedException(e);
+        }
 	}
 }

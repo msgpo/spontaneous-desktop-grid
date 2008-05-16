@@ -29,13 +29,15 @@ import de.javawi.jstun.util.UtilityException;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
+import ee.ut.f2f.comm.BlockingMessageSender;
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
 import ee.ut.f2f.util.Util;
 import ee.ut.f2f.util.logging.Logger;
 import ee.ut.f2f.util.stun.LocalStunInfo;
 
-public class UDPConnection extends Thread implements Activity{
+public class UDPConnection extends BlockingMessageSender implements Activity, Runnable
+{
 	
 	private final static Logger log = Logger.getLogger(UDPConnection.class);
 	
@@ -219,6 +221,9 @@ public class UDPConnection extends Thread implements Activity{
 	
 	public InetSocketAddress getMappedAddress() { return this.localMappedAddress; }
 
+    private String name = null;
+    private void setName(String n) { name = n; }
+    private String getName() { return name; }
 	public String getActivityName() { return getName(); }
 
 	public Activity getParentActivity() { return this.udpTester; }
@@ -244,7 +249,7 @@ public class UDPConnection extends Thread implements Activity{
     private byte[] bytesToSend = null;
     private CommunicationFailedException sendException = null;
 	//Main Send Bytes method
-    void send(final byte[] bytes) throws CommunicationFailedException
+    private void send(final byte[] bytes) throws CommunicationFailedException
     {
         log.debug("aquire synLock send()");
         synchronized (synLock)
@@ -504,8 +509,8 @@ public class UDPConnection extends Thread implements Activity{
         // forward received object to the Core
         try {
 			byte[] raw_msg = Util.unzip(receivedBytes);
-			Object obj = Util.deserializeObject(raw_msg);
-			F2FComputing.messageReceived(obj,this.udpTester.getRemotePeer().getID());
+			Object message = Util.deserializeObject(raw_msg);
+            messageReceived(message, this.udpTester.getRemotePeer().getID());
 		} catch (Exception e) {
 			// TODO Auto-generated catch block
 			e.printStackTrace();
@@ -1566,4 +1571,20 @@ public class UDPConnection extends Thread implements Activity{
 			return sBuf.toString();
 		}
 	}
+
+    public void sendMessage(Object message)throws CommunicationFailedException
+    {
+        try
+        {
+            // serialize message
+            byte[] raw_msg = Util.serializeObject(message);
+            // compress message
+            raw_msg = Util.zip(raw_msg);
+            this.send(raw_msg);
+        }
+        catch (IOException e)
+        {
+            throw new CommunicationFailedException(e);
+        }
+    }
 }

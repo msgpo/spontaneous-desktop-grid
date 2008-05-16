@@ -387,7 +387,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 								   remoteIas, // remote IP
 								   		this  // parent Thread
 				);
-				runningTest.start();
+				new Thread(runningTest).start();
 				while(true){
 					if (this.runningTest == null){
 						break;
