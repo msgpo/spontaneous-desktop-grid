@@ -446,7 +446,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
                     {
                 		log.debug("Received SYN-ACK");
                 		log.debug("Sending data [" + Arrays.toString(bytesToSend) + "]");
-                    	if (send(bytesToSend,0,bytesToSend.length,false,false))
+                    	if (send(bytesToSend,0,bytesToSend.length,false))
                 			status = Status.IDLE;
                 		else 
                 			status = Status.CLOSING;
@@ -568,18 +568,15 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
     }
 
     //recursive method
-	private boolean send(byte[] bytes, int offset, int length, boolean hasMore, boolean split)
+	private boolean send(byte[] bytes, int offset, int length, boolean hasMore)
 	{
 		//If message is larger then MAX size split in two
 		if (length > UDPPacket.MAX_MESSAGE_SIZE) {
-			log.debug("Message to large, split in two");
-			return send(bytes, offset, length, false, true);
-		}
-		if (split) {
+			log.debug("Message too large (), split in two");
 			int half_size = (int)(length/2d);
 			return 
-				send(bytes, offset, half_size, true, false) &&
-				send(bytes, (offset + half_size), (length - half_size), hasMore, false);
+				send(bytes, offset, half_size, true) &&
+				send(bytes, (offset + half_size), (length - half_size), hasMore);
 		}
 		log.debug("Sending [" + length + "] bytes");
 		while (this.status != Status.CLOSING)
@@ -631,7 +628,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
                 {
                     return false;
                 }
-                return send(bytes,offset,length,hasMore,true);
+                return send(bytes,offset,length,hasMore);
             }
             else
             {
@@ -641,7 +638,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 			    }
                 if (content.getType() == UDPPacket.NAK)
                 {
-				    return send(bytes, offset, length, hasMore, true);
+				    return send(bytes, offset, length, hasMore);
 			    }
             }
 		}
