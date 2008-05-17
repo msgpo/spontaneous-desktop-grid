@@ -17,6 +17,7 @@ import java.util.Collections;
 import java.util.List;
 import java.util.Random;
 import java.util.UUID;
+import java.util.concurrent.ConcurrentLinkedQueue;
 
 import de.javawi.jstun.attribute.ChangeRequest;
 import de.javawi.jstun.attribute.MappedAddress;
@@ -264,7 +265,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
             try
             {
                 DatagramPacket sendPacket = createDatagramPacketOut(content);
-                log.debug("Send SYN...");
+                log.debug("Send SYN..."+synGen);
                 sendFromLocalSocket(sendPacket);
     			log.debug("Sent SYN: " + content);
     		} catch (IOException e){
@@ -308,6 +309,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
     	return byteValue;
     }
 
+    ConcurrentLinkedQueue<UDPPacket> packetQueue = new ConcurrentLinkedQueue<UDPPacket>();
     private void listen()
     {
     	setName("UDP Connection [" + localConnectionId.toString() + "]");
@@ -316,27 +318,31 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 				"ID [" + localConnectionId.toString() + "] listening for incoming packets"));
 		log.info("UDP Connection established, ID [" + localConnectionId.toString() + "]");
 		log.debug("Listening for incoming packets");
-		runPingThread();
-        udpTester.addConnection(this);
+		udpTester.addConnection(this);
 		//try to set socket timeout to 0
     	setLocalSocketTimeout(0);
 		while (this.status != Status.CLOSING)
-		{						
+		{					
 			byte[] buffer = new byte[UDPPacket.HASH_LENGTH+1+4+4];//length + SYN id
 			DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			//try to receive
 			try {
-                log.debug("UDP listening for a packet...");
-                receiveFromLocalSocket(receivePacket);
-                log.debug("UDP received a packet");
-				content = new UDPPacket(receivePacket.getData());
+                log.debug("UDP SOCKET receive ...");
+            	localSocket.receive(receivePacket);
+    			content = new UDPPacket(receivePacket.getData());
+    			log.debug("UDP SOCKET received: " + content);
+        		synchronized (packetQueue)
+				{
+					packetQueue.add(content);
+					packetQueue.notifyAll();
+				}
 			} catch (SocketTimeoutException e) {
 				log.warn("UDP listening stopped for SocketTimeoutException");
 				continue;
 			} catch (IOException e) {
 				log.error("Unable to receive packet", e);
-				return;
+				continue;
 			} catch (UDPPacketParseException e) {
 				log.warn("Received not a UDPPacket",e);
 				continue;
@@ -344,86 +350,122 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
                 log.warn("Received a UDPPacket with wrong hash",e);
                 continue;
             }
-            
-            // at this point we have received something!!!
-            if (content == null) continue;
-            //log.debug("UDP listener received " + content);
-            if (content.getType() == UDPPacket.PING)
-            {
-                continue;
-            }
-			if (content.getType() == UDPPacket.SYN)
-            {
-                synchronized (synLock)
-                {
-                    if (synGen == null)
-                    {
-                        if (!sendSynAck())
-                        {
-                        	this.status = Status.CLOSING;
-                        	return;
-                        }
-                    	//try to set socket timeout back to 0
-                    	setLocalSocketTimeout(0);
-                    	this.status = Status.IDLE;
-                    }
-                    else
-                    {
-                        log.debug("SYN collision. local gen " + synGen);
-                        byte[] integer = content.getData();
-                        //log.debug("Collision Generated Int size [" + integer.length + "] content [" + Arrays.toString(integer) + "]");
-                        int remoteGenSyn = bytesToInt(integer);
-                        log.debug("SYN collision. remote gen " + remoteGenSyn);
-                        if (synGen.intValue() < remoteGenSyn)
-                        {
-                        	// first receive the remote data
-                            if (!sendSynAck())
-                            {
-                            	this.status = Status.CLOSING;
-                            	return;
-                            }
-                            //try to set socket timeout back to 0
-                        	setLocalSocketTimeout(0);
-                            // then continue to send the local data
-                            new Thread()
-                            {
-                                public void run()
-                                {
-                                    try {
-        								send(bytesToSend);
-        							} catch (CommunicationFailedException e) {
-                                        // notify the original sender thread about the exception
-                                        UDPConnection.this.status = Status.CLOSING;
-                                        UDPConnection.this.sendException = e;
-                                        UDPConnection.this.synGen.notifyAll();
-        							}
-                                }
-                            }.start();
-                        }
-                    }
-                }
-			}
-            else if (content.getType() == UDPPacket.SYN_ACK)
-            {
-        		log.debug("Received SYN-ACK");
-        		log.debug("Sending data [" + Arrays.toString(bytesToSend) + "]");
-            	if (send(bytesToSend,0,bytesToSend.length,false,false))
-        			this.status = Status.IDLE;
-        		else 
-        			this.status = Status.CLOSING;
-        		log.debug("aquire synGen");
-                synchronized (synLock)
-                {
-                    // release the the original sender thread 
-                    synLock.notifyAll();
-                }
-                //try to set socket timeout back to 0
-            	setLocalSocketTimeout(0);
-            }
 		}
 	}
+    
+    private UDPPacket receivePacket() throws IOException, InterruptedException
+    {
+		synchronized (packetQueue)
+		{
+			if (packetQueue.isEmpty())
+				packetQueue.wait();
+			return packetQueue.poll();
+		}
+    }
 	
-	private void runPingThread()
+	private void startMessageHandlerThread()
+    {
+		new Thread ()
+        {
+            public void run()
+            {
+            	while (UDPConnection.this.status != Status.CLOSING)
+            	{
+            		UDPPacket content = null;
+					try {
+						content = receivePacket();
+					} catch (IOException e) {
+						e.printStackTrace();
+						UDPConnection.this.status = Status.CLOSING;
+					} catch (InterruptedException e) {
+						e.printStackTrace();
+						UDPConnection.this.status = Status.CLOSING;
+					}
+            		// at this point we have received something!!!
+                    if (content == null) continue;
+                    //log.debug("UDP listener received " + content);
+                    if (content.getType() == UDPPacket.PING)
+                    {
+                        continue;
+                    }
+        			if (content.getType() == UDPPacket.SYN)
+                    {
+                        synchronized (synLock)
+                        {
+                        	byte[] integer = content.getData();
+                            int remoteGenSyn = bytesToInt(integer);
+                            log.debug("received SYN..."+remoteGenSyn);
+                            
+                            if (synGen == null)
+                            {
+                                if (!sendSynAck())
+                                {
+                                	status = Status.CLOSING;
+                                	return;
+                                }
+                            	//try to set socket timeout back to 0
+                            	setLocalSocketTimeout(0);
+                            	status = Status.IDLE;
+                            }
+                            else
+                            {
+                                log.debug("SYN collision. local gen " + synGen);
+                                //byte[] integer = content.getData();
+                                //log.debug("Collision Generated Int size [" + integer.length + "] content [" + Arrays.toString(integer) + "]");
+                                //int remoteGenSyn = bytesToInt(integer);
+                                log.debug("SYN collision. remote gen " + remoteGenSyn);
+                                if (synGen.intValue() < remoteGenSyn)
+                                {
+                                	// first receive the remote data
+                                    if (!sendSynAck())
+                                    {
+                                    	status = Status.CLOSING;
+                                    	return;
+                                    }
+                                    //try to set socket timeout back to 0
+                                	setLocalSocketTimeout(0);
+                                    // then continue to send the local data
+                                    new Thread()
+                                    {
+                                        public void run()
+                                        {
+                                            try {
+                								send(bytesToSend);
+                							} catch (CommunicationFailedException e) {
+                                                // notify the original sender thread about the exception
+                                                UDPConnection.this.status = Status.CLOSING;
+                                                UDPConnection.this.sendException = e;
+                                                UDPConnection.this.synGen.notifyAll();
+                							}
+                                        }
+                                    }.start();
+                                }
+                            }
+                        }
+        			}
+                    else if (content.getType() == UDPPacket.SYN_ACK)
+                    {
+                		log.debug("Received SYN-ACK");
+                		log.debug("Sending data [" + Arrays.toString(bytesToSend) + "]");
+                    	if (send(bytesToSend,0,bytesToSend.length,false,false))
+                			status = Status.IDLE;
+                		else 
+                			status = Status.CLOSING;
+                		log.debug("aquire synGen");
+                        synchronized (synLock)
+                        {
+                            // release the the original sender thread 
+                            synLock.notifyAll();
+                        }
+                        //try to set socket timeout back to 0
+                    	setLocalSocketTimeout(0);
+                    }
+            	}
+            }
+        }.start();
+    }
+	
+	private void startPingThread()
 	{
 		new Thread ()
         {
@@ -461,18 +503,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		}
 	}
 
-	private Boolean receiveLock = new Boolean(true);
-	private void receiveFromLocalSocket(DatagramPacket packet) throws IOException
-    {
-		log.debug("aquire  receiveLock ...");
-		synchronized (receiveLock)
-		{
-			log.debug("UDP SOCKET receive ...");
-        	localSocket.receive(packet);
-			log.debug("UDP SOCKET received");
-		}
-    }
-	
 	private Boolean sendLock = new Boolean(true);
 	private void sendFromLocalSocket(DatagramPacket packet) throws IOException
     {
@@ -555,18 +585,8 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 				send(bytes, (offset + half_size), (length - half_size), hasMore, false);
 		}
 		log.debug("Sending [" + length + "] bytes");
-		int errors = 0, timeouts = 0;
-		while (this.status != Status.CLOSING){
-			//Check counters
-			if (errors > MAX_SEND_ERRORS){
-				log.info("Max send errors reached, closing thread");
-				return false;
-			}
-			if (timeouts > MAX_SEND_TIMEOUTS){
-				log.info("Max send timeouts reached, closing thread");
-				return false;
-			}
-			
+		while (this.status != Status.CLOSING)
+		{
 			// Try to send packet
 			try {
 				UDPPacket content = new UDPPacket(bytes, offset, length, hasMore);
@@ -576,32 +596,27 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 			} catch (UDPPacketParseException e) {
 				log.error("Unable to send [" + length + "] bytes ["
 						+ e.getMessage() + "]");
-				errors++;
-                this.status = Status.CLOSING;
-				continue;
+				return false;
 			} catch (SocketException e) {
 				log.error("Unable to send [" + length + "] bytes", e);
-				errors++;
-                return false;
+			    return false;
 			} catch (IOException e) {
 				log.error("Unable to send [" + length + "] bytes", e);
-				errors++;
-                return false;
+			    return false;
 			}			
 			//set socket timeout
 			// we wait 1 second for ACK/NAK
 			setLocalSocketTimeout(1000);
 			
 			// wait for answer
-			byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1 + 4];
-			DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
+			//byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1 + 4];
+			//DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			try{
-				receiveFromLocalSocket(receivePacket);
-				content = new UDPPacket(receivePacket.getData());
+				content = receivePacket();
+				//content = new UDPPacket(receivePacket.getData());
 			} catch (SocketTimeoutException e) {
 				log.warn("Timeout waiting for ACK");
-				timeouts++;
 				if (length == 1)
                 {
                     return false;
@@ -609,8 +624,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 				return send(bytes,offset,length,hasMore,true);
 			} catch (Exception e){
 				log.error("Unable to receive ACK/NAK", e);
-				errors++;
-                return false;
+				return false;
 			}
 			
 			if(content != null)
@@ -627,6 +641,11 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 				    return send(bytes, offset, length, hasMore, true);
 			    }
             }
+			else
+			{
+				log.error("Received NULL instead of ACK/NAK");
+				return false;
+			}
 		}
 		return false;
 	}
@@ -635,34 +654,18 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 	{
 		//Final data array
 		byte[] returnData = new byte[0];
-		byte[] pData = new byte[UDPPacket.MAX_PACKET_SIZE];
-		DatagramPacket receivePacket = new DatagramPacket(pData, pData.length);
-		//int errors = 0;
+		//byte[] pData = new byte[UDPPacket.MAX_PACKET_SIZE];
+		//DatagramPacket receivePacket = new DatagramPacket(pData, pData.length);
 		while (this.status != Status.CLOSING)
 		{
-			//Check counters
-			/*if (errors > MAX_SEND_ERRORS){
-				log.info("Max send errors reached, closing thread");
-				return null;
-                //TODO: do not close the connection
-                // order the remote peer to start the sending again
-			}*/
 			//try to set socket timeout
 			setLocalSocketTimeout(0);
-			
-			//try to receive
-			try{
-				receiveFromLocalSocket(receivePacket);
-			} catch (IOException e){
-				log.error("Unable to receive packet", e);
-                return null;
-			}
-			//try to get data
+
 			UDPPacket udpp = null;
             UDPPacket response = null;
-			try
-            {
-				udpp = new UDPPacket(receivePacket.getData());
+			//try to receive
+			try{
+				udpp = receivePacket();
 				//log.debug("Received [" + Arrays.toString(udpp.getBytes()) + "]");
 
                 if (udpp != null)
@@ -799,7 +802,9 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
             ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
                     ActivityEvent.Type.CHANGED,
                     "started to listen"));
-			listen();
+            startPingThread();
+            startMessageHandlerThread();
+            listen();
             close();
             ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
                     ActivityEvent.Type.CHANGED,
@@ -845,7 +850,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 					try
                     {
 						DatagramPacket receivePacket = new DatagramPacket(receiveContent,receiveContent.length);
-						receiveFromLocalSocket(receivePacket);
+						localSocket.receive(receivePacket);
                         UDPPacket udpp = new UDPPacket(receivePacket.getData());
 						if (UDPPacket.PING == udpp.getType())
                         {

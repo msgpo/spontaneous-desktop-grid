@@ -382,7 +382,8 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			}
 			
 			//try to start UDP test
-			try{
+			try
+			{
 				this.runningTest = new UDPConnection(ds, // localSocket
 								   remoteIas, // remote IP
 								   		this  // parent Thread
@@ -396,7 +397,9 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 						Thread.sleep(1000);
 					} catch (InterruptedException e) {}
 				}
-			} catch (NoSuchAlgorithmException e){
+			}
+			catch (NoSuchAlgorithmException e)
+			{
 				log.error("Unable to start UDP test ["
 							+ ds.getLocalAddress().getHostAddress()
 							+ ":"
