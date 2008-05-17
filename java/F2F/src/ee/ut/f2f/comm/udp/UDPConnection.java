@@ -15,6 +15,7 @@ import java.util.Arrays;
 import java.util.Collection;
 import java.util.Collections;
 import java.util.List;
+import java.util.Queue;
 import java.util.Random;
 import java.util.UUID;
 import java.util.concurrent.ConcurrentLinkedQueue;
@@ -304,7 +305,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
     	return byteValue;
     }
 
-    ConcurrentLinkedQueue<UDPPacket> packetQueue = new ConcurrentLinkedQueue<UDPPacket>();
+    Queue<UDPPacket> packetQueue = new ConcurrentLinkedQueue<UDPPacket>();
     private void listen()
     {
     	setName("UDP Connection [" + localConnectionId.toString() + "]");
@@ -352,12 +353,17 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
     
     private UDPPacket receivePacket() throws IOException, InterruptedException
     {
-		synchronized (packetQueue)
-		{
-			if (packetQueue.isEmpty())
-				packetQueue.wait();
-			return packetQueue.poll();
-		}
+        return receivePacket(0);
+    }
+    
+    private UDPPacket receivePacket(int timeout) throws InterruptedException
+    {
+        synchronized (packetQueue)
+        {
+            if (packetQueue.isEmpty())
+                packetQueue.wait(timeout);
+            return packetQueue.poll();
+        }
     }
 	
 	private void startMessageHandlerThread()
@@ -400,8 +406,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
                                 	status = Status.CLOSING;
                                 	return;
                                 }
-                            	//try to set socket timeout back to 0
-                            	setLocalSocketTimeout(0);
                             	status = Status.IDLE;
                             }
                             else
@@ -419,8 +423,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
                                     	status = Status.CLOSING;
                                     	return;
                                     }
-                                    //try to set socket timeout back to 0
-                                	setLocalSocketTimeout(0);
                                     // then continue to send the local data
                                     new Thread()
                                     {
@@ -454,8 +456,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
                             // release the the original sender thread 
                             synLock.notifyAll();
                         }
-                        //try to set socket timeout back to 0
-                    	setLocalSocketTimeout(0);
                     }
             	}
             }
@@ -585,46 +585,55 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		while (this.status != Status.CLOSING)
 		{
 			// Try to send packet
-			try {
+			try
+            {
 				UDPPacket content = new UDPPacket(bytes, offset, length, hasMore);
 				DatagramPacket sendPacket = createDatagramPacketOut(content);
 				log.debug("Sending data: "+ content.toString());
 				sendFromLocalSocket(sendPacket);
-			} catch (UDPPacketParseException e) {
+			}
+            catch (UDPPacketParseException e)
+            {
 				log.error("Unable to send [" + length + "] bytes ["
 						+ e.getMessage() + "]");
 				return false;
-			} catch (SocketException e) {
+			}
+            catch (SocketException e)
+            {
 				log.error("Unable to send [" + length + "] bytes", e);
 			    return false;
-			} catch (IOException e) {
+			}
+            catch (IOException e)
+            {
 				log.error("Unable to send [" + length + "] bytes", e);
 			    return false;
-			}			
-			//set socket timeout
-			// we wait 1 second for ACK/NAK
-			setLocalSocketTimeout(1000);
+			}
 			
 			// wait for answer
 			//byte[] buffer = new byte[UDPPacket.HASH_LENGTH + 1 + 4];
 			//DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
-			try{
-				content = receivePacket();
+			try
+            {
+				content = receivePacket(1000);
 				//content = new UDPPacket(receivePacket.getData());
-			} catch (SocketTimeoutException e) {
-				log.warn("Timeout waiting for ACK");
-				if (length == 1)
-                {
-                    return false;
-                }
-				return send(bytes,offset,length,hasMore,true);
-			} catch (Exception e){
+			}
+            catch (InterruptedException e)
+            {
 				log.error("Unable to receive ACK/NAK", e);
 				return false;
 			}
 			
-			if(content != null)
+            if(content == null)
+            {
+                log.warn("Timeout waiting for ACK/NAK");
+                if (length == 1)
+                {
+                    return false;
+                }
+                return send(bytes,offset,length,hasMore,true);
+            }
+            else
             {
                 if (content.getType() == UDPPacket.ACK)
                 {
@@ -635,16 +644,11 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 				    return send(bytes, offset, length, hasMore, true);
 			    }
             }
-			else
-			{
-				log.error("Received NULL instead of ACK/NAK");
-				return false;
-			}
 		}
 		return false;
 	}
-	
-	private byte[] receiveData()
+
+    private byte[] receiveData()
 	{
 		//Final data array
 		byte[] returnData = new byte[0];
@@ -652,9 +656,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		//DatagramPacket receivePacket = new DatagramPacket(pData, pData.length);
 		while (this.status != Status.CLOSING)
 		{
-			//try to set socket timeout
-			setLocalSocketTimeout(0);
-
 			UDPPacket udpp = null;
             UDPPacket response = null;
 			//try to receive
