@@ -15,7 +15,7 @@ import java.util.Map;
 import java.util.Random;
 import java.util.StringTokenizer;
 import java.util.UUID;
-import java.util.concurrent.ConcurrentLinkedQueue;
+import java.util.concurrent.LinkedBlockingQueue;
 import java.util.jar.Attributes;
 import java.util.jar.JarFile;
 import java.util.jar.Manifest;
@@ -761,7 +761,7 @@ public class F2FComputing
 		}
 	}
 
-	private static ConcurrentLinkedQueue<MessageAndSender> messageQueue = new ConcurrentLinkedQueue<MessageAndSender>();
+	private static LinkedBlockingQueue<MessageAndSender> messageQueue = new LinkedBlockingQueue<MessageAndSender>();
 
 	/**
 	 * This method is called by a communication provider (IM, TCP, UDP etc) if a
@@ -787,11 +787,10 @@ public class F2FComputing
 			return;
 		}
 		logger.info("FROM " + sender.getDisplayName() + ": " + message);
-		messageQueue.add(new MessageAndSender(message, sender));
-		synchronized (messageQueue)
-		{
-			messageQueue.notify();
-		}
+		try
+        {
+            messageQueue.put(new MessageAndSender(message, sender));
+        } catch (InterruptedException e){}
 	}
 	
 	private static void handleMessage(final Object message, final F2FPeer sender)
@@ -1106,23 +1105,15 @@ public class F2FComputing
 		{
 			while (true)
 			{
-				if (messageQueue.isEmpty())
-				{
-					synchronized (messageQueue)
-					{
-						try
-						{
-							messageQueue.wait();
-						} catch (InterruptedException e) {}
-					}
-				}
-				while (!messageQueue.isEmpty())
-				{
-					MessageAndSender ms = messageQueue.poll();
-					F2FPeer sender = ms.sender;
-					Object message = ms.message;
-					handleMessage(message, sender);
-				}
+				MessageAndSender ms = null;
+                try
+                {
+                    ms = messageQueue.take();
+                } catch (InterruptedException e){}
+                if (ms == null) continue;
+				F2FPeer sender = ms.sender;
+				Object message = ms.message;
+				handleMessage(message, sender);
 			}
 		}
 	}
