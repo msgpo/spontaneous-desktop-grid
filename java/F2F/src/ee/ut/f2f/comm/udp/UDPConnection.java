@@ -612,7 +612,9 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 			UDPPacket content = null;
 			try
             {
+                log.debug("wait for ACK/NAK...");
 				content = receivePacket(1000);
+                log.debug("got " + content);
 				//content = new UDPPacket(receivePacket.getData());
 			}
             catch (InterruptedException e)
