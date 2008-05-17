@@ -288,7 +288,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
         log.debug("release synLock send()");
 	}
     
-    private static int bytesToInt(byte[] bytes)
+    public static int bytesToInt(byte[] bytes)
     {
     	if (bytes.length != 4) return 0;
     	int intValue = 0;
@@ -298,7 +298,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
         }
         return intValue;
     }
-    private static byte[] intToBytes(int intValue)
+    public static byte[] intToBytes(int intValue)
     {
     	byte[] byteValue = new byte[4]; 
     	byteValue[0]=(byte)((intValue & 0xff000000)>>>24);
