@@ -319,7 +319,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
     	setLocalSocketTimeout(0);
 		while (this.status != Status.CLOSING)
 		{					
-			byte[] buffer = new byte[UDPPacket.HASH_LENGTH+1+4+4];//length + SYN id
+			byte[] buffer = new byte[UDPPacket.MAX_PACKET_SIZE];
 			DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
 			UDPPacket content = null;
 			//try to receive
@@ -327,7 +327,9 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
                 log.debug("UDP SOCKET receive ...");
             	localSocket.receive(receivePacket);
     			content = new UDPPacket(receivePacket.getData());
+    			if (content == null) continue;
     			log.debug("UDP SOCKET received: " + content);
+    			if (content.getType() == UDPPacket.PING) continue;
         		synchronized (packetQueue)
 				{
 					packetQueue.add(content);
@@ -625,9 +627,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 			
 			if(content != null)
             {
-                // should not happen, but ...
-                if (content.getType() == UDPPacket.PING) continue;
-                
                 if (content.getType() == UDPPacket.ACK)
                 {
                     return true;
@@ -666,9 +665,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 
                 if (udpp != null)
                 {
-                    // this should not happen, but ...
-                    if (udpp.getType() == UDPPacket.PING) continue;
-                    
                     //append received data
                     returnData = mergeByteArrays(returnData, udpp.getData());
                     response = new UDPPacket(UDPPacket.ACK);
