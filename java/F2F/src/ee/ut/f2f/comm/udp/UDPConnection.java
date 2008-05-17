@@ -39,7 +39,6 @@ import ee.ut.f2f.util.stun.LocalStunInfo;
 
 public class UDPConnection extends BlockingMessageSender implements Activity, Runnable
 {
-	
 	private final static Logger log = Logger.getLogger(UDPConnection.class);
 	
 	//Default waiting timeout
