@@ -1406,7 +1406,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		
         private final static int HASH_LENGTH = 16;
 		
-        private final static int MAX_PACKET_SIZE = 65507;
+        private final static int MAX_PACKET_SIZE = 512;//65507;
         private final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1 - 4;//1 for TYPE/MORE byte, 4 for length
 		
         private byte[] bytes = null;
