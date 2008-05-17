@@ -48,11 +48,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 	//SO Timeouts
 	private final static int RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT = 1000;
 	private final static int HOLE_PUNCHING_SO_TIMEOUT = 10000;
-	
-	//Connection failed after ...
-	private final static int MAX_SEND_ERRORS = 10;
-	private final static int MAX_SEND_TIMEOUTS = 10;
-	
+		
 	//
 	private final static int DEFAULT_PORT_MAPPING_RULE = 1;  
 	
