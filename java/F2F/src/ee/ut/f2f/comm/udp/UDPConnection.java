@@ -572,7 +572,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 	{
 		//If message is larger then MAX size split in two
 		if (length > UDPPacket.MAX_MESSAGE_SIZE) {
-			log.debug("Message too large (), split in two");
+			log.debug("Message too large ("+length+"), split in two");
 			int half_size = (int)(length/2d);
 			return 
 				send(bytes, offset, half_size, true) &&
