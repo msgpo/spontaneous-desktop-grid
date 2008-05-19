@@ -77,7 +77,7 @@ public class CommunicationFactory
 	private static CommunicationProvider GetSipCommununication()
 	{
 		// also init TCP and UDP communication providers
-		//TCPCommunicationProvider.getInstance();
+		TCPCommunicationProvider.getInstance();
 		UDPCommProvider.getInstance();
 		
 		return SipIMCommunicationProvider.getInstance();
