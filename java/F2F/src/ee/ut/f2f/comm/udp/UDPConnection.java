@@ -8,8 +8,6 @@ import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.security.MessageDigest;
-import java.security.NoSuchAlgorithmException;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -49,11 +47,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		
 	//
 	private final static int DEFAULT_PORT_MAPPING_RULE = 1;  
-	
-	//
-	private final static String HASH_ALGORITHM = "MD5";
-	
-	
+		
 	//Member fields
 	//
 	private UDPTester udpTester = null;
@@ -71,10 +65,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 	//
 	private Integer localPortMappingRule = null;
 	private Integer remotePortMappingRule = null;
-	
-	//
-	private MessageDigest md = null;
-	
+		
 	private enum Status{
 		INIT,
 		GOT_MAPPED_ADDRESS,
@@ -86,24 +77,16 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 	}
 
 	//Constructors
-	private UDPConnection(DatagramSocket localSocket,
+	UDPConnection(DatagramSocket localSocket,
 				   InetAddress remoteIp,
-				   UDPTester parent,
-				   String hashAlgorithm) throws NoSuchAlgorithmException {
+				   UDPTester parent)  {
 		if (localSocket == null) throw new NullPointerException("localSocket == null");
 		if (parent == null) throw new NullPointerException("parent UDPTester == null");
 		
 		this.localSocket = localSocket;
 		this.udpTester = parent;
 		this.setName("UDP TEST ");
-		this.md = MessageDigest.getInstance(hashAlgorithm);
-        this.localConnectionId = UUID.randomUUID();
-	}
-	
-	UDPConnection (DatagramSocket localSocket,
-				   InetAddress remoteIp,
-				   UDPTester parent) throws NoSuchAlgorithmException {
-		this (localSocket, remoteIp, parent, HASH_ALGORITHM);
+		this.localConnectionId = UUID.randomUUID();
 	}
 	
 	/*private void exchangeID(){
@@ -1285,34 +1268,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		}
 		return mostFrequent;
 	}
-		
-	private int getDataLength(byte[] bytes, int offset, int length){
-		int zero_start_at = 0, zero_end_at = 0;
-		for (int i = offset; i < length; i++){
-			if (bytes[offset + i] == 0 && zero_end_at >= zero_start_at){
-				zero_start_at = i;
-			} else if (bytes[offset + i] > 0 && zero_end_at < zero_start_at){
-				zero_end_at = i;
-			}
-		}
-		if (zero_start_at > zero_end_at){
-			return zero_start_at;
-		} else {
-			return length;
-		}
-	}
-	
-	@SuppressWarnings("unused")
-	private byte[] trimByteArray(byte[] bytes, int offset, int length){
-		return getSubSequence(bytes, offset, getDataLength(bytes, offset, length));
-	}
-	
-	private byte[] getSubSequence(byte[] bytes, int offset, int length){
-		if (offset == 0 && length == bytes.length) return bytes;
-		byte[] returnBytes = new byte[length];
-		for(int i = 0; i < returnBytes.length; i++) returnBytes[i] = bytes[offset + i];
-		return returnBytes;
-	}
 	
 	private byte[] mergeByteArrays(byte[] bytes1, byte[] bytes2){
 		byte[] returnBytes = new byte[bytes1.length + bytes2.length];
@@ -1360,240 +1315,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		
 		PortMappingRuleDiscoveryException(Throwable e){
 			super(e);
-		}
-	}
-	
-	@SuppressWarnings("serial")
-	private class UDPPacketParseException extends Exception
-	{
-		UDPPacketParseException(){
-			super();
-		}
-		
-		UDPPacketParseException(String message){
-			super(message);
-		}
-		
-		UDPPacketParseException(String message, Throwable e){
-			super(message,e);
-		}
-		
-		UDPPacketParseException(Throwable e){
-			super(e);
-		}
-	}
-    
-    @SuppressWarnings("serial")
-    private class UDPPacketHashException extends Exception
-    {
-        UDPPacketHashException(UDPPacket packet){
-            super("Hash failure: " + packet.toString());
-        }
-    }
-	
-	private class UDPPacket
-	{
-		/* Packet Structure
-		 * |-------------|-----------------------------------------------------------|
-		 * |    HASH     |  TYPE / MORE  |DATA ID   |DATA LENGTH |  DATA             |
-		 * |  16 bytes   |  1 byte       | 4 bytes  | 4 bytes    |  MAX_MESSAGE_SIZE |
-		 */
-		
-        private final static byte ACK = 6;		//ACK if successfully received
-        private final static byte NAK = 7;		//NAK if failed
-        private final static byte SYN = 8;		//SYN initializes transfer
-        private final static byte SYN_ACK = 9;	//SYN-ACK confirms initialization
-        private final static byte PING = 10;    //hole punching ping
-		
-        private final static int HASH_LENGTH = 16;
-		
-        private final static int MAX_PACKET_SIZE = 512;//65507;
-        private final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1 - 4 - 4;
-		
-        private byte[] bytes = null;
-		
-        // constructors for outgoing packet
-        private UDPPacket(byte type) {
-			bytes = new byte[HASH_LENGTH + 1 + 4 + 4];
-			setType(type);
-            setDataID(0);
-            setDataLenght(0);
-			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
-            if (!checkHash())
-            {
-                log.error("HASH is wrong!");
-            }
-		}
-        private UDPPacket(int dataID, byte type) {
-            bytes = new byte[HASH_LENGTH + 1 + 4 + 4];
-            setType(type);
-            setDataID(dataID);
-            setDataLenght(0);
-            setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
-            if (!checkHash())
-            {
-                log.error("HASH is wrong!");
-            }
-        }
-		private UDPPacket(int dataID, byte[] data, int offset, int length, boolean more) 
-		{
-			bytes = new byte[HASH_LENGTH + 1 + 4 + 4 + length];
-			if (more) setType(ACK);
-            else setType(NAK);
-            setDataID(dataID);
-            setDataLenght(length);
-            setData(data, offset, length);
-			setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
-            if (!checkHash())
-            {
-                log.error("HASH is wrong!");
-            }
-		}
-        private UDPPacket(byte type, byte[] data) 
-        {
-            bytes = new byte[HASH_LENGTH + 1 + 4 + 4 + data.length];
-            setType(type);
-            setDataID(0);
-            setDataLenght(data.length);
-            setData(data, 0, data.length);
-            setHash(hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH)));
-            if (!checkHash())
-            {
-                log.error("HASH is wrong!");
-            }
-        }
-		
-        // constructor of incoming packet
-        private UDPPacket(byte[] bytes) throws UDPPacketParseException, UDPPacketHashException
-        {
-        	//log.debug("forming UDPPacket: "+ Arrays.toString(bytes));
-            // check the message size
-			if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
-				throw new UDPPacketParseException("Message too Short");
-            // check the TYPE field
-			if (bytes[HASH_LENGTH] < ACK || bytes[HASH_LENGTH] > PING) 
-            {
-                //log.error("received packet with wrong TYPE field: "+bytes[HASH_LENGTH]);
-                //log.debug(Arrays.toString(bytes));
-				throw new UDPPacketParseException("Invalid TYPE Field");
-            }
-			int size = bytesToInt(getSubSequence(bytes, HASH_LENGTH+1+4, 4));
-			if (size > MAX_MESSAGE_SIZE)
-				throw new UDPPacketParseException("Data too long, " + size);
-			this.bytes = getSubSequence(bytes, 0, HASH_LENGTH+1+4+4+size);
-
-            // check the hash
-            if (!checkHash())
-            {
-                throw new UDPPacketHashException(this);
-            }
-        }
-        
-        private void setDataID(int i)
-        {
-            byte[] lenght = intToBytes(i);
-            setBytes(lenght, 0, 4, HASH_LENGTH + 1);
-        }
-        private int getDataID()
-        {
-            return bytesToInt(getSubSequence(bytes, HASH_LENGTH+1, 4));
-        }
-		
-        private void setDataLenght(int i)
-        {
-			byte[] lenght = intToBytes(i);
-			setBytes(lenght, 0, 4, HASH_LENGTH + 1 + 4);
-		}
-        private int getDataLenght()
-        {
-        	return bytesToInt(getSubSequence(bytes, HASH_LENGTH+1+4, 4));
-        }
-		
-        private boolean hasMore()
-        {
-			return bytes[HASH_LENGTH] == ACK;
-		}
-		
-        private byte getType(){
-			return bytes[HASH_LENGTH];
-		}
- 		
-        private byte[] getBytes(){
-			return bytes;	
-		}
-		
-        private byte[] getHash(){
-			return getBytes(0,HASH_LENGTH);
-		}
-		
-        private byte[] getData(){
-			return getBytes(HASH_LENGTH + 1 + 4 + 4, getDataLenght());
-		}
-		
-		public String toString(){
-			StringBuffer sb = new StringBuffer();
-			sb.append("UDPPacket :\nType: [");
-			if (bytes[HASH_LENGTH] == ACK) {
-				sb.append("ACK("+getDataID()+")");
-            } else if (bytes[HASH_LENGTH] == NAK){
-                sb.append("NAK("+getDataID()+")");
-            } else if (bytes[HASH_LENGTH] == SYN){
-                sb.append("SYN");
-            } else if (bytes[HASH_LENGTH] == SYN_ACK){
-                sb.append("SYN_ACK");
-            } else if (bytes[HASH_LENGTH] == PING){
-                sb.append("PING");
-            }
-			sb.append("]\nData: [" + getDataLenght() + "] bytes\n");
-			sb.append("MD5 hash [" + byteArrayToHexString(bytes, 0, HASH_LENGTH) + "]\n");
-			sb.append("Total [" + bytes.length + "] bytes\n");
-			
-			return sb.toString();
-		}
-		
-        private boolean checkHash(){
-			boolean b = false;
-			byte[] hash = hashByteArray(bytes, HASH_LENGTH, (bytes.length - HASH_LENGTH));
-			b = MessageDigest.isEqual(hash, getHash());
-			return b;
-		}
-		
-		private byte[] getBytes(int offset, int length){
-			return getSubSequence(bytes, offset, length);
-		}
-		
-		private void setHash(byte[] hash){
-			setBytes(hash, 0, hash.length, 0);
-		}
-		
-		private void setData(byte[] data, int offset, int length) {
-			setBytes(data, offset, length, HASH_LENGTH + 1 + 4 + 4);
-		}
-		
-		private void setType(byte type){
-			bytes[HASH_LENGTH] = type;
-		}
-		
-		private void setBytes(byte[] src_bytes, int src_offset, int src_length, int dest_offset) {
-			for (int i = 0; i < src_length; i++){
-				bytes[dest_offset + i] = src_bytes[src_offset + i];
-			}
-		}
-		
-		private byte[] hashByteArray(byte[] bytes, int offset, int length) {
-			md.reset();
-			md.update(bytes, offset, length);
-			return md.digest();
-		}
-		
-		private String byteArrayToHexString(byte[] bytes, int offset, int length){
-			StringBuffer sBuf = new StringBuffer();
-			for (int i = 0; i < length; i++) {
-				String hex = Integer.toHexString(0xFF & bytes[offset + i]);
-				if (hex.length() == 1) sBuf.append("0");
-				sBuf.append(hex);
-			}
-			return sBuf.toString();
 		}
 	}
 

@@ -6,7 +6,6 @@ import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
 import java.net.UnknownHostException;
-import java.security.NoSuchAlgorithmException;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.UUID;
@@ -382,42 +381,18 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			}
 			
 			//try to start UDP test
-			try
-			{
-				this.runningTest = new UDPConnection(ds, // localSocket
-								   remoteIas, // remote IP
-								   		this  // parent Thread
-				);
-				new Thread(runningTest).start();
-				while(true){
-					if (this.runningTest == null){
-						break;
-					}
-					try { 
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {}
+			this.runningTest = new UDPConnection(ds, // localSocket
+							   remoteIas, // remote IP
+							   		this  // parent Thread
+			);
+			new Thread(runningTest).start();
+			while(true){
+				if (this.runningTest == null){
+					break;
 				}
-			}
-			catch (NoSuchAlgorithmException e)
-			{
-				log.error("Unable to start UDP test ["
-							+ ds.getLocalAddress().getHostAddress()
-							+ ":"
-							+ ds.getLocalPort()
-							+ "] -> ["
-							+ remoteIas.getHostAddress()
-							+ "]"
-							,e);
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(
-						this,ActivityEvent.Type.FAILED, 
-							"Unable to start UDP test ["
-								+ ds.getLocalAddress().getHostAddress()
-								+ ":"
-								+ ds.getLocalPort()
-								+ "] -> ["
-								+ remoteIas.getHostAddress()
-								+ "]"));
-				return;
+				try { 
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {}
 			}
 		}//for -udpConnections
 	}
