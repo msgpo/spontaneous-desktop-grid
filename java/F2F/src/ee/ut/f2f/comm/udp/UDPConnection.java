@@ -23,7 +23,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 	private final static Logger log = Logger.getLogger(UDPConnection.class);
 			
 	private DatagramSocket localSocket = null;
-	InetSocketAddress remoteMappedAddress = null;
+	private InetSocketAddress remoteMappedAddress = null;
 	F2FPeer remotePeer = null;
 	
 	private Status status = Status.IDLE;
@@ -43,8 +43,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		this.remoteMappedAddress = remoteMappedAddress;
 		this.remotePeer = remotePeer;
 	}
-		
-	Status getStatus() { return this.status;	}
 	
     private String name = null;
     private void setName(String n) { name = n; }
