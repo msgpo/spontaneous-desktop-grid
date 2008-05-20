@@ -3,198 +3,50 @@ package ee.ut.f2f.comm.udp;
 import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
-import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.SocketException;
-import java.net.SocketTimeoutException;
-import java.net.UnknownHostException;
-import java.util.ArrayList;
-import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
-import java.util.UUID;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import de.javawi.jstun.attribute.ChangeRequest;
-import de.javawi.jstun.attribute.MappedAddress;
-import de.javawi.jstun.attribute.MessageAttributeParsingException;
-import de.javawi.jstun.attribute.MessageAttributeInterface.MessageAttributeType;
-import de.javawi.jstun.header.MessageHeader;
-import de.javawi.jstun.header.MessageHeaderParsingException;
-import de.javawi.jstun.header.MessageHeaderInterface.MessageHeaderType;
-import de.javawi.jstun.util.UtilityException;
 import ee.ut.f2f.activity.Activity;
 import ee.ut.f2f.activity.ActivityEvent;
 import ee.ut.f2f.activity.ActivityManager;
 import ee.ut.f2f.comm.BlockingMessageSender;
 import ee.ut.f2f.core.CommunicationFailedException;
 import ee.ut.f2f.core.F2FComputing;
+import ee.ut.f2f.core.F2FPeer;
 import ee.ut.f2f.util.Util;
 import ee.ut.f2f.util.logging.Logger;
-import ee.ut.f2f.util.stun.LocalStunInfo;
 
 public class UDPConnection extends BlockingMessageSender implements Activity, Runnable
 {
 	private final static Logger log = Logger.getLogger(UDPConnection.class);
-	
-	//Default waiting timeout
-	private final static int DEFAULT_WAITING_TIMEOUT = 600;
-	
-	//SO Timeouts
-	private final static int RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT = 1000;
-	private final static int HOLE_PUNCHING_SO_TIMEOUT = 10000;
-		
-	//
-	private final static int DEFAULT_PORT_MAPPING_RULE = 1;  
-		
+			
 	//Member fields
 	//
-	private UDPTester udpTester = null;
+	//private UDPTester udpTester = null;
 	private DatagramSocket localSocket = null;
+	InetSocketAddress remoteMappedAddress = null;
+	F2FPeer remotePeer = null;
 	
-	private Status status = Status.INIT;
-	
-	//
-	private UUID localConnectionId = null;
-	
-	//
-	private InetSocketAddress localMappedAddress = null;
-	private InetSocketAddress remoteMappedAddress = null;
-	
-	//
-	private Integer localPortMappingRule = null;
-	private Integer remotePortMappingRule = null;
-		
+	private Status status = Status.IDLE;
+			
 	private enum Status{
-		INIT,
-		GOT_MAPPED_ADDRESS,
-		CONNECTION_ESTABLISHED,
         IDLE,
 		SENDING,
 		RECEIVING,
         CLOSING
 	}
 
-	//Constructors
 	UDPConnection(DatagramSocket localSocket,
-				   InetAddress remoteIp,
-				   UDPTester parent)  {
-		if (localSocket == null) throw new NullPointerException("localSocket == null");
-		if (parent == null) throw new NullPointerException("parent UDPTester == null");
-		
+				   InetSocketAddress remoteMappedAddress,
+				   F2FPeer remotePeer)
+	{
 		this.localSocket = localSocket;
-		this.udpTester = parent;
-		this.setName("UDP TEST ");
-		this.localConnectionId = UUID.randomUUID();
+		this.remoteMappedAddress = remoteMappedAddress;
+		this.remotePeer = remotePeer;
 	}
-	
-	/*private void exchangeID(){
-		log.debug("Start Excahnging ID");
-		if (this.udpTester.getRunningTest() == this){
-			//connection ready
-			//generate id
-			this.localConnectionId = UUID.randomUUID();
-			//send ID and wait for response
-			for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++)
-            {
-                try {
-                    sendUDPTestMessage(new UDPTestMessage(localConnectionId));
-                    if (this.remoteConnectionId != null) break;
-                    Thread.sleep(1000);
-                } catch (Exception e) {}
-            }
-			if (this.remoteConnectionId == null){
-				log.error(" " + getActivityName() + " Timeout waiting for remote ID");
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-						ActivityEvent.Type.FAILED,
-						"Timeout waiting for remote ID"));
-				testFailed();
-				return;
-			} else {
-				log.debug("Local connection ID [" + localConnectionId + "]");
-				log.debug("Remote connection ID [" + remoteConnectionId + "]");
-			}
-			
-			//add new UDP connection and start next test 
-			this.udpTester.addConnection(this);
-			this.udpTester.resetRunningTest();
-		} else {
-			log.warn("running test != this");
-		}
-	}*/
-	
-	private void testFailed()
-    {
-		this.status = Status.CLOSING;
-		this.udpTester.resetRunningTest();
-	}
-	
-	private void sendUDPTestMessage(UDPTestMessage udpTestMessage) throws CommunicationFailedException
-    {
-		this.udpTester.sendUDPTestMessage(udpTestMessage);
-	}
-	
-	void close()
-    {
-		log.info("Received stop signal, closing connection");
-		this.status = Status.CLOSING;
-		this.udpTester.removeConnection(this);
-	}
-
-	void receivedUDPTestMessage(UDPTestMessage udpm)
-    {
-		if(this.status == Status.INIT)
-        {
-			if(udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS)
-            {
-                if (udpm.mappedAddress == null) return;
-				this.remoteMappedAddress = udpm.mappedAddress;
-				this.remotePortMappingRule = udpm.portMappingRule;
-				this.status = Status.GOT_MAPPED_ADDRESS;
-			}
-            else
-            {
-				log.warn("Illegal message type at this moment [" + udpm.type + "]"
-							+ " status [" + this.status + "]");
-			}
-		}
-        else if (this.status == Status.GOT_MAPPED_ADDRESS)
-        {
-			if (udpm.type == UDPTestMessage.Type.RECEIVED_PING)
-            {
-				this.status = Status.CONNECTION_ESTABLISHED;
-			}
-            else if (udpm.type == UDPTestMessage.Type.MAPPED_ADDRESS)
-            {
-				this.remoteMappedAddress = udpm.mappedAddress;
-			}
-            else
-            {
-				log.warn(" " + getName() 
-							 + " Illegal message type at this moment [" 
-							 + udpm.type + "]"
-							 + " status [" + this.status + "]");
-			}
-        }
-        else if (this.status == Status.CONNECTION_ESTABLISHED)
-        {
-        	/*if (udpm.type == UDPTestMessage.Type.CONNECTION_ID)
-            {
-        		this.remoteConnectionId = udpm.id;
-        	}*/
- 		}
-        else
-        {
-			log.warn(" " + getName() 
-						 + " Illegal message type at this moment [" 
-						 + udpm.type + "]"
-						 + " status [" + this.status + "]");
-		}
-	}
-	
-	UUID getConnectionId() { return this.localConnectionId; }
-	
+		
 	Status getStatus() { return this.status;	}
 	
     private String name = null;
@@ -202,14 +54,22 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
     private String getName() { return name; }
 	public String getActivityName() { return getName(); }
 
-	public Activity getParentActivity() { return this.udpTester; }
+	public Activity getParentActivity() { return UDPCommProvider.getInstance(); }
 	
 	public void run()
     {
 		// just for information catch any exceptions that may occur
 		try
 		{
-			testProcess();
+            ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+                    ActivityEvent.Type.STARTED,
+                    "started to listen"));
+            setName("UDP Connection [" + remotePeer.getDisplayName() + "]");
+    		startPingThread();
+            startMessageHandlerThread();
+            UDPCommProvider.getInstance().addConnection(this);
+    		listen();
+    		UDPCommProvider.getInstance().removeConnection(this);
 		}
 		catch (Exception e)
 		{
@@ -218,6 +78,9 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 					ActivityEvent.Type.FAILED, e.getMessage()));
 		}
+        ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+                ActivityEvent.Type.FINISHED,
+                "stopped to listen"));
 	}
 	
     private Boolean synLock = new Boolean(true);
@@ -290,11 +153,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
     private LinkedBlockingQueue<byte[]> packetQueue = new LinkedBlockingQueue<byte[]>(Integer.MAX_VALUE);
     private void listen()
     {
-    	setName("UDP Connection [" + localConnectionId.toString() + "]");
-		log.info("UDP connection established, ID [" + localConnectionId.toString() + "]");
-		log.debug("Listening for incoming packets");
-		udpTester.addConnection(this);
-		// try to set socket timeout to 0
+    	// try to set socket timeout to 0
     	setLocalSocketTimeout(0);
         while (status != Status.CLOSING)
         {
@@ -524,7 +383,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
                     byte[] raw_msg = Util.unzip(receivedBytes);
                     Object message = Util.deserializeObject(raw_msg);
                     
-                    messageReceived(message, UDPConnection.this.udpTester.getRemotePeer().getID());
+                    messageReceived(message, remotePeer.getID());
                 } catch (Exception e)
                 {
                     e.printStackTrace();
@@ -681,594 +540,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		return null;
 	}
 	
-	private void testProcess() throws CommunicationFailedException{
-		log.debug("Starting " + getActivityName());
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-				ActivityEvent.Type.STARTED,
-				"Init"));
-		
-		// if behind Symmetric firewall try to guess the allocated port
-		if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()){
-			while(LocalStunInfo.getInstance().getStunServers(
-					localSocket.getLocalAddress()).size() < 4 ){
-				try{
-					Thread.sleep(1000);
-				} catch (InterruptedException e) {}
-			}
-			List<Integer> rules = new ArrayList<Integer>();
-			for (int i = 0; i < 5; i++){
-				try{
-					int rule = portMappingRuleDiscovery();
-					rules.add(new Integer(rule));
-				} catch (PortMappingRuleDiscoveryException e) {
-					log.warn("Unable to Discover Port Mapping rule", e);
-				}
-			}
-			log.debug("Discovered Port Allocation Rules :[" + rules + "]");
-			localPortMappingRule = getMostFrequentElem(rules);
-			if (localPortMappingRule == null){
-				localPortMappingRule = DEFAULT_PORT_MAPPING_RULE;
-			}
-			log.debug("Using discovered Rule [" + localPortMappingRule + "]");
-		} else {
-			localPortMappingRule = 0;
-		}
-		// discover mapped IP address and port
-		InetSocketAddress ias = null;
-		try{
-			ias = resolveMappedAddress();
-		} catch (MappedAddressResolvingException e) {
-			log.error("Unable to resolve Mapped Address",e);
-		}
-		this.localMappedAddress = new InetSocketAddress(ias.getAddress(),ias.getPort() 
-									+ localPortMappingRule);
-		
-		if( localMappedAddress == null ){
-			log.error("Mapped address is not resolved");
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-					ActivityEvent.Type.FAILED,
-					"Mapped address is not resolved"));
-			return;
-		}
-		
-		log.info(getActivityName() 
-				   + "Mapped address\t["
-				   + this.localMappedAddress.getAddress().getHostAddress()
-				   + ":"
-				   + this.localMappedAddress.getPort()
-				   + "]");
-		//exchange MappedAddress
-		exchangeMappedAddress();
-		
-		if( remoteMappedAddress == null ){
-			log.error("RemoteMappedAddress == null");
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-					ActivityEvent.Type.FAILED,
-					"RemoteMappedAddress == null"));
-			return;
-		}
-		log.debug("RemoteMappedAddress [" 
-					+ remoteMappedAddress.getAddress().getHostAddress()
-					+ ":"
-					+ remoteMappedAddress.getPort()
-					+ "]");
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-				ActivityEvent.Type.CHANGED,
-				"got remoteMappedAddress"));
-		
-		//start Hole Punching
-		punchHole();
-		if (this.status != Status.CONNECTION_ESTABLISHED)
-        {
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-					ActivityEvent.Type.FINISHED,
-					"UDP test failed"));
-			log.warn(" Test Failed");
-			testFailed();
-		}
-        else
-        {
-			//connection established, start listening
-			//exchangeID();
-            this.status = Status.IDLE;
-            ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-                    ActivityEvent.Type.CHANGED,
-                    "started to listen"));
-            startPingThread();
-            startMessageHandlerThread();
-            listen();
-            close();
-            ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-                    ActivityEvent.Type.CHANGED,
-                    "stopped to listen"));
-		}
-	}
-	
-	private Integer coneToSymPortRangePing = 0;
-	private Integer attackOnRemotePort = 0;
-	
-	private void punchHole()
-    {
-		log.debug(getActivityName() + "Hole Punching");
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-				ActivityEvent.Type.CHANGED,
-				"Hole Punching"));
-				
-		setLocalSocketTimeout(HOLE_PUNCHING_SO_TIMEOUT);
-		
-		synchronized (attackOnRemotePort) {
-			attackOnRemotePort = this.remoteMappedAddress.getPort();
-		}
-		synchronized (coneToSymPortRangePing) {
-			if (this.udpTester.getRemoteStunInfo().isSymmetricCone() &&
-				!LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()) {
-				coneToSymPortRangePing = 1;
-			}
-			//else if ()
-		}
-		
-		final int AFTER_CONNECTION_ESTABLISHED_PING_AMOUNT = 3;
-		
-		Thread udpListener = new Thread()
-        {
-			public void run()
-            {
-				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1 + 4 + 4];
-				while(  UDPConnection.this.status != Status.CLOSING
-                        /*UDPConnection.this.status != Status.CONNECTION_ESTABLISHED*/)
-                {	
-					try
-                    {
-						DatagramPacket receivePacket = new DatagramPacket(receiveContent,receiveContent.length);
-						localSocket.receive(receivePacket);
-                        UDPPacket udpp = new UDPPacket(receivePacket.getData());
-						if (UDPPacket.PING == udpp.getType())
-                        {
-							log.debug("Received PING packet from ["
-										+ receivePacket.getAddress().getHostAddress()
-										+ ":"
-										+ receivePacket.getPort()
-										+ "]");
-							
-							if (!(UDPConnection.this.remoteMappedAddress.getAddress().equals(receivePacket.getAddress()) &&
-                                  UDPConnection.this.remoteMappedAddress.getPort() == receivePacket.getPort())){	
-								//multiple subnetworks case
-								//ping received from different remote address
-								//change the target IP and port for ping
-                                UDPConnection.this.remoteMappedAddress = new InetSocketAddress(receivePacket.getAddress(),
-																		receivePacket.getPort());
-								//change the currently used target port
-								//stop the range attack
-								synchronized (UDPConnection.this.attackOnRemotePort ) {
-                                    UDPConnection.this.attackOnRemotePort = receivePacket.getPort();
-								}
-								synchronized (UDPConnection.this.coneToSymPortRangePing) {
-                                    UDPConnection.this.coneToSymPortRangePing = 0;
-								}
-							}
-                            
-                            // inform the other side that we have received a PING packet
-							try 
-                            {
-								sendUDPTestMessage(new UDPTestMessage(UDPTestMessage.Type.RECEIVED_PING));
-								return;
-							} catch (CommunicationFailedException e) {}
-						} else {
-							log.warn("Waited PING, received " + receivePacket);
-						}
-					} catch (SocketTimeoutException e) {
-						/*
-						if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone() &&
-								udpTester.getRemoteStunInfo().isSymmetricCone()){
-							//
-						}
-						else if(
-								(LocalStunInfo.getInstance().getStunInfo().isSymmetricCone() &&
-								!udpTester.getRemoteStunInfo().isSymmetricCone()) 
-							||
-							 	(!LocalStunInfo.getInstance().getStunInfo().isSymmetricCone() && 
-									udpTester.getRemoteStunInfo().isSymmetricCone())
-						  ) {
-							counter++;
-							if (counter == AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT){
-                                holePunchTimeout = true;
-							}
-						} else {
-							log.warn("Hole punching timeout, no result, stopping thread");
-                            holePunchTimeout = true;
-						}
-						*/
-					} catch (Exception e) {
-						log.warn("Exception receiving PING packet",e);
-					}
-				}
-				log.debug("HOLE Punching Receive Thread is STOPPING");
-			}
-		};
-		udpListener.start();
-		//first try with remote mapping rule
-		synchronized (attackOnRemotePort){
-			attackOnRemotePort = attackOnRemotePort + this.remotePortMappingRule;
-		}
-		long startTime = System.currentTimeMillis();
-		for (int pingsAfterTraversal = 0, ping_counter = 0, port_increment_counter = 0; 
-			   pingsAfterTraversal < AFTER_CONNECTION_ESTABLISHED_PING_AMOUNT &&
-			   status != Status.CLOSING; 
-			 ping_counter++)
-        {
-			if (System.currentTimeMillis() - startTime > 60000)
-			{
-				status = Status.CLOSING;
-				break;
-			}
-            UDPPacket sendUDPpacket = new UDPPacket(UDPPacket.PING);
-			byte[] sendContent = sendUDPpacket.getBytes();
-			DatagramPacket sendPacket = null;
-			//next if there is cone -> symmetric case
-			//try to ping a range of ports on symmetric side 
-			int p = attackOnRemotePort + (	coneToSymPortRangePing *
-											port_increment_counter *
-											((int) Math.pow((-1), port_increment_counter))
-										 );
-			
-			try
-            {
-				InetSocketAddress ias = new InetSocketAddress(remoteMappedAddress.getAddress(),p);
-				sendPacket = new DatagramPacket(sendContent,sendContent.length,ias);
-			}
-            catch (IllegalArgumentException e)
-            {
-				if (p > 65535 || p < 1024){
-					log.error("Remote Port number out of range [" + p + "]", e);
-					status = Status.CLOSING;
-					break;
-				}
-			} catch (SocketException e) {
-				log.error(getActivityName() +  " " + e.getMessage(),e);
-			}
-			if (sendPacket == null) continue;
-			
-			try
-            {
-				localSocket.send(sendPacket);
-				log.debug("Sent PING packet to "
-						   + sendPacket.getAddress().getHostAddress()
-						   + ":"
-						   + sendPacket.getPort());
-			}
-            catch (IOException e)
-            {
-				log.warn("I/O Exception sending PING packet to ["
-						   + sendPacket.getAddress().getHostAddress()
-						   + " "
-						   + sendPacket.getPort()
-						   +"]",e);
-			}
-			
-			try
-            {
-				Thread.sleep(50);
-			}
-            catch (InterruptedException e) {}
-			
-			if(status == Status.CONNECTION_ESTABLISHED)
-            {
-				pingsAfterTraversal++;
-			}
-			if(ping_counter > 3)
-            {
-				synchronized (attackOnRemotePort){
-					attackOnRemotePort = p;
-				}
-				port_increment_counter++;
-				ping_counter = 5;
-			}
-		}
-        try
-        {
-            udpListener.join();
-        } catch (InterruptedException e){}
-        log.debug("Hole Punching Method is STOPPING");
-	}
-	
-	private void exchangeMappedAddress() throws CommunicationFailedException{
-		log.debug(getActivityName() + "Mapped Address Exchange");
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-				ActivityEvent.Type.CHANGED,
-				"Mapped Address Exchange"));
-		//exchange mapped addresses
-		for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){
-			try{
-                sendUDPTestMessage(new UDPTestMessage(this.localMappedAddress,this.localPortMappingRule));
-				if (this.remoteMappedAddress != null) return;
-				Thread.sleep(1000);
-			} catch (InterruptedException e) {}
-		}
-		if( this.remoteMappedAddress == null){
-			log.error("Timeout while waiting mapped address");
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-					ActivityEvent.Type.FAILED,
-					"Timeout while waiting mapped address"));
-			return;
-		}
-	}
-	
-	private InetSocketAddress resolveMappedAddress(DatagramSocket soc, InetSocketAddress stunServer) throws MappedAddressResolvingException{
-		byte[] bytes = new byte[0];
-		MessageHeader sendMh = null;
-		try{
-			//create DP content
-			sendMh = new MessageHeader(MessageHeaderType.BindingRequest);
-			sendMh.generateTransactionID();
-			ChangeRequest cr = new ChangeRequest();
-			sendMh.addMessageAttribute(cr);
-			bytes = sendMh.getBytes();
-		} catch (UtilityException e){
-			log.error(getActivityName() 
-					+ " "
-					+ "JSTUN utility exception",e);
-			bytes = new byte[0];
-			sendMh = null;
-		}
-		if (bytes.length == 0 || sendMh == null){
-			log.error(getActivityName() 
-						+ " "
-						+ "Unable to create content for DatagramPacket");
-			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-					ActivityEvent.Type.FAILED, 
-					"Unable to create content for DatagramPacket"));
-			throw new MappedAddressResolvingException("Unable to create content for DatagramPacket");
-		}
-		
-		//create DatagramPacket
-		DatagramPacket sendPacket = new DatagramPacket(bytes,bytes.length);
-		
-		try{
-			soc.connect(stunServer);
-			soc.send(sendPacket);
-		} catch (SocketException e){
-			log.warn(getActivityName() 
-						+ " "
-						+"Unable to connect to stun Server ["
-						+ stunServer.getAddress().getHostAddress()
-						+ ":"
-						+ stunServer.getPort()
-						+ "] from local Socket ["
-						+ soc.getLocalAddress().getHostAddress()
-						+ ":"
-						+ soc.getLocalPort()
-						+ "]",e);
-			throw new MappedAddressResolvingException(e);
-		} catch (IOException e){
-			log.warn(getActivityName()
-					+ " "
-					+ "Unable to send Packet to StunServer ["
-					+ soc.getInetAddress().getHostAddress()
-					+ ":"
-					+ soc.getPort()
-					+ "] from local Socket ["
-					+ soc.getLocalAddress().getHostAddress()
-					+ ":"
-					+ soc.getLocalPort()
-					+ "]",e);
-			//skip this server
-			throw new MappedAddressResolvingException(e);
-		}
-		
-		
-		//
-		MessageHeader receiveMh = new MessageHeader();
-		//listen for incoming packets
-		try{	
-			DatagramPacket receivePacket = new DatagramPacket(new byte[200], 200);
-			log.debug("STUN SERVER MAPPED ADDRESS REQUEST >>>>>");
-			soc.receive(receivePacket);
-			log.debug("STUN SERVER MAPPED ADDRESS REQUEST <<<<<");
-			receiveMh = MessageHeader.parseHeader(receivePacket.getData());
-		} catch (SocketTimeoutException e){
-			log.warn(getActivityName() 
-					+ " "
-					+ "Socket Timeout waiting answer from ["
-					+ soc.getInetAddress().getHostAddress()
-					+ ":"
-					+ soc.getPort()
-					+ "]");
-			throw new MappedAddressResolvingException(e);
-		} catch (IOException e){
-			log.warn(getActivityName() 
-					+ " "
-					+ "IOException while listening on ["
-					+ soc.getInetAddress().getHostAddress()
-					+ ":"
-					+ soc.getPort()
-					+ "]",e);
-			throw new MappedAddressResolvingException(e);
-		} catch (MessageAttributeParsingException e1) {
-			log.warn(getActivityName() 
-					+ " " 
-					+ "Unable to create content for DatagramPacket");
-			throw new MappedAddressResolvingException(e1);
-		} catch (MessageHeaderParsingException e2){
-			log.warn(getActivityName() 
-					+ " " 
-					+ "Unable to create content for DatagramPacket");
-			throw new MappedAddressResolvingException(e2);
-		}
-		if(!receiveMh.equalTransactionID(sendMh)){
-			log.warn(getActivityName() 
-					+ " " 
-					+ "Discard wrong packet");
-			throw new MappedAddressResolvingException("Discard wrong packet");
-		}
-		MappedAddress ma = (MappedAddress) receiveMh.getMessageAttribute(MessageAttributeType.MappedAddress);
-		if(!(ma == null)){
-			InetAddress mappedIas = null;
-			int mappedPort = -1;
-			try{
-				mappedIas = ma.getAddress().getInetAddress();
-				mappedPort = ma.getPort();
-			} catch (UtilityException e){
-				log.error(getActivityName() 
-						+ " " 
-						+ "JSTUN utility exception",e);
-			} catch (UnknownHostException e){
-				log.error(getActivityName() 
-						+ " " 
-						+ e.getMessage());
-			}
-			if (mappedIas == null || mappedPort <= 0){
-				log.error(getActivityName() 
-						+ " " 
-						+ "Unable to get mapped address from received packet");
-				throw new MappedAddressResolvingException("Unable to get mapped address from received packet");
-			}
-			InetSocketAddress mappedAddress = new InetSocketAddress(mappedIas, mappedPort);
-			soc.disconnect();
-			return mappedAddress;
-		} else {
-			log.error(getActivityName() 
-					+ " " 
-					+ "Unable to get mapped address using stunServer ["
-						+ stunServer.getAddress().getHostAddress()
-						+ ":"
-						+ stunServer.getPort()
-						+ "]");
-			throw new MappedAddressResolvingException("Unable to get mapped address using stunServer ["
-					+ stunServer.getAddress().getHostAddress()
-					+ ":"
-					+ stunServer.getPort()
-					+ "]");
-		}
-	}
-	
-	private InetSocketAddress resolveMappedAddress() throws MappedAddressResolvingException{
-		InetSocketAddress mappedAddress = null;
-		log.debug(getActivityName() 
-				+ " "
-				+ "Resolving Mapped Address");
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-				ActivityEvent.Type.CHANGED,
-				"Resolving Mapped Address"));
-		
-		Collection<InetSocketAddress> stunServers = LocalStunInfo.getInstance().getStunServers(this.localSocket.getLocalAddress());
-		Collections.shuffle((List<InetSocketAddress>) stunServers);
-		//log.info("Got total [" + stunServers.size() + "] STUN server addresses for localIp");
-		
-		//set socket timeout
-		setLocalSocketTimeout(RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT);
-		
-		//loop over stunServers, ask for mapped address
-		for(InetSocketAddress stunServer : stunServers){
-			mappedAddress = resolveMappedAddress(localSocket,stunServer);
-			if (mappedAddress == null) throw new NullPointerException("mappedAddress == null after resolving");
-			break;
-		}
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-				ActivityEvent.Type.CHANGED,
-				"Mapped Address Resolved"));
-		return mappedAddress;
-	}
-
-	private int portMappingRuleDiscovery() throws PortMappingRuleDiscoveryException{
-		log.debug(getActivityName() 
-				+ " "
-				+ "Port Mapping Rule Discovery");
-		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-				ActivityEvent.Type.CHANGED,
-				"Port Mapping Rule Discovery"));
-		
-		Collection<InetSocketAddress> stunServers = Collections.synchronizedCollection(LocalStunInfo.getInstance().getStunServers(this.localSocket.getLocalAddress()));
-		//Collections.shuffle(stunServers);
-		
-		Integer rule = null;
-		int previousMappedPort = -1;
-		
-		DatagramSocket socket = null;
-		try{
-			socket = new DatagramSocket(new InetSocketAddress(this.localSocket.getLocalAddress(),0));
-			if (socket != null && socket.isBound()){
-				socket.setReuseAddress(true);
-			}
-		} catch (SocketException e){
-			log.error("Unable to bind DatagramSocket on localIp [" 
-							+ socket.getLocalAddress().getHostAddress()
-							+ "]");
-		}
-		if( socket == null ){
-			throw new PortMappingRuleDiscoveryException("Unable to bind DatagramSocket on localIp [" 
-					+ socket.getLocalAddress().getHostAddress()
-					+ "]");
-		}
-		
-		for(InetSocketAddress stunServer : stunServers){
-			try {
-				log.debug("RESOLVE MAPPED ADDRESS >>>>>>>");
-				InetSocketAddress mappedAddress = resolveMappedAddress(socket, stunServer);
-				log.debug("RESOLVE MAPPED ADDRESS <<<<<<<");
-				if ( rule == null && previousMappedPort == -1){
-					previousMappedPort = mappedAddress.getPort();	
-				} else if (rule == null && previousMappedPort > -1){ 
-					rule = new Integer(mappedAddress.getPort() - previousMappedPort);
-					previousMappedPort = mappedAddress.getPort();
-				} else if (rule != null && previousMappedPort > -1){
-					/*
-					log.debug("Port allocation rule: [MappedPort:"
-								+ mappedAddress.getPort()
-								+ "] [previous Port:"
-								+ previousMappedPort
-								+ "] [Rule:"
-								+ rule.intValue()
-								+ "]");
-					*/		
-					if (rule.intValue() == (mappedAddress.getPort() - previousMappedPort)){
-						socket.disconnect();
-						socket.close();
-						return rule.intValue();
-					} else {
-						rule = new Integer(mappedAddress.getPort() - previousMappedPort);
-						previousMappedPort = mappedAddress.getPort();
-					}
-				}
-				log.debug("Port allocation rule: ["
-						+ stunServer.getAddress().getHostAddress()
-						+ ":"
-						+ stunServer.getPort()
-						+ "] <- ["
-						+ mappedAddress.getAddress().getHostAddress()
-						+ ":"
-						+ mappedAddress.getPort()
-						+ "] <- ["
-						+ socket.getLocalAddress().getHostAddress()
-						+ ":"
-						+ socket.getLocalPort()
-						+ "] rule:"
-						+ rule
-						+ "]");
-			} catch (MappedAddressResolvingException e) {
-				continue;
-			}
-		}
-			throw new PortMappingRuleDiscoveryException("Unable to discover Port Mapping rule [" 
-					+ socket.getLocalAddress().getHostAddress()
-					+ "]");
-	}
-	
-	private Integer getMostFrequentElem(List<Integer> list){
-		Integer mostFrequent = null;
-		int count = 0;
-		for(Integer i : list){
-			int c = Collections.frequency(list, i);
-			if(c > count){
-				count = c;
-				mostFrequent = i;
-				if (count > (list.size()/2)){
-					break;
-				}
-			}
-		}
-		return mostFrequent;
-	}
-	
 	private byte[] mergeByteArrays(byte[] bytes1, byte[] bytes2){
 		byte[] returnBytes = new byte[bytes1.length + bytes2.length];
 		for (int i = 0; i < bytes1.length || i < bytes2.length ;i++){
@@ -1276,46 +547,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 			if( i < bytes2.length ) returnBytes[bytes1.length + i] = bytes2[i];
 		}
 		return returnBytes;
-	}
-	
-	@SuppressWarnings("serial")
-	private class MappedAddressResolvingException extends Exception
-	{
-		MappedAddressResolvingException() {
-			super();
-		}
-		
-		MappedAddressResolvingException(String message){
-			super(message);
-		}
-		
-		MappedAddressResolvingException(String message, Throwable e){
-			super(message,e);
-		}
-		
-		MappedAddressResolvingException(Throwable e){
-		 	super(e);
-		}
-	}
-	
-	@SuppressWarnings("serial")
-	private class PortMappingRuleDiscoveryException extends Exception
-	{
-		PortMappingRuleDiscoveryException(){
-			super();
-		}
-		
-		PortMappingRuleDiscoveryException(String message){
-			super(message);
-		}
-		
-		PortMappingRuleDiscoveryException(String message, Throwable e){
-			super(message,e);
-		}
-		
-		PortMappingRuleDiscoveryException(Throwable e){
-			super(e);
-		}
 	}
 
     public synchronized void sendMessage(Object message)throws CommunicationFailedException
