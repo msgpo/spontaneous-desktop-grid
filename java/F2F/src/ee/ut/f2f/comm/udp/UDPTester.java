@@ -290,6 +290,16 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		}*/
 		
 		initUDPTests();
+		
+		if (this.status != Status.CONNECTION_ESTABLISHED)
+        {
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+					ActivityEvent.Type.FAILED,
+					"UDP test failed"));
+			log.warn(" Test Failed");
+        }
+		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+				ActivityEvent.Type.FINISHED));
 	
 	}
 
@@ -470,12 +480,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			punchHole(localSocket);
 			if (this.status != Status.CONNECTION_ESTABLISHED)
 	        {
-				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-						ActivityEvent.Type.FAILED,
-						"UDP test failed"));
-				log.warn(" Test Failed");
 				setStatus(Status.CLOSING);
-				break;
 			}
 	        else
 	        {
