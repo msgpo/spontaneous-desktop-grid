@@ -22,9 +22,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 {
 	private final static Logger log = Logger.getLogger(UDPConnection.class);
 			
-	//Member fields
-	//
-	//private UDPTester udpTester = null;
 	private DatagramSocket localSocket = null;
 	InetSocketAddress remoteMappedAddress = null;
 	F2FPeer remotePeer = null;
