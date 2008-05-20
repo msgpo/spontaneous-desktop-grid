@@ -485,6 +485,9 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	        else
 	        {
 				//connection established
+				ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
+						ActivityEvent.Type.CHANGED,
+						"connection established"));
 	        	new Thread(new UDPConnection(localSocket, remoteMappedAddress, remotePeer)).start();
 	        	createdConnections++;
 			}
