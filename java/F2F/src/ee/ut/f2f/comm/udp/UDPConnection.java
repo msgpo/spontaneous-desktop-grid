@@ -804,7 +804,6 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 	private Integer coneToSymPortRangePing = 0;
 	private Integer attackOnRemotePort = 0;
 	
-    private boolean holePunchTimeout = false;
 	private void punchHole()
     {
 		log.debug(getActivityName() + "Hole Punching");
@@ -832,8 +831,7 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 			public void run()
             {
 				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1 + 4 + 4];
-				while(  !UDPConnection.this.holePunchTimeout && 
-                        UDPConnection.this.status != Status.CLOSING
+				while(  UDPConnection.this.status != Status.CLOSING
                         /*UDPConnection.this.status != Status.CONNECTION_ESTABLISHED*/)
                 {	
 					try
@@ -909,12 +907,17 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
 		synchronized (attackOnRemotePort){
 			attackOnRemotePort = attackOnRemotePort + this.remotePortMappingRule;
 		}
+		long startTime = System.currentTimeMillis();
 		for (int pingsAfterTraversal = 0, ping_counter = 0, port_increment_counter = 0; 
 			   pingsAfterTraversal < AFTER_CONNECTION_ESTABLISHED_PING_AMOUNT &&
-			   !holePunchTimeout && 
 			   status != Status.CLOSING; 
 			 ping_counter++)
         {
+			if (System.currentTimeMillis() - startTime > 60000)
+			{
+				status = Status.CLOSING;
+				break;
+			}
             UDPPacket sendUDPpacket = new UDPPacket(UDPPacket.PING);
 			byte[] sendContent = sendUDPpacket.getBytes();
 			DatagramPacket sendPacket = null;
@@ -934,7 +937,8 @@ public class UDPConnection extends BlockingMessageSender implements Activity, Ru
             {
 				if (p > 65535 || p < 1024){
 					log.error("Remote Port number out of range [" + p + "]", e);
-                    holePunchTimeout = true;
+					status = Status.CLOSING;
+					break;
 				}
 			} catch (SocketException e) {
 				log.error(getActivityName() +  " " + e.getMessage(),e);
