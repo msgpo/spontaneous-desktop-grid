@@ -470,7 +470,7 @@ Index: src/net/java/sip/communicator/impl/gui/main/MainFrame.java
       */
 Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
 ===================================================================
---- src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java	(revision 3556)
+--- src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java	(revision 3645)
 +++ src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java	(working copy)
 @@ -108,6 +108,8 @@
                  {
@@ -512,20 +512,19 @@ Index: src/net/java/sip/communicator/impl/gui/main/contactlist/ContactList.java
          }
      }
      
-@@ -823,6 +835,8 @@
+@@ -823,6 +835,7 @@
          ContactListModel listModel = (ContactListModel) this.getModel();
  
          Object dest = listModel.getElementAt(selectedIndex);
 +        if (!contains(e.getPoint())) dest = null;
-+
+ 
          if (draggedElement != null)
          {
-             if (dest instanceof MetaContact)
-@@ -895,6 +909,8 @@
+@@ -900,6 +913,8 @@
  
              draggedElement.setVisible(false);
              draggedElement = null;
-+
++            
 +            mainFrame.getDnDCoordinator().finishDnD();
          }
      }
@@ -1303,7 +1302,7 @@ Index: src/net/java/sip/communicator/impl/protocol/mock/MockBasicInstantMessagin
 \ No newline at end of file
 Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3556)
+--- src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(revision 3645)
 +++ src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantMessagingSipImpl.java	(working copy)
 @@ -27,7 +27,8 @@
   * @author Benoit Pradelle
@@ -1327,7 +1326,7 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
       * The provider that created us.
       */
      private ProtocolProviderServiceSipImpl sipProvider = null;
-@@ -665,6 +671,27 @@
+@@ -671,6 +677,27 @@
       */
      private void fireMessageEvent(EventObject evt)
      {
@@ -1351,15 +1350,15 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
 +            catch(Exception e) {}
 +        }
 +        if (filtered) return;
-+
++        
          Iterator listeners = null;
          synchronized (this.messageListeners)
          {
-@@ -1148,5 +1175,36 @@
+@@ -1154,5 +1181,36 @@
              }
          }
      }
-+
++    
 +    /**
 +     * Registeres a <tt>EventFilter</tt> with this operation set so that 
 +     * events, that do not need processing, are filtered out.
@@ -1391,19 +1390,20 @@ Index: src/net/java/sip/communicator/impl/protocol/sip/OperationSetBasicInstantM
 +        }
 +    }
  }
- 
+
+
 Index: src/net/java/sip/communicator/impl/protocol/sip/ProtocolProviderServiceSipImpl.java
 ===================================================================
---- src/net/java/sip/communicator/impl/protocol/sip/ProtocolProviderServiceSipImpl.java	(revision 3556)
+--- src/net/java/sip/communicator/impl/protocol/sip/ProtocolProviderServiceSipImpl.java	(revision 3645)
 +++ src/net/java/sip/communicator/impl/protocol/sip/ProtocolProviderServiceSipImpl.java	(working copy)
-@@ -789,6 +789,10 @@
+@@ -796,6 +796,10 @@
                  OperationSetBasicInstantMessaging.class.getName(),
                  opSetBasicIM);
              
 +            this.supportedOperationSets.put(
 +                OperationSetInstantMessageFiltering.class.getName(),
 +                opSetBasicIM);
-+
++            
              // init DTMF (from JM Heitz)
              OperationSetDTMF opSetDTMF = new OperationSetDTMFSipImpl(this);
              this.supportedOperationSets.put(
