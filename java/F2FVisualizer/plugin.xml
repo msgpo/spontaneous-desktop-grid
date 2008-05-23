@@ -1,0 +1,162 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<?eclipse version="3.2"?>
+<plugin>
+
+   <extension
+         id="f2fapplication"
+         point="org.eclipse.core.runtime.applications">
+      <application>
+         <run
+               class="ee.ut.f2f.visualizer.Application">
+         </run>
+      </application>
+   </extension>
+   <extension
+         point="org.eclipse.ui.perspectives">
+      <perspective
+            name="F2F Network Perspective"
+            class="ee.ut.f2f.visualizer.perspective.Perspective"
+            id="ee.ut.f2f.visualizer.perspective">
+      </perspective>
+   </extension>
+   <extension
+         point="org.eclipse.ui.views">
+      <view
+            name="Node Info"
+            allowMultiple="false"
+            icon="icons/information.gif"
+            class="ee.ut.f2f.visualizer.view.NodeInfoView"
+            id="ee.ut.f2f.visualizer.view.nodeInfoView">
+      </view>
+      <view
+            name="Statistics"
+            allowMultiple="false"
+            icon="icons/statistics.gif"
+            class="ee.ut.f2f.visualizer.view.StatisticsView"
+            id="ee.ut.f2f.visualizer.view.statisticsView">
+      </view>
+      <view
+            name="Filters"
+            allowMultiple="false"
+            icon="icons/123.gif"
+            class="ee.ut.f2f.visualizer.view.FilterView"
+            id="ee.ut.f2f.visualizer.view.filterView">
+      </view>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editors">
+      <editor
+            name="Network Graph"
+            icon="icons/hierarchy.gif"
+            class="ee.ut.f2f.visualizer.editor.GraphEditor"
+            id="ee.ut.f2f.visualizer.editor.graphEditor">
+      </editor>
+   </extension>
+   <extension
+         point="org.eclipse.ui.commands">
+      <category
+            name="F2F Network Visualizer"
+            id="ee.ut.f2f.visualizer.category">
+      </category>
+      <command
+            name="Open File Dialog"
+            description="Open GXL file"
+            categoryId="ee.ut.f2f.visualizer.category"
+            id="ee.ut.f2f.visualizer.openFile">
+      </command>
+      <command
+            name="Save File Dialog"
+            description="Save GXL file"
+            categoryId="ee.ut.f2f.visualizer.category"
+            id="ee.ut.f2f.visualizer.saveFile">
+      </command>
+      <command
+            name="Switch Layout Algorithm"
+            description="Switch Layout Algorithm"
+            categoryId="ee.ut.f2f.visualizer.category"
+            id="ee.ut.f2f.visualizer.switchAlgorithm">
+      </command>
+      <command
+            name="Collect Data"
+            description="Collect Data"
+            categoryId="ee.ut.f2f.visualizer.category"
+            id="ee.ut.f2f.visualizer.collectData">
+      </command>
+   </extension>
+   <extension
+         point="org.eclipse.ui.bindings">
+      <key
+            commandId="org.eclipse.ui.file.exit"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+X">
+      </key>
+      <key
+            commandId="ee.ut.f2f.visualizer.openFile"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+O">
+      </key>
+      <key
+            commandId="ee.ut.f2f.visualizer.saveFile"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+ALT+S">
+      </key>
+      <key
+            commandId="ee.ut.f2f.visualizer.switchAlgorithm"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+L">
+      </key>
+      <key
+            commandId="ee.ut.f2f.visualizer.collectData"
+            schemeId="org.eclipse.ui.defaultAcceleratorConfiguration"
+            sequence="CTRL+R">
+      </key>
+   </extension>
+   <extension
+         point="org.eclipse.ui.editorActions">
+      <editorContribution
+            id="ee.ut.f2f.visualizer.editorContribution1"
+            targetID="ee.ut.f2f.visualizer.editor.graphEditor">
+         <action
+               id="ee.ut.f2f.visualizer.action.ArrangeActionDelegate"
+               class="ee.ut.f2f.visualizer.action.ArrangeActionDelegate"
+               definitionId="ee.ut.f2f.visualizer.switchAlgorithm"
+               icon="icons/swap.gif"
+               toolbarPath="algorithms"
+               label="Switch Graph Layout Algorithm"
+               tooltip="Switch Graph Layout Algorithm">
+         </action>
+      </editorContribution>
+   </extension>
+   <extension
+         id="product"
+         point="org.eclipse.core.runtime.products">
+      <product
+            application="ee.ut.f2f.visualizer.f2fapplication"
+            name="%ProductName">
+         <property
+               name="appName"
+               value="%ProductName"/>
+         <property
+               name="aboutText"
+               value="%AboutText">
+         </property>
+         <property
+               name="windowImages"
+               value="%WindowImages">
+         </property>
+         <property
+               name="aboutImage"
+               value="%AboutImage">
+         </property>
+         <property
+               name="startupProgressRect"
+               value="5,275,445,15">
+         </property>
+         <property
+               name="preferenceCustomization"
+               value="plugin_customization.ini">
+         </property>
+      </product>
+   </extension>
+
+</plugin>
