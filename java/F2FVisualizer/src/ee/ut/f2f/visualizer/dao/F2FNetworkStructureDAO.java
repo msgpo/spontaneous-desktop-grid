@@ -30,33 +30,25 @@ public class F2FNetworkStructureDAO implements IF2FNetworkStructureDAO {
 	private static final int NODE_COUNT = 510;
 	private static final int MAX_EDGES_PER_NODE = 2;
 	
-	/**
-	 * Dummy implementation for getting the F2F network topology data.
-	 * 
-	 * Only useful for testing purposes.
-	 * 
-	 * @return Generated GXLDocument.
-	 */
 	public GXLDocument getGXLDocument() {
 		if (true) {
 			return getActualGXLDocument();
 		}
-		debug("Generating dummy F2F network topology data ....");
-		GXLDocument doc = null;
-		if (true) {
-			doc = generateGXLDocumentDynamically(NODE_COUNT, MAX_EDGES_PER_NODE);
-		}
 		else {
-			doc = getFixedStructureGXLDocument();
+			// Only for testing
+			return getDummyGXLDocument();
 		}
-		debug("Dummy F2F network topology data generated.");
-		return doc;
 	}
 	
 	private void debug(String s) {
 		log.debug(s);
 	}
 	
+	/**
+	 * Obtains the network topology over the Java RMI
+	 * 
+	 * @return Network topology as GXLDocument
+	 */
 	private GXLDocument getActualGXLDocument() {
 		debug("Collectiong real F2F network topology data ....");
 		GXLDocument doc = null;
@@ -74,6 +66,26 @@ public class F2FNetworkStructureDAO implements IF2FNetworkStructureDAO {
 			throw new RuntimeException(e);
 		}
 		debug("Collecting of real F2F network topology data done");
+		return doc;
+	}
+	
+	/**
+	 * Dummy implementation for getting the F2F network topology data.
+	 * 
+	 * Only useful for testing purposes.
+	 * 
+	 * @return Generated GXLDocument.
+	 */
+	private GXLDocument getDummyGXLDocument() {
+		debug("Generating dummy F2F network topology data ....");
+		GXLDocument doc = null;
+		if (true) {
+			doc = generateGXLDocumentDynamically(NODE_COUNT, MAX_EDGES_PER_NODE);
+		}
+		else {
+			doc = getFixedStructureGXLDocument();
+		}
+		debug("Dummy F2F network topology data generated.");
 		return doc;
 	}
 	

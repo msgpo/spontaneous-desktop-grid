@@ -8,12 +8,25 @@ import org.eclipse.core.runtime.FileLocator;
 
 import ee.ut.f2f.gatherer.rmi.IF2FGatherer;
 
+/**
+ * Provides access to the F2F network data gathering tool.
+ * 
+ * @author Indrek Priks
+ */
 public class F2FGathererDao {
 	
 	private static final String POLICY_FILE = "mypolicy.policy";
 	
 	private IF2FGatherer server;
 	
+	/**
+	 * Returns the RMI F2F gatherer instance.
+	 * 
+	 * If the instance is not available wraps the Exception into a
+	 * RuntimeException.
+	 * 
+	 * @return RMI F2F gatherer instance
+	 */
 	public synchronized IF2FGatherer getF2FGatherer() {
 		if (server == null) {
 			System.out.println("Starting up F2FGatherer client server..");
