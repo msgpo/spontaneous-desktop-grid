@@ -57,10 +57,6 @@ public class LayoutAlgorithmFactory {
 	public static AbstractLayoutAlgorithm newLayoutAlgorithm(int layoutAlgorithm) {
 		debug("newLayoutAlgorithm(" + layoutAlgorithm + ")");
 		AbstractLayoutAlgorithm algorithm = new GridLayoutAlgorithm(LayoutStyles.NO_LAYOUT_NODE_RESIZING);
-		if (true){
-			//FIXME:Testin
-			return algorithm;
-		}
 		switch (layoutAlgorithm) {
 		case GRID_LAYOUT:
 			debug("Grid layout");
