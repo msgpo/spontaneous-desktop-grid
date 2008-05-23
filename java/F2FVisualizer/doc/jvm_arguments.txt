@@ -1,0 +1,9 @@
+For exporting the application:
+
+Product configuration:
+
+Launching arguments->VM arguments->
+-Djava.rmi.server.codebase=file:./lib/f2fgatherermi.jar
+
+Launching arguments->Program arguments->
+-console -consolelog

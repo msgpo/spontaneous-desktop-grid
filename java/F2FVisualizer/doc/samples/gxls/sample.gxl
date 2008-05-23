@@ -1,0 +1,331 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gxl SYSTEM "http://www.gupro.de/GXL/gxl-1.0.dtd">
+<gxl>
+	<graph id="graph1">
+		<node id="node1">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+					<string>Skype</string>
+				</set>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.5.0</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.5.0_12</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="org.osgi.framework.processor">
+				<string>x86</string>
+			</attr>
+			<attr name="os.name">
+				<string>Windows 2000</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+		</node>
+		<node id="node2">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.6.0</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_03</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="org.osgi.framework.processor">
+				<string>x86</string>
+			</attr>
+			<attr name="os.name">
+				<string>Windows Vista</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>big</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+		</node>
+		<node id="node3">
+			<attr name="connections">
+				<set>
+					<string>Skype</string>
+				</set>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.5.0</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_03</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="org.osgi.framework.processor">
+				<string>x86</string>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+		</node>
+		<node id="node4">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.4.0</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.4.0_03</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="org.osgi.framework.processor">
+				<string>x86</string>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+		</node>
+		<node id="node5">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.5.0</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_03</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="org.osgi.framework.processor">
+				<string>x86</string>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+		</node>
+		<node id="node6">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.5.0</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_03</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="org.osgi.framework.processor">
+				<string>x86</string>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+		</node>
+		<node id="node7">
+			<attr name="connections">
+				<set>
+					<string>Skype</string>
+				</set>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.5.0</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_03</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="org.osgi.framework.processor">
+				<string>x86</string>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+		</node>
+		<node id="node8">
+			<attr name="connections">
+				<set>
+					<string>Skype</string>
+				</set>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.5.0</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_03</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="org.osgi.framework.processor">
+				<string>x86</string>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+		</node>
+		<edge from="node1" to="node2">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>1000</string>
+			</attr>
+		</edge>
+		<edge from="node1" to="node3">
+			<attr name="connections">
+				<set>
+					<string>Skype</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>10000</string>
+			</attr>
+		</edge>
+		<edge from="node1" to="node4">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>1000</string>
+			</attr>
+		</edge>
+		<edge from="node1" to="node5">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>1000</string>
+			</attr>
+		</edge>
+		<edge from="node1" to="node6">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>1000</string>
+			</attr>
+		</edge>
+		<edge from="node2" to="node4">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>1000</string>
+			</attr>
+		</edge>
+		<edge from="node5" to="node6">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>1000</string>
+			</attr>
+		</edge>
+		<edge from="node3" to="node7">
+			<attr name="connections">
+				<set>
+					<string>Skype</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>100000</string>
+			</attr>
+		</edge>
+		<edge from="node3" to="node8">
+			<attr name="connections">
+				<set>
+					<string>Skype</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>1000</string>
+			</attr>
+		</edge>
+		<edge from="node7" to="node8">
+			<attr name="connections">
+				<set>
+					<string>Skype</string>
+				</set>
+			</attr>
+			<attr name="bandwith">
+				<string>1000000</string>
+			</attr>
+		</edge>
+	</graph>
+</gxl>
