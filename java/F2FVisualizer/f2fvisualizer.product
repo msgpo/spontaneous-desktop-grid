@@ -14,7 +14,7 @@
 
    <launcherArgs>
       <programArgs>-console -consolelog</programArgs>
-      <vmArgs>-Djava.rmi.server.codebase=file:./lib/f2fgatherermi.jar</vmArgs>
+      <vmArgs>-Djava.rmi.server.codebase=file:./lib/f2fgathererrmi.jar</vmArgs>
       <vmArgsMac>-XstartOnFirstThread -Dorg.eclipse.swt.internal.carbon.smallFonts</vmArgsMac>
    </launcherArgs>
 
@@ -30,7 +30,6 @@
          <bmp/>
       </win>
    </launcher>
-
 
    <vm>
    </vm>

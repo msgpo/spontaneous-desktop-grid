@@ -6,6 +6,7 @@ import java.io.ObjectInputStream;
 import java.util.Enumeration;
 import java.util.Properties;
 
+import net.sourceforge.gxl.GXLAttr;
 import net.sourceforge.gxl.GXLCompositeValue;
 import net.sourceforge.gxl.GXLDocument;
 import net.sourceforge.gxl.GXLEdge;
@@ -79,7 +80,7 @@ public class F2FNetworkStructureDAO implements IF2FNetworkStructureDAO {
 	private GXLDocument getDummyGXLDocument() {
 		debug("Generating dummy F2F network topology data ....");
 		GXLDocument doc = null;
-		if (true) {
+		if (!true) {
 			doc = generateGXLDocumentDynamically(NODE_COUNT, MAX_EDGES_PER_NODE);
 		}
 		else {
@@ -114,6 +115,19 @@ public class F2FNetworkStructureDAO implements IF2FNetworkStructureDAO {
 			String key = (String) en.nextElement();
 			String val = System.getProperty(key);
 			// debug(key + "->" + val);
+			/*
+			 * This way one can create an attribute which is like a map which contains
+			 * another key-value pairs:
+			 * 
+			 * GXLAttr att = new GXLAttr("System", new GXLString("System
+			 * properties"));
+			 * 
+			 * att.setAttr("os.name", new GXLString("Windows"));
+			 * 
+			 * att.setAttr("java.version", new GXLString("1.5.0"));
+			 * 
+			 * node1.add(att);
+			 */
 			node1.setAttr(key, new GXLString(val));
 			node2.setAttr(key, new GXLString(val));
 			node3.setAttr(key, new GXLString(val));

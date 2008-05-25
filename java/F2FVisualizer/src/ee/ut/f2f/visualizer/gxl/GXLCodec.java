@@ -13,6 +13,7 @@ import net.sourceforge.gxl.GXLGraphElement;
 import net.sourceforge.gxl.GXLNode;
 import net.sourceforge.gxl.GXLString;
 import net.sourceforge.gxl.GXLValue;
+import ee.ut.f2f.gatherer.rmi.GXLConstants;
 import ee.ut.f2f.visualizer.log.F2FLogger;
 
 /**
@@ -29,13 +30,13 @@ public class GXLCodec {
 	 * Name of the <code>GXLAttr</code> attribute that represents the
 	 * connections on <code>GXLNode</code> and <code>GXLEdge</code>.
 	 */
-	public static final String ATTR_NAME_CONNECTION = "connections";
+	public static final String ATTR_NAME_CONNECTION = GXLConstants.ATTR_NAME_CONNECTION.getName();
 	
 	/**
 	 * Name of the <code>GXLAttr</code> attribute that represents the connection
 	 * band-with on <code>GXLEdge</code>.
 	 */
-	public static final String ATTR_NAME_BANDWITH = "bandwith";
+	public static final String ATTR_NAME_BANDWITH = GXLConstants.ATTR_NAME_BANDWIDTH.getName();
 	
 	/**
 	 * Reads the GXL document from file.

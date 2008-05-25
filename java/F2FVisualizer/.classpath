@@ -1,7 +1,7 @@
 <?xml version="1.0" encoding="UTF-8"?>
 <classpath>
 	<classpathentry kind="src" path="src"/>
-	<classpathentry exported="true" kind="lib" path="lib/f2fgatherermi.jar"/>
+	<classpathentry exported="true" kind="lib" path="lib/f2fgathererrmi.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/org.eclipse.mylyn.zest.core_0.5.0.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/org.eclipse.mylyn.zest.layouts_0.5.0.0.jar"/>
 	<classpathentry exported="true" kind="lib" path="lib/gxl.jar"/>

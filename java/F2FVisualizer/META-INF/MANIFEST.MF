@@ -13,6 +13,6 @@ Bundle-ClassPath: lib/org.eclipse.mylyn.zest.core_0.5.0.0.jar,
  lib/org.eclipse.mylyn.zest.layouts_0.5.0.0.jar,
  lib/gxl.jar,
  .,
- lib/f2fgatherermi.jar
+ lib/f2fgathererrmi.jar
 Bundle-Vendor: %Provider
 Bundle-RequiredExecutionEnvironment: J2SE-1.5

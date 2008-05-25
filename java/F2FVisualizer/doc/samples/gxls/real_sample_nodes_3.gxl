@@ -1,0 +1,666 @@
+<?xml version="1.0" encoding="UTF-8"?>
+<!DOCTYPE gxl SYSTEM "http://www.gupro.de/GXL/gxl-1.0.dtd">
+<gxl>
+	<graph id="graph1">
+		<node id="4d105ba5-cc50-4a69-abf0-3e508234f6f6">
+			<attr name="node.id">
+				<string>4d105ba5-cc50-4a69-abf0-3e508234f6f6</string>
+			</attr>
+			<attr name="http.agent">
+				<string>SIP Communicator/1.0-alpha3-0.build.by.Administrator</string>
+			</attr>
+			<attr name="java.runtime.name">
+				<string>Java(TM) SE Runtime Environment</string>
+			</attr>
+			<attr name="felix.config.properties">
+				<string>file:../F2F/felix.client.run.properties</string>
+			</attr>
+			<attr name="sun.boot.library.path">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\bin</string>
+			</attr>
+			<attr name="java.vm.version">
+				<string>11.0-b11</string>
+			</attr>
+			<attr name="java.vm.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="java.vendor.url">
+				<string>http://java.sun.com/</string>
+			</attr>
+			<attr name="path.separator">
+				<string>;</string>
+			</attr>
+			<attr name="java.util.logging.config.file">
+				<string>./f2f.logging.properties</string>
+			</attr>
+			<attr name="java.vm.name">
+				<string>Java HotSpot(TM) Client VM</string>
+			</attr>
+			<attr name="file.encoding.pkg">
+				<string>sun.io</string>
+			</attr>
+			<attr name="sun.java.launcher">
+				<string>SUN_STANDARD</string>
+			</attr>
+			<attr name="user.country">
+				<string>EE</string>
+			</attr>
+			<attr name="sun.os.patch.level">
+				<string>Service Pack 2</string>
+			</attr>
+			<attr name="java.vm.specification.name">
+				<string>Java Virtual Machine Specification</string>
+			</attr>
+			<attr name="user.dir">
+				<string>E:\sip-communicator3</string>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.6.0_10-beta-b13</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="java.endorsed.dirs">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\endorsed</string>
+			</attr>
+			<attr name="os.arch">
+				<string>x86</string>
+			</attr>
+			<attr name="java.io.tmpdir">
+				<string>E:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\</string>
+			</attr>
+			<attr name="line.separator">
+				<string/>
+			</attr>
+			<attr name="java.vm.specification.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="user.variant">
+				<string/>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.jnu.encoding">
+				<string>Cp1252</string>
+			</attr>
+			<attr name="java.library.path">
+				<string>E:\sip-communicator3\lib;lib/native/windows</string>
+			</attr>
+			<attr name="java.specification.name">
+				<string>Java Platform API Specification</string>
+			</attr>
+			<attr name="java.class.version">
+				<string>50.0</string>
+			</attr>
+			<attr name="sun.management.compiler">
+				<string>HotSpot Client Compiler</string>
+			</attr>
+			<attr name="os.version">
+				<string>5.1</string>
+			</attr>
+			<attr name="user.home">
+				<string>E:\Documents and Settings\Administrator</string>
+			</attr>
+			<attr name="java.security.policy">
+				<string>file:../F2F/mypolicy.policy</string>
+			</attr>
+			<attr name="user.timezone">
+				<string>Europe/Helsinki</string>
+			</attr>
+			<attr name="java.awt.printerjob">
+				<string>sun.awt.windows.WPrinterJob</string>
+			</attr>
+			<attr name="file.encoding">
+				<string>Cp1257</string>
+			</attr>
+			<attr name="java.specification.version">
+				<string>1.6</string>
+			</attr>
+			<attr name="java.class.path">
+				<string>E:\sip-communicator3\.\f2f.profile\01;lib/jdic-all.jar;lib/os-specific/windows/jdic_stub.jar;lib/felix.jar;lib/sc-launcher.jar;sc-bundles/util.jar</string>
+			</attr>
+			<attr name="user.name">
+				<string>Administrator</string>
+			</attr>
+			<attr name="java.vm.specification.version">
+				<string>1.0</string>
+			</attr>
+			<attr name="java.home">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre</string>
+			</attr>
+			<attr name="sun.arch.data.model">
+				<string>32</string>
+			</attr>
+			<attr name="user.language">
+				<string>et</string>
+			</attr>
+			<attr name="java.specification.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="awt.toolkit">
+				<string>sun.awt.windows.WToolkit</string>
+			</attr>
+			<attr name="java.vm.info">
+				<string>mixed mode, sharing</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_10-beta</string>
+			</attr>
+			<attr name="java.ext.dirs">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\ext;E:\WINDOWS\Sun\Java\lib\ext</string>
+			</attr>
+			<attr name="sun.boot.class.path">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\resources.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\rt.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\sunrsasign.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\jsse.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\jce.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\charsets.jar;E:\Program Files\Java\jdk1.6.0_10\jre\classes</string>
+			</attr>
+			<attr name="net.java.sip.communicator.SC_HOME_DIR_LOCATION">
+				<string>./f2f.profile</string>
+			</attr>
+			<attr name="java.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="file.separator">
+				<string>\</string>
+			</attr>
+			<attr name="sip-communicator.application.name">
+				<string>SIP Communicator</string>
+			</attr>
+			<attr name="net.java.sip.communicator.SC_HOME_DIR_NAME">
+				<string>01</string>
+			</attr>
+			<attr name="java.vendor.url.bug">
+				<string>http://java.sun.com/cgi-bin/bugreport.cgi</string>
+			</attr>
+			<attr name="sun.io.unicode.encoding">
+				<string>UnicodeLittle</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.desktop">
+				<string>windows</string>
+			</attr>
+			<attr name="java.rmi.server.codebase">
+				<string>file:sc-bundles/f2fgathererrmi.jar</string>
+			</attr>
+			<attr name="sip-communicator.version">
+				<string>1.0-alpha3-0.build.by.Administrator</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+			<attr name="memoryload">
+				<string>45</string>
+			</attr>
+			<attr name="totalphysicalmemory">
+				<string>2145280000</string>
+			</attr>
+			<attr name="freephysicalmemory">
+				<string>1168572416</string>
+			</attr>
+			<attr name="totalpagingfile">
+				<string>4129648640</string>
+			</attr>
+			<attr name="freepagingfile">
+				<string>3272372224</string>
+			</attr>
+			<attr name="totalvirtualmemory">
+				<string>2147352576</string>
+			</attr>
+			<attr name="freevirtualmemory">
+				<string>1846046720</string>
+			</attr>
+		</node>
+		<node id="46872e14-439a-4e4b-adad-8d4d964e0f37">
+			<attr name="node.id">
+				<string>46872e14-439a-4e4b-adad-8d4d964e0f37</string>
+			</attr>
+			<attr name="http.agent">
+				<string>SIP Communicator/1.0-alpha3-0.build.by.Administrator</string>
+			</attr>
+			<attr name="java.runtime.name">
+				<string>Java(TM) SE Runtime Environment</string>
+			</attr>
+			<attr name="felix.config.properties">
+				<string>file:../F2F/felix.client.run.properties</string>
+			</attr>
+			<attr name="sun.boot.library.path">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\bin</string>
+			</attr>
+			<attr name="java.vm.version">
+				<string>11.0-b11</string>
+			</attr>
+			<attr name="java.vm.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="java.vendor.url">
+				<string>http://java.sun.com/</string>
+			</attr>
+			<attr name="path.separator">
+				<string>;</string>
+			</attr>
+			<attr name="java.util.logging.config.file">
+				<string>file:../F2F/logging.properties</string>
+			</attr>
+			<attr name="java.vm.name">
+				<string>Java HotSpot(TM) Client VM</string>
+			</attr>
+			<attr name="file.encoding.pkg">
+				<string>sun.io</string>
+			</attr>
+			<attr name="sun.java.launcher">
+				<string>SUN_STANDARD</string>
+			</attr>
+			<attr name="user.country">
+				<string>EE</string>
+			</attr>
+			<attr name="sun.os.patch.level">
+				<string>Service Pack 2</string>
+			</attr>
+			<attr name="java.vm.specification.name">
+				<string>Java Virtual Machine Specification</string>
+			</attr>
+			<attr name="user.dir">
+				<string>E:\sip-communicator</string>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.6.0_10-beta-b13</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="java.endorsed.dirs">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\endorsed</string>
+			</attr>
+			<attr name="os.arch">
+				<string>x86</string>
+			</attr>
+			<attr name="java.io.tmpdir">
+				<string>E:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\</string>
+			</attr>
+			<attr name="line.separator">
+				<string/>
+			</attr>
+			<attr name="ee.ut.f2f.F2F_PROPERTIES_FILE">
+				<string>../F2F/conf/F2FComputing.properties</string>
+			</attr>
+			<attr name="java.vm.specification.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="user.variant">
+				<string/>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.jnu.encoding">
+				<string>Cp1252</string>
+			</attr>
+			<attr name="java.library.path">
+				<string>E:\sip-communicator\lib;lib/native/windows</string>
+			</attr>
+			<attr name="java.specification.name">
+				<string>Java Platform API Specification</string>
+			</attr>
+			<attr name="java.class.version">
+				<string>50.0</string>
+			</attr>
+			<attr name="sun.management.compiler">
+				<string>HotSpot Client Compiler</string>
+			</attr>
+			<attr name="os.version">
+				<string>5.1</string>
+			</attr>
+			<attr name="user.home">
+				<string>E:\Documents and Settings\Administrator</string>
+			</attr>
+			<attr name="java.security.policy">
+				<string>file:../F2F/mypolicy.policy</string>
+			</attr>
+			<attr name="user.timezone">
+				<string>Europe/Helsinki</string>
+			</attr>
+			<attr name="java.awt.printerjob">
+				<string>sun.awt.windows.WPrinterJob</string>
+			</attr>
+			<attr name="file.encoding">
+				<string>Cp1257</string>
+			</attr>
+			<attr name="java.specification.version">
+				<string>1.6</string>
+			</attr>
+			<attr name="java.class.path">
+				<string>E:\sip-communicator\..\F2F\sip-communicator-profiles\01;E:\sip-communicator\bin;E:\sip-communicator\lib\felix.jar;E:\sip-communicator\lib\jdic-all.jar;E:\sip-communicator\lib\bundle\junit.jar;E:\sip-communicator\lib\bundle\org.apache.felix.servicebinder-0.9.0-SNAPSHOT.jar;E:\sip-communicator\lib\installer-exclude\bcprov-jdk14-130.jar;E:\sip-communicator\lib\installer-exclude\commons-logging.jar;E:\sip-communicator\lib\installer-exclude\concurrent.jar;E:\sip-communicator\lib\installer-exclude\dnsjava-2.0.3.jar;E:\sip-communicator\lib\installer-exclude\JainSipApi1.2.jar;E:\sip-communicator\lib\installer-exclude\JainSipRi1.2.jar;E:\sip-communicator\lib\installer-exclude\jcalendar-1.3.2.jar;E:\sip-communicator\lib\installer-exclude\jdom.jar;E:\sip-communicator\lib\installer-exclude\jmf.jar;E:\sip-communicator\lib\installer-exclude\jml-1.0b2.jar;E:\sip-communicator\lib\installer-exclude\joscar-client.jar;E:\sip-communicator\lib\installer-exclude\joscar-common.jar;E:\sip-communicator\lib\installer-exclude\joscar-protocol.jar;E:\sip-communicator\lib\installer-exclude\jsocks-klea.jar;E:\sip-communicator\lib\installer-exclude\jspeex.jar;E:\sip-communicator\lib\installer-exclude\junit.jar;E:\sip-communicator\lib\installer-exclude\log4j-1.2.8.jar;E:\sip-communicator\lib\installer-exclude\nist-sdp-1.0.jar;E:\sip-communicator\lib\installer-exclude\rome-0.9.jar;E:\sip-communicator\lib\installer-exclude\smack.jar;E:\sip-communicator\lib\installer-exclude\smackx.jar;E:\sip-communicator\lib\installer-exclude\smackx-jingle.jar;E:\sip-communicator\lib\installer-exclude\Stun4J.jar;E:\sip-communicator\lib\installer-exclude\ymsg_network_v0_63.jar;E:\sip-communicator\lib\os-specific\linux\installer-exclude\jmf.jar;E:\sip-communicator\lib\os-specific\linux\jdic_stub.jar;E:\sip-communicator\lib\os-specific\mac\installer-exclude\jmf.jar;E:\sip-communicator\lib\os-specific\mac\AppleJavaExtensions.jar;E:\sip-communicator\lib\os-specific\mac\growl.jar;E:\sip-communicator\lib\os-specific\mac\jdic_stub.jar;E:\sip-communicator\lib\os-specific\solaris\installer-exclude\jmf.jar;E:\sip-communicator\lib\os-specific\solaris\jdic_stub.jar;E:\sip-communicator\lib\os-specific\windows\installer-exclude\jmf.jar;E:\sip-communicator\lib\os-specific\windows\installer-exclude\sound.jar;E:\sip-communicator\lib\os-specific\windows\jdic_stub.jar;E:\sip-communicator\lib\installer-exclude\aclibico-2.1.jar;E:\sip-communicator\lib\installer-exclude\pircbot.jar;E:\sip-communicator\lib\installer-exclude\jsch-0.1.36.jar;E:\sip-communicator\lib\installer-exclude\jdic_misc.jar;E:\eclipse\plugins\org.apache.ant_1.7.0.v200706080842\lib\ant.jar</string>
+			</attr>
+			<attr name="user.name">
+				<string>Administrator</string>
+			</attr>
+			<attr name="java.vm.specification.version">
+				<string>1.0</string>
+			</attr>
+			<attr name="java.home">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre</string>
+			</attr>
+			<attr name="sun.arch.data.model">
+				<string>32</string>
+			</attr>
+			<attr name="user.language">
+				<string>et</string>
+			</attr>
+			<attr name="java.specification.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="awt.toolkit">
+				<string>sun.awt.windows.WToolkit</string>
+			</attr>
+			<attr name="java.vm.info">
+				<string>mixed mode, sharing</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_10-beta</string>
+			</attr>
+			<attr name="java.ext.dirs">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\ext;E:\WINDOWS\Sun\Java\lib\ext</string>
+			</attr>
+			<attr name="sun.boot.class.path">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\resources.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\rt.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\sunrsasign.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\jsse.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\jce.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\charsets.jar;E:\Program Files\Java\jdk1.6.0_10\jre\classes</string>
+			</attr>
+			<attr name="net.java.sip.communicator.SC_HOME_DIR_LOCATION">
+				<string>../F2F/sip-communicator-profiles</string>
+			</attr>
+			<attr name="java.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="file.separator">
+				<string>\</string>
+			</attr>
+			<attr name="sip-communicator.application.name">
+				<string>SIP Communicator</string>
+			</attr>
+			<attr name="net.java.sip.communicator.SC_HOME_DIR_NAME">
+				<string>01</string>
+			</attr>
+			<attr name="java.vendor.url.bug">
+				<string>http://java.sun.com/cgi-bin/bugreport.cgi</string>
+			</attr>
+			<attr name="sun.io.unicode.encoding">
+				<string>UnicodeLittle</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.desktop">
+				<string>windows</string>
+			</attr>
+			<attr name="java.rmi.server.codebase">
+				<string>file:sc-bundles/f2fgathererrmi.jar</string>
+			</attr>
+			<attr name="sip-communicator.version">
+				<string>1.0-alpha3-0.build.by.Administrator</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+			<attr name="memoryload">
+				<string>45</string>
+			</attr>
+			<attr name="totalphysicalmemory">
+				<string>2145280000</string>
+			</attr>
+			<attr name="freephysicalmemory">
+				<string>1168916480</string>
+			</attr>
+			<attr name="totalpagingfile">
+				<string>4129648640</string>
+			</attr>
+			<attr name="freepagingfile">
+				<string>3272417280</string>
+			</attr>
+			<attr name="totalvirtualmemory">
+				<string>2147352576</string>
+			</attr>
+			<attr name="freevirtualmemory">
+				<string>1848094720</string>
+			</attr>
+		</node>
+		<edge from="46872e14-439a-4e4b-adad-8d4d964e0f37" to="4d105ba5-cc50-4a69-abf0-3e508234f6f6">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwidth">
+				<string>1048560</string>
+			</attr>
+		</edge>
+		<edge from="46872e14-439a-4e4b-adad-8d4d964e0f37" to="4ae8ee83-8db6-4b5d-97a7-258f6e311f6e">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwidth">
+				<string>1202477</string>
+			</attr>
+		</edge>
+		<node id="4ae8ee83-8db6-4b5d-97a7-258f6e311f6e">
+			<attr name="node.id">
+				<string>4ae8ee83-8db6-4b5d-97a7-258f6e311f6e</string>
+			</attr>
+			<attr name="http.agent">
+				<string>SIP Communicator/1.0-alpha3-0.build.by.Administrator</string>
+			</attr>
+			<attr name="java.runtime.name">
+				<string>Java(TM) SE Runtime Environment</string>
+			</attr>
+			<attr name="felix.config.properties">
+				<string>file:../F2F/felix.client.run.properties</string>
+			</attr>
+			<attr name="sun.boot.library.path">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\bin</string>
+			</attr>
+			<attr name="java.vm.version">
+				<string>11.0-b11</string>
+			</attr>
+			<attr name="java.vm.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="java.vendor.url">
+				<string>http://java.sun.com/</string>
+			</attr>
+			<attr name="path.separator">
+				<string>;</string>
+			</attr>
+			<attr name="java.util.logging.config.file">
+				<string>./f2f.logging.properties</string>
+			</attr>
+			<attr name="java.vm.name">
+				<string>Java HotSpot(TM) Client VM</string>
+			</attr>
+			<attr name="file.encoding.pkg">
+				<string>sun.io</string>
+			</attr>
+			<attr name="sun.java.launcher">
+				<string>SUN_STANDARD</string>
+			</attr>
+			<attr name="user.country">
+				<string>EE</string>
+			</attr>
+			<attr name="sun.os.patch.level">
+				<string>Service Pack 2</string>
+			</attr>
+			<attr name="java.vm.specification.name">
+				<string>Java Virtual Machine Specification</string>
+			</attr>
+			<attr name="user.dir">
+				<string>E:\sip-communicator2</string>
+			</attr>
+			<attr name="java.runtime.version">
+				<string>1.6.0_10-beta-b13</string>
+			</attr>
+			<attr name="java.awt.graphicsenv">
+				<string>sun.awt.Win32GraphicsEnvironment</string>
+			</attr>
+			<attr name="java.endorsed.dirs">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\endorsed</string>
+			</attr>
+			<attr name="os.arch">
+				<string>x86</string>
+			</attr>
+			<attr name="java.io.tmpdir">
+				<string>E:\DOCUME~1\ADMINI~1\LOCALS~1\Temp\</string>
+			</attr>
+			<attr name="line.separator">
+				<string/>
+			</attr>
+			<attr name="java.vm.specification.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="user.variant">
+				<string/>
+			</attr>
+			<attr name="os.name">
+				<string>Windows XP</string>
+			</attr>
+			<attr name="sun.jnu.encoding">
+				<string>Cp1252</string>
+			</attr>
+			<attr name="java.library.path">
+				<string>E:\sip-communicator2\lib;lib/native/windows</string>
+			</attr>
+			<attr name="java.specification.name">
+				<string>Java Platform API Specification</string>
+			</attr>
+			<attr name="java.class.version">
+				<string>50.0</string>
+			</attr>
+			<attr name="sun.management.compiler">
+				<string>HotSpot Client Compiler</string>
+			</attr>
+			<attr name="os.version">
+				<string>5.1</string>
+			</attr>
+			<attr name="user.home">
+				<string>E:\Documents and Settings\Administrator</string>
+			</attr>
+			<attr name="java.security.policy">
+				<string>file:../F2F/mypolicy.policy</string>
+			</attr>
+			<attr name="user.timezone">
+				<string>Europe/Helsinki</string>
+			</attr>
+			<attr name="java.awt.printerjob">
+				<string>sun.awt.windows.WPrinterJob</string>
+			</attr>
+			<attr name="file.encoding">
+				<string>Cp1257</string>
+			</attr>
+			<attr name="java.specification.version">
+				<string>1.6</string>
+			</attr>
+			<attr name="java.class.path">
+				<string>E:\sip-communicator2\.\f2f.profile\01;lib/jdic-all.jar;lib/os-specific/windows/jdic_stub.jar;lib/felix.jar;lib/sc-launcher.jar;sc-bundles/util.jar</string>
+			</attr>
+			<attr name="user.name">
+				<string>Administrator</string>
+			</attr>
+			<attr name="java.vm.specification.version">
+				<string>1.0</string>
+			</attr>
+			<attr name="java.home">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre</string>
+			</attr>
+			<attr name="sun.arch.data.model">
+				<string>32</string>
+			</attr>
+			<attr name="user.language">
+				<string>et</string>
+			</attr>
+			<attr name="java.specification.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="awt.toolkit">
+				<string>sun.awt.windows.WToolkit</string>
+			</attr>
+			<attr name="java.vm.info">
+				<string>mixed mode, sharing</string>
+			</attr>
+			<attr name="java.version">
+				<string>1.6.0_10-beta</string>
+			</attr>
+			<attr name="java.ext.dirs">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\ext;E:\WINDOWS\Sun\Java\lib\ext</string>
+			</attr>
+			<attr name="sun.boot.class.path">
+				<string>E:\Program Files\Java\jdk1.6.0_10\jre\lib\resources.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\rt.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\sunrsasign.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\jsse.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\jce.jar;E:\Program Files\Java\jdk1.6.0_10\jre\lib\charsets.jar;E:\Program Files\Java\jdk1.6.0_10\jre\classes</string>
+			</attr>
+			<attr name="net.java.sip.communicator.SC_HOME_DIR_LOCATION">
+				<string>./f2f.profile</string>
+			</attr>
+			<attr name="java.vendor">
+				<string>Sun Microsystems Inc.</string>
+			</attr>
+			<attr name="file.separator">
+				<string>\</string>
+			</attr>
+			<attr name="sip-communicator.application.name">
+				<string>SIP Communicator</string>
+			</attr>
+			<attr name="net.java.sip.communicator.SC_HOME_DIR_NAME">
+				<string>01</string>
+			</attr>
+			<attr name="java.vendor.url.bug">
+				<string>http://java.sun.com/cgi-bin/bugreport.cgi</string>
+			</attr>
+			<attr name="sun.io.unicode.encoding">
+				<string>UnicodeLittle</string>
+			</attr>
+			<attr name="sun.cpu.endian">
+				<string>little</string>
+			</attr>
+			<attr name="sun.desktop">
+				<string>windows</string>
+			</attr>
+			<attr name="java.rmi.server.codebase">
+				<string>file:sc-bundles/f2fgathererrmi.jar</string>
+			</attr>
+			<attr name="sip-communicator.version">
+				<string>1.0-alpha3-0.build.by.Administrator</string>
+			</attr>
+			<attr name="sun.cpu.isalist">
+				<string>pentium_pro+mmx pentium_pro pentium+mmx pentium i486 i386 i86</string>
+			</attr>
+			<attr name="memoryload">
+				<string>45</string>
+			</attr>
+			<attr name="totalphysicalmemory">
+				<string>2145280000</string>
+			</attr>
+			<attr name="freephysicalmemory">
+				<string>1168355328</string>
+			</attr>
+			<attr name="totalpagingfile">
+				<string>4129648640</string>
+			</attr>
+			<attr name="freepagingfile">
+				<string>3272110080</string>
+			</attr>
+			<attr name="totalvirtualmemory">
+				<string>2147352576</string>
+			</attr>
+			<attr name="freevirtualmemory">
+				<string>1847709696</string>
+			</attr>
+		</node>
+		<edge from="4ae8ee83-8db6-4b5d-97a7-258f6e311f6e" to="4d105ba5-cc50-4a69-abf0-3e508234f6f6">
+			<attr name="connections">
+				<set>
+					<string>MSN</string>
+				</set>
+			</attr>
+			<attr name="bandwidth">
+				<string>524280</string>
+			</attr>
+		</edge>
+	</graph>
+</gxl>
