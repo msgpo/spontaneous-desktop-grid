@@ -23,7 +23,7 @@ public class GraphEditorInput implements IEditorInput {
 	/** Logger */
 	private static final F2FLogger log = new F2FLogger(GraphEditorInput.class);
 	/** The editor window name of the editor of the live data */
-	private static final String LIVE_EDITOR_NAME = "live";
+	public static final String LIVE_EDITOR_NAME = "live";
 	
 	private List<PropertyChangeListener> listeners = new ArrayList<PropertyChangeListener>();
 	private final String name;

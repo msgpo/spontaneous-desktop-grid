@@ -28,6 +28,17 @@ public abstract class FileAction extends Action {
 	protected String[] extensionNames = new String[] {
 			"GXL files (*.gxl)", "XML files (*.xml)", "All files (*)"
 	};
+	/** Default file extension */
+	private static final String DEFAULT_FILE_EXT = ".gxl";
+	
+	/**
+	 * Returns the default file extension
+	 * 
+	 * @return the default file extension
+	 */
+	protected String getDefaultExtension() {
+		return DEFAULT_FILE_EXT;
+	}
 	
 	/**
 	 * Opens file choose dialog for "Save as" purpose.
@@ -40,7 +51,23 @@ public abstract class FileAction extends Action {
 	 *         <code> null </code> if no file was chosen.
 	 */
 	public File chooseSaveFile(Shell shell) {
-		return chooseFile(shell, SWT.SAVE);
+		return chooseSaveFile(shell, null);
+	}
+	
+	/**
+	 * Opens file choose dialog for "Save as" purpose.
+	 * 
+	 * Lets the user to choose a filename and path where to save a file.
+	 * 
+	 * @param shell
+	 *          Window which opens the file choose dialog.
+	 * @param fileName
+	 *          Default file name to display in the save file dialog.
+	 * @return <code> File </code> object, if a file was chosen.
+	 *         <code> null </code> if no file was chosen.
+	 */
+	public File chooseSaveFile(Shell shell, String fileName) {
+		return chooseFile(shell, SWT.SAVE, fileName);
 	}
 	
 	/**
@@ -54,14 +81,15 @@ public abstract class FileAction extends Action {
 	 *         <code> null </code> if no file was chosen.
 	 */
 	public File chooseOpenFile(Shell shell) {
-		return chooseFile(shell, SWT.OPEN);
+		return chooseFile(shell, SWT.OPEN, null);
 	}
 	
-	private File chooseFile(Shell shell, int style) {
+	private File chooseFile(Shell shell, int style, String fileName) {
 		FileDialog dialog = new FileDialog(shell, style);
 		
 		dialog.setFilterExtensions(extensions);
 		dialog.setFilterNames(extensionNames);
+		dialog.setFileName(fileName);
 		if (lastUsedDirectory != null)
 			dialog.setFilterPath(lastUsedDirectory);
 		
@@ -75,8 +103,8 @@ public abstract class FileAction extends Action {
 		
 		lastUsedDirectory = file.getParent();
 		
-		String fileName = file == null ? null : file.getAbsolutePath();
-		log.debug("Choosed file:" + fileName);
+		String filePath = file == null ? null : file.getAbsolutePath();
+		log.debug("Choosed file:" + filePath);
 		
 		return file;
 	}

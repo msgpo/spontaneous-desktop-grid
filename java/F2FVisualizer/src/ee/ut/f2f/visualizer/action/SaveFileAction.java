@@ -1,6 +1,8 @@
 package ee.ut.f2f.visualizer.action;
 
 import java.io.File;
+import java.text.SimpleDateFormat;
+import java.util.Date;
 
 import org.eclipse.jface.dialogs.MessageDialog;
 import org.eclipse.ui.IEditorPart;
@@ -8,6 +10,7 @@ import org.eclipse.ui.IWorkbenchWindow;
 
 import ee.ut.f2f.visualizer.Activator;
 import ee.ut.f2f.visualizer.command.ICommandIds;
+import ee.ut.f2f.visualizer.editor.GraphEditor;
 import ee.ut.f2f.visualizer.log.F2FLogger;
 import ee.ut.f2f.visualizer.model.GraphEditorInput;
 
@@ -20,6 +23,7 @@ import ee.ut.f2f.visualizer.model.GraphEditorInput;
 public class SaveFileAction extends FileAction {
 	
 	private static final F2FLogger log = new F2FLogger(SaveFileAction.class);
+	private static final SimpleDateFormat sdf = new SimpleDateFormat("yyyy.MM.dd-HH:mm:ss");
 	private final IWorkbenchWindow window;
 	
 	/**
@@ -44,26 +48,34 @@ public class SaveFileAction extends FileAction {
 	 */
 	public void run() {
 		if (window != null) {
-			File f = chooseSaveFile(window.getShell());
+			IEditorPart part = window.getActivePage().getActiveEditor();
+			
+			boolean write = false;
+			GraphEditorInput input = null;
+			String defaultFileName = sdf.format(new Date()) + getDefaultExtension();
+			if (part != null) {
+				input = (GraphEditorInput) part.getEditorInput();
+				write = input != null;
+				if (!GraphEditorInput.LIVE_EDITOR_NAME.equals(part.getTitle())) {
+					defaultFileName = part.getTitle();
+				}
+			}
+			
+			File f = chooseSaveFile(window.getShell(), defaultFileName);
+			
 			if (f != null) {
-				try {
-					boolean write = false;
-					IEditorPart part = window.getActivePage().getActiveEditor();
-					if (part != null) {
-						GraphEditorInput input = (GraphEditorInput) part.getEditorInput();
-						if (input != null) {
-							write = true;
-							log.debug("writing file..");
-							input.getGXLDocument().write(f);
-						}
+				if (write) {
+					try {
+						log.debug("writing file..");
+						input.getGXLDocument().write(f);
 					}
-					if (!write) {
-						MessageDialog.openInformation(window.getShell(), "File saving failed!",
-								"Could not save the file, editor contains no data!");
+					catch (Exception e) {
+						MessageDialog.openError(window.getShell(), "Error", "Error saving to file:" + e.getMessage());
 					}
 				}
-				catch (Exception e) {
-					MessageDialog.openError(window.getShell(), "Error", "Error saving to file:" + e.getMessage());
+				else {
+					MessageDialog.openInformation(window.getShell(), "File saving failed!",
+							"Could not save the file, editor contains no data!");
 				}
 			}
 		}
