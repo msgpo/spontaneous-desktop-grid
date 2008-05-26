@@ -7,6 +7,7 @@ import java.util.List;
 
 import net.sourceforge.gxl.GXLAttr;
 import net.sourceforge.gxl.GXLCompositeValue;
+import net.sourceforge.gxl.GXLEdge;
 import net.sourceforge.gxl.GXLGraphElement;
 import net.sourceforge.gxl.GXLValue;
 
@@ -41,11 +42,34 @@ public class NodeInfoViewContentProvider implements ITreeContentProvider {
 			List list = (List) parent;
 			if (!list.isEmpty()) {
 				Object el = list.get(0);
+				log.debug("INDREK:" + el.toString());
 				if (el instanceof GXLGraphElement) {
 					// Sort ascending
 					Collections.sort(list, new Comparator<GXLGraphElement>() {
 						
 						public int compare(GXLGraphElement o1, GXLGraphElement o2) {
+							GXLEdge e1 = null;
+							GXLEdge e2 = null;
+							if (o1 instanceof GXLEdge) {
+								e1 = (GXLEdge) o1;
+							}
+							if (o2 instanceof GXLEdge) {
+								e2 = (GXLEdge) o2;
+							}
+							// GXLEdge-s first, GXLNode-s last.
+							if (e1 != null && e2 == null) {
+								return -1;
+							}
+							else if (e1 == null && e2 != null) {
+								return 1;
+							}
+							else if (e1 != null && e2 != null) {
+								int result = e1.getSourceID().compareTo(e2.getSourceID());
+								if (result == 0) {
+									result = e1.getTargetID().compareTo(e2.getTargetID());
+								}
+								return result;
+							}
 							return o1.getID().compareTo(o2.getID());
 						}
 					});

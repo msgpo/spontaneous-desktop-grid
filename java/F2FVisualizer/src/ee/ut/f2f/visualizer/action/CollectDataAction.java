@@ -60,12 +60,14 @@ public class CollectDataAction extends Action {
 				d = dao.getGXLDocument();
 			}
 			catch (Exception e) {
-				MessageDialog.openError(window.getShell(), "Error", "Error collecting the information:" + e.getMessage());
+				MessageDialog.openError(window.getShell(), "Error",
+						"An error occured while collecting the full network topology information: " + e.getMessage());
 				return;
 			}
 			
 			if (GXLCodec.getNodesCount(d) < 2) {
-				MessageDialog.openInformation(window.getShell(), "No friends are connected", "No friends are connected");
+				MessageDialog.openInformation(window.getShell(), "No friends are connected",
+						"No friends are connected at the moment. Please try again later.");
 				return;
 			}
 			
