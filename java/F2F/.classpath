@@ -12,5 +12,6 @@
 	<classpathentry kind="lib" path="/sip-communicator/lib/bundle/junit.jar"/>
 	<classpathentry kind="lib" path="lib/jstun-0.6.1.jar"/>
 	<classpathentry kind="con" path="org.eclipse.jdt.junit.JUNIT_CONTAINER/3"/>
+	<classpathentry kind="lib" path="lib/gxl.jar"/>
 	<classpathentry kind="output" path="build/classes"/>
 </classpath>
