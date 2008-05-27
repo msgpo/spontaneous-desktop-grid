@@ -79,9 +79,22 @@
 			/>
 			<copy todir="${scPath}" 
 				file="${basedir}/conf/F2FComputing.properties"/>
+			
+			<!-- copy native drivers -->
+			<copy todir="${scPath}/lib/native/windows">
+				<fileset dir="lib/native/windows"/>
+			</copy>
 		</target>
 	
 		<target name="rebuild" depends="clean, make" >
+		</target>
+	
+		<!-- generate jar for rmi client -->
+		<target name="client_jar">
+			 <jar destfile="${scPath}/sc-bundles/f2fgathererrmi.jar"
+			       basedir="${tmpBuildPath}/classes"
+			       includes="ee/ut/f2f/gatherer/rmi/IF2FGatherer.class,ee/ut/f2f/gatherer/rmi/GXLConstants.class"
+			  />
 		</target>
 	
 	<!-- End: Targets -->
