@@ -3,6 +3,7 @@ package ee.ut.f2f.comm.sc.im;
 import org.osgi.framework.BundleActivator;
 import org.osgi.framework.BundleContext;
 
+import ee.ut.f2f.gatherer.Gatherer;
 import ee.ut.f2f.ui.F2FComputingGUI;
 import ee.ut.f2f.util.F2FProperties;
 
@@ -23,6 +24,7 @@ public class Activator implements BundleActivator {
 		//F2FComputing.initiateF2FComputing();
 		// init SIP Communicator stuff
 		SipIMCommunicationProvider.initiateSipIMCommunicationProvider(context);
+		Gatherer.getInstance().initialize(context);
 	}
 	
 	/*
