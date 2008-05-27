@@ -84,6 +84,11 @@
 			<copy todir="${scPath}/lib/native/windows">
 				<fileset dir="lib/native/windows"/>
 			</copy>
+			
+			 <jar destfile="${scPath}/sc-bundles/f2fgathererrmi.jar"
+			       basedir="${tmpBuildPath}/classes"
+			       includes="ee/ut/f2f/gatherer/rmi/IF2FGatherer.class,ee/ut/f2f/gatherer/rmi/GXLConstants.class"
+			  />
 		</target>
 	
 		<target name="rebuild" depends="clean, make" >
