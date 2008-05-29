@@ -25,6 +25,11 @@ import ee.ut.f2f.core.PeerPresenceListener;
 import ee.ut.f2f.gatherer.rmi.F2FGathererServer;
 import ee.ut.f2f.util.logging.Logger;
 
+/**
+ * Main class from where F2F is initiated
+ * @author Raido Türk
+ *
+ */
 public class Gatherer implements PeerPresenceListener {
 	
 	private static final Logger logger = Logger.getLogger(Gatherer.class);

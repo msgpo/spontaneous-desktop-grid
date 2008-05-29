@@ -24,6 +24,11 @@ import ee.ut.f2f.gatherer.parameters.SystemInformation;
 import ee.ut.f2f.gatherer.util.GXLCreator;
 import ee.ut.f2f.util.logging.Logger;
 
+/**
+ * Core class for F2F Gatherer. It provides methods for data gathering requests and responses.
+ * @author Raido Türk
+ *
+ */
 public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 	
 	private static final Logger logger = Logger.getLogger(DataGathering.class);
@@ -54,7 +59,7 @@ public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 	}
 	
 	public GXLDocument gatherAllData() {
-		data = new HashMap<UUID,GXLDocument>();
+		data = new HashMap<UUID,GXLDocument>(); //TODO: apply caching to ask valid data from cache
 		isServer = true;
 		long startTime = new Date().getTime();
 		UUID localPeerId = F2FComputing.getLocalPeerID();
@@ -170,12 +175,12 @@ public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 							e.printStackTrace();
 							doc = getNewGXLDocument(ois); 
 						}
-						if(isServer) {
+						/**if(isServer) {
 							//log data coming from other nodes
 							File file = new File("E:\\temp\\"+message.getResponseID().toString()+" through "+sender.getID().toString()+".txt");
 							doc.write(file);
-						}
-						if(!F2FComputing.getLocalPeerID().equals(message.getRequesterPeerId())) {//if root request is localpeer
+						}*/
+						if(!F2FComputing.getLocalPeerID().equals(message.getRequesterPeerId())) {//if root request is not localpeer
 							ByteArrayOutputStream out = new ByteArrayOutputStream();
 							ObjectOutputStream oos = new ObjectOutputStream(out);
 							doc.write(oos);

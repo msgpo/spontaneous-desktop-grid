@@ -35,12 +35,10 @@ public class F2FGathererServer implements IF2FGatherer {
 		ByteArrayOutputStream out = new ByteArrayOutputStream();
 		ObjectOutputStream oos = new ObjectOutputStream(out);
 		doc.write(oos);
-		//getGXLDocument().write(oos);
 		return out.toByteArray();
 	}
 
 	public static void main(String[] args) throws Exception{
-		//ei tea kui vajalik see osa on
         if (System.getSecurityManager() == null) {
             System.setSecurityManager(new SecurityManager());
         }

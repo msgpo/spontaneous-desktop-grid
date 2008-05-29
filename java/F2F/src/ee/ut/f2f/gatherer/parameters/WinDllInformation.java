@@ -10,8 +10,7 @@ import ee.ut.f2f.gatherer.util.Constants;
  */
 public class WinDllInformation {
 
-	private native void gatherSystemInformation();
-	private native WindowsAttributes findData(WindowsAttributes attr);
+	private native WindowsAttributes findWinData(WindowsAttributes attr);
 	
 	public WinDllInformation() {
 		System.loadLibrary(Constants.WINDOWS_DLL_NAME.getName());
@@ -19,7 +18,7 @@ public class WinDllInformation {
 	
 	public WindowsAttributes gatherInformationFromDll() {
 		WindowsAttributes atr2 = new WindowsAttributes();
-		WindowsAttributes atr = new WinDllInformation().findData(atr2);
+		WindowsAttributes atr = new WinDllInformation().findWinData(atr2);
 		return atr;
 	}
 	

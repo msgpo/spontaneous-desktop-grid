@@ -13,12 +13,10 @@ public class WindowsAttributes {
 	long totalPagingFile;
 	long freePagingFile;
 	long totalVirtualMemory;
-	long freeVirtualMemory;
-	
-	//long totalDiskSpace;
-	//long freeDiskSpace;
-	
-	String windowsVersion;
+	long freeVirtualMemory;	
+	long totalDiskSpace;
+	long freeDiskSpace;
+
 
 	/**
 	 * @return the memoryLoad
@@ -72,24 +70,15 @@ public class WindowsAttributes {
 	/**
 	 * @return the totalDiskSpace
 	 */
-	//public long getTotalDiskSpace() {
-		//return totalDiskSpace;
-	//}
+	public long getTotalDiskSpace() {
+		return totalDiskSpace;
+	}
 
 	/**
 	 * @return the freeDiskSpace
 	 */
-	//public long getFreeDiskSpace() {
-		//return freeDiskSpace;
-	//}
-
-	/**
-	 * @return the windowsVersion
-	 */
-	public String getWindowsVersion() {
-		return windowsVersion;
+	public long getFreeDiskSpace() {
+		return freeDiskSpace;
 	}
-	
-	
 
 }
