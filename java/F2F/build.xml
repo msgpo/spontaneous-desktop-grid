@@ -59,19 +59,33 @@
 				>
 				<classpath refid="task.classpath"/>
 		  	</javac>
+			
+			<!-- generate JNI header file -->
+			<javah force="yes" classpath="${tmpBuildPath}/classes" outputFile="src/native/windows/windowsinf.h">
+				<class name="ee.ut.f2f.gatherer.parameters.WinDllInformation"/>
+			</javah>
+			
+			<javah force="yes" classpath="${tmpBuildPath}/classes" outputFile="src/native/linux/linuxinf.h">
+				<class name="ee.ut.f2f.gatherer.parameters.LinuxSoInformation"/>
+			</javah>
 	
 			<!-- Include the source code in the jar (HACK! this includes also a picture!) -->
 			<copy todir="${tmpBuildPath}/classes">
-			    <fileset dir="${basedir}/src"/>
+			    <fileset dir="${basedir}/src">
+			    	<exclude name="native/**"/>	
+			    </fileset>
 			</copy>
-				
+			
 			<jar 
 				basedir="${tmpBuildPath}/classes"
 				destfile="${tmpBuildPath}/F2F.jar"
 			/>
 			<copy todir="${tmpBuildPath}/lib">
-			    <fileset dir="${basedir}/lib"/>
+			    <fileset dir="${basedir}/lib">
+			    	<exclude name="native/**"/>
+			    </fileset>
 			</copy>
+
 			<jar 
 				basedir="${tmpBuildPath}"
 				destfile="${f2fJarPath}"
