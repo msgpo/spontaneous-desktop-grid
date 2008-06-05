@@ -28,7 +28,7 @@ import net.sourceforge.gxl.GXLValue;
 
 /**
  * 
- * @author Raido Türk
+ * @author Raido TÃ¼rk
  *
  */
 public class GXLCreator {

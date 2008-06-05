@@ -2,7 +2,7 @@ package ee.ut.f2f.gatherer.util;
 
 /**
  * Enums used elsewhere in application
- * @author Raido Türk
+ * @author Raido TÃ¼rk
  *
  */
 public enum Constants {

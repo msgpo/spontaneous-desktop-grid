@@ -2,7 +2,7 @@ package ee.ut.f2f.gatherer.model;
 
 /**
  * 
- * @author Raido Türk
+ * @author Raido TÃ¼rk
  *
  */
 public class WindowsAttributes {

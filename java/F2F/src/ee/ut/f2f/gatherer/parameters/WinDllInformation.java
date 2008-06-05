@@ -5,7 +5,7 @@ import ee.ut.f2f.gatherer.util.Constants;
 
 /**
  * 
- * @author Raido Türk
+ * @author Raido TÃ¼rk
  *
  */
 public class WinDllInformation {

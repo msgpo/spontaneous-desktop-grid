@@ -27,7 +27,7 @@ import ee.ut.f2f.util.logging.Logger;
 
 /**
  * Main class from where F2F is initiated
- * @author Raido Türk
+ * @author Raido TÃ¼rk
  *
  */
 public class Gatherer implements PeerPresenceListener {

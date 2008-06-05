@@ -26,7 +26,7 @@ import ee.ut.f2f.util.logging.Logger;
 
 /**
  * Core class for F2F Gatherer. It provides methods for data gathering requests and responses.
- * @author Raido Türk
+ * @author Raido TÃ¼rk
  *
  */
 public class DataGathering implements F2FMessageListener, PeerPresenceListener{
@@ -175,11 +175,6 @@ public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 							e.printStackTrace();
 							doc = getNewGXLDocument(ois); 
 						}
-						/**if(isServer) {
-							//log data coming from other nodes
-							File file = new File("E:\\temp\\"+message.getResponseID().toString()+" through "+sender.getID().toString()+".txt");
-							doc.write(file);
-						}*/
 						if(!F2FComputing.getLocalPeerID().equals(message.getRequesterPeerId())) {//if root request is not localpeer
 							ByteArrayOutputStream out = new ByteArrayOutputStream();
 							ObjectOutputStream oos = new ObjectOutputStream(out);
@@ -200,7 +195,6 @@ public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 				synchronized(this.data) {
 					existingNodeInfo = this.data.get(message.getResponseID());
 					if(existingNodeInfo != null){
-						System.out.println("üritan uuendada node "+message.getResponseID()+" infot");
 						existingNodeInfo = GXLCreator.extractConnectionsIntoExistingDoc(existingNodeInfo, doc);
 						this.data.put(message.getResponseID(), existingNodeInfo);
 						//add connection data to node 

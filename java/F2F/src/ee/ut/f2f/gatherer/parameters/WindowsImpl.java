@@ -6,7 +6,7 @@ import net.sourceforge.gxl.GXLDocument;
 
 /**
  * Microsoft Windows Implementation
- * @author Raido Türk
+ * @author Raido TÃ¼rk
  *
  */
 public class WindowsImpl extends SystemInformation{

@@ -4,7 +4,7 @@ import net.sourceforge.gxl.GXLDocument;
 
 /**
  * Abstract system information gathering class
- * @author Raido Türk
+ * @author Raido TÃ¼rk
  *
  */
 public abstract class SystemInformation {
