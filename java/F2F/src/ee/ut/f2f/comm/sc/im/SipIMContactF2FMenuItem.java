@@ -56,4 +56,9 @@ class SipIMContactF2FMenuItem
     {
         return null;
     }
+
+    public int getPositionIndex()
+    {
+        return -1;
+    }
 }

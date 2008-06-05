@@ -68,7 +68,7 @@ public class Gatherer implements PeerPresenceListener {
 		DataGathering.getInstance();
 		
 		try {
-			F2FGathererServer.main(null);
+			//F2FGathererServer.main(null);
 		} catch (Exception e) {logger.error("error when starting RMI server", e);}
 		
 		

@@ -87,4 +87,10 @@ public class F2FMultiProtocolProviderFactory
 	public boolean uninstallAccount(AccountID accountID) {
 		return false;
 	}
+
+    @Override
+    public void modifyAccount(ProtocolProviderService protocolProvider, Map accountProperties)
+        throws NullPointerException
+    {
+    }
 }

@@ -90,4 +90,9 @@ class SipIMChatF2FButton
     {
         return null;
     }
+
+    public int getPositionIndex()
+    {
+        return -1;
+    }
 }
