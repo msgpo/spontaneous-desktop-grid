@@ -43,7 +43,7 @@ Checkout SIP Communicator (SC) from the SC SVN repository or download latest ver
 
 == apply patch to SC project ==
 
- # apply the patch file "Sip Communicator patch.txt" as a patch to SC project in Eclipse (project's context menu -> Team -> Apply patch)
+ # apply the patch file "Sip Communicator patch.txt" as a patch to SC project in Eclipse (project's context menu -> Team -> Apply patch), apply with a fuzziness of 16
  # build SC
  
 == compile ==
