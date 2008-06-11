@@ -11,7 +11,7 @@ public class LinuxSoInformation {
 		System.loadLibrary(Constants.LINUX_SO_NAME.getName());
 	}
 	
-	public LinuxAttributes gatherInformationFromDll() {
+	public LinuxAttributes gatherInformationFromSo() {
 		LinuxAttributes atr2 = new LinuxAttributes();
 		LinuxAttributes atr = new LinuxSoInformation().findData(atr2);
 		return atr;

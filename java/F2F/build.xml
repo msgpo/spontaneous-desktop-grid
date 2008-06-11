@@ -99,6 +99,11 @@
 				<fileset dir="lib/native/windows"/>
 			</copy>
 			
+			<!-- copy native drivers -->
+			<copy todir="${scPath}/lib/native/linux">
+				<fileset dir="lib/native/linux"/>
+			</copy>
+			
 			 <jar destfile="${scPath}/sc-bundles/f2fgathererrmi.jar"
 			       basedir="${tmpBuildPath}/classes"
 			       includes="ee/ut/f2f/gatherer/rmi/IF2FGatherer.class,ee/ut/f2f/gatherer/rmi/GXLConstants.class"

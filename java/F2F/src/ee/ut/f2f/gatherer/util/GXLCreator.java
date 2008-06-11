@@ -8,6 +8,7 @@ import java.util.Map;
 import java.util.Properties;
 import java.util.UUID;
 
+import ee.ut.f2f.gatherer.model.LinuxAttributes;
 import ee.ut.f2f.gatherer.model.WindowsAttributes;
 import ee.ut.f2f.gatherer.rmi.GXLConstants;
 
@@ -81,6 +82,29 @@ public class GXLCreator {
 		}
 		try {
 			//iterate over all Windows API declared methods
+			for(int i = 0;i < atr.getClass().getDeclaredMethods().length; i++) {
+				Method method = atr.getClass().getDeclaredMethods()[i];
+				Object val = method.invoke(atr, (Object[])null); 
+				node.setAttr(method.getName().replaceFirst("get", "").toLowerCase(), new GXLString(String.valueOf(val)));
+			}
+		} catch(Exception e) {
+			e.printStackTrace();
+		}
+		return doc;
+	}
+	
+	
+	public static GXLDocument addLinuxAttributes(GXLDocument doc, LinuxAttributes atr) {
+		GXLGraph graph = extractGXLGraph(doc);
+		GXLNode node = null;
+		for(int i = 0; i < graph.getGraphElementCount(); i++) {
+			GXLGraphElement el = (GXLGraphElement) graph.getGraphElementAt(i);
+			if (el instanceof GXLNode) {
+				node = (GXLNode)el;
+			}
+		}
+		try {
+			//iterate over all Linux declared methods
 			for(int i = 0;i < atr.getClass().getDeclaredMethods().length; i++) {
 				Method method = atr.getClass().getDeclaredMethods()[i];
 				Object val = method.invoke(atr, (Object[])null); 
