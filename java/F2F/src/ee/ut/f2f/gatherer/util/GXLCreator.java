@@ -354,7 +354,6 @@ public class GXLCreator {
 	private static GXLGraph removeUnNecessaryEdges(GXLGraph rootGraph) {
 		if(rootGraph != null) {
 			int count = rootGraph.getChildCount();
-			System.out.println("final doc child count: "+count);
 			for(int i = 0; i < count; i++) {
 				GXLElement el = rootGraph.getChildAt(i);
 				if(el instanceof GXLEdge) {
@@ -373,9 +372,9 @@ public class GXLCreator {
 	
 	/**
 	 * Checks if current named node already exists in GXLGraph
-	 * @param id
-	 * @param rootGraph
-	 * @return
+	 * @param id node name
+	 * @param rootGraph graph from node is being searched
+	 * @return <code>true</code> if current named node exists, </code>false</code> otherwise
 	 */
 	private static boolean currentNamedNodeExists(String id, GXLGraph rootGraph) {
 		int count = rootGraph.getGraphElementCount();
@@ -401,19 +400,18 @@ public class GXLCreator {
 				GXLAttr cons = node.getAttr(GXLConstants.ATTR_NAME_CONNECTION.getName());
 				if(cons != null) {
 					try {
-					GXLAttr toWhom = node.getAttr(Constants.EDGE_WITH_WHOM_ATTR.getName());
-					System.out.println("edge between "+node.getID()+" and "+((GXLString)toWhom.getValue()).getValue());
-					GXLNode oldNode = findNodeFromDoc(currentDoc,node.getID());
-					GXLAttr oldCons = oldNode.getAttr(GXLConstants.ATTR_NAME_CONNECTION.getName());
-					GXLNode clonedNode = null;
-					if(oldCons != null) {
-						System.out.println("leidsin vanad connectionid ka");
-						clonedNode = createNewNodeFromNewAndExistingConnections(oldNode,node);
-					} else {
-						clonedNode = cloneConnectionsNode(node);
-					}
-					currentDocGraph.remove(oldNode);
-					currentDocGraph.add(clonedNode);
+						GXLAttr toWhom = node.getAttr(Constants.EDGE_WITH_WHOM_ATTR.getName());
+						System.out.println("edge between "+node.getID()+" and "+((GXLString)toWhom.getValue()).getValue());
+						GXLNode oldNode = findNodeFromDoc(currentDoc,node.getID());
+						GXLAttr oldCons = oldNode.getAttr(GXLConstants.ATTR_NAME_CONNECTION.getName());
+						GXLNode clonedNode = null;
+						if(oldCons != null) {
+							clonedNode = createNewNodeFromNewAndExistingConnections(oldNode,node);
+						} else {
+							clonedNode = cloneConnectionsNode(node);
+						}
+						currentDocGraph.remove(oldNode);
+						currentDocGraph.add(clonedNode);
 					} catch(Exception e) {
 						e.printStackTrace();
 					}

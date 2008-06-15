@@ -10,7 +10,7 @@ import java.util.UUID;
 import ee.ut.f2f.core.F2FPeer;
 
 /**
- * 
+ * F2F Gatherer specific messages
  * @author Raido Türk
  *
  */

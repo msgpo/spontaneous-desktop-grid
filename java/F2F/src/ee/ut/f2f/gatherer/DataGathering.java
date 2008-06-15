@@ -204,7 +204,7 @@ public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 				}
 			//}			
 		} catch (Exception e) {
-			
+			logger.error("Exception occured: ",e);
 		}
 		return doc;
 	}

@@ -49,7 +49,6 @@ public class Gatherer implements PeerPresenceListener {
 		this.bundleContext = bc;
 		F2FComputing.addPeerPresenceListener(this);
 		
-		//FIXME: temp hack for testing to find out all F2F friends from contact list
 		if (getMetaContactListService() != null)
 		{
 			MetaContactGroup group = getMetaContactListService().getRoot();
@@ -59,7 +58,7 @@ public class Gatherer implements PeerPresenceListener {
 			findContacts(group.getContactGroups());
 			for(Iterator it = contacts.iterator(); it.hasNext(); ) {
 				Contact contact = (Contact) it.next();
-				SipIMCommunicationProvider.getInstance().makeF2FTest(contact); //FIXME: hack to determine F2F capable contacts
+				//SipIMCommunicationProvider.getInstance().makeF2FTest(contact); //FIXME: hack to determine F2F capable contacts
 			}
 		}
 
@@ -107,8 +106,8 @@ public class Gatherer implements PeerPresenceListener {
 	}
 	
 	/**
-	 * 
-	 * @return
+	 * Returns all peer accounts
+	 * @return Map of accounts
 	 */
 	public Map<String,List<String>> returnAllPeerAccounts() {
 		Map<String,List<String>> peerAccounts = new HashMap<String,List<String>>();
