@@ -9,6 +9,11 @@ import net.sourceforge.gxl.GXLDocument;
  */
 public abstract class SystemInformation {
 	
+	/**
+	 * Returns appropriate instance to operating system
+	 * @param osName - operating system from <code>os.name</code> property
+	 * @return according implementation or RuntimeException is thrown if no match is found
+	 */
 	public static SystemInformation getInstance(String osName) {
 		if (osName.startsWith("windows")) {
 			return new WindowsImpl();

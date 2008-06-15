@@ -12,10 +12,13 @@ public enum Constants {
 	 */
 	WINDOWS_DLL_NAME("f2fwininf"),
 	
+	/**
+	 * Linux SO file name
+	 */
 	LINUX_SO_NAME("f2flinuxinf"),
 	
 	FRIEND_DATA_CACHE_VALID_TIME_IN_MINUTES("60"),
-	
+
 	IS_DUMMY_NODEINFO_ATTR("isDummyNodeInfo"),
 	
 	EDGE_WITH_WHOM_ATTR("edgeWithWhom");

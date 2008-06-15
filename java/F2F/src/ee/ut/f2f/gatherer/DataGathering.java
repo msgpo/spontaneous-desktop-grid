@@ -214,15 +214,7 @@ public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 	}
 	
 	private boolean isCacheStillValid(UUID requesterId, UUID id) {
-		FriendsDataSituation friendsData = dataRequests.get(requesterId);
-		if (friendsData == null)
-			return false;
-		Timestamp nodeSent = friendsData.dataSent.get(id);
-		if(nodeSent == null)
-			return false;
-		long currentTime = System.currentTimeMillis();
-		//if(currentTime-nodeSent.getTime() >)  than valid cache time
-			//return false;
+		//TODO: to be implemented
 
 		return true;
 	}
@@ -230,11 +222,8 @@ public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 	public void peerContacted(F2FPeer peer) {
 		System.out.println("found peer: "+peer.getDisplayName());
 		if(requestInProgress) { // if only request in progress then send data gathering request to peer
-			System.out.println("sending data gathering request to peer");
 			Map<String,List<String>> localPeerAccounts = localPeerProvidersToFriend();
 			
-			//FIXME: replace with real request root id
-			//FIXME: replace with real start time
 			long serverRequestStartTime = 0;
 			
 			F2FDataGatheringRequestMessage request = 
@@ -325,7 +314,6 @@ public class DataGathering implements F2FMessageListener, PeerPresenceListener{
 						F2FDataGatheringRequestMessage request = new F2FDataGatheringRequestMessage(requester, localPeerAccounts, requestHierarchy, serverRequestStartTime);
 						request.addPeerToRequestHierarchy(F2FComputing.getLocalPeerID());
 						try {
-							//System.out.println("sending Data gathering request to friend: "+peer.getID().toString());
 							peer.sendMessage(request);
 							reqSent++;
 						} catch (CommunicationFailedException e) {

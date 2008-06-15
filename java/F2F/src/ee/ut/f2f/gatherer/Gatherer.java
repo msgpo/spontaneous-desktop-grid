@@ -49,7 +49,6 @@ public class Gatherer implements PeerPresenceListener {
 		this.bundleContext = bc;
 		F2FComputing.addPeerPresenceListener(this);
 		
-		
 		//FIXME: temp hack for testing to find out all F2F friends from contact list
 		if (getMetaContactListService() != null)
 		{
@@ -68,7 +67,7 @@ public class Gatherer implements PeerPresenceListener {
 		DataGathering.getInstance();
 		
 		try {
-			//F2FGathererServer.main(null);
+			F2FGathererServer.main(null);
 		} catch (Exception e) {logger.error("error when starting RMI server", e);}
 		
 		
@@ -121,7 +120,6 @@ public class Gatherer implements PeerPresenceListener {
 				for (int i = 0; i < protocolProviderRefs.length; i++) {
 					ProtocolProviderService provider = (ProtocolProviderService) getBundleContext()
 							.getService(protocolProviderRefs[i]);
-					//System.out.println(provider.getAccountID().getAccountAddress());
 					List<String> providerAccounts = (List<String>)peerAccounts.get(provider.getProtocolDisplayName());
 					if(providerAccounts == null)
 						providerAccounts = new ArrayList<String>();
@@ -137,6 +135,11 @@ public class Gatherer implements PeerPresenceListener {
 		return null;
 	}
 	
+	/**
+	 * Finds connections with given peer accounts
+	 * @param requesterAccounts peer's accounts to be compared with
+	 * @return list of Protocols that current peer in his/her contactlist 
+	 */
 	public List<String> findConnectionsWithPeer(Map<String,List<String>> requesterAccounts) {
 		List<String> connections = new ArrayList<String>();
 		if (getMetaContactListService() != null)

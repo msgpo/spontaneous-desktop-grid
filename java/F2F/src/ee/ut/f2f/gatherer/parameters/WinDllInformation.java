@@ -4,7 +4,7 @@ import ee.ut.f2f.gatherer.model.WindowsAttributes;
 import ee.ut.f2f.gatherer.util.Constants;
 
 /**
- * 
+ * Windows specific gathering
  * @author Raido Türk
  *
  */

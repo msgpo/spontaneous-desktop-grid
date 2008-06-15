@@ -2,6 +2,11 @@ package ee.ut.f2f.gatherer;
 
 import java.util.Date;
 
+/**
+ * Interface for bandwidth message implementation
+ * @author Raido Türk
+ *
+ */
 public interface IF2FMessageTiming {
 	
 	public Date getRequestDateSent();

@@ -28,7 +28,7 @@ import net.sourceforge.gxl.GXLString;
 import net.sourceforge.gxl.GXLValue;
 
 /**
- * 
+ * GXL document specific functionality
  * @author Raido Türk
  *
  */

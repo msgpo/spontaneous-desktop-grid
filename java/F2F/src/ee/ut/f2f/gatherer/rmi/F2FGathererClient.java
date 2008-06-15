@@ -8,6 +8,11 @@ import java.rmi.registry.Registry;
 
 import net.sourceforge.gxl.GXLDocument;
 
+/**
+ * Client test
+ * @author Raido Türk
+ *
+ */
 public class F2FGathererClient {
 
 	public static void main(String args[]) {

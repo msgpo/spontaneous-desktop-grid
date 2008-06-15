@@ -9,6 +9,11 @@ import java.util.UUID;
 
 import ee.ut.f2f.core.F2FPeer;
 
+/**
+ * 
+ * @author Raido Türk
+ *
+ */
 public class F2FGathererMessage implements IF2FMessageTiming, Serializable {
 	
 	final static int BANDWITH_TEST_MSG_SIZE = 65535;
