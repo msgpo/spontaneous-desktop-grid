@@ -10,17 +10,15 @@
 
 = SIP Communicator =
 
-== Checkout or download ==
+== Checkout ==
 
-Checkout SIP Communicator (SC) from the SC SVN repository or download latest version.
+Checkout SIP Communicator (SC) from the SC SVN repository, revision 3645.
 
  * for checkout see [http://www.sip-communicator.org/index.php/Development/VersionControl SC SVN page]
    # you need to become observer of SC project (send request via dev.java.net and wait for the project leader confirmation, may take time)
    # in Eclipse open https://sip-communicator.dev.java.net/svn/sip-communicator SVN repository
-   # checkout trunk (may take up to 10 minutes)
+   # checkout trunk (may take up to 10 minutes), revision 3645
      * it is suggested you rename it to 'sip-communicator'
- * *or* download latest version
-   # the latest nightly build works fine
 
 == Configure and compile ==
 
