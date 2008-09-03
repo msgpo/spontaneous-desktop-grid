@@ -1,0 +1,110 @@
+- Applications
+-- game
+-- Doug
+--- PCG
+- multi messenger support
+-- pidgin
+-- sip-communicator
+-- Skype
+-- Miranda
+-- Trillian
+-- MSN
+- security
+-- encryption
+-- authentitaction
+-- client: sandboxing + configuring
+- inheritence (F2F2F)
+-- trust concepts
+-- topology
+- multi programming language support
+-- java 
+-- python
+-- c#
+-- c/c++
+-- oz
+-- matlab
+-- scilab
+-- excel 2007 (distr. excel)
+- ps3 support
+- gpu support
+- reliable UDP
+- improve hole punching
+- review core/core unstatic
+- profiling
+- testing
+- headless client -> artjom/andres
+- resource broker -> andres
+- f2f on mobile phone -> sven
+- provide dht or distributed data storage
+- provide filesharing between peers
+
+More ideas:
+- f2f only as network overlay, different frmeworks for different programming languages
+- security, topology, resource brokering (and selling) built in
+- client execution environment based on llvm
+- network layer written in C
+
+New architecture:
+
+network layer -interfaces to-> IM adapter -is plugin of-> IM
+   ^                               |
+   |                             starts/triggers local execution in
+  uses                             |
+   |                               v
+Interpreter(VM -> llvm?)/Configurator
+Monitoring
+[use another abstraction layer between IM adapter and network/interpreter ]
+
+F2F messages must be filtered in the IM adapter. Every F2F mesage received has to be stored and made available for the receiveMessage function (maybe other direction and better store in network layer module?)
+
+- network layer: written in C, no threading, optimized for speed (don't copy things, if not necessary), with the following interface
+-- imported methods:
+--- (String message, F2FPeerId id) receiveMessage()
+--- sendMessage( F2FPeerId id, String message )
+-- some methods to add and support gui functionality (these are actually exported)
+--- F2FTaskId createF2FChat() / F2FTaskId is a unique String (should contain author and creation time)
+--- addPeer( F2FTaskId taskid, F2FPeerId id )
+--- removePeer( F2FTaskId taskid, F2FPeerId id )
+- F2FPeerId (could be maybe also a list of these + an alias name, eventualy a routing information should be saved here, if the friend is not directly accessible, maybe we also need its public key here) consists of an address String like user@jabber.org (or an icq number) and a protocol identifier (like icq, aim, msn, jabber, yahoo)
+- maybe the topology stuff should also be done in the network layer, however, it could be also in the Interpreter layer
+- export to the interpreter:
+-- networkstream to F2FPeer
+
+- Interpreter/Configurator
+-- startConfigurator
+-- startF2FTask( F2FTaskId taskid, interpreter, taskfile )
+
+
+==========
+Let's call F2F Network layer the F2F socket provider (F2FSoPro). How should it be used?
+Will be called now F2FCore. The middle-layer will be called F2FAdapter.
+- F2FPeer createF2FPeer( ) // F2FPeer is a number or id-string to reference
+    // send and receive are non blocking methods, which must be implemented and will be used for doing the reliable setup in the F2F Socket provider
+- void send( F2FPeer peer, message ) // this send-method will be called in F2FGroup.send or F2FPeer.send and must be given as a parameter there
+- int notifyKernelWithReceived( F2FPeer fromPeer, message )
+- F2FGroup createF2FGroup( groupname ) // F2F Group is something like a collection of all F2F Sockets
+- F2FGroup.addPeer( peerid )
+- F2FGroup.removePeer( peerid )
+- peerid[] F2FGroup.getPeerList
+- F2FGroup.send( message, sendMethodIM )
+- F2FPeer.send( message, sendMethodIM )
+- int F2FGroup.receive( *peerid, *message, receiveSize ) // sets peerid and message, returns how many of these pairs are available - if nothing was received peerid and message are empty and the return value is -1 // receive may have to be called often, if kernel does not run as thread
+
+
+=============
+Papers
+=============
+
+1. The spontanous Desktop Grid - Usecases and Requirements Analysis
+Comparison with Skype, ease of use. Nat Traversal, General stuff
+Comparison to BOINC and P2P Grid
+Memory, DHT, etc
+
+2. UPNP Hole punching in java
+
+3. The role of topology in p2p computing networks
+
+4. Virtualization in F2F, F2F TNG
+Proposal for new F2F framework
+
+5. Something on the PS3s?

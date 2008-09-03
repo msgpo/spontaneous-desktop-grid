@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: main.c
+ *   Filename: f2fcore.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -21,14 +21,31 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
  *   Description:
- *   As F2FCore is not standalone, here is just some test-stuff for it.
+ *   This is the F2FCore interface implementation
  ***************************************************************************/
 
-#include <stdio.h>
+#include "f2fcore.h"
 
-int main()
-{
-	printf("Hello\n");
-	
-	return 0;
-}
+F2FPeer createF2FPeer();
+
+/** hand over messages from the IM program to the core */
+F2FError notifyCoreWithReceived( F2FPeer fromPeer, const F2FString message );
+
+F2FGroup createF2FGroup( groupname );
+
+F2FError F2FGroupAddPeer( F2FGroup group, F2FPeer peerid ); // Add the peer to the group
+
+F2FError F2FGroupRemovePeer( F2FGroup group, F2FPeer peerid ); // Remove peer from group
+
+/** Give a list of all peer-ids in a group */
+F2FSize F2FGroupPeerList( F2FGroup group, const F2FPeer ** peerlist);
+
+F2FError F2FGroupSend( F2FGroup group, F2FString message, SendMethodIM sendFuncPtr );
+
+F2FError F2FPeerSend( F2FPeer peer, F2FString message, SendMethodIM sendFuncPtr );
+
+// sets peerid and message, returns how many of these pairs are available - if nothing was received peerid and message are empty and the return value is -1 // receive may have to be called often, if kernel does not run as thread
+F2FSize F2FGroupReceive( F2FPeer *peerList, F2FString *messageList );
+/* check with F2FSizeValid */
+
+#endif /*F2FCORE_H_*/
