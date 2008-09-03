@@ -1,1 +1,0 @@
-/usr/bin/gcc     CMakeFiles/f2fcore.dir/main.o  -o f2fcore -rdynamic 
