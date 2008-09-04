@@ -26,12 +26,14 @@
 
 #include "f2fcore.h"
 
-/* Compute some values out of the constants */
-#define MaxPeersFieldSize (F2FMaxPeers+7)/8)
+/* Allocate all the necesary memory */
 
 
-
-F2FError createF2FPeer( /*out*/ F2FPeer *peer )
+/** Do the initialization - especially create a random seed and get your own PeerID 
+ * Must be called first.
+ * Gets the name of this peer (for example "Ulrich Norbisrath's peer") and the public key */
+F2FError f2fInit( const F2FString myName, const F2FString myPublicKey, 
+		const SendMethodIM sendFunc, /*out*/ F2FPeer *peer )
 {
 	return F2FErrOK;
 }
