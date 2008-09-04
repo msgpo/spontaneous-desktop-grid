@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fcore.h
+ *   Filename: f2fcommunicationprovider.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -21,17 +21,20 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
  *   Description:
- *   This is the F2FCore interface implementation
+ *   Control of the different communication providers.
  ***************************************************************************/
 
-#include "f2fcore.h"
+#ifndef F2FCOMMUNICATIONPROVIDER_H_
+#define F2FCOMMUNICATIONPROVIDER_H_
 
-/* Compute some values out of the constants */
-#define MaxPeersFieldSize (F2FMaxPeers+7)/8)
-
-
-
-F2FError createF2FPeer( /*out*/ F2FPeer *peer )
+/* static list with providers including their send and receive stuff*/ 
+/** every peer has this info (used by all providers) */
+typedef struct
 {
-	return F2FErrOK;
-}
+	int activeprovider; /** the active provider. The one over which data is send and from which data is received */
+	/** Local Ip number */
+	/** Ip number of router */
+	/** which providers are trying to connect, in which state are they ... */
+} F2FPeerCommunicationProviderInfo;
+
+#endif /*F2FCOMMUNICATIONPROVIDER_H_*/
