@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fcommunicationprovider.h
+ *   Filename: f2fconfig.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -20,13 +20,22 @@
  *   Free Software Foundation, Inc.,                                       
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
- *   Description:
- *   Control of the different communication providers.
+ *   Description: all config settings for the f2fcore
+ *   
  ***************************************************************************/
 
-#ifndef F2FCOMMUNICATIONPROVIDER_H_
-#define F2FCOMMUNICATIONPROVIDER_H_
+#ifndef F2FCONFIG_H_
+#define F2FCONFIG_H_
 
+/** Maximum length of name strings */
+#define F2FMaxNameLength 255
 
+/** Number of maximum known peers in one F2FCore */
+#define F2FMaxPeers 1024
 
-#endif /*F2FCOMMUNICATIONPROVIDER_H_*/
+/** Number of groups a peer can join */
+#define F2FMaxGroups 64
+
+/** Do we need a buffer length for send and receive buffers? */
+
+#endif /*F2FCONFIG_H_*/

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fcommunicationprovider.h
+ *   Filename: f2fgrouplist.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -20,13 +20,11 @@
  *   Free Software Foundation, Inc.,                                       
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
- *   Description:
- *   Control of the different communication providers.
+ *   Description: All around the groulist.
+ *   
  ***************************************************************************/
 
-#ifndef F2FCOMMUNICATIONPROVIDER_H_
-#define F2FCOMMUNICATIONPROVIDER_H_
+#ifndef F2FGROUPLIST_H_
+#define F2FGROUPLIST_H_
 
-
-
-#endif /*F2FCOMMUNICATIONPROVIDER_H_*/
+#endif /*F2FGROUPLIST_H_*/

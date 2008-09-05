@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fcommunicationprovider.h
+ *   Filename: f2fpeerlist.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -20,13 +20,28 @@
  *   Free Software Foundation, Inc.,                                       
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
- *   Description:
- *   Control of the different communication providers.
+ *   Description: all functions around the f2fpeerlist (adding deleting,
+ *                searching )
  ***************************************************************************/
 
-#ifndef F2FCOMMUNICATIONPROVIDER_H_
-#define F2FCOMMUNICATIONPROVIDER_H_
+#ifndef F2FPEERLIST_H_
+#define F2FPEERLIST_H_
+
+#include "f2fcore.h"
+
+/** add one peer to the list, return peer or NULL if no space left */
+F2FPeer * f2fPeerListAdd( F2FWord32 uidhi, F2FWord32 uidlo );
+
+/** remove a peer from the list */
+F2FError f2fPeerListRemove( F2FPeer *peer );
+
+/** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
+F2FPeer * f2fFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
+
+/** Find the nearest upper peer or the peer itself via the uid, return index
+ * If the list is empty or has one element which is higher than the current 0 will be returned.
+ * If it is higher than all peers the returned index equals the listsize */
+int findNearestUpperPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
 
 
-
-#endif /*F2FCOMMUNICATIONPROVIDER_H_*/
+#endif /* F2FPEERLIST_H_ */

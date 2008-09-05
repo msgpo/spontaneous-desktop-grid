@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fcommunicationprovider.h
+ *   Filename: f2fgrouplist.c
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -20,13 +20,12 @@
  *   Free Software Foundation, Inc.,                                       
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
- *   Description:
- *   Control of the different communication providers.
+ *   Description: All around the grouplist
+ *   
  ***************************************************************************/
 
-#ifndef F2FCOMMUNICATIONPROVIDER_H_
-#define F2FCOMMUNICATIONPROVIDER_H_
+#include "f2fcore.h"
+#include "f2fgrouplist.h"
 
-
-
-#endif /*F2FCOMMUNICATIONPROVIDER_H_*/
+/* Allocate all the necessary memory */
+static F2FGroup groupList[ F2FMaxGroups ];

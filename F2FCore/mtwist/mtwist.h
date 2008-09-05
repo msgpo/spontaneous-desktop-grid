@@ -134,15 +134,20 @@
 #endif /* INT_MAX */
 #endif /* MT_MACHINE_BITS */
 
+
 /*
  * Define an unsigned type that is guaranteed to be 32 bits wide.
  */
+#include <stdint.h> /* here we have the 32bit int [ulno] */
+#ifdef _STDINT_H
+typedef int32_t mt_u32bit_t;
+#else
 #if MT_MACHINE_BITS == 32
 typedef unsigned long	mt_u32bit_t;
 #else /* MT_MACHINE_BITS */
 typedef unsigned int	mt_u32bit_t;
 #endif /* MT_MACHINE_BITS */
-
+#endif /* _STDINT_H */
 
 /*
  * The following value is a fundamental parameter of the algorithm.

@@ -26,8 +26,37 @@
 
 #include <stdio.h>
 
+#include "f2fcore.h"
+#include "f2fpeerlist.h"
+
+F2FError mySendIM ( F2FWord32 localPeerID, F2FString message )
+{
+	printf("mySendIM sends: %s\n", message);
+	return F2FErrOK;
+}
+
 int main()
 {
+	char *test [2];
+	
+	char *test2 = "Hallo";
+	
+	test[1] = test2;
+	
+	F2FPeer *myPeerId;
+	
+	// f2fInit("ulnotes", "", &mySendIM, &myPeerId);
+	
+	f2fPeerListAdd(10,10);
+	f2fPeerListAdd(10,3);
+	f2fPeerListAdd(12,10);
+	f2fPeerListAdd(2,10);
+	f2fPeerListAdd(14,0);
+	
+	F2FPeer *testpeer = f2fFindPeer( 12, 10 );
+	
+	f2fPeerListRemove( testpeer );
+	
 	printf("Hello\n");
 	
 	return 0;
