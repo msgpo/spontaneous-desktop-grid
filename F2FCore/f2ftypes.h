@@ -37,12 +37,13 @@ typedef long F2FSize; // a length of something (is signed as it could be negativ
 
 /** Error return codes */
 typedef enum  {
-	F2FErrOK = 0,
-	F2FErrCreationFailed = -1,
-	F2FErrNotEnoughSeed = -2,
-	F2FErrInitNotCalled = -3,
-	F2FErrListEmpty = -4,
-	F2FErrNotFound = -5
+	F2FErrOK = 0, /** Successfull operation */
+	F2FErrCreationFailed = -1, /** an object could not be created */
+	F2FErrNotEnoughSeed = -2, /** Not enough input to create a seed */
+	F2FErrInitNotCalled = -3, /** init must be called first */
+	F2FErrListEmpty = -4, /** Trying to access an object from an empty list */
+	F2FErrNotFound = -5, /** Could not find the object searched for */
+	F2FErrListFull = -6, /** Not enough memory reserved to add this object */
 } F2FError;
 
 /** the unique identifier used in F2F 

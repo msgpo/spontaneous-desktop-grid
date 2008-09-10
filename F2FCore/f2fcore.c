@@ -89,16 +89,30 @@ F2FWord32 F2FRandom()
 /** As a next step, the user has to create a new F2FGroup, in which his intenden Job can be
  * computeted.
  * This group gets a name, which should be displayed in the invitation of clients (other peers). */
-F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup *group )
+F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group )
 {
 	if (! initWasCalled) return F2FErrInitNotCalled;
-	group->id.hi = 
-	group->id.lo = mts_lrand( &randomnessState );
-	group->name[ F2FMaxNameLength ] = 0; // Make sure string is terminated
-	strncpy( group->name, groupname, F2FMaxNameLength );
-	return F2FErrOK; 
+	*group = f2fGroupListCreate( groupname );
+	if( *group ) return F2FErrOK;
+	else return F2FErrListFull;
 }
 
+/** Finally friends (other peers) can be added to this group. This function triggers
+ * the registration to ask the specified peer to join a F2F Computing group 
+ * If we know his public key, we can send it as a challenge. He would then also get our publickey,
+ * which could be compared to a allready cached one, to create an own challenge, and later used to
+ * do encrypted and authenticated communication. Of course our own peerid from f2fInit is also
+ * included.
+ * - localPeerId will be the id used to send an IM message to this friend, it has to be managed
+ * in the middle layer
+ * - identifier can be the name in the addressbook or one of the addresses including the protocol,
+ * example: "test@jabber.xyz (XMPP)" 
+ * This function will call the SendMethodIP-function*/
+F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerId,
+		const F2FString identifier,	const F2FString otherPeersPublicKey )
+{
+	
+}
 
 
 

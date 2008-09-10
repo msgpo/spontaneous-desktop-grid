@@ -48,7 +48,7 @@ F2FError f2fInit( const F2FString myName, const F2FString myPublicKey,
 /** As a next step, the user has to create a new F2FGroup, in which his intenden Job can be
  * computeted.
  * This group gets a name, which should be displayed in the invitation of clients (other peers). */
-F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup *group );
+F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group );
 
 /** Finally friends (other peers) can be added to this group. This function triggers
  * the registration to ask the specified peer to join a F2F Computing group 
