@@ -111,6 +111,20 @@ F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group )
 F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerId,
 		const F2FString identifier,	const F2FString otherPeersPublicKey )
 {
+	/* Ask new peer, if he is f2f capable: send a challenge, save the challenge.
+	 * If the peer sends back the correct answer at one point, it is added as a peer */
+	/* The message, which is sent out as initial challenge contains the following:
+	 * Byte:
+	 *     1: Type of message (set to invite)
+	 *   2-4: reserved for later
+	 *  5-12: Group identifier
+	 * 13-20: Peer identifier of inviting peer
+	 * 21-28: Peer identifier offer (this is at the same time the challenge, so we make sure
+	 *        the invited peer should know this, when he answers (we need later to encrypt
+	 *        this with the public key of the invited peer)
+	 *    29: Group name length (max F2FMaxNameLength)
+	 *    30: Invitation message length (max F2FMaxNameLength)
+	 * 31- *: Group name and then invitation message */
 	
 }
 
