@@ -30,8 +30,7 @@
 
 #include "f2fconfig.h"
 #include "f2ftypes.h"
-
-#include "f2fcommunicationprovider.h"
+#include "f2fgroup.h"
 
 /** sendMethodIM is a non blocking method, which must be implemented and will be used for doing 
  * the reliable IM communication in F2FCore.
@@ -65,8 +64,6 @@ F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup *group );
 F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerId,
 		const F2FString identifier,	const F2FString otherPeersPublicKey );
 
-typedef long F2FSize; // a length of something (is signed as it could be negative in an error case)
-
 /** Will create a list of pointers to all the peers in a group, the list must have 
  * the size of maxsize and be a list of pointers, the last listentry might be null,
  * if smaller than maxsize, the actual size created in the list is also returned.
@@ -92,8 +89,7 @@ F2FError f2fGroupSendText( F2FGroup *group, F2FString message );
 
 /** Send data to a peer in this group */
 F2FError f2fGroupPeerSendData( F2FGroup *group, F2FPeer *peer, 
-		F2FString data, F2FWord32 dataLen,
-		F2FSendMethodIM sendFuncPtr );
+		F2FString data, F2FWord32 dataLen );
 
 /** gets peeridList and corresponding messageList,
  *  returns how many of these pairs are available
@@ -101,5 +97,8 @@ F2FError f2fGroupPeerSendData( F2FGroup *group, F2FPeer *peer,
  *  receive may have to be called often, if kernel does not run as thread */
 F2FSize f2fGroupReceive( F2FPeer *peerList, F2FString *messageList );
 /* check with F2FSizeValid */
+
+/** Return a random number from the seeded mersenne twister */
+F2FWord32 F2FRandom();
 
 #endif /*F2FCORE_H_*/

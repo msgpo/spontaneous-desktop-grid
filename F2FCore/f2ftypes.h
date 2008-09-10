@@ -33,6 +33,8 @@ typedef int32_t F2FWord32;
 
 typedef char *F2FString; // The string of F2F on C layer is just an array of characters terminated with 0
 
+typedef long F2FSize; // a length of something (is signed as it could be negative in an error case)
+
 /** Error return codes */
 typedef enum  {
 	F2FErrOK = 0,
@@ -70,13 +72,5 @@ typedef struct
 	F2FWord32 localPeerId; /** The id in the adapterlayer to reference how
 	 * to send via the IM channel */ 
 } F2FPeer;
-
-/** F2FGroup - a collection of peers solving one designated task (also 64bit random id) */
-typedef struct
-{
-	F2FUID id;
-	char name[F2FMaxNameLength+1]; /** The name of this group, does not need to be unique
-								   * might be something like: "Ulno's blender computing group" */	
-} F2FGroup;
 
 #endif /*F2FTYPES_H_*/

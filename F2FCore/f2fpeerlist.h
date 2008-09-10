@@ -27,12 +27,12 @@
 #ifndef F2FPEERLIST_H_
 #define F2FPEERLIST_H_
 
-#include "f2fcore.h"
+#include "f2ftypes.h"
 
 /** add one peer to the list, return peer or NULL if no space left */
 F2FPeer * f2fPeerListAdd( F2FWord32 uidhi, F2FWord32 uidlo );
 
-/** remove a peer from the list */
+/** remove a peer from the list, only use, when sure peer was removed from all groups!!! */
 F2FError f2fPeerListRemove( F2FPeer *peer );
 
 /** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
@@ -41,7 +41,7 @@ F2FPeer * f2fFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
 /** Find the nearest upper peer or the peer itself via the uid, return index
  * If the list is empty or has one element which is higher than the current 0 will be returned.
  * If it is higher than all peers the returned index equals the listsize */
-int findNearestUpperPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
+// static not accessible int findNearestUpperPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
 
 
 #endif /* F2FPEERLIST_H_ */

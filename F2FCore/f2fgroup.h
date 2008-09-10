@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fcommunicationprovider.h
+ *   Filename: f2fgroup.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -21,12 +21,33 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
  *   Description:
- *   Control of the different communication providers.
+ *   everything around the f2fgroup
  ***************************************************************************/
 
-#ifndef F2FCOMMUNICATIONPROVIDER_H_
-#define F2FCOMMUNICATIONPROVIDER_H_
+#ifndef F2FGROUP_H_
+#define F2FGROUP_H_
+
+#include "f2ftypes.h"
+#include "f2fgroup.h"
+
+/** F2FGroup - a collection of peers solving one designated task (also 64bit random id) */
+typedef struct
+{
+	F2FUID id;
+	char name[F2FMaxNameLength+1]; /** The name of this group, does not need to be unique
+								   * might be something like: "Ulno's blender computing group" */	
+	F2FPeer *sortedIdsList [ F2FMaxPeers ]; /** peers belonging to this group */
+	F2FSize listSize; /** current size of the sorted IDs list */
+} F2FGroup;
+
+/** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
+F2FPeer * f2fGroupFindPeer( const F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo );
+
+/** add one peer to the list, return peer or NULL if no space left */
+F2FError f2fGroupPeerListAdd( /* out */ F2FGroup *group, F2FPeer *peer );
+
+/** remove a peer from the list */
+F2FError f2fGroupPeerListRemove( F2FGroup *group, F2FPeer *peer );
 
 
-
-#endif /*F2FCOMMUNICATIONPROVIDER_H_*/
+#endif /*F2FGROUP_H_*/

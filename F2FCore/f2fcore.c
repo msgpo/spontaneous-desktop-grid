@@ -80,18 +80,25 @@ F2FError f2fInit( const F2FString myName, const F2FString myPublicKey,
 	return F2FErrOK;
 }
 
+/** Return a random number from the seeded mersenne twister */
+F2FWord32 F2FRandom()
+{
+	return mts_lrand( &randomnessState );
+}
+
 /** As a next step, the user has to create a new F2FGroup, in which his intenden Job can be
  * computeted.
  * This group gets a name, which should be displayed in the invitation of clients (other peers). */
 F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup *group )
 {
 	if (! initWasCalled) return F2FErrInitNotCalled;
-	group->id.hi = mts_lrand( &randomnessState );
+	group->id.hi = 
 	group->id.lo = mts_lrand( &randomnessState );
 	group->name[ F2FMaxNameLength ] = 0; // Make sure string is terminated
 	strncpy( group->name, groupname, F2FMaxNameLength );
 	return F2FErrOK; 
 }
+
 
 
 

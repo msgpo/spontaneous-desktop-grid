@@ -20,11 +20,27 @@
  *   Free Software Foundation, Inc.,                                       
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
- *   Description: All around the groulist.
+ *   Description: All around the grouplist.
  *   
  ***************************************************************************/
 
 #ifndef F2FGROUPLIST_H_
 #define F2FGROUPLIST_H_
+
+#include "f2ftypes.h"
+#include "f2fgroup.h"
+
+/** Try to find the exact group. If it does not exist, return NULL. Else return the peer */
+F2FGroup * f2fGroupListFindGroup( const F2FWord32 uidhi, const F2FWord32 uidlo );
+
+/** Create a new group - give it also a uid */
+F2FGroup * f2fGroupListCreate( const F2FString name );
+
+/** create a group in the list, return group in success or NULL if no space left */
+F2FGroup * f2fGroupListAdd( const F2FString name, const F2FWord32 hiuid, const F2FWord32 louid );
+
+/** remove a peer from the list */
+F2FError f2fGroupListRemove( F2FGroup *group );
+
 
 #endif /*F2FGROUPLIST_H_*/
