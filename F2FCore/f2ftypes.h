@@ -44,6 +44,7 @@ typedef enum  {
 	F2FErrListEmpty = -4, /** Trying to access an object from an empty list */
 	F2FErrNotFound = -5, /** Could not find the object searched for */
 	F2FErrListFull = -6, /** Not enough memory reserved to add this object */
+	F2FErrNothingAvail = -6, /** Not enough memory reserved to add this object */
 } F2FError;
 
 /** the unique identifier used in F2F 

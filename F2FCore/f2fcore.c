@@ -39,6 +39,10 @@ static int initWasCalled = 0; // this will be set if init was successful
 /** Static state vector for randomness of mersenne twister, this is global in this module */
 mt_state randomnessState;
 
+/** Send a nd receive buffers */
+static char sendBuffer[F2FMaxMessageSize];
+static char receiveBuffer[F2FMaxMessageSize];
+
 /** Do the initialization - especially create a random seed and get your own PeerID 
  * Must be called first.
  * Gets the name of this peer (for example "Ulrich Norbisrath's peer") and the public key */
@@ -97,6 +101,26 @@ F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group )
 	else return F2FErrListFull;
 }
 
+/** The message, which is sent out as initial challenge contains the following: */
+typedef struct
+{
+	unsigned char messagetype; /**    1: Type of message, must be set to invite */
+	char reserved[3];          /**  2-4: reserved for later */
+	F2FUID groupID;            /**  5-12: Group identifier, 
+									TODO: check if little/hi endian byte order matters here*/
+	F2FUID sourcePeerID;       /** 13-20: Peer identifier of inviting peer (TODO also check endianity) */
+	F2FUID destPeerID;         /** 21-28: Peer identifier offer 
+		* (this is at the same time the challenge,
+	 	* so we make sure the invited peer should know this
+	 	*  when he answers (we need later to encrypt
+	    * this with the public key of the invited peer) */
+	unsigned char nameLength; /**    29: Group name length (max F2FMaxNameLength) */
+	unsigned char inviteLength; /**  30: Invitation message length (max F2FMaxNameLength) */
+	char nameAndInvite [F2FMaxNameLength*2]; /* 31- *: Group name and then invitation message */
+    /* maybe timestamps should be added */
+} InviteMessage;
+ 
+
 /** Finally friends (other peers) can be added to this group. This function triggers
  * the registration to ask the specified peer to join a F2F Computing group 
  * If we know his public key, we can send it as a challenge. He would then also get our publickey,
@@ -113,20 +137,12 @@ F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerI
 {
 	/* Ask new peer, if he is f2f capable: send a challenge, save the challenge.
 	 * If the peer sends back the correct answer at one point, it is added as a peer */
-	/* The message, which is sent out as initial challenge contains the following:
-	 * Byte:
-	 *     1: Type of message (set to invite)
-	 *   2-4: reserved for later
-	 *  5-12: Group identifier
-	 * 13-20: Peer identifier of inviting peer
-	 * 21-28: Peer identifier offer (this is at the same time the challenge, so we make sure
-	 *        the invited peer should know this, when he answers (we need later to encrypt
-	 *        this with the public key of the invited peer)
-	 *    29: Group name length (max F2FMaxNameLength)
-	 *    30: Invitation message length (max F2FMaxNameLength)
-	 * 31- *: Group name and then invitation message */
+
+	InviteMessage *mes = (InviteMessage *) sendBuffer;
 	
+	/* first create ID for new peer and save this peer as an unconfirmed peer */
+	
+	//mes->destPeerID.hi = htonl( )
+	return F2FErrOK;
 }
-
-
 

@@ -36,6 +36,8 @@
 /** Number of groups a peer can join */
 #define F2FMaxGroups 64
 
-/** Do we need a buffer length for send and receive buffers? */
+/** maximum message size, must be bigger than the maximum uuencoded different possible 
+ * message types */
+#define F2FMaxMessageSize 4096
 
 #endif /*F2FCONFIG_H_*/

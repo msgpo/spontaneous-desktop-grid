@@ -81,22 +81,24 @@ F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer );
 F2FError f2fNotifyCoreWithReceived( const F2FPeer *fromPeer, const F2FString message );
 
 /** check if a returned size  is valid */
-static inline int f2fSizeValid( F2FSize size ) 
+static inline int f2fSizeValid( const F2FSize size ) 
 { return size >= 0; }
 
 /* Send a text message to all group members */
-F2FError f2fGroupSendText( F2FGroup *group, F2FString message ); 
+F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message ); 
 
 /** Send data to a peer in this group */
-F2FError f2fGroupPeerSendData( F2FGroup *group, F2FPeer *peer, 
-		F2FString data, F2FWord32 dataLen );
+F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer, 
+		const F2FString data, const F2FWord32 dataLen );
 
-/** gets peeridList and corresponding messageList,
- *  returns how many of these pairs are available
- *  if nothing was received the return value is -1 
- *  receive may have to be called often, if kernel does not run as thread */
-F2FSize f2fGroupReceive( F2FPeer *peerList, F2FString *messageList );
-/* check with F2FSizeValid */
+/** tries to receive a message. If succesful, this gives a peer and the corresponding
+ * message, if not peer and message will be NULL and F2FErrNothingAvail will be returned.
+ * In success case F2FErrOK will be returned.
+ * This routine must be called on a regulary interval - it can't be used in parallel to
+ * the other methods here in this interface. 
+ * If the timeout value is >0 then it will be used in an internal select. The function will
+ * then block to the maximum timeout ms. */
+F2FError f2fGroupReceive( /*out*/ F2FPeer **peer, F2FString **message, F2FWord32 timeout );
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 F2FRandom();
