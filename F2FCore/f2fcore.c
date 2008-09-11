@@ -27,8 +27,10 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
+#include <arpa/inet.h>
 
 #include "mtwist/mtwist.h"
+#include "b64/b64.h"
 #include "f2fcore.h"
 #include "f2fpeerlist.h"
 #include "f2fgrouplist.h"
@@ -39,9 +41,21 @@ static int initWasCalled = 0; // this will be set if init was successful
 /** Static state vector for randomness of mersenne twister, this is global in this module */
 mt_state randomnessState;
 
-/** Send a nd receive buffers */
+/** Send and receive buffers */
 static char sendBuffer[F2FMaxMessageSize];
 static char receiveBuffer[F2FMaxMessageSize];
+
+
+/* this is a secure strlen with no buffer overrun */
+size_t strnlen( const char *str, size_t max )
+{
+	size_t size;
+	
+	for (size = 0; size < max; ++size) {
+		if( ! str[size] ) break;
+	}
+	return size;
+}
 
 /** Do the initialization - especially create a random seed and get your own PeerID 
  * Must be called first.
@@ -101,6 +115,26 @@ F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group )
 	else return F2FErrListFull;
 }
 
+/* use the special send function to send a im message to a local known peer */
+F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message, 
+		const F2FSize size )
+{
+	F2FSize currentsize, newsize;
+	
+	/* Decode message for sending in f2f framework */
+	strcpy( sendBuffer, F2FMessageMark ); /* header */
+	currentsize = F2FMessageMarkLength;
+	newsize = b64encode( message, sendBuffer + currentsize, size, F2FMaxMessageSize-currentsize );
+	currentsize += newsize;
+	/* send the new message */
+	return (*sendMethod)( localpeerid, sendBuffer, currentsize );
+}
+
+typedef enum
+{
+	F2FMessageTypeInvite,
+} F2FMessageType;
+
 /** The message, which is sent out as initial challenge contains the following: */
 typedef struct
 {
@@ -114,12 +148,11 @@ typedef struct
 	 	* so we make sure the invited peer should know this
 	 	*  when he answers (we need later to encrypt
 	    * this with the public key of the invited peer) */
-	unsigned char nameLength; /**    29: Group name length (max F2FMaxNameLength) */
+	unsigned char groupNameLength; /**    29: Group name length (max F2FMaxNameLength) */
 	unsigned char inviteLength; /**  30: Invitation message length (max F2FMaxNameLength) */
 	char nameAndInvite [F2FMaxNameLength*2]; /* 31- *: Group name and then invitation message */
     /* maybe timestamps should be added */
 } InviteMessage;
- 
 
 /** Finally friends (other peers) can be added to this group. This function triggers
  * the registration to ask the specified peer to join a F2F Computing group 
@@ -133,16 +166,34 @@ typedef struct
  * example: "test@jabber.xyz (XMPP)" 
  * This function will call the SendMethodIP-function*/
 F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerId,
-		const F2FString identifier,	const F2FString otherPeersPublicKey )
+		const F2FString identifier, const F2FString inviteMessage,
+		const F2FString otherPeersPublicKey )
 {
 	/* Ask new peer, if he is f2f capable: send a challenge, save the challenge.
 	 * If the peer sends back the correct answer at one point, it is added as a peer */
 
-	InviteMessage *mes = (InviteMessage *) sendBuffer;
+	InviteMessage mes;
 	
 	/* first create ID for new peer and save this peer as an unconfirmed peer */
+	F2FPeer *newpeer = f2fPeerListAdd( F2FRandom(), F2FRandom() );
+	/* initialize  the newly allocated peer */
+	newpeer->localPeerId = localPeerId;
+	newpeer->status = F2FPeerWaitingForInviteConfirm;
+	newpeer->lastActivity = time( NULL );
+	newpeer->identifier[F2FMaxNameLength] = 0;
+	strncpy( newpeer->identifier, identifier, F2FMaxNameLength);
 	
-	//mes->destPeerID.hi = htonl( )
-	return F2FErrOK;
+	/* prepare the outgoing message */
+	mes.destPeerID.hi = htonl( newpeer->id.hi );
+	mes.destPeerID.lo = htonl( newpeer->id.lo );
+	mes.messagetype = F2FMessageTypeInvite;
+	mes.groupNameLength = strnlen( identifier, F2FMaxNameLength );
+	memcpy( mes.nameAndInvite, identifier, mes.groupNameLength );
+	mes.inviteLength = strnlen( inviteMessage, F2FMaxNameLength );
+	memcpy( mes.nameAndInvite + mes.groupNameLength, identifier, mes.inviteLength );
+	
+	/* send the message out to the respective peer via IM */
+	return f2fIMSend( localPeerId, (F2FString)&mes, sizeof(InviteMessage) 
+			- 2 * F2FMaxNameLength + mes.groupNameLength + mes.inviteLength );
 }
 

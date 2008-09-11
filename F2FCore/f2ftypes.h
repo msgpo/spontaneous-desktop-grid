@@ -28,6 +28,9 @@
 #define F2FTYPES_H_
 
 #include <stdint.h> // We need to know what 32bit-word is, so we can still run on 64 and more
+#include <time.h>
+
+#include "f2fconfig.h"
 
 typedef int32_t F2FWord32;
 
@@ -65,14 +68,25 @@ typedef struct
 	/** which providers are trying to connect, in which state are they ... */
 } F2FPeerCommunicationProviderInfo;
 
+typedef enum
+{
+	F2FPeerActive,
+	F2FPeerWaitingForInviteConfirm,
+} F2FPeerStates;
+
 /** A peer is represented by its random 64 bit id */
 typedef struct
 {
 	F2FUID id;
+	F2FPeerStates status;
+	F2FWord32 localPeerId; /** the id under which this peer is referred in the 
+	 * adapter layer. This has to be given to the send function to send an IM to
+	 * this peer */
+	char identifier[F2FMaxNameLength + 1]; /** Displayname of the peer */
+	time_t lastActivity; /** When was the last network activity with this  peer,
+	 					   * needed to remove peer from peerlist after some time */
 	F2FPeerCommunicationProviderInfo communicationproviderinfo; /** Space for the comm. providers 
 	 														   * includes active provider */
-	F2FWord32 localPeerId; /** The id in the adapterlayer to reference how
-	 * to send via the IM channel */ 
 } F2FPeer;
 
 #endif /*F2FTYPES_H_*/

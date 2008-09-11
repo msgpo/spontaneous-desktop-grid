@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fconfig.h
+ *   Filename: b64.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -20,29 +20,20 @@
  *   Free Software Foundation, Inc.,                                       
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
- *   Description: all config settings for the f2fcore
- *   
+ *   Description:
+ *   Interfacefile for the base64 encoding.
  ***************************************************************************/
 
-#ifndef F2FCONFIG_H_
-#define F2FCONFIG_H_
+#ifndef B64_H_
+#define B64_H_
 
-/** Maximum length of name strings */
-#define F2FMaxNameLength 255
+/* Here are ulno's extensions for coding whole strings,
+ * they return the size of the output */
+size_t b64encode( const char * src, char * dst, 
+		size_t inputlen, size_t maxoutputlen );
 
-/** Number of maximum known peers in one F2FCore */
-#define F2FMaxPeers 1024
+size_t b64decode( const char * src, char * dst, 
+		size_t inputlen, size_t maxoutputlen );
 
-/** Number of groups a peer can join */
-#define F2FMaxGroups 64
 
-/** maximum message size, must be bigger than the maximum uuencoded different possible 
- * message types */
-#define F2FMaxMessageSize 4096
-
-/** the mark of f2f messages */
-#define F2FMessageMark "<F2F/>"
-/* TODO, check if this length can be found out automatically */
-#define F2FMessageMarkLength 6
-
-#endif /*F2FCONFIG_H_*/
+#endif /*B64_H_*/

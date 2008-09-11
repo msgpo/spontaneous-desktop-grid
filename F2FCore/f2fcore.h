@@ -36,7 +36,7 @@
  * the reliable IM communication in F2FCore.
  * this send-method will be called in f2fGroupSendText, f2fGroupPeerSendData, and f2fRegisterPeer 
  * and must be given as a parameter to init */ 
-typedef F2FError (*F2FSendMethodIM) ( F2FWord32 localPeerID, F2FString message );
+typedef F2FError (*F2FSendMethodIM) ( F2FWord32 localPeerID, F2FString message, F2FSize size );
 
 /** Do the initialization - especially create a random seed and get your own PeerID 
  * Must be called first.
@@ -62,7 +62,8 @@ F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group );
  * example: "test@jabber.xyz (XMPP)" 
  * This function will call the SendMethodIP-function*/
 F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerId,
-		const F2FString identifier,	const F2FString otherPeersPublicKey );
+		const F2FString identifier, const F2FString inviteMessage,
+		const F2FString otherPeersPublicKey );
 
 /** Will create a list of pointers to all the peers in a group, the list must have 
  * the size of maxsize and be a list of pointers, the last listentry might be null,
