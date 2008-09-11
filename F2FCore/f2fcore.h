@@ -78,7 +78,9 @@ F2FSize f2fGroupPeerList( F2FGroup *group, const F2FPeer ** peerlist);
 /** unregister the peer again, must before appear in group */
 F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer );
 
-/** hand over messages from the IM program to the core */
+/** hand over messages from the IM program to the core, before this function can be
+ * called the second time f2fGroupReceive must be called to be able to clear
+ * the buffers */
 F2FError f2fNotifyCoreWithReceived( const F2FPeer *fromPeer, const F2FString message );
 
 /** check if a returned size  is valid */
@@ -99,7 +101,8 @@ F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
  * the other methods here in this interface. 
  * If the timeout value is >0 then it will be used in an internal select. The function will
  * then block to the maximum timeout ms. */
-F2FError f2fGroupReceive( /*out*/ F2FPeer **peer, F2FString **message, F2FWord32 timeout );
+F2FError f2fGroupReceive( /*out*/ F2FPeer **peer, F2FString **message, 
+		const F2FWord32 timeout );
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 F2FRandom();

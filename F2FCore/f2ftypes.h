@@ -47,7 +47,11 @@ typedef enum  {
 	F2FErrListEmpty = -4, /** Trying to access an object from an empty list */
 	F2FErrNotFound = -5, /** Could not find the object searched for */
 	F2FErrListFull = -6, /** Not enough memory reserved to add this object */
-	F2FErrNothingAvail = -6, /** Not enough memory reserved to add this object */
+	F2FErrNothingAvail = -7, /** Not enough memory reserved to add this object */
+	F2FErrBufferFull = -8, /** Can't send this message as one of the
+		* communications buffer is already full. Call f2fGroupReceive to receive
+		* stuff from the buffer to empty it. */
+
 } F2FError;
 
 /** the unique identifier used in F2F 

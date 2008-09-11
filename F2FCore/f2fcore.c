@@ -45,7 +45,6 @@ mt_state randomnessState;
 static char sendBuffer[F2FMaxMessageSize];
 static char receiveBuffer[F2FMaxMessageSize];
 
-
 /* this is a secure strlen with no buffer overrun */
 size_t strnlen( const char *str, size_t max )
 {
@@ -197,3 +196,17 @@ F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerI
 			- 2 * F2FMaxNameLength + mes.groupNameLength + mes.inviteLength );
 }
 
+/** tries to receive a message. If succesful, this gives a peer and the corresponding
+ * message, if not peer and message will be NULL and F2FErrNothingAvail will be returned.
+ * In success case F2FErrOK will be returned.
+ * This routine must be called on a regulary interval - it can't be used in parallel to
+ * the other methods here in this interface. 
+ * If the timeout value is >0 then it will be used in an internal select. The function will
+ * then block to the maximum timeout ms. 
+ * This function returns F2FErrBufferFull, if there is still data to receive available.
+ * The function shoul dbe called directly again (after processing the received data) */
+F2FError f2fGroupReceive( /*out*/ F2FPeer **peer, F2FString **message,
+			const F2FWord32 timeout )
+{
+	return F2FErrOK;
+}
