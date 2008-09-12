@@ -30,6 +30,7 @@
 
 #include "f2fconfig.h"
 #include "f2ftypes.h"
+#include "f2fpeer.h"
 #include "f2fgroup.h"
 
 /** sendMethodIM is a non blocking method, which must be implemented and will be used for doing 
@@ -61,7 +62,7 @@ F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group );
  * - identifier can be the name in the addressbook or one of the addresses including the protocol,
  * example: "test@jabber.xyz (XMPP)" 
  * This function will call the SendMethodIP-function*/
-F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerId,
+F2FError f2fGroupRegisterPeer( /*out*/ F2FGroup *group, const F2FWord32 localPeerId,
 		const F2FString identifier, const F2FString inviteMessage,
 		const F2FString otherPeersPublicKey );
 
@@ -80,8 +81,14 @@ F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer );
 
 /** hand over messages from the IM program to the core, before this function can be
  * called the second time f2fGroupReceive must be called to be able to clear
- * the buffers */
-F2FError f2fNotifyCoreWithReceived( const F2FPeer *fromPeer, const F2FString message );
+ * the buffers.
+ * The messages have start with the right header and must be base64 encoded to be detectable.
+ * If any other message is passed here, the function will return F2FErrNotF2FMessage.
+ * We send here only the local peerid and the local identifier as this peer might not
+ * be in our peer list */
+F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
+		const F2FString identifier, const F2FString message, 
+		const F2FSize size );
 
 /** check if a returned size  is valid */
 static inline int f2fSizeValid( const F2FSize size ) 
@@ -101,8 +108,9 @@ F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
  * the other methods here in this interface. 
  * If the timeout value is >0 then it will be used in an internal select. The function will
  * then block to the maximum timeout ms. */
-F2FError f2fGroupReceive( /*out*/ F2FPeer **peer, F2FString **message, 
-		const F2FWord32 timeout );
+F2FError f2fGroupReceive( /*out*/ F2FGroup **group, F2FPeer **sourcePeer,
+			F2FPeer **destPeer, F2FString *message, F2FSize *size, 
+			const F2FWord32 timeout );
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 F2FRandom();

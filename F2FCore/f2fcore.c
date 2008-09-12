@@ -41,12 +41,26 @@ static int initWasCalled = 0; // this will be set if init was successful
 /** Static state vector for randomness of mersenne twister, this is global in this module */
 mt_state randomnessState;
 
+static F2FPeer *myself; /* saves own peer information */
+
 /** Send and receive buffers */
-static char sendBuffer[F2FMaxMessageSize];
-static char receiveBuffer[F2FMaxMessageSize];
+static struct
+{
+	char buffer[F2FMaxMessageSize];
+	F2FSize size; /* how much is filled */
+} sendBuffer;
+static struct
+{
+	F2FGroup *group;
+	F2FPeer *sourcePeer;
+	F2FPeer *destPeer;
+	int filled; /** indicate, if something is in here */
+	F2FSize size; /* how much is filled */
+	char buffer[F2FMaxMessageSize];
+} receiveBuffer;
 
 /* this is a secure strlen with no buffer overrun */
-size_t strnlen( const char *str, size_t max )
+static inline size_t strnlen( const char *str, size_t max )
 {
 	size_t size;
 	
@@ -86,12 +100,16 @@ F2FError f2fInit( const F2FString myName, const F2FString myPublicKey,
 	}
 	mts_seedfull( &randomnessState, seeds ); // activate the seed
 	/* Create a new peer with random uid */
-	F2FPeer *newpeer = f2fPeerListAdd( mts_lrand( &randomnessState ), mts_lrand( &randomnessState ) );
+	F2FPeer *newpeer = f2fPeerListNew( mts_lrand( &randomnessState ), mts_lrand( &randomnessState ) );
 	if (newpeer == NULL) return F2FErrOK;
 	*peer = newpeer;
+	myself = newpeer;
 	/* save the send method */
 	sendMethod = sendFunc;
-	/* add peer to peerlist */
+	/* initialize buffers */
+	receiveBuffer.filled = 0;
+	receiveBuffer.size = 0;
+	sendBuffer.size = 0;
 	/* Init was successfull */
 	initWasCalled = 1;
 	return F2FErrOK;
@@ -114,35 +132,51 @@ F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group )
 	else return F2FErrListFull;
 }
 
-/* use the special send function to send a im message to a local known peer */
+/* use the special send function to send a IM message to a local known peer */
 F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message, 
 		const F2FSize size )
 {
 	F2FSize currentsize, newsize;
 	
-	/* Decode message for sending in f2f framework */
-	strcpy( sendBuffer, F2FMessageMark ); /* header */
+	/* Encode message for sending in f2f framework */
+	strcpy( sendBuffer.buffer, F2FMessageMark ); /* header */
 	currentsize = F2FMessageMarkLength;
-	newsize = b64encode( message, sendBuffer + currentsize, size, F2FMaxMessageSize-currentsize );
+	newsize = b64encode( message, sendBuffer.buffer + currentsize, size, F2FMaxMessageSize-currentsize );
 	currentsize += newsize;
 	/* send the new message */
-	return (*sendMethod)( localpeerid, sendBuffer, currentsize );
+	return (*sendMethod)( localpeerid, sendBuffer.buffer, currentsize );
+}
+
+/* use the special send function to send a IM message to a local known peer */
+F2FError f2fIMDecode( const F2FString message, const F2FSize messagelen, 
+		F2FString decodebuffer, const F2FSize maxdecodelen )
+{
+	/* TODO: eventually remove whitespace */
+	/* Decode message from IM ending in f2f framework */
+	if( memcmp( sendBuffer.buffer, F2FMessageMark, F2FMessageMarkLength ) ) /* test header */
+		return F2FErrNotF2FMessage; /* not the right header */
+	b64decode( message + F2FMessageMarkLength, decodebuffer, messagelen, maxdecodelen );
+	/* TODO: eventually evaluate result of b64encode */ 
+	return F2FErrOK;
 }
 
 typedef enum
 {
 	F2FMessageTypeInvite,
+	F2FMessageTypeInviteAnswer,
+	/* her should be a lot of types to inquire status data, pinging, 
+	 * and exchanging routing information */ 
 } F2FMessageType;
 
-/** The message, which is sent out as initial challenge contains the following: */
+/** The message, which is sent out as initial challenge (to invite another 
+ * peer to a group) contains the following: */
 typedef struct
 {
-	unsigned char messagetype; /**    1: Type of message, must be set to invite */
+	unsigned char messagetype; /**    1: Type of message, must be set to F2FMessageTypeInvite */
 	char reserved[3];          /**  2-4: reserved for later */
-	F2FUID groupID;            /**  5-12: Group identifier, 
-									TODO: check if little/hi endian byte order matters here*/
-	F2FUID sourcePeerID;       /** 13-20: Peer identifier of inviting peer (TODO also check endianity) */
-	F2FUID destPeerID;         /** 21-28: Peer identifier offer 
+	F2FUID groupID;            /**  5-12: Group identifier */
+	F2FUID sourcePeerID;       /** 13-20: Peer identifier of inviting peer  */
+	F2FUID tmpIDAndChallenge;    /** 21-28: challenge 
 		* (this is at the same time the challenge,
 	 	* so we make sure the invited peer should know this
 	 	*  when he answers (we need later to encrypt
@@ -152,6 +186,18 @@ typedef struct
 	char nameAndInvite [F2FMaxNameLength*2]; /* 31- *: Group name and then invitation message */
     /* maybe timestamps should be added */
 } InviteMessage;
+
+/** This is the answer which should be sent back after you get an invite to accept the
+ * invitation - we might need here a feedback to the user - TODO implement this feedback */
+typedef struct
+{
+	unsigned char messagetype; /** Type of message, must be set to F2FMessageTypeInviteAnswer */
+	char reserved[3];          /** reserved for later */
+	F2FUID groupID;            /** Group identifier */
+	F2FUID sourcePeerID;       /** Peer identifier of answering peer  */
+	F2FUID destPeerID;         /** Peer identifier of peer who invited  */
+	F2FUID tmpIDAndChallenge;    /** challenge - also to identify local peer entry */
+} InviteMessageAnswer;
 
 /** Finally friends (other peers) can be added to this group. This function triggers
  * the registration to ask the specified peer to join a F2F Computing group 
@@ -164,7 +210,7 @@ typedef struct
  * - identifier can be the name in the addressbook or one of the addresses including the protocol,
  * example: "test@jabber.xyz (XMPP)" 
  * This function will call the SendMethodIP-function*/
-F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerId,
+F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localPeerId,
 		const F2FString identifier, const F2FString inviteMessage,
 		const F2FString otherPeersPublicKey )
 {
@@ -174,17 +220,26 @@ F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerI
 	InviteMessage mes;
 	
 	/* first create ID for new peer and save this peer as an unconfirmed peer */
-	F2FPeer *newpeer = f2fPeerListAdd( F2FRandom(), F2FRandom() );
+	F2FPeer *newpeer = f2fPeerListNew( F2FRandom(), F2FRandom() );
+	/* This id here is only temporary and only used as challenge, so the client can 
+	 * authenticate itself, that it really knows this number.
+	 * It is temporarely saved in the peer's id and replaced by 
+	 * the real id, when the peer sends its real id. */
 	/* initialize  the newly allocated peer */
 	newpeer->localPeerId = localPeerId;
 	newpeer->status = F2FPeerWaitingForInviteConfirm;
 	newpeer->lastActivity = time( NULL );
 	newpeer->identifier[F2FMaxNameLength] = 0;
+	f2fPeerAddToGroup( newpeer, group );
 	strncpy( newpeer->identifier, identifier, F2FMaxNameLength);
 	
 	/* prepare the outgoing message */
-	mes.destPeerID.hi = htonl( newpeer->id.hi );
-	mes.destPeerID.lo = htonl( newpeer->id.lo );
+	mes.sourcePeerID.hi = htonl(myself->id.hi);
+	mes.sourcePeerID.lo = htonl(myself->id.lo);
+	mes.tmpIDAndChallenge.hi = htonl( newpeer->id.hi ); 
+	mes.tmpIDAndChallenge.lo = htonl( newpeer->id.lo );
+	mes.groupID.hi = htonl( group->id.hi );
+	mes.groupID.lo = htonl( group->id.lo );
 	mes.messagetype = F2FMessageTypeInvite;
 	mes.groupNameLength = strnlen( identifier, F2FMaxNameLength );
 	memcpy( mes.nameAndInvite, identifier, mes.groupNameLength );
@@ -205,8 +260,131 @@ F2FError f2fGroupRegisterPeer( const F2FGroup *group, const F2FWord32 localPeerI
  * then block to the maximum timeout ms. 
  * This function returns F2FErrBufferFull, if there is still data to receive available.
  * The function shoul dbe called directly again (after processing the received data) */
-F2FError f2fGroupReceive( /*out*/ F2FPeer **peer, F2FString **message,
+F2FError f2fGroupReceive( /*out*/ F2FGroup **group, F2FPeer **sourcePeer,
+			F2FPeer **destPeer, F2FString *message, F2FSize *size, 
 			const F2FWord32 timeout )
 {
+	/* Check, if there is still something in the buffer */
+	if( receiveBuffer.filled )
+	{
+		*group = receiveBuffer.group;
+		*sourcePeer = receiveBuffer.sourcePeer;
+		*destPeer = receiveBuffer.destPeer;
+		*message = receiveBuffer.buffer;
+		*size = receiveBuffer.size;
+		receiveBuffer.filled = 0; /* as it has been requested, this will be free the next call */
+		return F2FErrOK;
+	}
+	/* From here on receive.filled is 0 */
+	/* Try now to receive stuff from the network */
+	/* TODO: select(... */
+	return F2FErrOK;
+}
+
+/** process an InviteMessage sent to me, react to this invite */
+static F2FError processInviteMessage( const F2FWord32 localPeerId,
+		const F2FString identifier, const InviteMessage *msg)
+{
+	/* check if I know this peer already */
+	F2FPeer * srcPeer = f2fPeerListFindPeer( msg->sourcePeerID.lo, msg->sourcePeerID.lo );
+	/* TODO: verify that this is really my friend contacting me */
+	if( srcPeer == NULL ) /* not in the local peer list */
+	{
+		/* add to my peer list */
+		srcPeer = f2fPeerListNew( ntohl(msg->sourcePeerID.hi), ntohl(msg->sourcePeerID.lo) );
+		if( srcPeer == NULL ) return F2FErrListFull;
+		srcPeer->localPeerId = localPeerId;
+		srcPeer->identifier[F2FMaxNameLength] = 0;
+		strncpy( srcPeer->identifier, identifier, F2FMaxNameLength );
+		srcPeer->status = F2FPeerActive;
+	}
+	srcPeer->lastActivity = time(NULL);
+	F2FGroup *group = f2fGroupListFindGroup( ntohl(msg->groupID.hi), 
+			ntohl(msg->groupID.lo) );
+	if( group == NULL ) /* the group does not exist, normal, when I am invited */
+	{
+		/* TODO: process the actual invite string and ask myself, if I want to be part
+		 * of this computation group */
+		F2FSize namelen = msg->groupNameLength;
+		if (namelen>F2FMaxNameLength) namelen=F2FMaxNameLength;
+		char groupname[namelen+1];
+		groupname[namelen] = 0;
+		memcpy(groupname, msg->nameAndInvite, namelen);
+		group = f2fGroupListAdd( groupname, ntohl(msg->groupID.hi), ntohl(msg->groupID.lo) );
+		if( group == NULL ) return F2FErrListFull;
+	}
+	/* Send answer back */
+	InviteMessageAnswer myanswer;
+	myanswer.destPeerID.hi = msg->sourcePeerID.hi; /* no transfer in endian necessary */
+	myanswer.destPeerID.lo = msg->sourcePeerID.lo; /* no transfer in endian necessary */
+	myanswer.sourcePeerID.hi = htonl(myself->id.hi);
+	myanswer.sourcePeerID.lo = htonl(myself->id.lo);
+	myanswer.groupID.hi = msg->groupID.hi; /* no transfer in endian necessary */
+	myanswer.groupID.lo = msg->groupID.lo; /* no transfer in endian necessary */
+	myanswer.tmpIDAndChallenge.hi = msg->tmpIDAndChallenge.hi; /* no transfer in endian necessary */
+	myanswer.tmpIDAndChallenge.lo = msg->tmpIDAndChallenge.lo; /* no transfer in endian necessary */
+	myanswer.messagetype = F2FMessageTypeInviteAnswer;
+	return f2fIMSend( localPeerId, (F2FString)&myanswer, sizeof(myanswer) );
+}
+
+/** process an InviteMessageAnswer */
+static F2FError processInviteMessageAnswer( const InviteMessageAnswer *msg )
+{
+	F2FError error;
+	
+	F2FPeer *answerPeer = f2fPeerListFindPeer( msg->tmpIDAndChallenge.hi, 
+			msg->tmpIDAndChallenge.lo );
+	if( answerPeer == NULL ) return F2FErrNotAuthenticated; /* this peer did 
+	 * not get an invite */ 
+	/* Check if peer waits for an invite */
+	if( answerPeer->status != F2FPeerWaitingForInviteConfirm )
+		return F2FErrNotAuthenticated;
+	/* Check, if peer was invited in the group it specifies */
+	F2FGroup *answerGroup = f2fGroupListFindGroup( msg->groupID.hi,
+			msg->groupID.lo );
+	if( answerGroup == NULL ) return F2FErrNotAuthenticated; /* this peer did
+	 * not get an invite */ 
+	if( f2fPeerFindGroupIndex( answerPeer, answerGroup) < 0 )
+		return F2FErrNotAuthenticated;
+	/* Change the id to the official id */
+	error = f2fPeerChangeUID( answerPeer, msg->sourcePeerID.hi, 
+			msg->sourcePeerID.lo, &answerPeer);
+	if( error != F2FErrOK ) return error;
+	answerPeer -> status = F2FPeerActive; /* active now */
+	return F2FErrOK;
+}
+
+/** hand over messages from the IM program to the core, before this function can be
+ * called the second time f2fGroupReceive must be called to be able to clear
+ * the buffers.
+ * The messages start with the right header and must be base64 encoded to be detectable.
+ * If any other message is passed here, the function will return F2FErrNotF2FMessage. */
+F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
+		const F2FString identifier, const F2FString message, 
+		const F2FSize size )
+{
+	F2FError error;
+	
+	/* TODO: evaluate fromPeer to the source Peer sent in the message */
+	if ( receiveBuffer.filled ) // still full
+		return F2FErrBufferFull;
+	error = f2fIMDecode(message, size, receiveBuffer.buffer, F2FMaxMessageSize);
+	if( error != F2FErrOK ) return error;
+	/* parse message */
+	switch ( (F2FMessageType) receiveBuffer.buffer[0] )
+	{
+	case F2FMessageTypeInviteAnswer:
+		error = processInviteMessageAnswer( (InviteMessageAnswer *) receiveBuffer.buffer);
+		if( error != F2FErrOK ) return error;
+		break;
+	case F2FMessageTypeInvite:
+		error = processInviteMessage( localPeerId, identifier,
+				(InviteMessage *) receiveBuffer.buffer);
+		if( error != F2FErrOK ) return error;
+		break;
+	default:
+		return F2FErrMessageTypeUnknown;
+		break;
+	}
 	return F2FErrOK;
 }

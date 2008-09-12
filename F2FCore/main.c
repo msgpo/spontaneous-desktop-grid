@@ -1,3 +1,4 @@
+
 /***************************************************************************
  *   Filename: main.c
  *   Author: ulno
@@ -47,13 +48,13 @@ int main()
 	
 	// f2fInit("ulnotes", "", &mySendIM, &myPeerId);
 	
-	f2fPeerListAdd(10,10);
-	f2fPeerListAdd(10,3);
-	f2fPeerListAdd(12,10);
-	f2fPeerListAdd(2,10);
-	f2fPeerListAdd(14,0);
+	f2fPeerListNew(10,10);
+	f2fPeerListNew(10,3);
+	f2fPeerListNew(12,10);
+	f2fPeerListNew(2,10);
+	f2fPeerListNew(14,0);
 	
-	F2FPeer *testpeer = f2fFindPeer( 12, 10 );
+	F2FPeer *testpeer = f2fPeerListFindPeer( 12, 10 );
 	
 	f2fPeerListRemove( testpeer );
 	

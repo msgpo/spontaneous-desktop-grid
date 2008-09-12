@@ -51,7 +51,10 @@ typedef enum  {
 	F2FErrBufferFull = -8, /** Can't send this message as one of the
 		* communications buffer is already full. Call f2fGroupReceive to receive
 		* stuff from the buffer to empty it. */
-
+	F2FErrNotF2FMessage = -9, /** This was not a F2F message */
+	F2FErrNotAuthenticated = -10, /** This messag eis not authenticated */
+	F2FErrMessageTypeUnknown = -11, /** This message type was unknown */
+	F2FErrWierdError = -200, /** This error should not happen */
 } F2FError;
 
 /** the unique identifier used in F2F 
@@ -61,36 +64,5 @@ typedef struct
 	F2FWord32 hi;
 	F2FWord32 lo;
 } F2FUID;
-
-/* static list with providers including their send and receive stuff*/ 
-/** every peer has this info (used by all providers) */
-typedef struct
-{
-	int activeprovider; /** the active provider. The one over which data is send and from which data is received */
-	/** Local Ip number */
-	/** Ip number of router */
-	/** which providers are trying to connect, in which state are they ... */
-} F2FPeerCommunicationProviderInfo;
-
-typedef enum
-{
-	F2FPeerActive,
-	F2FPeerWaitingForInviteConfirm,
-} F2FPeerStates;
-
-/** A peer is represented by its random 64 bit id */
-typedef struct
-{
-	F2FUID id;
-	F2FPeerStates status;
-	F2FWord32 localPeerId; /** the id under which this peer is referred in the 
-	 * adapter layer. This has to be given to the send function to send an IM to
-	 * this peer */
-	char identifier[F2FMaxNameLength + 1]; /** Displayname of the peer */
-	time_t lastActivity; /** When was the last network activity with this  peer,
-	 					   * needed to remove peer from peerlist after some time */
-	F2FPeerCommunicationProviderInfo communicationproviderinfo; /** Space for the comm. providers 
-	 														   * includes active provider */
-} F2FPeer;
 
 #endif /*F2FTYPES_H_*/

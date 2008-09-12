@@ -28,10 +28,10 @@
 #define F2FGROUP_H_
 
 #include "f2ftypes.h"
-#include "f2fgroup.h"
+#include "f2fpeer.h"
 
 /** F2FGroup - a collection of peers solving one designated task (also 64bit random id) */
-typedef struct
+typedef struct F2FGroupStruct
 {
 	F2FUID id;
 	char name[F2FMaxNameLength+1]; /** The name of this group, does not need to be unique
@@ -48,6 +48,12 @@ F2FError f2fGroupPeerListAdd( /* out */ F2FGroup *group, F2FPeer *peer );
 
 /** remove a peer from the list */
 F2FError f2fGroupPeerListRemove( F2FGroup *group, F2FPeer *peer );
+
+/** Add peer to group (update lists in peer and in group) */
+F2FError f2fGroupAddPeer( F2FGroup *group, F2FPeer *peer );
+
+/** Remove peer from group (update lists in peer and in group) */
+F2FError f2fGroupRemovePeer( F2FGroup *group, F2FPeer *peer );
 
 
 #endif /*F2FGROUP_H_*/

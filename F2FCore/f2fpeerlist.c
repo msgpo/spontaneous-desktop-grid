@@ -79,7 +79,7 @@ static int findNearestUpperPeer( const F2FWord32 uidhi, const F2FWord32 uidlo )
 }
 
 /** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
-F2FPeer * f2fFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo )
+F2FPeer * f2fPeerListFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo )
 {
 	if( listsize == 0 ) return NULL;
 	int index = findNearestUpperPeer( uidhi, uidlo );
@@ -92,7 +92,7 @@ F2FPeer * f2fFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo )
 }
 
 /** add one peer to the list, return peer or NULL if no space left */
-F2FPeer * f2fPeerListAdd( F2FWord32 uidhi, F2FWord32 uidlo )
+F2FPeer * f2fPeerListNew( F2FWord32 uidhi, F2FWord32 uidlo )
 {
 	F2FPeer *current = peerList;
 	
@@ -114,6 +114,7 @@ F2FPeer * f2fPeerListAdd( F2FWord32 uidhi, F2FWord32 uidlo )
 			sortedIdsList [searchpos] = current;
 			current->id.hi = uidhi;
 			current->id.lo = uidlo;
+			current->groupsListSize = 0;
 			listsize ++;
 			return current;
 		}

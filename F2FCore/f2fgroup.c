@@ -85,16 +85,16 @@ F2FPeer * f2fGroupFindPeer( const F2FGroup *group, const F2FWord32 uidhi, const 
 /** add one peer to the list, return peer or NULL if no space left */
 F2FError f2fGroupPeerListAdd( /* out */ F2FGroup *group, F2FPeer *peer )
 {
-			/* insert in sorted list */
-			int searchpos = f2fGroupFindNearestUpperPeer( group, peer->id.hi, peer->id.lo );
-			if( searchpos < 0 )
-				return searchpos;
-			/* do the actual insert */
-			memmove( group->sortedIdsList + searchpos + 1, group->sortedIdsList + searchpos, 
-					(group->listSize - searchpos) * sizeof(*(group->sortedIdsList)) );
-			group->sortedIdsList [searchpos] = peer;
-			group->listSize ++;
-			return F2FErrOK;
+	/* insert in sorted list */
+	int searchpos = f2fGroupFindNearestUpperPeer( group, peer->id.hi, peer->id.lo );
+	if( searchpos < 0 )
+		return searchpos;
+	/* do the actual insert */
+	memmove( group->sortedIdsList + searchpos + 1, group->sortedIdsList + searchpos, 
+			(group->listSize - searchpos) * sizeof(*(group->sortedIdsList)) );
+	group->sortedIdsList [searchpos] = peer;
+	group->listSize ++;
+	return F2FErrOK;
 }
 
 /** remove a peer from the list */
@@ -116,3 +116,14 @@ F2FError f2fGroupPeerListRemove( F2FGroup *group, F2FPeer *peer )
 		return F2FErrNotFound;
 }
 
+/** Add peer to group (update lists in peer and in group) */
+F2FError f2fGroupAddPeer( F2FGroup *group, F2FPeer *peer )
+{
+	return f2fPeerAddToGroup( peer, group );
+}
+
+/** Remove peer from group (update lists in peer and in group) */
+F2FError f2fGroupRemovePeer( F2FGroup *group, F2FPeer *peer )
+{
+	return f2fPeerRemoveFromGroup( peer, group );
+}
