@@ -1,16 +1,23 @@
 PYVER = 2.5
 
+MODULENAME = f2fcoremodule
+
 PYCLIB = /usr/bin
 PYINC  = /usr/include/python$(PYVER)
 
-SRC_DIR   = src/native
-BUILD_DIR = build/native
+SRC_DIR   = ../src/native
+BUILD_DIR = native
+
+CFLAGS=-fPIC -Wall
+LDFLAGS=-fPIC
+
+all: build
 
 init:
-	mkdir $BUILD_DIR
+	mkdir $(BUILD_DIR)
 	
 build:
-	gcc $(SRC_DIR)/f2fcoremodule.c -g -I$(PYINC) -shared -L$(PYLIB) -lpython$(PYVER) -o $(BUILD_DIR)hello.so
+	gcc $(SRC_DIR)/$(MODULENAME).c -g -I$(PYINC) $(CFLAGS) -shared -L$(PYLIB) -lpython$(PYVER) -o $(BUILD_DIR)/$(MODULENAME).so
 	
 clean:
-	rm -rf $(BUILD_DIR)/hello.so $(BUILD_DIR)/core	
+	rm -rf $(BUILD_DIR)/$(MODULENAME).so $(BUILD_DIR)/core	
