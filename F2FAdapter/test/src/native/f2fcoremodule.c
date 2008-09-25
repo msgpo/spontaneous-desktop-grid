@@ -1,22 +1,19 @@
 /****************************************************************
  * A python extension module for F2FCore
- *
+ * (exampe)
  ****************************************************************/
-
+#include <Python.h>
+#include <structmember.h>
 #include <stdlib.h>
 #include <string.h>
 
-#include "python2.5/Python.h"
-
 /* simple example of python extension in C */
 /* module functions */
-static PyObject*
-message(PyObject *self, PyObject *args){
+static PyObject* message(PyObject *self, PyObject *args){
 	char *fromPython;
 	char result[64];
-	int n = -1;
 
-	if (! Py_Arg_Parse(args, "(s)", &fromPython) ){
+	if (! PyArg_Parse(args, "(s)", &fromPython) ){
 		return NULL;
 	} else {
 		strcpy(result, "Hello, ");
@@ -25,16 +22,19 @@ message(PyObject *self, PyObject *args){
 	}
 }
 
+
 /* registration table */
-static struct PyMemberDef hello_methods[] = {
+static struct PyMemberDef methods[] = {
 		{
-				"message",		// function name
-				message,		// C function pointer
-				1				// always tuple
+				"message". 
+				message, 
+				METH_VARARGS, 
+				"Print the hello message."
 		},
-		{ NULL, NULL }			// end of table marker
+		{NULL, NULL}        /* Sentinel */
 };
 
-void initHello(){				// called on first import
-	(void) Py_InitModule4("hello", hello_methods);
+PyMODINIT_FUNC initf2fcore(void){
+	(void) Py_InitModule("f2fcore", methods);
 }
+
