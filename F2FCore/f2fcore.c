@@ -35,20 +35,59 @@
 #include "f2fpeerlist.h"
 #include "f2fgrouplist.h"
 
-static F2FSendMethodIM sendMethod;
 static int initWasCalled = 0; // this will be set if init was successful
+static F2FError globalError = F2FErrOK; // a global error variable
 
 /** Static state vector for randomness of mersenne twister, this is global in this module */
 mt_state randomnessState;
 
 static F2FPeer *myself; /* saves own peer information */
 
-/** Send and receive buffers */
+/** Send buffer */
 static struct
 {
 	char buffer[F2FMaxMessageSize];
 	F2FSize size; /* how much is filled */
 } sendBuffer;
+
+/** Send IM buffer.
+ * This buffer stores IM messages, which have to be sent
+ * They could be sent to multiple peers.
+ * This is, why there is a list of local peer ids.
+ */
+static struct
+{
+	char buffer[F2FMaxMessageSize+1]; /* usually cleartext, so reserve space
+								for terminating 0 */
+	F2FSize size; /* how much is filled */
+	F2FWord32 localPeerIDlist[ F2FMaxPeers ];
+	F2FSize localidscount; /* the number of ids in list */
+} sendIMBuffer;
+
+/** get the 0 terminated sendIMBuffer */
+char * f2fSendIMBufferGetBuffer()
+{
+	if (sendIMBuffer.localidscount <= 0) return NULL; // buffer empty	
+	sendIMBuffer.buffer[sendIMBuffer.size] = 0; /* make sure this is terminated */
+	return sendIMBuffer.buffer;
+}
+
+/** get the size of the message in sendIMBuffer */
+F2FSize f2fSendIMBufferGetBufferSize()
+{
+	return sendIMBuffer.size;	
+}
+
+/** return the next peer id of the buffer where data has to be sent and
+ * decrease list
+ * return -1 if there is nothing to send */
+F2FWord32 f2fSendIMBufferGetNextLocalPeerID()
+{
+	if (sendIMBuffer.localidscount <= 0) return -1; // none left
+	return sendIMBuffer.localPeerIDlist[-- sendIMBuffer.size];
+}
+
+/** Receive buffer */
 static struct
 {
 	F2FGroup *group;
@@ -73,8 +112,7 @@ static inline size_t strnlen( const char *str, size_t max )
 /** Do the initialization - especially create a random seed and get your own PeerID 
  * Must be called first.
  * Gets the name of this peer (for example "Ulrich Norbisrath's peer") and the public key */
-F2FError f2fInit( const F2FString myName, const F2FString myPublicKey, 
-		const F2FSendMethodIM sendFunc, /*out*/ F2FPeer **peer )
+F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey )
 {
 #define MAXBUFFERSIZE 1024
 	char buffer[MAXBUFFERSIZE+1]; // Buffer for concatenation of name and key
@@ -101,18 +139,19 @@ F2FError f2fInit( const F2FString myName, const F2FString myPublicKey,
 	mts_seedfull( &randomnessState, seeds ); // activate the seed
 	/* Create a new peer with random uid */
 	F2FPeer *newpeer = f2fPeerListNew( mts_lrand( &randomnessState ), mts_lrand( &randomnessState ) );
-	if (newpeer == NULL) return F2FErrOK;
-	*peer = newpeer;
-	myself = newpeer;
-	/* save the send method */
-	sendMethod = sendFunc;
+	if (newpeer == NULL)
+	{
+		globalError = F2FErrListFull;
+		return NULL;
+	}
 	/* initialize buffers */
 	receiveBuffer.filled = 0;
 	receiveBuffer.size = 0;
 	sendBuffer.size = 0;
+	sendIMBuffer.localidscount = 0;
 	/* Init was successfull */
 	initWasCalled = 1;
-	return F2FErrOK;
+	return newpeer;
 }
 
 /** Return a random number from the seeded mersenne twister */
@@ -124,27 +163,45 @@ F2FWord32 F2FRandom()
 /** As a next step, the user has to create a new F2FGroup, in which his intenden Job can be
  * computeted.
  * This group gets a name, which should be displayed in the invitation of clients (other peers). */
-F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group )
+F2FGroup * f2fCreateGroup( const F2FString groupname )
 {
-	if (! initWasCalled) return F2FErrInitNotCalled;
-	*group = f2fGroupListCreate( groupname );
-	if( *group ) return F2FErrOK;
-	else return F2FErrListFull;
+	if (! initWasCalled)
+	{
+		globalError = F2FErrInitNotCalled;
+		return NULL;
+	}
+	F2FGroup * group = f2fGroupListCreate( groupname );
+	if( group ) return group;
+	globalError = F2FErrListFull;
+	return NULL;
 }
 
-/* use the special send function to send a IM message to a local known peer */
+/** prepare message to send a IM message to one locally known peer */
 F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message, 
 		const F2FSize size )
 {
 	F2FSize currentsize, newsize;
 	
+	if( sendIMBuffer.localidscount > 0 ) // not empty
+	{
+		return F2FErrBufferFull;
+	}
 	/* Encode message for sending in f2f framework */
-	strcpy( sendBuffer.buffer, F2FMessageMark ); /* header */
+	strcpy( sendIMBuffer.buffer, F2FMessageMark ); /* header */
 	currentsize = F2FMessageMarkLength;
-	newsize = b64encode( message, sendBuffer.buffer + currentsize, size, F2FMaxMessageSize-currentsize );
-	currentsize += newsize;
-	/* send the new message */
-	return (*sendMethod)( localpeerid, sendBuffer.buffer, currentsize );
+	newsize = b64encode( message, sendIMBuffer.buffer + currentsize, size, F2FMaxMessageSize-currentsize );
+	currentsize += newsize;	/* prepare sending of the new message */
+	sendIMBuffer.localPeerIDlist[ 0 ] = localpeerid;
+	sendIMBuffer.localidscount = 1;
+	return F2FErrOK;
+}
+
+/** Add a local peer to the sendIMBuffer */
+F2FError f2fIMAddPeer( const F2FWord32 localpeerid )
+{
+	if( sendIMBuffer.localidscount >= F2FMaxPeers ) return F2FErrListFull;
+	sendIMBuffer.localPeerIDlist[ ++ sendIMBuffer.localidscount ] = localpeerid;
+	return F2FErrOK;
 }
 
 /* use the special send function to send a IM message to a local known peer */

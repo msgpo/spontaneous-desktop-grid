@@ -40,27 +40,43 @@
  * this send-method will be called in f2fGroupSendText, f2fGroupPeerSendData, and f2fRegisterPeer
  * and must be given as a parameter to init
  *
- * @TODO Replace with buffer based callback
- * 	Refactor thi funtion in fillSendBuffer (the bugffer has to be checked after the calling the
- * 	send method)
+ * The method is replaced with a buffer based callback
+ * Refactor this funtion in fillSendBuffer (the buffer has to be checked after the calling the
+ * send method)
  *
- * */
+ *
 typedef F2FError (*F2FSendMethodIM) ( F2FWord32 localPeerID, F2FString message, F2FSize size );
+ */
+
+/** get the 0 terminated sendIMBuffer */
+char * f2fSendIMBufferGetBuffer();
+
+/** get the size of the message in sendIMBuffer */
+F2FSize f2fSendIMBufferGetBufferSize();
+
+/** Return the next peer id of the buffer where data has to be sent and
+ * decrease list
+ * return -1 if there is nothing to send */ 
+F2FWord32 f2fSendIMBufferGetNextLocalPeerID();
+
+/** return the Error code of the last problematic operation */
+F2FError f2fGetErrorCode( );
 
 /** Do the initialization - especially create a random seed and get your own PeerID
  * Must be called first.
- * Gets the name of this peer (for example "Ulrich Norbisrath's peer") and the public key.
- * ALso the IM-sending function of the middle layer has to be specified here */
-F2FError f2fInit( const F2FString myName, const F2FString myPublicKey,
-		const F2FSendMethodIM sendFunc, /*out*/ F2FPeer **peer );
+ * Sets the name of this peer (for example "Ulrich Norbisrath's peer") and the public key.
+ * In case of failure this function will return null and set the error code */
+F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey );
 
-/** As a next step, the user has to create a new F2FGroup, in which his intenden Job can be
+/** As a next step, the user has to create a new F2FGroup, in which his/her Job can be
  * computeted.
- * This group gets a name, which should be displayed in the invitation of clients (other peers). */
-F2FError f2fCreateGroup( const F2FString groupname, /*out*/ F2FGroup **group );
+ * This group gets a name, which should be displayed in the invitation of clients (other peers).
+ * The created group is returned. If an error occured null is returned and the errorcode is set */
+F2FGroup * f2fCreateGroup( const F2FString groupname );
 
 /** Finally friends (other peers) can be added to this group. This function triggers
- * the registration to ask the specified peer to join a F2F Computing group
+ * the registration to ask the specified peer to join a F2F Computing group.
+ * This means f2fFillIMSendBuffer
  * If we know his public key, we can send it as a challenge. He would then also get our publickey,
  * which could be compared to a allready cached one, to create an own challenge, and later used to
  * do encrypted and authenticated communication. Of course our own peerid from f2fInit is also
@@ -74,18 +90,15 @@ F2FError f2fGroupRegisterPeer( /*out*/ F2FGroup *group, const F2FWord32 localPee
 		const F2FString identifier, const F2FString inviteMessage,
 		const F2FString otherPeersPublicKey );
 
+/** unregister the peer again, must be in group */
+F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer );
+
 /** Will create a list of pointers to all the peers in a group, the list must have
  * the size of maxsize and be a list of pointers, the last listentry might be null,
  * if smaller than maxsize, the actual size created in the list is also returned.
  * If there was an error -1 is returned. */
-F2FSize f2fGroupCreatePeerList( const F2FGroup *group, const F2FWord32 maxsize,
+F2FSize f2fGroupGetPeerList( const F2FGroup *group, const F2FWord32 maxsize,
 		/* out */ F2FPeer **peerlist );
-
-/** Give a list of all peer-ids in a group */
-F2FSize f2fGroupPeerList( F2FGroup *group, const F2FPeer ** peerlist);
-
-/** unregister the peer again, must before appear in group */
-F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer );
 
 /** hand over messages from the IM program to the core, before this function can be
  * called the second time f2fGroupReceive must be called to be able to clear
@@ -93,7 +106,8 @@ F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer );
  * The messages have start with the right header and must be base64 encoded to be detectable.
  * If any other message is passed here, the function will return F2FErrNotF2FMessage.
  * We send here only the local peerid and the local identifier as this peer might not
- * be in our peer list
+ * be in our peer list.
+ * The IMBuffer has to be checked after the call of this function.
  *
  * @param F2FString identifier - display name of contact in list
  * @param F2FWord32 localPeerId - local reference for Peer
