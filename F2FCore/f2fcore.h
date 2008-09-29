@@ -93,12 +93,11 @@ F2FError f2fGroupRegisterPeer( /*out*/ F2FGroup *group, const F2FWord32 localPee
 /** unregister the peer again, must be in group */
 F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer );
 
-/** Will create a list of pointers to all the peers in a group, the list must have
- * the size of maxsize and be a list of pointers, the last listentry might be null,
- * if smaller than maxsize, the actual size created in the list is also returned.
- * If there was an error -1 is returned. */
-F2FSize f2fGroupGetPeerList( const F2FGroup *group, const F2FWord32 maxsize,
-		/* out */ F2FPeer **peerlist );
+/** Return size of a peerlist in a group */
+F2FSize f2fGroupGetPeerListSize( const F2FGroup *group );
+
+/** Return a pointer to the peers of a group */
+F2FPeer * f2fGroupGetPeerList( const F2FGroup *group );
 
 /** hand over messages from the IM program to the core, before this function can be
  * called the second time f2fGroupReceive must be called to be able to clear
@@ -140,6 +139,6 @@ F2FError f2fGroupReceive( /*out*/ F2FGroup **group, F2FPeer **sourcePeer,
 			const F2FWord32 timeout );
 
 /** Return a random number from the seeded mersenne twister */
-F2FWord32 F2FRandom();
+F2FWord32 f2fRandom();
 
 #endif /*F2FCORE_H_*/

@@ -25,15 +25,15 @@
  ***************************************************************************/
  
 %module f2fcore
-/*%{
-extern double My_variable;
-extern int    fact(int);
-extern int    my_mod(int n, int m);
-%}
-
-extern double My_variable;
-extern int    fact(int);
-extern int    my_mod(int n, int m);*/
-
+%{
 #include "f2ftypes.h"
 #include "f2fcore.h"
+%}
+
+// make sure you can use numbers
+%apply int { F2FWord32, F2FSize }; // Check if this does not introduce errors - should long be used?
+
+%include "f2ftypes.h"
+%include "f2fcore.h"
+
+

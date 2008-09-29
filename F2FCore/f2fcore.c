@@ -38,6 +38,11 @@
 static int initWasCalled = 0; // this will be set if init was successful
 static F2FError globalError = F2FErrOK; // a global error variable
 
+F2FError f2fGetErrorCode()
+{
+	return globalError;
+}
+
 /** Static state vector for randomness of mersenne twister, this is global in this module */
 mt_state randomnessState;
 
@@ -158,7 +163,7 @@ F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey )
 }
 
 /** Return a random number from the seeded mersenne twister */
-F2FWord32 F2FRandom()
+F2FWord32 f2fRandom()
 {
 	return mts_lrand( &randomnessState );
 }
@@ -280,7 +285,7 @@ F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localP
 	InviteMessage mes;
 	
 	/* first create ID for new peer and save this peer as an unconfirmed peer */
-	F2FPeer *newpeer = f2fPeerListNew( F2FRandom(), F2FRandom() );
+	F2FPeer *newpeer = f2fPeerListNew( f2fRandom(), f2fRandom() );
 	/* This id here is only temporary and only used as challenge, so the client can 
 	 * authenticate itself, that it really knows this number.
 	 * It is temporarely saved in the peer's id and replaced by 
@@ -309,6 +314,25 @@ F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localP
 	/* send the message out to the respective peer via IM */
 	return f2fIMSend( localPeerId, (F2FString)&mes, sizeof(InviteMessage) 
 			- 2 * F2FMaxNameLength + mes.groupNameLength + mes.inviteLength );
+}
+
+/** unregister the peer again, must be in group */
+F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer )
+{
+	return f2fGroupPeerListRemove(group, peer);
+	// TODO: implement notfication
+}
+
+/** Return size of a peerlist in a group */
+F2FSize f2fGroupGetPeerListSize( const F2FGroup *group )
+{
+	return group->listSize;
+}
+
+/** Return a pointer to the peers of a group */
+F2FPeer * f2fGroupGetPeerList( const F2FGroup *group )
+{
+	return group->sortedIdsList;
 }
 
 /** tries to receive a message. If succesful, this gives a peer and the corresponding
@@ -446,5 +470,20 @@ F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
 		return F2FErrMessageTypeUnknown;
 		break;
 	}
+	return F2FErrOK;
+}
+
+/* Send a text message to all group members */
+F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message )
+{
+	// TODO: implement
+	return F2FErrOK;
+}
+
+/** Send data to a peer in this group */
+F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
+		const F2FString data, const F2FWord32 dataLen )
+{
+	// TODO: implement
 	return F2FErrOK;
 }
