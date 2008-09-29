@@ -128,7 +128,10 @@ F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey )
 	strncpy( buffer + buffersize, myPublicKey, MAXBUFFERSIZE - buffersize );
 	buffersize = strlen( buffer );
 	if (buffersize < 4) // not enough data to create seed
-	    return F2FErrNotEnoughSeed;
+	{
+		globalError = F2FErrNotEnoughSeed;
+	    return NULL;
+	}
 	// iterate over seed
 	int seedCell;
 	for (seedCell = 0; seedCell < MT_STATE_SIZE; ++seedCell) 
