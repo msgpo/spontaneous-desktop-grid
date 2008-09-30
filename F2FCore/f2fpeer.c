@@ -140,3 +140,19 @@ F2FError f2fPeerChangeUID( F2FPeer *oldpeer, const F2FWord32 hi, const F2FWord32
 	if (newpeer != NULL) *newpeer = newpeer_tmp;
 	return F2FErrOK;
 }
+
+/* some getters for swig */
+F2FWord32 f2fPeerGetUIDLo( const F2FPeer *peer )
+{
+	return peer->id.lo;
+}
+
+F2FWord32 f2fPeerGetUIDHi( const F2FPeer *peer )
+{
+	return peer->id.hi;
+}
+
+F2FWord32 f2fPeerGetLocalPeerId( const F2FPeer *peer )
+{
+	return peer->localPeerId;
+}

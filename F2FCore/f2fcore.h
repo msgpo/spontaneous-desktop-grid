@@ -141,4 +141,9 @@ F2FError f2fGroupReceive( /*out*/ F2FGroup **group, F2FPeer **sourcePeer,
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 f2fRandom();
 
+/* some getters for f2fpeers */
+F2FWord32 f2fPeerGetUIDLo( const F2FPeer *peer );
+F2FWord32 f2fPeerGetUIDHi( const F2FPeer *peer );
+F2FWord32 f2fPeerGetLocalPeerId( const F2FPeer *peer );
+
 #endif /*F2FCORE_H_*/
