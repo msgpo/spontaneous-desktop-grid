@@ -24,13 +24,13 @@ def usage():
 
 # check usage
 if len(sys.argv) < 5: usage()
-Server = sys.argv[1]
-Username = sys.argv[2]
-Password = sys.argv[3]
-Resource = sys.argv[4]
+servername = sys.argv[1]
+username = sys.argv[2]
+password = sys.argv[3]
+resource = sys.argv[4]
 
-#con = jabber.Client(host=Server,debug=jabber.DBG_ALWAYS ,log=sys.stderr)
-con = jabber.Client(host=Server,log=None)
+#con = jabber.Client(host=servername,debug=jabber.DBG_ALWAYS ,log=sys.stderr)
+con = jabber.Client(host=servername,log=None)
 
 try:
     con.connect()
@@ -93,15 +93,23 @@ con.registerHandler('message',messageCB)
 #con.registerHandler('iq',iqCB)
 #con.setDisconnectHandler(disconnectedCB)
 
-if con.auth(Username,Password,Resource):
-    print "Logged in as %s to server %s" % ( Username, Server)
+if con.auth(username,password,resource):
+    print "Logged in as %s to server %s" % ( username, servername )
 else:
     print "eek -> ", con.lastErr, con.lastErrCode
     sys.exit(1)
 
-con.requestRoster()
+#con.requestRoster()
 con.sendInitPresence()
 
+# Initialize f2f
+mypeerid = f2fcore.f2fInit( username +'@' + servername + '/' + resource, "")
+
+print f2fcore.f2fPeerGetUIDHi(mypeerid)
+print f2fcore.f2fPeerGetUIDLo(mypeerid)
+print f2fcore.f2fPeerGetLocalPeerId(mypeerid)
+
+# big loop
 from time import sleep
 while(1):
     con.process(0) 
