@@ -65,13 +65,37 @@ except IOError, e:
 else:
     print "Connected"
 
-def messageCB(con, msg):
-    if msg.getBody(): ## Dont show blank messages ##
-        print msg.getFrom()
-        print msg.getBody()
+global messageStack
+messageStack=[]
+MaxMessageStackSize=1024
+def receiveMessageCB(con, msg):
+    if msg.getBody(): # If message not empty
+        if len(messageStack) > MaxMessageStackSize: # Don't let stack grow too big
+            messageStack.pop() # forget one message
+        messageStack.insert(0,msg)
+
+# Work through the messageStack and hand these messages over to the F2FCore
+def evaluateReceivedMessages():
+    while len(messageStack) > 0:
+        msg = messageStack.pop()
+        msgfrom = msg.getFrom()
+        try:
+            localPeerId = friendlist.index(msgfrom)
+        except ValueError: # new friend
+            localPeerId = len(friendlist)
+            friendlist.append(msgfrom)
+        # send message to f2fcore, TODO: check result
+        f2fcore.f2fNotifyCoreWithReceived( localPeerId, msgfrom,
+                                           msg.getBody(), 
+                                           len(msg.getBody()) )
+        sendOutSendIMBuffer() # flush the send buffer, if here is an answer
+        if f2fcore.f2fReceiveBufferIsFilled():
+            print f2fcore.f2fReceiveBufferGetContent(1024)
+            f2fcore.f2fReceiveBufferRelease()
+        # TODO: finish here, not only debug
 
 def presenceCB(con, prs):
-    """Called when a presence is recieved"""
+    """Called when a presence is received"""
     who = str(prs.getFrom())
     type = prs.getType()
     if type == None: type = 'available'
@@ -113,7 +137,7 @@ def disconnectedCB(con):
     print "Ouch, network error"
     sys.exit(1)
             
-con.registerHandler('message',messageCB)
+con.registerHandler('message',receiveMessageCB)
 #con.registerHandler('presence',presenceCB)
 #con.registerHandler('iq',iqCB)
 #con.setDisconnectHandler(disconnectedCB)
@@ -141,25 +165,32 @@ def sendOutSendIMBuffer():
 
 # Initialize f2f
 mypeerid = f2fcore.f2fInit( username +'@' + servername + '/' + resource, "")
+
 if( groupname ): # a job shall be submitted
     mygroupid = f2fcore.f2fCreateGroup( groupname )
     # Invite all the friends to this group
     for index in range(len(friendlist)):
         f2fcore.f2fGroupRegisterPeer( mygroupid, index, friendlist[index], "headless invite", "" )
-        # check sendbuffer (to send away the created invitemessage
+        # check sendIMBuffer (to send away the created invitemessage)
         sendOutSendIMBuffer()
 else:
     mygroupid = None
         
-print f2fcore.f2fPeerGetUIDHi(mypeerid)
-print f2fcore.f2fPeerGetUIDLo(mypeerid)
-print f2fcore.f2fPeerGetLocalPeerId(mypeerid)
 
-
-
+def showPeerList():
+    print "Peerlist:"
+    for index in range(f2fcore.f2fPeerListGetSize()):
+        peer = f2fcore.f2fPeerListGetPeer(index)
+        print "Peerid:", f2fcore.f2fPeerGetUIDHi(peer),\
+            ",", f2fcore.f2fPeerGetUIDLo(peer)
+        print "Localpeerid:", f2fcore.f2fPeerGetLocalPeerId(peer)
+        print
+        
+        
 # big loop
 from time import sleep
 while(1):
-    con.process(0) 
-    sleep (1)
+    con.process(2.5) 
+    #sleep (1)
+    showPeerList()
     

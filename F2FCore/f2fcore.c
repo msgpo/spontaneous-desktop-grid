@@ -318,8 +318,9 @@ F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localP
 			- 2 * F2FMaxNameLength + mes.groupNameLength + mes.inviteLength );
 }
 
-/** unregister the peer again, must be in group */
-F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer )
+/** unregister the peer again, must be in group 
+ * changes group and peer (because of the embedded lists) */
+F2FError f2fGroupUnregisterPeer( F2FGroup *group, F2FPeer *peer )
 {
 	return f2fGroupPeerListRemove(group, peer);
 	// TODO: implement notfication
@@ -331,10 +332,12 @@ F2FSize f2fGroupGetPeerListSize( const F2FGroup *group )
 	return group->listSize;
 }
 
-/** Return a pointer to the peers of a group */
-F2FPeer * f2fGroupGetPeerList( const F2FGroup *group )
+/** Return a pointer to a peer of a group */
+F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group, 
+		F2FWord32 peerindex )
 {
-	return group->sortedIdsList;
+	if(peerindex<0 || peerindex>group->listSize) return NULL;
+	return group->sortedIdsList[peerindex];
 }
 
 /** tries to receive a message. If succesful, this gives a peer and the corresponding
@@ -345,25 +348,55 @@ F2FPeer * f2fGroupGetPeerList( const F2FGroup *group )
  * If the timeout value is >0 then it will be used in an internal select. The function will
  * then block to the maximum timeout ms. 
  * This function returns F2FErrBufferFull, if there is still data to receive available.
- * The function shoul dbe called directly again (after processing the received data) */
-F2FError f2fGroupReceive( /*out*/ F2FGroup **group, F2FPeer **sourcePeer,
-			F2FPeer **destPeer, F2FString *message, F2FSize *size, 
-			const F2FWord32 timeout )
+ * The function should be called directly again (after processing the received data) */
+F2FError f2fReceive()
 {
-	/* Check, if there is still something in the buffer */
-	if( receiveBuffer.filled )
-	{
-		*group = receiveBuffer.group;
-		*sourcePeer = receiveBuffer.sourcePeer;
-		*destPeer = receiveBuffer.destPeer;
-		*message = receiveBuffer.buffer;
-		*size = receiveBuffer.size;
-		receiveBuffer.filled = 0; /* as it has been requested, this will be free the next call */
-		return F2FErrOK;
-	}
+	if(receiveBuffer.filled) // Can receive with full buffer
+		return F2FErrBufferFull;
 	/* From here on receive.filled is 0 */
 	/* Try now to receive stuff from the network */
 	/* TODO: select(... */
+	return F2FErrOK;
+}
+
+/** return 1, if there is data in the ReceiveBuffer */
+int f2fReceiveBufferIsFilled()
+{ return receiveBuffer.filled; }
+
+/** get the group of the received data */
+F2FGroup * f2fReceiveBufferGetGroup()
+{ return receiveBuffer.group; }
+
+/** get received Source peer */
+F2FPeer * f2fReceiveBufferGetSourcePeer()
+{ return receiveBuffer.sourcePeer; }
+
+/** get received destination peer */
+F2FPeer * f2fReceiveBufferGetDestPeer()
+{ return receiveBuffer.destPeer; }
+
+/** get size of current buffer */
+F2FSize f2fReceiveBufferGetSize()
+{ return receiveBuffer.size; }
+
+/** get a pointer to the content of the buffer */
+char * f2fReceiveBufferGetContentPtr()
+{ return receiveBuffer.buffer; }
+
+/** special function for SWIG to return a binary buffer 
+ * maxlen is a pointer to a variable, which specifies the maximum len, which can be taken and
+ * will have the actual length of copied data at the end
+ * The data must be copied into content */
+void f2fReceiveBufferGetContent(char *content, int *maxlen )
+{
+	if (*maxlen > receiveBuffer.size) *maxlen = receiveBuffer.size;
+	memcpy(content,receiveBuffer.buffer,*maxlen);
+}
+
+/** show that the buffer has been read and can be filled again */
+F2FError f2fReceiveBufferRelease()
+{
+	receiveBuffer.filled = 0;
 	return F2FErrOK;
 }
 

@@ -90,14 +90,16 @@ F2FError f2fGroupRegisterPeer( /*out*/ F2FGroup *group, const F2FWord32 localPee
 		const F2FString identifier, const F2FString inviteMessage,
 		const F2FString otherPeersPublicKey );
 
-/** unregister the peer again, must be in group */
-F2FError f2fGroupUnregisterPeer( const F2FGroup *group, const F2FPeer *peer );
+/** unregister the peer again, must be in group 
+ * changes group and peer (because of the embedded lists) */
+F2FError f2fGroupUnregisterPeer( F2FGroup *group, F2FPeer *peer );
 
 /** Return size of a peerlist in a group */
 F2FSize f2fGroupGetPeerListSize( const F2FGroup *group );
 
-/** Return a pointer to the peers of a group */
-F2FPeer * f2fGroupGetPeerList( const F2FGroup *group );
+/** Return a pointer to a peer of a group */
+F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group, 
+		F2FWord32 peerindex );
 
 /** hand over messages from the IM program to the core, before this function can be
  * called the second time f2fGroupReceive must be called to be able to clear
@@ -131,19 +133,49 @@ F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
  * message, if not peer and message will be NULL and F2FErrNothingAvail will be returned.
  * In success case F2FErrOK will be returned.
  * This routine must be called on a regulary interval - it can't be used in parallel to
- * the other methods here in this interface.
+ * the other methods here in this interface. 
  * If the timeout value is >0 then it will be used in an internal select. The function will
- * then block to the maximum timeout ms. */
-F2FError f2fGroupReceive( /*out*/ F2FGroup **group, F2FPeer **sourcePeer,
-			F2FPeer **destPeer, F2FString *message, F2FSize *size,
-			const F2FWord32 timeout );
+ * then block to the maximum timeout ms. 
+ * This function returns F2FErrBufferFull, if there is still data to receive available.
+ * The function should be called directly again (after processing the received data) */
+F2FError f2fReceive();
+
+/** return 1, if there is data in the ReceiveBuffer */
+int f2fReceiveBufferIsFilled();
+
+/** get the group of the received data */
+F2FGroup * f2fReceiveBufferGetGroup();
+
+/** get received Source peer */
+F2FPeer * f2fReceiveBufferGetSourcePeer();
+
+/** get received destination peer */
+F2FPeer * f2fReceiveBufferGetDestPeer();
+
+/** get size of current buffer */
+F2FSize f2fReceiveBufferGetSize();
+
+/** get a pointer to the content of the buffer */
+char * f2fReceiveBufferGetContentPtr();
+
+#ifdef SWIG
+%cstring_output_withsize(char *content, int *maxlen);
+#endif
+void f2fReceiveBufferGetContent(char *content, int *maxlen );
+
+/** show that the buffer has been read and can be filled again */
+F2FError f2fReceiveBufferRelease();
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 f2fRandom();
 
-/* some getters for f2fpeers */
+/* some getters for f2fpeers and f2fpeerlist*/
 F2FWord32 f2fPeerGetUIDLo( const F2FPeer *peer );
 F2FWord32 f2fPeerGetUIDHi( const F2FPeer *peer );
 F2FWord32 f2fPeerGetLocalPeerId( const F2FPeer *peer );
+/** Return size of the general peerlist */
+F2FSize f2fPeerListGetSize();
+/** Return a pointer to a peer in th eglobal peerlist */
+F2FPeer * f2fPeerListGetPeer( F2FWord32 peerindex );
 
 #endif /*F2FCORE_H_*/
