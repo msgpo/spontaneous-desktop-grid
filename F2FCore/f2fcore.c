@@ -72,7 +72,7 @@ static struct
 /** get the 0 terminated sendIMBuffer */
 char * f2fSendIMBufferGetBuffer()
 {
-	if (sendIMBuffer.localidscount <= 0) return NULL; // buffer empty	
+	if(sendIMBuffer.size > F2FMaxMessageSize) sendIMBuffer.size = F2FMaxMessageSize;
 	sendIMBuffer.buffer[sendIMBuffer.size] = 0; /* make sure this is terminated */
 	return sendIMBuffer.buffer;
 }
@@ -89,7 +89,7 @@ F2FSize f2fSendIMBufferGetBufferSize()
 F2FWord32 f2fSendIMBufferGetNextLocalPeerID()
 {
 	if (sendIMBuffer.localidscount <= 0) return -1; // none left
-	return sendIMBuffer.localPeerIDlist[-- sendIMBuffer.size];
+	return sendIMBuffer.localPeerIDlist[-- sendIMBuffer.localidscount];
 }
 
 /** Receive buffer */
@@ -202,6 +202,7 @@ F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message,
 	currentsize += newsize;	/* prepare sending of the new message */
 	sendIMBuffer.localPeerIDlist[ 0 ] = localpeerid;
 	sendIMBuffer.localidscount = 1;
+	sendIMBuffer.size = currentsize;
 	return F2FErrOK;
 }
 

@@ -36,4 +36,5 @@
 %include "f2ftypes.h"
 %include "f2fcore.h"
 
+// redefine some char * which are returned
 
