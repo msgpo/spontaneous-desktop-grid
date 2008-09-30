@@ -159,6 +159,7 @@ F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey )
 	sendIMBuffer.localidscount = 0;
 	/* Init was successfull */
 	initWasCalled = 1;
+	myself = newpeer;
 	return newpeer;
 }
 

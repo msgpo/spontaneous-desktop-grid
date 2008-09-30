@@ -31,7 +31,7 @@
 %}
 
 // make sure you can use numbers
-%apply int { F2FWord32, F2FSize }; // Check if this does not introduce errors - should long be used?
+%apply int { F2FWord32, F2FSize , F2FError }; // Check if this does not introduce errors - should long be used?
 
 %include "f2ftypes.h"
 %include "f2fcore.h"
