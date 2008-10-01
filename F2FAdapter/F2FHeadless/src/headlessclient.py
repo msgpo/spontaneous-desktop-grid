@@ -12,7 +12,12 @@ import sys
 import os
 # Add path for f2fcore module
 sys.path.insert(1, os.path.realpath(
+            os.path.join( sys.path[0], "..","F2FCore" )))
+sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], "..", "..","F2FCore" )))
+sys.path.insert(1, os.path.realpath(
+            os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
+print sys.path
 import f2fcore
 
 # Add path for jabber module
@@ -27,9 +32,9 @@ def usage():
     print "usage:"
     print "%s <server> <username> <password> <resource>"   % sys.argv[0]
     print "<friend1>,<friend2>,... [<groupname> <job-archive>]"
-    print "            - connect to server and login   "
-    print "              allow the specified friends to use this resource"
-    print "              if group and job are specified,"
+    print "            - Connect to server and login."
+    print "              Allow the specified friends to use this resource."
+    print "              If group and job are specified,"
     print "              add all friends to this group and submit job."
     sys.exit(0)
 
@@ -51,7 +56,8 @@ if len(sys.argv) >= 7:
     else:
         usage()
 else:
-    friendlist = ""
+    friendlist = []
+    groupname = ""
     jobarchive = ""
 
 #con = jabber.Client(host=servername,debug=jabber.DBG_ALWAYS ,log=sys.stderr)
