@@ -17,7 +17,6 @@ sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], "..", "..","F2FCore" )))
 sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
-print sys.path
 import f2fcore
 
 # Add path for jabber module
@@ -84,16 +83,16 @@ def receiveMessageCB(con, msg):
 def evaluateReceivedMessages():
     while len(messageStack) > 0:
         msg = messageStack.pop()
-        msgfrom = msg.getFrom()
+        msgfrom = str(msg.getFrom())
         try:
             localPeerId = friendlist.index(msgfrom)
         except ValueError: # new friend
             localPeerId = len(friendlist)
             friendlist.append(msgfrom)
         # send message to f2fcore, TODO: check result
+        body = str(msg.getBody())
         f2fcore.f2fNotifyCoreWithReceived( localPeerId, msgfrom,
-                                           msg.getBody(), 
-                                           len(msg.getBody()) )
+                                           body, len(body) )
         sendOutSendIMBuffer() # flush the send buffer, if here is an answer
         if f2fcore.f2fReceiveBufferIsFilled():
             print f2fcore.f2fReceiveBufferGetContent(1024)
@@ -194,9 +193,14 @@ def showPeerList():
         
         
 # big loop
-from time import sleep
+from time import sleep, time
+oldtime = time()
 while(1):
-    con.process(2.5) 
+    con.process(0.5) 
     #sleep (1)
-    showPeerList()
+    evaluateReceivedMessages()
+    newtime = time()
+    if newtime-oldtime > 5:
+        oldtime = newtime
+        showPeerList()
     

@@ -220,10 +220,10 @@ F2FError f2fIMDecode( const F2FString message, const F2FSize messagelen,
 {
 	/* TODO: eventually remove whitespace */
 	/* Decode message from IM ending in f2f framework */
-	if( memcmp( sendBuffer.buffer, F2FMessageMark, F2FMessageMarkLength ) ) /* test header */
+	if( memcmp( message, F2FMessageMark, F2FMessageMarkLength ) ) /* test header */
 		return F2FErrNotF2FMessage; /* not the right header */
 	b64decode( message + F2FMessageMarkLength, decodebuffer, messagelen, maxdecodelen );
-	/* TODO: eventually evaluate result of b64encode */ 
+	/* TODO: eventually evaluate result of b64decode */ 
 	return F2FErrOK;
 }
 
@@ -405,7 +405,7 @@ static F2FError processInviteMessage( const F2FWord32 localPeerId,
 		const F2FString identifier, const InviteMessage *msg)
 {
 	/* check if I know this peer already */
-	F2FPeer * srcPeer = f2fPeerListFindPeer( msg->sourcePeerID.lo, msg->sourcePeerID.lo );
+	F2FPeer * srcPeer = f2fPeerListFindPeer( ntohl(msg->sourcePeerID.lo), ntohl(msg->sourcePeerID.lo) );
 	/* TODO: verify that this is really my friend contacting me */
 	if( srcPeer == NULL ) /* not in the local peer list */
 	{
@@ -429,7 +429,9 @@ static F2FError processInviteMessage( const F2FWord32 localPeerId,
 		char groupname[namelen+1];
 		groupname[namelen] = 0;
 		memcpy(groupname, msg->nameAndInvite, namelen);
-		group = f2fGroupListAdd( groupname, ntohl(msg->groupID.hi), ntohl(msg->groupID.lo) );
+		group = f2fGroupListAdd( groupname, 
+				ntohl(msg->groupID.hi), 
+				ntohl(msg->groupID.lo) );
 		if( group == NULL ) return F2FErrListFull;
 	}
 	/* Send answer back */
@@ -451,23 +453,23 @@ static F2FError processInviteMessageAnswer( const InviteMessageAnswer *msg )
 {
 	F2FError error;
 	
-	F2FPeer *answerPeer = f2fPeerListFindPeer( msg->tmpIDAndChallenge.hi, 
-			msg->tmpIDAndChallenge.lo );
+	F2FPeer *answerPeer = f2fPeerListFindPeer( ntohl(msg->tmpIDAndChallenge.hi), 
+			ntohl(msg->tmpIDAndChallenge.lo) );
 	if( answerPeer == NULL ) return F2FErrNotAuthenticated; /* this peer did 
 	 * not get an invite */ 
 	/* Check if peer waits for an invite */
 	if( answerPeer->status != F2FPeerWaitingForInviteConfirm )
 		return F2FErrNotAuthenticated;
 	/* Check, if peer was invited in the group it specifies */
-	F2FGroup *answerGroup = f2fGroupListFindGroup( msg->groupID.hi,
-			msg->groupID.lo );
+	F2FGroup *answerGroup = f2fGroupListFindGroup( ntohl(msg->groupID.hi),
+			ntohl(msg->groupID.lo) );
 	if( answerGroup == NULL ) return F2FErrNotAuthenticated; /* this peer did
 	 * not get an invite */ 
 	if( f2fPeerFindGroupIndex( answerPeer, answerGroup) < 0 )
 		return F2FErrNotAuthenticated;
 	/* Change the id to the official id */
-	error = f2fPeerChangeUID( answerPeer, msg->sourcePeerID.hi, 
-			msg->sourcePeerID.lo, &answerPeer);
+	error = f2fPeerChangeUID( answerPeer, ntohl(msg->sourcePeerID.hi), 
+			ntohl(msg->sourcePeerID.lo), &answerPeer);
 	if( error != F2FErrOK ) return error;
 	answerPeer -> status = F2FPeerActive; /* active now */
 	return F2FErrOK;
