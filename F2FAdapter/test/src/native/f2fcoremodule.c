@@ -24,6 +24,7 @@ static PyObject* message(PyObject *self, PyObject *args){
 
 
 /* registration table */
+/*
 static struct PyMemberDef methods[] = {
 		{
 				"message". 
@@ -32,9 +33,11 @@ static struct PyMemberDef methods[] = {
 				"Print the hello message."
 		},
 		{NULL, NULL}        /* Sentinel */
+/*
 };
 
 PyMODINIT_FUNC initf2fcore(void){
 	(void) Py_InitModule("f2fcore", methods);
 }
+*/
 
