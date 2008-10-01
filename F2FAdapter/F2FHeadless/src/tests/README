@@ -1,0 +1,3 @@
+For f2fMaster and f2fSlave you need a local jabberserver (i.e. openfire).
+Furthermore you need two users f2f01 and f2f02 on this server with password f2f.
+The users must know each other.
