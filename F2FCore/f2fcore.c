@@ -198,7 +198,8 @@ F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message,
 	/* Encode message for sending in f2f framework */
 	strcpy( sendIMBuffer.buffer, F2FMessageMark ); /* header */
 	currentsize = F2FMessageMarkLength;
-	newsize = b64encode( message, sendIMBuffer.buffer + currentsize, size, F2FMaxMessageSize-currentsize );
+	newsize = b64encode( message, sendIMBuffer.buffer + currentsize,
+				size, F2FMaxMessageSize-currentsize );
 	currentsize += newsize;	/* prepare sending of the new message */
 	sendIMBuffer.localPeerIDlist[ 0 ] = localpeerid;
 	sendIMBuffer.localidscount = 1;
@@ -312,7 +313,7 @@ F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localP
 	memcpy( mes.nameAndInvite, identifier, mes.groupNameLength );
 	mes.inviteLength = strnlen( inviteMessage, F2FMaxNameLength );
 	memcpy( mes.nameAndInvite + mes.groupNameLength, identifier, mes.inviteLength );
-	
+
 	/* send the message out to the respective peer via IM */
 	return f2fIMSend( localPeerId, (F2FString)&mes, sizeof(InviteMessage) 
 			- 2 * F2FMaxNameLength + mes.groupNameLength + mes.inviteLength );
@@ -405,7 +406,7 @@ static F2FError processInviteMessage( const F2FWord32 localPeerId,
 		const F2FString identifier, const InviteMessage *msg)
 {
 	/* check if I know this peer already */
-	F2FPeer * srcPeer = f2fPeerListFindPeer( ntohl(msg->sourcePeerID.lo), ntohl(msg->sourcePeerID.lo) );
+	F2FPeer * srcPeer = f2fPeerListFindPeer( ntohl(msg->sourcePeerID.hi), ntohl(msg->sourcePeerID.lo) );
 	/* TODO: verify that this is really my friend contacting me */
 	if( srcPeer == NULL ) /* not in the local peer list */
 	{
@@ -445,7 +446,8 @@ static F2FError processInviteMessage( const F2FWord32 localPeerId,
 	myanswer.tmpIDAndChallenge.hi = msg->tmpIDAndChallenge.hi; /* no transfer in endian necessary */
 	myanswer.tmpIDAndChallenge.lo = msg->tmpIDAndChallenge.lo; /* no transfer in endian necessary */
 	myanswer.messagetype = F2FMessageTypeInviteAnswer;
-	return f2fIMSend( localPeerId, (F2FString)&myanswer, sizeof(myanswer) );
+	return f2fIMSend( localPeerId, (F2FString)&myanswer,
+			sizeof(myanswer) );
 }
 
 /** process an InviteMessageAnswer */
@@ -465,7 +467,7 @@ static F2FError processInviteMessageAnswer( const InviteMessageAnswer *msg )
 			ntohl(msg->groupID.lo) );
 	if( answerGroup == NULL ) return F2FErrNotAuthenticated; /* this peer did
 	 * not get an invite */ 
-	if( f2fPeerFindGroupIndex( answerPeer, answerGroup) < 0 )
+	if( f2fPeerFindGroupIndex( answerPeer, answerGroup ) < 0 )
 		return F2FErrNotAuthenticated;
 	/* Change the id to the official id */
 	error = f2fPeerChangeUID( answerPeer, ntohl(msg->sourcePeerID.hi), 

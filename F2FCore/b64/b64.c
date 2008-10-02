@@ -520,14 +520,16 @@ size_t b64encode( const char * src, char * dst,
 
     while( srcpos < inputlen ) {
         len = 0;
-        for( i = 0; i < 3; i++ ) {
-            in[i] = (unsigned char) src[ srcpos++ ];
-            if( srcpos < inputlen ) {
+        // Get 3 input bytes (less, if less are left)
+        for( i = 0; i < 3; i++ ) \
+        {
+            if( srcpos < inputlen ) \
+            {
+                in[i] = (unsigned char) src[ srcpos ];
                 len++;
             }
-            else {
-                in[i] = 0;
-            }
+            else { in[i] = 0; }
+            srcpos ++;
         }
         if( len ) {
             b64encodeblock( in, out, len );
