@@ -149,9 +149,9 @@ F2FSize f2fPeerListGetSize()
 	return listsize;
 }
 
-/** Return a pointer to a peer in th eglobal peerlist */
+/** Return a pointer to a peer in the global peerlist */
 F2FPeer * f2fPeerListGetPeer( F2FWord32 peerindex )
 {
 	if(peerindex<0 || peerindex>listsize) return NULL;
-	return peerList+peerindex;
+	return sortedIdsList[peerindex];
 }

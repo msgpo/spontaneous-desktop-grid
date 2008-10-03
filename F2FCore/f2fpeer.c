@@ -120,7 +120,9 @@ F2FError f2fPeerRemoveFromGroup( /*out*/ F2FPeer *peer, F2FGroup *group )
 
 /** Change uid and update corresponding lists, if newpeer is not NULL, 
  * return here the new peper address */
-F2FError f2fPeerChangeUID( F2FPeer *oldpeer, const F2FWord32 hi, const F2FWord32 lo, F2FPeer **newpeer )
+F2FError f2fPeerChangeUID( F2FPeer *oldpeer, 
+		const F2FWord32 hi, const F2FWord32 lo, 
+		F2FPeer **newpeer )
 {
 	F2FPeer tmpPeer;
 	F2FPeer *newpeer_tmp;
