@@ -35,7 +35,7 @@ enum F2FTicketStateEnum
 {
 	F2FTicketStateEmpty = 0,
 	F2FTicketStateRequested = 1,
-	F2FTicketStateReceived = 2,
+	F2FTicketStateReceived = 2
 } F2FTicketState;
 
 typedef struct F2FGroupPeerStruct
@@ -43,7 +43,8 @@ typedef struct F2FGroupPeerStruct
 	F2FPeer *peer; /** a pointer to the actual peer */
 	F2FTicket ticket; /** This is th eticket, which allows the 
 						* current F2F instance to execute jobs on this peer */
-	F2FTicketState ticketState; /** Request state of the ticket */
+//	F2FTicketState ticketState; /** Request state of the ticket */
+	int ticketState; /** Request state of the ticket */
 } F2FGroupPeer;
 
 /** F2FGroup - a collection of peers solving one designated task (also 64bit random id) */
