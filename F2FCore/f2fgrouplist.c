@@ -56,6 +56,7 @@ F2FGroup * f2fGroupListAdd( const F2FString name, const F2FWord32 hiuid, const F
 	strncpy( current->name, name, F2FMaxNameLength );
 	current->id.hi = hiuid;
 	current->id.lo = louid;
+	current->name = NULL;
 	groupListSize ++;
 	return current;
 }

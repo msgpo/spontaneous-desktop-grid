@@ -175,7 +175,25 @@ F2FWord32 f2fPeerGetUIDHi( const F2FPeer *peer );
 F2FWord32 f2fPeerGetLocalPeerId( const F2FPeer *peer );
 /** Return size of the general peerlist */
 F2FSize f2fPeerListGetSize();
-/** Return a pointer to a peer in th eglobal peerlist */
+/** Return a pointer to a peer in the global peerlist */
 F2FPeer * f2fPeerListGetPeer( F2FWord32 peerindex );
+
+/** submit a job to a f2f group
+ * This will first ask for allowance tickets from 
+ * every client in the job group. If at a later point
+ * (when the job is already started) clients (more slaves)
+ * are added to the group, they will be directly asked for a ticket.
+ * If tickets are received back, the job will be sent to these clients.
+ * The Job must be available as a local file in a special archive format
+ */ 
+F2FError f2fGroupSubmitJob( const char * jobpath );
+
+/** distribute file */
+F2FError f2fGroupDistributeFile( const char * publishname,
+		const char * filepath );
+
+/** distribute data in distr. hash table */
+F2FError f2fGroupDistributeData( const char * publishname,
+		char * memorypool, F2FSize len );
 
 #endif /*F2FCORE_H_*/

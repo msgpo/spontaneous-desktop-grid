@@ -29,6 +29,22 @@
 
 #include "f2ftypes.h"
 #include "f2fpeer.h"
+#include "f2fticket.h"
+
+enum F2FTicketStateEnum
+{
+	F2FTicketStateEmpty = 0,
+	F2FTicketStateRequested = 1,
+	F2FTicketStateReceived = 2,
+} F2FTicketState;
+
+typedef struct F2FGroupPeerStruct
+{
+	F2FPeer *peer; /** a pointer to the actual peer */
+	F2FTicket ticket; /** This is th eticket, which allows the 
+						* current F2F instance to execute jobs on this peer */
+	F2FTicketState ticketState; /** Request state of the ticket */
+} F2FGroupPeer;
 
 /** F2FGroup - a collection of peers solving one designated task (also 64bit random id) */
 typedef struct F2FGroupStruct
@@ -36,12 +52,15 @@ typedef struct F2FGroupStruct
 	F2FUID id;
 	char name[F2FMaxNameLength+1]; /** The name of this group, does not need to be unique
 								   * might be something like: "Ulno's blender computing group" */	
-	F2FPeer *sortedIdsList [ F2FMaxPeers ]; /** peers belonging to this group */
+	F2FGroupPeer sortedPeerList [ F2FMaxPeers ]; /** peers belonging to this group */
 	F2FSize listSize; /** current size of the sorted IDs list */
+	F2FString jobfilepath; /** points to the name of the submitted job
+							* NULL, if no job was submitted
+	 						* TODO: consider multiple jobs in one group */
 } F2FGroup;
 
 /** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
-F2FPeer * f2fGroupFindPeer( const F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo );
+F2FPeer * f2fGroupFindPeer( F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo );
 
 /** add one peer to the list, return peer or NULL if no space left */
 F2FError f2fGroupPeerListAdd( /* out */ F2FGroup *group, F2FPeer *peer );

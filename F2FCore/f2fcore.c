@@ -338,7 +338,7 @@ F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group,
 		F2FWord32 peerindex )
 {
 	if(peerindex<0 || peerindex>group->listSize) return NULL;
-	return group->sortedIdsList[peerindex];
+	return group->sortedPeerList[peerindex].peer;
 }
 
 /** tries to receive a message. If succesful, this gives a peer and the corresponding
@@ -524,5 +524,33 @@ F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
 		const F2FString data, const F2FWord32 dataLen )
 {
 	// TODO: implement
+	return F2FErrOK;
+}
+
+/** submit a job to a f2f group
+ * This will first ask for allowance tickets from 
+ * every client in the job group. If at a later point
+ * (when the job is already started) clients (more slaves)
+ * are added to the group, they will be directly asked for a ticket.
+ * If tickets are received back, the job will be sent to these clients.
+ * The Job must be available as a local file in a special archive format
+ */ 
+F2FError f2fGroupSubmitJob( const char * jobpath )
+{
+	
+	return F2FErrOK;
+}
+
+/** distribute file */
+F2FError f2fGroupDistributeFile( const char * publishname,
+		const char * filepath )
+{
+	return F2FErrOK;
+}
+
+/** distribute data in distr. hash table */
+F2FError f2fGroupDistributeData( const char * publishname,
+		char * memorypool, F2FSize len )
+{
 	return F2FErrOK;
 }

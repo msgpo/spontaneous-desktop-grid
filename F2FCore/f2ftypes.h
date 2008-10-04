@@ -59,10 +59,12 @@ typedef enum  {
 
 /** the unique identifier used in F2F 
  * first this will be only 64 bits, which should be ok, if there are about max. 1024 clients in a frid */
-typedef struct
+typedef struct F2FUIDStruct
 {
 	F2FWord32 hi;
 	F2FWord32 lo;
 } F2FUID;
+
+#include "f2fticket.h"
 
 #endif /*F2FTYPES_H_*/

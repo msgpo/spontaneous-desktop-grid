@@ -189,9 +189,9 @@ def showPeerList():
     for index in range(f2fcore.f2fPeerListGetSize()):
         peer = f2fcore.f2fPeerListGetPeer(index)
         print "Peerid:", f2fcore.f2fPeerGetUIDHi(peer),\
-            ",", f2fcore.f2fPeerGetUIDLo(peer)
-        print "Localpeerid:", f2fcore.f2fPeerGetLocalPeerId(peer)
-        print
+            ",", f2fcore.f2fPeerGetUIDLo(peer), "localpeerid:",\
+            f2fcore.f2fPeerGetLocalPeerId(peer)
+    print
         
         
 # big loop

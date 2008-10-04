@@ -31,7 +31,7 @@
 /** Find the nearest upper peer or the peer itself via the uid, return index
  * If the list is empty or has one element which is higher than the current 0 will be returned.
  * If it is higher than all peers the returned index equals the group->listSize */
-static int f2fGroupFindNearestUpperPeer( const F2FGroup *group, 
+static int f2fGroupFindNearestUpperPeer( F2FGroup *group, 
 		const F2FWord32 uidhi, const F2FWord32 uidlo )
 {
 	int searchpos = group->listSize / 2;
@@ -43,17 +43,17 @@ static int f2fGroupFindNearestUpperPeer( const F2FGroup *group,
 			newIsHigherThanSearchMinus1 = 1;
 		else
 		{
-			F2FPeer *searchMinus1 = group->sortedIdsList[searchpos-1];
-			newIsHigherThanSearchMinus1 = ( uidhi > searchMinus1->id.hi ) || 
-				( uidhi == searchMinus1->id.hi && uidlo >= searchMinus1->id.lo );
+			F2FGroupPeer *searchMinus1 = &(group->sortedPeerList [searchpos-1]);
+			newIsHigherThanSearchMinus1 = ( uidhi > searchMinus1->peer->id.hi ) || 
+				( uidhi == searchMinus1->peer->id.hi && uidlo >= searchMinus1->peer->id.lo );
 		}
 		if (searchpos == group->listSize)
 			newIsLowerThanSearch = 1;
 		else
 		{
-			F2FPeer *search = group->sortedIdsList[searchpos];
-			newIsLowerThanSearch = ( uidhi < search->id.hi ) || 
-				( uidhi == search->id.hi && uidlo < search->id.lo );
+			F2FGroupPeer *search = group->sortedPeerList + searchpos;
+			newIsLowerThanSearch = ( uidhi < search->peer->id.hi ) || 
+				( uidhi == search->peer->id.hi && uidlo < search->peer->id.lo );
 		}
 		if( ! newIsHigherThanSearchMinus1 )
 		{
@@ -70,12 +70,12 @@ static int f2fGroupFindNearestUpperPeer( const F2FGroup *group,
 }
 
 /** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
-F2FPeer * f2fGroupFindPeer( const F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo )
+F2FPeer * f2fGroupFindPeer( F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo )
 {
 	if( group->listSize == 0 ) return NULL;
 	int index = f2fGroupFindNearestUpperPeer( group, uidhi, uidlo );
 	if( index == 0) return NULL;
-	F2FPeer *candidate = group->sortedIdsList[ index - 1 ];
+	F2FPeer *candidate = group->sortedPeerList[ index - 1 ].peer;
 	if( candidate->id.hi == uidhi || candidate->id.lo == uidlo )
 		return candidate;
 	else
@@ -90,9 +90,10 @@ F2FError f2fGroupPeerListAdd( /* out */ F2FGroup *group, F2FPeer *peer )
 	if( searchpos < 0 )
 		return searchpos;
 	/* do the actual insert */
-	memmove( group->sortedIdsList + searchpos + 1, group->sortedIdsList + searchpos, 
-			(group->listSize - searchpos) * sizeof(*(group->sortedIdsList)) );
-	group->sortedIdsList [searchpos] = peer;
+	memmove( group->sortedPeerList + searchpos + 1, group->sortedPeerList + searchpos, 
+			(group->listSize - searchpos) * sizeof(*(group->sortedPeerList)) );
+	group->sortedPeerList [searchpos].peer = peer;
+	f2fTicketSetNull( & (group->sortedPeerList [searchpos].ticket) );
 	group->listSize ++;
 	return F2FErrOK;
 }
@@ -103,12 +104,12 @@ F2FError f2fGroupPeerListRemove( F2FGroup *group, F2FPeer *peer )
 	if( group->listSize == 0 ) return F2FErrListEmpty;
 	int index = f2fGroupFindNearestUpperPeer( group, peer->id.hi, peer->id.lo );
 	if( index == 0 ) return F2FErrNotFound;
-	F2FPeer *candidate = group->sortedIdsList[ index - 1];
-	if( candidate->id.hi == peer->id.hi || candidate->id.lo == peer->id.lo )
+	F2FGroupPeer *candidate = group->sortedPeerList + index - 1;
+	if( candidate->peer->id.hi == peer->id.hi || candidate->peer->id.lo == peer->id.lo )
 	{
 		/* remove from sorted list */
-		memmove( group->sortedIdsList + index - 1, group->sortedIdsList + index, 
-				(group->listSize - index) * sizeof(*(group->sortedIdsList)) );
+		memmove( group->sortedPeerList + index - 1, group->sortedPeerList + index, 
+				(group->listSize - index) * sizeof(*(group->sortedPeerList)) );
 		group->listSize --;
 		return F2FErrOK;
 	}
