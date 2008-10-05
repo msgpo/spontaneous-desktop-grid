@@ -127,7 +127,8 @@ F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
 /** Send data to a peer in this group */
 F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
-		const F2FString data, const F2FWord32 dataLen );
+		const char *data, const F2FWord32 dataLen, int * datasentflag );
+
 
 /** tries to receive a message. If succesful, this gives a peer and the corresponding
  * message, if not peer and message will be NULL and F2FErrNothingAvail will be returned.

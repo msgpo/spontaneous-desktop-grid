@@ -519,9 +519,23 @@ F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message )
 	return F2FErrOK;
 }
 
-/** Send data to a peer in this group */
-F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
-		const F2FString data, const F2FWord32 dataLen )
+/** Fill send buffer for a specific peer in a group */
+F2FError f2fSendData( const F2FGroup *group, const F2FPeer *peer,
+		const char *data, const F2FWord32 dataLen )
+{
+	// TODO: implement
+	return F2FErrOK;
+}
+
+/** test, if data in buffer has been sent */
+F2FError f2fDataSent( )
+{
+	// TODO: implement
+	return F2FErrOK;
+}
+
+/** empty, send buffer for data, even if it has not been sent */
+F2FError f2fEmptyData()
 {
 	// TODO: implement
 	return F2FErrOK;
@@ -537,7 +551,7 @@ F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
  */ 
 F2FError f2fGroupSubmitJob( const char * jobpath )
 {
-	
+	// TODO: implement	
 	return F2FErrOK;
 }
 
@@ -545,6 +559,7 @@ F2FError f2fGroupSubmitJob( const char * jobpath )
 F2FError f2fGroupDistributeFile( const char * publishname,
 		const char * filepath )
 {
+	// TODO: implement
 	return F2FErrOK;
 }
 
@@ -552,5 +567,6 @@ F2FError f2fGroupDistributeFile( const char * publishname,
 F2FError f2fGroupDistributeData( const char * publishname,
 		char * memorypool, F2FSize len )
 {
+	// TODO: implement
 	return F2FErrOK;
 }
