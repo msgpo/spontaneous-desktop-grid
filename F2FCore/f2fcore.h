@@ -179,6 +179,23 @@ F2FSize f2fPeerListGetSize();
 /** Return a pointer to a peer in the global peerlist */
 F2FPeer * f2fPeerListGetPeer( F2FWord32 peerindex );
 
+/** Fill send buffer with data for all group members */
+F2FError f2fGroupSendData( const F2FGroup *group, 
+		const char * message, F2FSize len );
+
+/** Fill send buffer with a text message for all group members */
+F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
+
+/** Fill send buffer for a specific peer in a group */
+F2FError f2fPeerSendData( const F2FGroup *group, const F2FPeer *peer,
+		const char *data, const F2FWord32 dataLen );
+
+/** test, if data in buffer has been sent */
+F2FError f2fDataSent();
+
+/** empty, send buffer for data, even if it has not been sent */
+F2FError f2fEmptyData();
+
 /** submit a job to a f2f group
  * This will first ask for allowance tickets from 
  * every client in the job group. If at a later point

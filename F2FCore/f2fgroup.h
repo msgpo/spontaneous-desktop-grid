@@ -41,8 +41,10 @@ enum F2FTicketStateEnum
 typedef struct F2FGroupPeerStruct
 {
 	F2FPeer *peer; /** a pointer to the actual peer */
-	F2FTicket ticket; /** This is th eticket, which allows the 
+	F2FTicket sendTicket; /** This is the ticket, which allows the 
 						* current F2F instance to execute jobs on this peer */
+	F2FTicket receiveTicket; /** This is the ticket, which allows another peer 
+						*  to execute jobs in the current F2F instance */
 	enum F2FTicketStateEnum ticketState; /** Request state of the ticket */
 } F2FGroupPeer;
 

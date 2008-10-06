@@ -34,6 +34,7 @@
 #include "f2fcore.h"
 #include "f2fpeerlist.h"
 #include "f2fgrouplist.h"
+#include "f2fmessagetypes.h"
 
 static int initWasCalled = 0; // this will be set if init was successful
 static F2FError globalError = F2FErrOK; // a global error variable
@@ -228,45 +229,6 @@ F2FError f2fIMDecode( const F2FString message, const F2FSize messagelen,
 	return F2FErrOK;
 }
 
-typedef enum
-{
-	F2FMessageTypeInvite,
-	F2FMessageTypeInviteAnswer,
-	/* her should be a lot of types to inquire status data, pinging, 
-	 * and exchanging routing information */ 
-} F2FMessageType;
-
-/** The message, which is sent out as initial challenge (to invite another 
- * peer to a group) contains the following: */
-typedef struct
-{
-	unsigned char messagetype; /**    1: Type of message, must be set to F2FMessageTypeInvite */
-	char reserved[3];          /**  2-4: reserved for later */
-	F2FUID groupID;            /**  5-12: Group identifier */
-	F2FUID sourcePeerID;       /** 13-20: Peer identifier of inviting peer  */
-	F2FUID tmpIDAndChallenge;    /** 21-28: challenge 
-		* (this is at the same time the challenge,
-	 	* so we make sure the invited peer should know this
-	 	*  when he answers (we need later to encrypt
-	    * this with the public key of the invited peer) */
-	unsigned char groupNameLength; /**    29: Group name length (max F2FMaxNameLength) */
-	unsigned char inviteLength; /**  30: Invitation message length (max F2FMaxNameLength) */
-	char nameAndInvite [F2FMaxNameLength*2]; /* 31- *: Group name and then invitation message */
-    /* maybe timestamps should be added */
-} InviteMessage;
-
-/** This is the answer which should be sent back after you get an invite to accept the
- * invitation - we might need here a feedback to the user - TODO implement this feedback */
-typedef struct
-{
-	unsigned char messagetype; /** Type of message, must be set to F2FMessageTypeInviteAnswer */
-	char reserved[3];          /** reserved for later */
-	F2FUID groupID;            /** Group identifier */
-	F2FUID sourcePeerID;       /** Peer identifier of answering peer  */
-	F2FUID destPeerID;         /** Peer identifier of peer who invited  */
-	F2FUID tmpIDAndChallenge;    /** challenge - also to identify local peer entry */
-} InviteMessageAnswer;
-
 /** Finally friends (other peers) can be added to this group. This function triggers
  * the registration to ask the specified peer to join a F2F Computing group 
  * If we know his public key, we can send it as a challenge. He would then also get our publickey,
@@ -285,7 +247,7 @@ F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localP
 	/* Ask new peer, if he is f2f capable: send a challenge, save the challenge.
 	 * If the peer sends back the correct answer at one point, it is added as a peer */
 
-	InviteMessage mes;
+	F2FMessageInvite mes;
 	
 	/* first create ID for new peer and save this peer as an unconfirmed peer */
 	F2FPeer *newpeer = f2fPeerListNew( f2fRandom(), f2fRandom() );
@@ -315,7 +277,7 @@ F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localP
 	memcpy( mes.nameAndInvite + mes.groupNameLength, identifier, mes.inviteLength );
 
 	/* send the message out to the respective peer via IM */
-	return f2fIMSend( localPeerId, (F2FString)&mes, sizeof(InviteMessage) 
+	return f2fIMSend( localPeerId, (F2FString)&mes, sizeof(F2FMessageInvite) 
 			- 2 * F2FMaxNameLength + mes.groupNameLength + mes.inviteLength );
 }
 
@@ -403,7 +365,7 @@ F2FError f2fReceiveBufferRelease()
 
 /** process an InviteMessage sent to me, react to this invite */
 static F2FError processInviteMessage( const F2FWord32 localPeerId,
-		const F2FString identifier, const InviteMessage *msg)
+		const F2FString identifier, const F2FMessageInvite *msg)
 {
 	/* check if I know this peer already */
 	F2FPeer * srcPeer = f2fPeerListFindPeer( ntohl(msg->sourcePeerID.hi), ntohl(msg->sourcePeerID.lo) );
@@ -436,7 +398,7 @@ static F2FError processInviteMessage( const F2FWord32 localPeerId,
 		if( group == NULL ) return F2FErrListFull;
 	}
 	/* Send answer back */
-	InviteMessageAnswer myanswer;
+	F2FMessageInviteAnswer myanswer;
 	myanswer.destPeerID.hi = msg->sourcePeerID.hi; /* no transfer in endian necessary */
 	myanswer.destPeerID.lo = msg->sourcePeerID.lo; /* no transfer in endian necessary */
 	myanswer.sourcePeerID.hi = htonl(myself->id.hi);
@@ -451,7 +413,7 @@ static F2FError processInviteMessage( const F2FWord32 localPeerId,
 }
 
 /** process an InviteMessageAnswer */
-static F2FError processInviteMessageAnswer( const InviteMessageAnswer *msg )
+static F2FError processInviteMessageAnswer( const F2FMessageInviteAnswer *msg )
 {
 	F2FError error;
 	
@@ -497,12 +459,12 @@ F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
 	switch ( (F2FMessageType) receiveBuffer.buffer[0] )
 	{
 	case F2FMessageTypeInviteAnswer:
-		error = processInviteMessageAnswer( (InviteMessageAnswer *) receiveBuffer.buffer);
+		error = processInviteMessageAnswer( (F2FMessageInviteAnswer *) receiveBuffer.buffer);
 		if( error != F2FErrOK ) return error;
 		break;
 	case F2FMessageTypeInvite:
 		error = processInviteMessage( localPeerId, identifier,
-				(InviteMessage *) receiveBuffer.buffer);
+				(F2FMessageInvite *) receiveBuffer.buffer);
 		if( error != F2FErrOK ) return error;
 		break;
 	default:
@@ -512,7 +474,15 @@ F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
 	return F2FErrOK;
 }
 
-/* Send a text message to all group members */
+/** Fill send buffer with data for all group members */
+F2FError f2fGroupSendData( const F2FGroup *group, 
+		const char * message, F2FSize len )
+{
+	// TODO: implement
+	return F2FErrOK;
+}
+
+/** Fill send buffer with a text message for all group members */
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message )
 {
 	// TODO: implement
@@ -520,7 +490,7 @@ F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message )
 }
 
 /** Fill send buffer for a specific peer in a group */
-F2FError f2fSendData( const F2FGroup *group, const F2FPeer *peer,
+F2FError f2fPeerSendData( const F2FGroup *group, const F2FPeer *peer,
 		const char *data, const F2FWord32 dataLen )
 {
 	// TODO: implement

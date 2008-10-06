@@ -27,11 +27,17 @@
 #ifndef F2FTICKET_H_
 #define F2FTICKET_H_
 
+#include <time.h>
 #include "f2ftypes.h"
 
 /** a ticket which allows to execute jobs, if known.
- * The direct use of this structur is discouraged, use the access methods */
-typedef struct F2FUIDStruct F2FTicket;
+ * The direct use of this structure is discouraged, use the access methods */
+typedef struct F2FTicketStruct
+{
+	F2FWord32 hi;
+	F2FWord32 lo;
+	time_t validUntil;
+} F2FTicket;
 
 /** create valus for an F2FTicket and initialize the given structure **/
 F2FError f2fTicketInitialize( F2FTicket *newticket );
