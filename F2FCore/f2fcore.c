@@ -582,15 +582,15 @@ F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
 /** test, if data in buffer has been sent (Buffers are empty) */
 int f2fDataSent( )
 {
-	return sendBuffer.size == 0 && sendIMBuffer.size == 0;
+	return sendBuffer.localidscount == 0 && sendIMBuffer.localidscount == 0;
 }
 
 /** empty, send buffers for data, even if it has not been sent */
 F2FError f2fEmptyData()
 {
 	/* TODO: maybe return F2FErrBufferFull if buffer not empty before? */
-	sendBuffer.size = 0;
-	sendIMBuffer.size = 0;
+	sendBuffer.localidscount = 0;
+	sendIMBuffer.localidscount = 0;
 	return F2FErrOK;
 }
 

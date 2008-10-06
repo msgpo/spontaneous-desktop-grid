@@ -126,8 +126,9 @@ static inline int f2fSizeValid( const F2FSize size )
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
 /** Send data to a peer in this group */
-F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
-		const char *data, const F2FWord32 dataLen, int * datasentflag );
+/* TODO: think if this is obsolet
+ * F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
+		const char *data, const F2FWord32 dataLen, int * datasentflag );*/
 
 
 /** tries to receive a message. If succesful, this gives a peer and the corresponding

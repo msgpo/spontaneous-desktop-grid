@@ -128,6 +128,8 @@ F2FError f2fPeerChangeUID( F2FPeer *oldpeer,
 	F2FPeer *newpeer_tmp;
 	F2FError error;
 	
+	/* TODO: !!! Check if update concerns all groups the peer is in */
+	
 	/* copy current version of the peer */
 	memcpy( &tmpPeer, oldpeer, sizeof(F2FPeer) );
 	tmpPeer.id.hi = hi;
