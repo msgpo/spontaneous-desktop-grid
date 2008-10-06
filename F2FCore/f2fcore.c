@@ -49,11 +49,13 @@ mt_state randomnessState;
 
 static F2FPeer *myself; /* saves own peer information */
 
-/** Send buffer */
+/** Send buffer, this can be also sent to multiple peers */
 static struct
 {
 	char buffer[F2FMaxMessageSize];
 	F2FSize size; /* how much is filled */
+	F2FPeer * peerList[ F2FMaxPeers ];
+	F2FSize localidscount; /* the number of ids in list */
 } sendBuffer;
 
 /** Send IM buffer.
@@ -63,7 +65,7 @@ static struct
  */
 static struct
 {
-	char buffer[F2FMaxMessageSize+1]; /* usually cleartext, so reserve space
+	char buffer[F2FMaxEncodedMessageSize+1]; /* usually cleartext, so reserve space
 								for terminating 0 */
 	F2FSize size; /* how much is filled */
 	F2FWord32 localPeerIDlist[ F2FMaxPeers ];
@@ -73,7 +75,7 @@ static struct
 /** get the 0 terminated sendIMBuffer */
 char * f2fSendIMBufferGetBuffer()
 {
-	if(sendIMBuffer.size > F2FMaxMessageSize) sendIMBuffer.size = F2FMaxMessageSize;
+	if(sendIMBuffer.size > F2FMaxEncodedMessageSize) sendIMBuffer.size = F2FMaxEncodedMessageSize;
 	sendIMBuffer.buffer[sendIMBuffer.size] = 0; /* make sure this is terminated */
 	return sendIMBuffer.buffer;
 }
@@ -161,6 +163,7 @@ F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey )
 	/* Init was successfull */
 	initWasCalled = 1;
 	myself = newpeer;
+	myself->activeprovider = F2FProviderMyself;
 	return newpeer;
 }
 
@@ -168,6 +171,14 @@ F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey )
 F2FWord32 f2fRandom()
 {
 	return mts_lrand( &randomnessState );
+}
+
+/** Return a random number from the seeded mersenne twister, but not 0 */
+F2FWord32 f2fRandomNotNull()
+{
+	 F2FWord32 rand;
+	 while( (rand = mts_lrand( &randomnessState )) == 0);
+	 return rand;
 }
 
 /** As a next step, the user has to create a new F2FGroup, in which his intenden Job can be
@@ -200,7 +211,7 @@ F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message,
 	strcpy( sendIMBuffer.buffer, F2FMessageMark ); /* header */
 	currentsize = F2FMessageMarkLength;
 	newsize = b64encode( message, sendIMBuffer.buffer + currentsize,
-				size, F2FMaxMessageSize-currentsize );
+				size, F2FMaxEncodedMessageSize-currentsize );
 	currentsize += newsize;	/* prepare sending of the new message */
 	sendIMBuffer.localPeerIDlist[ 0 ] = localpeerid;
 	sendIMBuffer.localidscount = 1;
@@ -250,7 +261,7 @@ F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localP
 	F2FMessageInvite mes;
 	
 	/* first create ID for new peer and save this peer as an unconfirmed peer */
-	F2FPeer *newpeer = f2fPeerListNew( f2fRandom(), f2fRandom() );
+	F2FPeer *newpeer = f2fPeerListNew( f2fRandomNotNull(), f2fRandomNotNull() );
 	/* This id here is only temporary and only used as challenge, so the client can 
 	 * authenticate itself, that it really knows this number.
 	 * It is temporarely saved in the peer's id and replaced by 
@@ -379,6 +390,7 @@ static F2FError processInviteMessage( const F2FWord32 localPeerId,
 		srcPeer->identifier[F2FMaxNameLength] = 0;
 		strncpy( srcPeer->identifier, identifier, F2FMaxNameLength );
 		srcPeer->status = F2FPeerActive;
+		srcPeer -> activeprovider = F2FProviderIM; /* Contact at the moment via IM */
 	}
 	srcPeer->lastActivity = time(NULL);
 	F2FGroup *group = f2fGroupListFindGroup( ntohl(msg->groupID.hi), 
@@ -436,6 +448,7 @@ static F2FError processInviteMessageAnswer( const F2FMessageInviteAnswer *msg )
 			ntohl(msg->sourcePeerID.lo), &answerPeer);
 	if( error != F2FErrOK ) return error;
 	answerPeer -> status = F2FPeerActive; /* active now */
+	answerPeer -> activeprovider = F2FProviderIM; /* Contact at the moment via IM */
 	return F2FErrOK;
 }
 
@@ -455,7 +468,7 @@ F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
 		return F2FErrBufferFull;
 	error = f2fIMDecode(message, size, receiveBuffer.buffer, F2FMaxMessageSize);
 	if( error != F2FErrOK ) return error;
-	/* parse message */
+	/* parse message TODO: extract parsing in own method */
 	switch ( (F2FMessageType) receiveBuffer.buffer[0] )
 	{
 	case F2FMessageTypeInviteAnswer:
@@ -474,40 +487,110 @@ F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
 	return F2FErrOK;
 }
 
+static F2FError prepareSendBuffersWithData( const F2FGroup *group,
+		const char * data, F2FSize len, int binary )
+{
+	F2FMessageData msg;
+
+	/* Check if send-buffers are empty */
+	if(! f2fDataSent())
+		return F2FErrBufferFull;
+	msg.messagetype = F2FMessageTypeData;
+	msg.groupID.hi = htonl( group->id.hi );
+	msg.groupID.lo = htonl( group->id.lo );
+	msg.sourcePeerID.hi = htonl( myself->id.hi );
+	msg.sourcePeerID.lo = htonl( myself->id.lo );
+	msg.destPeerID.hi = 0; /** goes to multiple destinations */
+	msg.destPeerID.lo = 0;
+	msg.binary = binary;
+	msg.size = len;
+	/* prepare normal sendBuffer */
+	if ( len > sizeof(sendBuffer.buffer)-sizeof(F2FMessageData) ) 
+		return F2FErrMessageTooLong;
+	memcpy( sendBuffer.buffer, &msg, sizeof(F2FMessageData) );
+	memcpy( sendBuffer.buffer + sizeof(F2FMessageData), data, len);
+	/* and the IM endbuffer */
+	F2FWord32 outputlen = b64encode( data, sendIMBuffer.buffer,
+			len + sizeof(F2FMessageData), sizeof(sendIMBuffer.buffer) );
+	if(outputlen == 0) return F2FErrMessageTooLong;
+	/* Indicate, that both buffers are filled now */
+	sendIMBuffer.size = outputlen;
+	sendBuffer.size = len + sizeof(F2FMessageData);
+	return F2FErrOK;	
+}
+
+/** Fill send buffer with data for all group members */
+static F2FError f2fGroupSendRaw( const F2FGroup *group, 
+		const char * message, F2FSize len, int binary )
+{
+	F2FError error = prepareSendBuffersWithData( group, message, len, binary );
+	if (error != F2FErrOK ) return error;
+	/* fill the lists of peers to send data to */
+	/* go through all peers in this group and add these to the
+	 * respective sendlists */
+	sendBuffer.localidscount = 0;
+	sendIMBuffer.localidscount = 0;
+	int peerindex;
+	for( peerindex = 0; peerindex < group->listSize; peerindex ++)
+	{
+		if (group->sortedPeerList[peerindex].peer->activeprovider 
+				== F2FProviderIM )
+			sendBuffer.peerList[sendBuffer.localidscount++] =
+				group->sortedPeerList[peerindex].peer;
+		else
+			sendIMBuffer.localPeerIDlist[sendIMBuffer.localidscount++] =
+				group->sortedPeerList[peerindex].peer->localPeerId;
+	}
+	return F2FErrOK;
+}
+
 /** Fill send buffer with data for all group members */
 F2FError f2fGroupSendData( const F2FGroup *group, 
 		const char * message, F2FSize len )
 {
-	// TODO: implement
-	return F2FErrOK;
+	return f2fGroupSendRaw( group, message, len, 1 /* binary */ );
 }
 
 /** Fill send buffer with a text message for all group members */
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message )
 {
-	// TODO: implement
-	return F2FErrOK;
+	F2FSize len = strnlen( message, F2FMaxMessageSize );
+	return f2fGroupSendRaw( group, message, len, 0 /* not binary */ );
 }
 
 /** Fill send buffer for a specific peer in a group */
-F2FError f2fPeerSendData( const F2FGroup *group, const F2FPeer *peer,
+F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
 		const char *data, const F2FWord32 dataLen )
 {
-	// TODO: implement
+	F2FError error = prepareSendBuffersWithData( group, data, dataLen, 1 /* binary */ );
+	if (error != F2FErrOK ) return error;
+	/* prepare the right destinations for the buffer
+	 * in terms of provider */
+	if (peer->activeprovider == F2FProviderIM )
+	{
+		sendBuffer.peerList[0] = peer;
+		sendBuffer.localidscount = 1;
+	}
+	else
+	{
+		sendIMBuffer.localPeerIDlist[0] = peer->localPeerId;
+		sendIMBuffer.localidscount = 1;
+	}
 	return F2FErrOK;
 }
 
-/** test, if data in buffer has been sent */
-F2FError f2fDataSent( )
+/** test, if data in buffer has been sent (Buffers are empty) */
+int f2fDataSent( )
 {
-	// TODO: implement
-	return F2FErrOK;
+	return sendBuffer.size == 0 && sendIMBuffer.size == 0;
 }
 
-/** empty, send buffer for data, even if it has not been sent */
+/** empty, send buffers for data, even if it has not been sent */
 F2FError f2fEmptyData()
 {
-	// TODO: implement
+	/* TODO: maybe return F2FErrBufferFull if buffer not empty before? */
+	sendBuffer.size = 0;
+	sendIMBuffer.size = 0;
 	return F2FErrOK;
 }
 

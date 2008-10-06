@@ -510,11 +510,16 @@ void b64decodeblock( unsigned char in[4], unsigned char out[3] )
 }*/
 
 /* Here are ulno's extensions for coding whole strings,
- * they return the size of the output */
+ * they return the size of the output
+ * The function returns 0, if the created code
+ * would be too big to fit  in a buffer of size maxoutputlen */
 size_t b64encode( const char * src, char * dst, 
 		size_t inputlen, size_t maxoutputlen )
 {
-    unsigned char in[3], out[4];
+	if( (inputlen + 3) / 3 * 4 > maxoutputlen )
+		return 0;
+	
+	unsigned char in[3], out[4];
     int i, len/*, blocksout = 0*/;
     size_t srcpos = 0, dstpos = 0;
 

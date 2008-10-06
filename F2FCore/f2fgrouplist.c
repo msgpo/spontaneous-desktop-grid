@@ -64,7 +64,7 @@ F2FGroup * f2fGroupListAdd( const F2FString name, const F2FWord32 hiuid, const F
 /** Create a new group - give it also a uid */
 F2FGroup * f2fGroupListCreate( const F2FString name )
 {
-	return f2fGroupListAdd( name, f2fRandom(), f2fRandom() );
+	return f2fGroupListAdd( name, f2fRandomNotNull(), f2fRandomNotNull() );
 }
 
 /** remove a peer from the list */

@@ -28,15 +28,18 @@
 
 #include "f2ftypes.h"
 
-/* static list with providers including their send and receive stuff*/ 
-/** every peer has this info (used by all providers) */
-typedef struct
+enum F2FProviderTypeEnum
 {
-	int activeprovider; /** the active provider. The one over which data is send and from which data is received */
-	/** Local Ip number */
-	/** Ip number of router */
-	/** which providers are trying to connect, in which state are they ... */
-} F2FPeerCommunicationProviderInfo;
+	F2FProviderMyself, /** This is the own peerid, so direct communication is
+	 				* possible - will be just a memory transfer */
+	F2FProviderIM, /** Instant messaging provider, important info in localPeerId */
+	F2FProviderTCPIPV4, /** Connection via TCP over sockets */
+	F2FProviderUDPHolePunch, /** Connection via UDP Hole punch */
+	/* UPNP */
+	/* IPV6 */
+	/* Bluetooth */
+	/* Skype data transfer */
+} F2FProviderType;
 
 typedef enum
 {
@@ -57,10 +60,13 @@ typedef struct F2FPeerStruct
 	char identifier[F2FMaxNameLength + 1]; /** Displayname of the peer */
 	time_t lastActivity; /** When was the last network activity with this  peer.
 	 					   * This is needed to remove peer from peerlist after some time */
-	F2FPeerCommunicationProviderInfo communicationproviderinfo; /** Space for the comm. providers 
-	 														   * includes active provider */
+	enum F2FProviderTypeEnum activeprovider; /** the active provider.
+				* The one over which data is sent to and recieved from this peer */ 
 	struct F2FGroupStruct *groups[F2FMaxGroups]; /* Member in this groups */
 	F2FSize groupsListSize; /* Member in how many groups */
+	/** Local Ip number */
+	/** Ip number of router */
+	/** which providers are trying to connect, in which state are they ... */
 } F2FPeer;
 
 /** Add peer to group (update lists in peer and in group) */

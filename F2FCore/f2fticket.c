@@ -43,12 +43,8 @@ void f2fTicketSetNull( F2FTicket *ticket )
 /** create valus for an F2FTicket and initialize the given structure **/
 F2FError f2fTicketInitialize( F2FTicket *newticket )
 {
-	while(1)
-	{
-		newticket->hi = f2fRandom();
-		newticket->lo = f2fRandom();
-		if (!f2fTicketNull( newticket )) break; // Even if this nearly never will happen
-	}
+	newticket->hi = f2fRandomNotNull();
+	newticket->lo = f2fRandomNotNull();
 	return F2FErrOK; 
 }
 

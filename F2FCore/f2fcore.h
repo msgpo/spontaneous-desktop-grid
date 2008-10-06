@@ -169,6 +169,8 @@ F2FError f2fReceiveBufferRelease();
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 f2fRandom();
+/** Return a random number from the seeded mersenne twister, but not 0 */
+F2FWord32 f2fRandomNotNull();
 
 /* some getters for f2fpeers and f2fpeerlist*/
 F2FWord32 f2fPeerGetUIDLo( const F2FPeer *peer );
@@ -187,11 +189,11 @@ F2FError f2fGroupSendData( const F2FGroup *group,
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
 /** Fill send buffer for a specific peer in a group */
-F2FError f2fPeerSendData( const F2FGroup *group, const F2FPeer *peer,
+F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
 		const char *data, const F2FWord32 dataLen );
 
 /** test, if data in buffer has been sent */
-F2FError f2fDataSent();
+int f2fDataSent();
 
 /** empty, send buffer for data, even if it has not been sent */
 F2FError f2fEmptyData();

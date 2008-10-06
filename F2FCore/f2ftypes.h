@@ -54,6 +54,7 @@ typedef enum  {
 	F2FErrNotF2FMessage = -9, /** This was not a F2F message */
 	F2FErrNotAuthenticated = -10, /** This messag eis not authenticated */
 	F2FErrMessageTypeUnknown = -11, /** This message type was unknown */
+	F2FErrMessageTooLong = -12, /** This message is too long */
 	F2FErrWierdError = -200, /** This error should not happen */
 } F2FError;
 

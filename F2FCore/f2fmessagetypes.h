@@ -36,8 +36,7 @@ typedef enum
 	F2FMessageTypeInviteAnswer, /** Answer of the invited peer */
 	F2FMessageTypeGetJobTicket, /** Ask for ticket to submit jobs */
 	F2FMessageTypeGetJobTicketAnswer, /** The answer including the ticket */
-	F2FMessageTypeData, /** Just some raw data */
-	F2FMessageTypeText, /** A simple text message */
+	F2FMessageTypeData, /** Just some unstructured data */
 	/* here should be a lot of types to inquire status data, pinging, 
 	 * and exchanging routing information */ 
 } F2FMessageType;
@@ -106,20 +105,9 @@ typedef struct
 	F2FUID sourcePeerID;       /** sending peer  */
 	F2FUID destPeerID;         /** destination peer  */
 	F2FSize size;			   /** Amount of data sent */
+	int binary;				   /** Set if, this is raw binary data */
 	/* The data will be appended here */
 } F2FMessageData;
-
-/** a text message (which should be displayed) */
-typedef struct
-{
-	unsigned char messagetype; /** Type of message, must be set to F2FMessageText */
-	char reserved[3];          /** reserved for later */
-	F2FUID groupID;            /** Group identifier */
-	F2FUID sourcePeerID;       /** sending peer  */
-	F2FUID destPeerID;         /** destination peer  */
-	F2FSize size;			   /** Amount of text sent */
-	/* The data will be appended here */
-} F2FMessageText;
 
 
 #endif /*F2FMESSAGETYPES_H_*/

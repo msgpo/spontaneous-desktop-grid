@@ -45,4 +45,6 @@
 /* TODO, check if this length can be found out automatically */
 #define F2FMessageMarkLength 6
 
+#define F2FMaxEncodedMessageSize ((F2FMaxMessageSize + 3)* 4 / 3 + F2FMessageMarkLength)
+
 #endif /*F2FCONFIG_H_*/
