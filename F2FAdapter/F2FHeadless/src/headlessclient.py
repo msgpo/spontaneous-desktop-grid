@@ -2,7 +2,7 @@
 # Headless jabber client
 # This client allows to run a headless (without gui) client for the
 # f2f network
-# in a first instance, it can only take jobs
+# in a first instance, it can take and submit jobs (but only one)
 # it will be used to develop a client which can be submitted to real grids
 # in a second instance it also should be able to submit jobs with it
 # TODO: Replace jabber.py with http://pyxmpp.jajcus.net/
@@ -82,6 +82,7 @@ def receiveMessageCB(con, msg):
 
 # Work through the messageStack and hand these messages over to the F2FCore
 def evaluateReceivedMessages():
+    sendOutSendIMBuffer() # flush the send buffer, if something is in there
     while len(messageStack) > 0:
         msg = messageStack.pop()
         msgfrom = str(msg.getFrom())
@@ -202,7 +203,9 @@ while(1):
     #sleep (1)
     evaluateReceivedMessages()
     newtime = time()
-    if newtime-oldtime > 5:
+    if newtime-oldtime > 10:
         oldtime = newtime
         showPeerList()
+        if( groupname ):
+            f2fcore.f2fGroupSendText( mygroupid, "Hello World!" )
     
