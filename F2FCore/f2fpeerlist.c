@@ -143,6 +143,34 @@ F2FError f2fPeerListRemove( F2FPeer *peer )
 		return F2FErrNotFound;
 }
 
+/** move a peer in the list, changing its id */
+F2FError f2fPeerListChange( F2FPeer *peer, F2FWord32 hi, F2FWord32 lo )
+{
+	if( listsize == 0 ) return F2FErrListEmpty;
+	int index = findNearestUpperPeer( peer->id.hi, peer->id.lo );
+	if( index == 0 ) return F2FErrNotFound;
+	F2FPeer *candidate = sortedIdsList[ index - 1];
+	if( candidate->id.hi == peer->id.hi || candidate->id.lo == peer->id.lo )
+	{
+		/* remove from sorted list */
+		memmove( sortedIdsList + index - 1, sortedIdsList + index, 
+				(listsize - index) * sizeof(*sortedIdsList) );
+		isReservedList[peerList - candidate] = 0; // free this entry
+		listsize --;
+	}
+	else return F2FErrNotFound;
+	/* Add at the right position */
+	int searchpos = findNearestUpperPeer( hi, lo );
+	/* do the actual insert */
+	memmove( sortedIdsList + searchpos + 1, sortedIdsList + searchpos, 
+			(listsize - searchpos) * sizeof(*sortedIdsList) );
+	sortedIdsList [searchpos] = peer;
+	peer->id.hi = hi;
+	peer->id.lo = lo;
+	listsize ++;
+	return F2FErrOK;
+}
+
 /** Return size of the general peerlist */
 F2FSize f2fPeerListGetSize()
 {

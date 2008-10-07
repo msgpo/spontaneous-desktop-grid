@@ -43,5 +43,7 @@ F2FPeer * f2fPeerListFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
  * If it is higher than all peers the returned index equals the listsize */
 // static not accessible int findNearestUpperPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
 
+/** move a peer in the list, changing its id */
+F2FError f2fPeerListChange( F2FPeer *peer, F2FWord32 hi, F2FWord32 lo );
 
 #endif /* F2FPEERLIST_H_ */

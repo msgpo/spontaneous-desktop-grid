@@ -78,9 +78,8 @@ F2FError f2fPeerRemoveFromGroup( /*out*/ F2FPeer *peer, struct F2FGroupStruct *g
 /** Find a specific group in the list of groups, return index or -1 if not found */
 int f2fPeerFindGroupIndex( const F2FPeer *peer, const struct F2FGroupStruct *group );
 
-/** Change uid and update corresponding lists, if newpeer is not NULL, 
- * return here the new peper address */
-F2FError f2fPeerChangeUID( F2FPeer *oldpeer, const F2FWord32 hi,
-		const F2FWord32 lo, F2FPeer **newpeer );
+/** Change uid and update corresponding lists */
+F2FError f2fPeerChangeUID( F2FPeer *peer, 
+		const F2FWord32 hi, const F2FWord32 lo );
 
 #endif /*F2FPEER_H_*/

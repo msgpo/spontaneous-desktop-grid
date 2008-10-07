@@ -93,6 +93,7 @@ F2FError f2fGroupPeerListAdd( /* out */ F2FGroup *group, F2FPeer *peer )
 	memmove( group->sortedPeerList + searchpos + 1, group->sortedPeerList + searchpos, 
 			(group->listSize - searchpos) * sizeof(*(group->sortedPeerList)) );
 	group->sortedPeerList [searchpos].peer = peer;
+	/* TODO: check if ticket shoul dbe initialized somewhere else */
 	f2fTicketSetNull( & (group->sortedPeerList [searchpos].sendTicket) );
 	f2fTicketSetNull( & (group->sortedPeerList [searchpos].receiveTicket) );
 	group->listSize ++;

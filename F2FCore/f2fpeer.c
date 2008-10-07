@@ -120,28 +120,26 @@ F2FError f2fPeerRemoveFromGroup( /*out*/ F2FPeer *peer, F2FGroup *group )
 
 /** Change uid and update corresponding lists, if newpeer is not NULL, 
  * return here the new peper address */
-F2FError f2fPeerChangeUID( F2FPeer *oldpeer, 
-		const F2FWord32 hi, const F2FWord32 lo, 
-		F2FPeer **newpeer )
+F2FError f2fPeerChangeUID( F2FPeer *peer, 
+		const F2FWord32 hi, const F2FWord32 lo )
 {
-	F2FPeer tmpPeer;
-	F2FPeer *newpeer_tmp;
 	F2FError error;
 	
-	/* TODO: !!! Check if update concerns all groups the peer is in */
-	
-	/* copy current version of the peer */
-	memcpy( &tmpPeer, oldpeer, sizeof(F2FPeer) );
-	tmpPeer.id.hi = hi;
-	tmpPeer.id.lo = lo;
-	/* remove it */
-	error = f2fPeerListRemove( oldpeer );
+	/* Take peer out of all groups, it is in */
+	int index;
+	for( index = 0; index < peer->groupsListSize; index++)
+	{
+		f2fGroupPeerListRemove( peer->groups[index], peer );
+	}
+	/* change id and put it at the right position in the sorted global peer list */
+	error = f2fPeerListChange(peer,hi,lo);
 	if( error != F2FErrOK ) return error;
-	/* create new with new uid */
-	newpeer_tmp = f2fPeerListNew( hi, lo );
-	if( newpeer_tmp == NULL ) return F2FErrWierdError; /* should not happen */
-	memcpy( newpeer_tmp, &tmpPeer, sizeof(F2FPeer) ); /* update data in this peer */
-	if (newpeer != NULL) *newpeer = newpeer_tmp;
+	/* Add it to the groups again */
+	for( index = 0; index < peer->groupsListSize; index++)
+	{
+		f2fGroupPeerListAdd( peer->groups[index], peer );
+		/* TODO: check: This resets tickets!!! */
+	}
 	return F2FErrOK;
 }
 

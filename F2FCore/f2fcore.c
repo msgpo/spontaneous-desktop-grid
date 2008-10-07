@@ -192,7 +192,11 @@ F2FGroup * f2fCreateGroup( const F2FString groupname )
 		return NULL;
 	}
 	F2FGroup * group = f2fGroupListCreate( groupname );
-	if( group ) return group;
+	if( group )
+	{
+		globalError = f2fGroupAddPeer(group, myself); /* Add myself in this new group */
+		return group;
+	}
 	globalError = F2FErrListFull;
 	return NULL;
 }
@@ -445,7 +449,7 @@ static F2FError processInviteMessageAnswer( const F2FMessageInviteAnswer *msg )
 		return F2FErrNotAuthenticated;
 	/* Change the id to the official id */
 	error = f2fPeerChangeUID( answerPeer, ntohl(msg->sourcePeerID.hi), 
-			ntohl(msg->sourcePeerID.lo), &answerPeer);
+			ntohl(msg->sourcePeerID.lo) );
 	if( error != F2FErrOK ) return error;
 	answerPeer -> status = F2FPeerActive; /* active now */
 	answerPeer -> activeprovider = F2FProviderIM; /* Contact at the moment via IM */
