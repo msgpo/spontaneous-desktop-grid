@@ -145,6 +145,9 @@ F2FError f2fReceive();
 /** return 1, if there is data in the ReceiveBuffer */
 int f2fReceiveBufferIsFilled();
 
+/** return 1, if the data in the ReceiveBuffer is binary data */
+int f2fReceiveBufferIsBinary();
+
 /** get the group of the received data */
 F2FGroup * f2fReceiveBufferGetGroup();
 
@@ -167,6 +170,9 @@ void f2fReceiveBufferGetContent(char *content, int *maxlen );
 
 /** show that the buffer has been read and can be filled again */
 F2FError f2fReceiveBufferRelease();
+
+/** Send content of the local sendBuffer */
+F2FError f2fSend();
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 f2fRandom();

@@ -81,7 +81,7 @@ def receiveMessageCB(con, msg):
         messageStack.insert(0,msg)
 
 # Work through the messageStack and hand these messages over to the F2FCore
-def evaluateReceivedMessages():
+def evaluateReceivedIMMessages():
     sendOutSendIMBuffer() # flush the send buffer, if something is in there
     while len(messageStack) > 0:
         msg = messageStack.pop()
@@ -167,12 +167,12 @@ def sendMessage(localpeerid,messagetxt):
     
 def sendOutSendIMBuffer():
     while (True):
-        nextpeer=f2fcore.f2fSendIMBufferGetNextLocalPeerID()
+        nextpeer = f2fcore.f2fSendIMBufferGetNextLocalPeerID()
         if( nextpeer < 0 ): break
         sendMessage( nextpeer, f2fcore.f2fSendIMBufferGetBuffer() )
 
 # Initialize f2f
-mypeerid = f2fcore.f2fInit( username +'@' + servername + '/' + resource, "")
+mypeerid = f2fcore.f2fInit( username + '@' + servername + '/' + resource, "")
 
 if( groupname ): # a job shall be submitted
     mygroupid = f2fcore.f2fCreateGroup( groupname )
@@ -193,7 +193,15 @@ def showPeerList():
             ",", f2fcore.f2fPeerGetUIDLo(peer), "localpeerid:",\
             f2fcore.f2fPeerGetLocalPeerId(peer)
     print
-        
+
+def evaluateReceiveBuffer():
+    if f2fcore.f2fReceiveBufferIsFilled():
+        if f2fcore.f2fReceiveBufferIsBinary():
+            print "Buffer is binary, content not shown."
+        else:
+            print "Buffer is text. Content:", \
+                f2fcore.f2fReceiveBufferGetContent(4096)
+        f2fcore.f2fReceiveBufferRelease()
         
 # big loop
 from time import sleep, time
@@ -201,7 +209,10 @@ oldtime = time()
 while(1):
     con.process(0.5) 
     #sleep (1)
-    evaluateReceivedMessages()
+    evaluateReceivedIMMessages()
+    f2fcore.f2fSend()
+    f2fcore.f2fReceive()
+    evaluateReceiveBuffer()
     newtime = time()
     if newtime-oldtime > 10:
         oldtime = newtime

@@ -55,7 +55,7 @@ static struct
 	char buffer[F2FMaxMessageSize];
 	F2FSize size; /* how much is filled */
 	F2FPeer * peerList[ F2FMaxPeers ];
-	F2FSize localidscount; /* the number of ids in list */
+	F2FSize peercount; /* the number of ids in list */
 } sendBuffer;
 
 /** Send IM buffer.
@@ -69,7 +69,7 @@ static struct
 								for terminating 0 */
 	F2FSize size; /* how much is filled */
 	F2FWord32 localPeerIDlist[ F2FMaxPeers ];
-	F2FSize localidscount; /* the number of ids in list */
+	F2FSize peercount; /* the number of ids in list */
 } sendIMBuffer;
 
 /** get the 0 terminated sendIMBuffer */
@@ -91,17 +91,20 @@ F2FSize f2fSendIMBufferGetBufferSize()
  * return -1 if there is nothing to send */
 F2FWord32 f2fSendIMBufferGetNextLocalPeerID()
 {
-	if (sendIMBuffer.localidscount <= 0) return -1; // none left
-	return sendIMBuffer.localPeerIDlist[-- sendIMBuffer.localidscount];
+	if (sendIMBuffer.peercount <= 0) return -1; // none left
+	return sendIMBuffer.localPeerIDlist[-- sendIMBuffer.peercount];
 }
 
 /** Receive buffer */
 static struct
 {
-	F2FGroup *group;
-	F2FPeer *sourcePeer;
-	F2FPeer *destPeer;
+	F2FGroup *group; /** The group in which this data was sent */
+	F2FPeer *sourcePeer; /** The sourcepeer of this data */
+	F2FPeer *destPeer; /** The destination peer of this data 
+	 					 * TODO: if this is not this peer, the data should 
+	 					 * be forwarded*/
 	int filled; /** indicate, if something is in here */
+	int binary; /** is this binary data or text (which should go to the chat) */
 	F2FSize size; /* how much is filled */
 	char buffer[F2FMaxMessageSize];
 } receiveBuffer;
@@ -159,7 +162,7 @@ F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey )
 	receiveBuffer.filled = 0;
 	receiveBuffer.size = 0;
 	sendBuffer.size = 0;
-	sendIMBuffer.localidscount = 0;
+	sendIMBuffer.peercount = 0;
 	/* Init was successfull */
 	initWasCalled = 1;
 	myself = newpeer;
@@ -201,33 +204,45 @@ F2FGroup * f2fCreateGroup( const F2FString groupname )
 	return NULL;
 }
 
-/** prepare message to send a IM message to one locally known peer */
-F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message, 
+/** encode a message for sending via the f2f IM channel in the
+ * sendIMBuffer ignore localpeerids */
+F2FError encodeIMMessage( const char * message, 
 		const F2FSize size )
 {
 	F2FSize currentsize, newsize;
-	
-	if( sendIMBuffer.localidscount > 0 ) // not empty
-	{
-		return F2FErrBufferFull;
-	}
+
 	/* Encode message for sending in f2f framework */
 	strcpy( sendIMBuffer.buffer, F2FMessageMark ); /* header */
 	currentsize = F2FMessageMarkLength;
 	newsize = b64encode( message, sendIMBuffer.buffer + currentsize,
 				size, F2FMaxEncodedMessageSize-currentsize );
+	if(newsize == 0) return F2FErrMessageTooLong;
 	currentsize += newsize;	/* prepare sending of the new message */
-	sendIMBuffer.localPeerIDlist[ 0 ] = localpeerid;
-	sendIMBuffer.localidscount = 1;
 	sendIMBuffer.size = currentsize;
+	return F2FErrOK;
+}
+
+/** prepare message to send a IM message to one locally known peer */
+F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message, 
+		const F2FSize size )
+{
+	F2FError error;
+	
+	if( sendIMBuffer.peercount > 0 ) // not empty
+	{
+		return F2FErrBufferFull;
+	}
+	error = encodeIMMessage( message, size );
+	sendIMBuffer.localPeerIDlist[ 0 ] = localpeerid;
+	sendIMBuffer.peercount = 1;
 	return F2FErrOK;
 }
 
 /** Add a local peer to the sendIMBuffer */
 F2FError f2fIMAddPeer( const F2FWord32 localpeerid )
 {
-	if( sendIMBuffer.localidscount >= F2FMaxPeers ) return F2FErrListFull;
-	sendIMBuffer.localPeerIDlist[ ++ sendIMBuffer.localidscount ] = localpeerid;
+	if( sendIMBuffer.peercount >= F2FMaxPeers ) return F2FErrListFull;
+	sendIMBuffer.localPeerIDlist[ ++ sendIMBuffer.peercount ] = localpeerid;
 	return F2FErrOK;
 }
 
@@ -329,10 +344,11 @@ F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group,
  * The function should be called directly again (after processing the received data) */
 F2FError f2fReceive()
 {
-	if(receiveBuffer.filled) // Can receive with full buffer
+	if(receiveBuffer.filled) // Can't receive with full buffer
 		return F2FErrBufferFull;
 	/* From here on receive.filled is 0 */
-	/* Try now to receive stuff from the network */
+	/* Try now to receive stuff from the internal network (not IM) */
+	/* call then parseMessage, this might fill the receiveBuffer */
 	/* TODO: select(... */
 	return F2FErrOK;
 }
@@ -340,6 +356,10 @@ F2FError f2fReceive()
 /** return 1, if there is data in the ReceiveBuffer */
 int f2fReceiveBufferIsFilled()
 { return receiveBuffer.filled; }
+
+/** return 1, if the data in the ReceiveBuffer is binary data */
+int f2fReceiveBufferIsBinary()
+{ return receiveBuffer.binary; }
 
 /** get the group of the received data */
 F2FGroup * f2fReceiveBufferGetGroup()
@@ -375,6 +395,83 @@ void f2fReceiveBufferGetContent(char *content, int *maxlen )
 F2FError f2fReceiveBufferRelease()
 {
 	receiveBuffer.filled = 0;
+	return F2FErrOK;
+}
+
+static F2FError fillReceiveBuffer( F2FWord32 grouphi, F2FWord32 grouplo,
+		F2FWord32 srchi, F2FWord32 srclo,
+		F2FWord32 desthi, F2FWord32 destlo,
+		int binary, const char *buf, F2FSize size )
+{
+	F2FGroup *group;
+	F2FPeer *src, *dst;
+	
+	if( receiveBuffer.filled ) /* Still filled */
+		return F2FErrBufferFull;
+	if(size > F2FMaxMessageSize)
+		return F2FErrMessageTooLong;
+	/* Find group and peers */
+	group = f2fGroupListFindGroup(grouphi, grouplo);
+	if(!group) return F2FErrNotFound;
+	src = f2fPeerListFindPeer(srchi, srclo);
+	if(!src) return F2FErrNotFound;
+	if(desthi == 0 && destlo == 0)
+	{ // If both 0 then don't route just assume message is to me
+		dst = myself;
+	}
+	else
+	{
+		dst = f2fPeerListFindPeer(desthi, destlo);
+		// TODO: Consider, what has to be done for routing
+	}
+	if(!dst) return F2FErrNotFound;
+	receiveBuffer.filled = 1; /* Now it will be filled */
+	receiveBuffer.group = group;
+	receiveBuffer.sourcePeer = src;
+	receiveBuffer.destPeer = dst;
+	receiveBuffer.binary = binary;
+	memcpy( receiveBuffer.buffer, buf, size );
+	receiveBuffer.size = size;
+	return F2FErrOK;
+}
+
+/** Send content of the local sendBuffer 
+ * TODO: Think, if timeout is needed here */
+F2FError f2fSend()
+{
+	if(sendBuffer.peercount > 0)
+	{
+		/* Take the first peer and process message to it */
+		F2FPeer * peer = sendBuffer.peerList[sendBuffer.peercount - 1];
+		/* Find the communication provider, which helps
+		 * us to reach the destination */
+		switch( peer->activeprovider )
+		{
+		case F2FProviderMyself:
+			/* here we can just copy data to the receive buffer */
+			if( receiveBuffer.filled )
+				return F2FErrBufferFull;
+			F2FMessageData *msg = (F2FMessageData *) & sendBuffer.buffer;
+			fillReceiveBuffer(
+					ntohl(msg->groupID.hi), ntohl(msg->groupID.lo),
+					ntohl(msg->sourcePeerID.hi), ntohl(msg->sourcePeerID.lo),
+					ntohl(msg->destPeerID.hi), ntohl(msg->destPeerID.lo),
+					msg->binary,
+					sendBuffer.buffer + sizeof(F2FMessageData),
+					msg->size );
+			/* receiveBuffer.group ? */
+			break;
+		case F2FProviderTCPIPV4:
+			break;
+			/* TODO: implement */
+		case F2FProviderUDPHolePunch:
+			/* TODO: implement */
+			break;
+		case F2FProviderIM:
+			break;
+		}
+		sendBuffer.peercount --;
+	}
 	return F2FErrOK;
 }
 
@@ -456,6 +553,56 @@ static F2FError processInviteMessageAnswer( const F2FMessageInviteAnswer *msg )
 	return F2FErrOK;
 }
 
+/** process a message of type data */
+static F2FError processMessageData( const char * buffer)
+{
+	F2FMessageData *msg = (F2FMessageData *) buffer;
+	
+	if( msg->binary )
+		printf("Received binary data from %d, %d in group %d, %d.\n",
+				ntohl(msg->sourcePeerID.hi), ntohl(msg->sourcePeerID.lo),
+				ntohl(msg->groupID.hi), ntohl(msg->groupID.lo));
+	else
+	{
+		char tmpbuffer[F2FMaxMessageSize+1];
+		if( msg->size > F2FMaxMessageSize )
+			return F2FErrMessageTooLong;
+		memcpy(tmpbuffer, buffer + sizeof(*msg), msg->size );
+		tmpbuffer[msg->size] = 0; /* terminate with 0 */
+		printf("Received text data from %d, %d in group %d, %d: %s\n",
+				ntohl(msg->sourcePeerID.hi), ntohl(msg->sourcePeerID.lo),
+				ntohl(msg->groupID.hi), ntohl(msg->groupID.lo),
+				tmpbuffer );
+	}
+	return F2FErrOK;
+}
+
+/** parse messages (internal or IM messages) */
+static F2FError parseMessage( const char * buffer )
+{
+	F2FError error;
+	
+	/* TODO: evaluate fromPeer to the source Peer sent in the message */
+	switch ( (F2FMessageType) buffer[0] )
+	{
+	case F2FMessageTypeInviteAnswer:
+		error = processInviteMessageAnswer( (F2FMessageInviteAnswer *) buffer);
+		if( error != F2FErrOK ) return error;
+		break;
+	case F2FMessageTypeInvite:
+		/* nothing already handled in upper layer */
+		break;
+	case F2FMessageTypeData:
+		error = processMessageData( buffer );
+		if( error != F2FErrOK ) return error;
+		break;
+	default:
+		return F2FErrMessageTypeUnknown;
+		break;
+	}
+	return F2FErrOK;
+}
+
 /** hand over messages from the IM program to the core, before this function can be
  * called the second time f2fGroupReceive must be called to be able to clear
  * the buffers.
@@ -466,39 +613,28 @@ F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
 		const F2FSize size )
 {
 	F2FError error;
+	char tmpbuffer[F2FMaxMessageSize];
 	
-	/* TODO: evaluate fromPeer to the source Peer sent in the message */
-	if ( receiveBuffer.filled ) // still full
-		return F2FErrBufferFull;
-	error = f2fIMDecode(message, size, receiveBuffer.buffer, F2FMaxMessageSize);
+	error = f2fIMDecode(message, size, tmpbuffer, F2FMaxMessageSize);
 	if( error != F2FErrOK ) return error;
-	/* parse message TODO: extract parsing in own method */
-	switch ( (F2FMessageType) receiveBuffer.buffer[0] )
+	if( (F2FMessageType) tmpbuffer[0] == F2FMessageTypeInvite )
 	{
-	case F2FMessageTypeInviteAnswer:
-		error = processInviteMessageAnswer( (F2FMessageInviteAnswer *) receiveBuffer.buffer);
-		if( error != F2FErrOK ) return error;
-		break;
-	case F2FMessageTypeInvite:
 		error = processInviteMessage( localPeerId, identifier,
-				(F2FMessageInvite *) receiveBuffer.buffer);
-		if( error != F2FErrOK ) return error;
-		break;
-	default:
-		return F2FErrMessageTypeUnknown;
-		break;
+				(F2FMessageInvite *) tmpbuffer);
 	}
-	return F2FErrOK;
+	else
+	{
+		error = parseMessage( tmpbuffer );
+	}
+	return error;
 }
 
+/** Prepare the Buffers - don't check, if they are filled */
 static F2FError prepareSendBuffersWithData( const F2FGroup *group,
-		const char * data, F2FSize len, int binary )
+		const char * data, F2FSize len, int binary)
 {
 	F2FMessageData msg;
 
-	/* Check if send-buffers are empty */
-	if(! f2fDataSent())
-		return F2FErrBufferFull;
 	msg.messagetype = F2FMessageTypeData;
 	msg.groupID.hi = htonl( group->id.hi );
 	msg.groupID.lo = htonl( group->id.lo );
@@ -513,12 +649,6 @@ static F2FError prepareSendBuffersWithData( const F2FGroup *group,
 		return F2FErrMessageTooLong;
 	memcpy( sendBuffer.buffer, &msg, sizeof(F2FMessageData) );
 	memcpy( sendBuffer.buffer + sizeof(F2FMessageData), data, len);
-	/* and the IM endbuffer */
-	F2FWord32 outputlen = b64encode( data, sendIMBuffer.buffer,
-			len + sizeof(F2FMessageData), sizeof(sendIMBuffer.buffer) );
-	if(outputlen == 0) return F2FErrMessageTooLong;
-	/* Indicate, that both buffers are filled now */
-	sendIMBuffer.size = outputlen;
 	sendBuffer.size = len + sizeof(F2FMessageData);
 	return F2FErrOK;	
 }
@@ -527,25 +657,31 @@ static F2FError prepareSendBuffersWithData( const F2FGroup *group,
 static F2FError f2fGroupSendRaw( const F2FGroup *group, 
 		const char * message, F2FSize len, int binary )
 {
-	F2FError error = prepareSendBuffersWithData( group, message, len, binary );
-	if (error != F2FErrOK ) return error;
+	/* Check if send-buffers are empty */
+	if(! f2fDataSent())
+		return F2FErrBufferFull;
 	/* fill the lists of peers to send data to */
 	/* go through all peers in this group and add these to the
 	 * respective sendlists */
-	sendBuffer.localidscount = 0;
-	sendIMBuffer.localidscount = 0;
+	// obsolet - already asked sendBuffer.peercount = 0;
+	// obsolet - already asked sendIMBuffer.peercount = 0;
 	int peerindex;
 	for( peerindex = 0; peerindex < group->listSize; peerindex ++)
 	{
-		if (group->sortedPeerList[peerindex].peer->activeprovider 
+		if ( group->sortedPeerList[peerindex].peer->activeprovider 
 				== F2FProviderIM )
-			sendBuffer.peerList[sendBuffer.localidscount++] =
-				group->sortedPeerList[peerindex].peer;
-		else
-			sendIMBuffer.localPeerIDlist[sendIMBuffer.localidscount++] =
+			sendIMBuffer.localPeerIDlist[sendIMBuffer.peercount++] =
 				group->sortedPeerList[peerindex].peer->localPeerId;
+		else
+			sendBuffer.peerList[sendBuffer.peercount++] =
+				group->sortedPeerList[peerindex].peer;
 	}
-	return F2FErrOK;
+	F2FError error = prepareSendBuffersWithData( group, message, len, binary );
+	if (error != F2FErrOK ) return error;
+	/* and the IM endbuffer */
+	if( sendIMBuffer.peercount > 0 )
+		error = encodeIMMessage( sendBuffer.buffer, sendBuffer.size );
+	return error;
 }
 
 /** Fill send buffer with data for all group members */
@@ -573,12 +709,12 @@ F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
 	if (peer->activeprovider == F2FProviderIM )
 	{
 		sendBuffer.peerList[0] = peer;
-		sendBuffer.localidscount = 1;
+		sendBuffer.peercount = 1;
 	}
 	else
 	{
 		sendIMBuffer.localPeerIDlist[0] = peer->localPeerId;
-		sendIMBuffer.localidscount = 1;
+		sendIMBuffer.peercount = 1;
 	}
 	return F2FErrOK;
 }
@@ -586,15 +722,15 @@ F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
 /** test, if data in buffer has been sent (Buffers are empty) */
 int f2fDataSent( )
 {
-	return sendBuffer.localidscount == 0 && sendIMBuffer.localidscount == 0;
+	return sendBuffer.peercount == 0 && sendIMBuffer.peercount == 0;
 }
 
 /** empty, send buffers for data, even if it has not been sent */
 F2FError f2fEmptyData()
 {
 	/* TODO: maybe return F2FErrBufferFull if buffer not empty before? */
-	sendBuffer.localidscount = 0;
-	sendIMBuffer.localidscount = 0;
+	sendBuffer.peercount = 0;
+	sendIMBuffer.peercount = 0;
 	return F2FErrOK;
 }
 

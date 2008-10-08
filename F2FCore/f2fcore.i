@@ -23,8 +23,10 @@
  *   Description:
  *   SWIG interface-file for f2fcore
  ***************************************************************************/
- 
 %module f2fcore
+
+%include "cstring.i"
+
 %{
 #include "f2ftypes.h"
 #include "f2fcore.h"
