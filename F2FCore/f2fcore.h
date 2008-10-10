@@ -32,6 +32,7 @@
 #include "f2ftypes.h"
 #include "f2fpeer.h"
 #include "f2fgroup.h"
+#include "f2fmessagetypes.h"
 
 /**
  *
@@ -196,7 +197,8 @@ F2FError f2fGroupSendData( const F2FGroup *group,
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
 /** Fill send buffer for a specific peer in a group */
-F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
+F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer, 
+		F2FMessageType type,
 		const char *data, const F2FWord32 dataLen );
 
 /** test, if data in buffer has been sent */
