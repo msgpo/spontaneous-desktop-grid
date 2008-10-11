@@ -96,10 +96,6 @@ def evaluateReceivedIMMessages():
         f2fcore.f2fNotifyCoreWithReceived( localPeerId, msgfrom,
                                            body, len(body) )
         sendOutSendIMBuffer() # flush the send buffer, if here is an answer
-        if f2fcore.f2fReceiveBufferIsFilled():
-            print f2fcore.f2fReceiveBufferGetContent(1024)
-            f2fcore.f2fReceiveBufferRelease()
-        # TODO: finish here, not only debug
 
 def presenceCB(con, prs):
     """Called when a presence is received"""

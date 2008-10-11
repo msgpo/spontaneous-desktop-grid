@@ -75,8 +75,9 @@ typedef struct
  * invitation - we might need here a feedback to the user - TODO implement this feedback */
 typedef struct
 {
-	F2FUID tmpPeerID; /** the temporary peer ID, we have assigned to this peer */ 
-	F2FUID tmpIDAndChallenge;  /** challenge - also to identify local peer entry */
+	F2FUID tmpIDAndChallenge;  /** challenge - also to identify local peer entry 
+	                             * (the temporary peer ID, which was assigned to this peer) */
+	F2FUID realSourceID; /** the real SourceID of the answering peer */
 } F2FMessageInviteAnswer;
 
 ///** Request for a job ticket, which can be used to run a job

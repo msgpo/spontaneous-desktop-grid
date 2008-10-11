@@ -286,7 +286,7 @@ F2FError f2fGroupRegisterPeer( /* out */ F2FGroup *group, const F2FWord32 localP
 	/* initialize  the newly allocated peer */
 	newpeer->localPeerId = localPeerId;
 	newpeer->status = F2FPeerWaitingForInviteConfirm;
-	newpeer -> activeprovider = F2FProviderIM; /* Contact at the moment via IM */
+	newpeer->activeprovider = F2FProviderIM; /* Contact at the moment via IM */
 	newpeer->lastActivity = time( NULL );
 	newpeer->identifier[F2FMaxNameLength] = 0;
 	f2fPeerAddToGroup( newpeer, group );
@@ -471,17 +471,20 @@ F2FError f2fSend()
 	return F2FErrOK;
 }
 
-/** process an InviteMessage sent to me, react to this invite */
+/** process an InviteMessage sent to me, react to this invite
+ * (create the answer) */
 static F2FError processInviteMessage( 
 		F2FGroup *group, F2FPeer *srcPeer, F2FPeer *dstPeer,
 		const F2FMessageInvite *msg )
 {
+	/* dstpeer should be myself, as the message was sent to me */
+	/* TODO: maybe check? */
 	/* Send answer back */
 	F2FMessageInviteAnswer myanswer;
-	myanswer.tmpPeerID.hi = htonl(srcPeer->id.hi); /* dest is NUll here, is src right??? !!! TODO: !!!*/
-	myanswer.tmpPeerID.hi = htonl(srcPeer->id.lo);
 	myanswer.tmpIDAndChallenge.hi = msg->tmpIDAndChallenge.hi; /* no transfer in endian necessary */
 	myanswer.tmpIDAndChallenge.lo = msg->tmpIDAndChallenge.lo; /* no transfer in endian necessary */
+	myanswer.realSourceID.hi = htonl(myself->id.hi);
+	myanswer.realSourceID.lo = htonl(myself->id.lo);
 	return f2fPeerSendData( group, srcPeer, F2FMessageTypeInviteAnswer,
 			(char *)& myanswer, sizeof(F2FMessageInviteAnswer));
 }
@@ -495,7 +498,7 @@ static F2FError processInviteMessageAnswer(
 	
 	/* Check if peer waits for an invite */
 	F2FPeer * waitingPeer = f2fPeerListFindPeer(
-					ntohl(msg->tmpPeerID.hi),ntohl(msg->tmpPeerID.lo) );
+					ntohl(msg->tmpIDAndChallenge.hi), ntohl(msg->tmpIDAndChallenge.lo) );
 	if( ! waitingPeer )
 		return F2FErrNotAuthenticated;
 	if( waitingPeer->status != F2FPeerWaitingForInviteConfirm )
@@ -504,7 +507,7 @@ static F2FError processInviteMessageAnswer(
 		return F2FErrNotAuthenticated;
 	/* Change the id to the official id */
 	error = f2fPeerChangeUID( waitingPeer, 
-			srcPeer->id.hi, srcPeer->id.lo );
+			ntohl(msg->realSourceID.hi), ntohl(msg->realSourceID.lo) );
 	if( error != F2FErrOK ) return error;
 	waitingPeer -> status = F2FPeerActive; /* active now */
 	return F2FErrOK;
@@ -555,9 +558,10 @@ static F2FError parseMessage( const char * buffer, F2FSize len )
 		return F2FErrNotFound;
 	srcPeer = f2fPeerListFindPeer( 
 			ntohl(hdr->sourcePeerID.hi), ntohl(hdr->sourcePeerID.lo) );
-	if( srcPeer == NULL ) /* not in the local peer list */
-		return F2FErrNotFound;
-	srcPeer->lastActivity = time(NULL); // update timestamp
+	/* This can be null, if it was an invite answer,
+	 * where the actual source is not known */
+	if( srcPeer != NULL ) /* is in the local peer list */
+		srcPeer->lastActivity = time(NULL); // update timestamp
 	F2FUID dstuid;
 	dstuid.hi = ntohl(hdr->destPeerID.hi);
 	dstuid.lo = ntohl(hdr->destPeerID.lo);
@@ -574,7 +578,9 @@ static F2FError parseMessage( const char * buffer, F2FSize len )
 	}
 	/* TODO: Check length of the message extensions, should match! */ 
 	/* process differnt messages */
-	//F2FSize mesExtLen = ntohl( hdr->len );
+	F2FSize mesExtLen = ntohl( hdr->len );
+	if(mesExtLen > F2FMaxMessageSize)
+		mesExtLen = F2FMaxMessageSize;
 	const char * mesExt = buffer + sizeof( F2FMessageHeader );
 	switch ( hdr->messagetype )
 	{
@@ -591,10 +597,26 @@ static F2FError parseMessage( const char * buffer, F2FSize len )
 		if( error != F2FErrOK ) return error;
 		break;
 	case F2FMessageTypeRaw:
-		/* not handled error = processMessageData( buffer );
-		if( error != F2FErrOK ) return error; */
+		if(receiveBuffer.filled)
+			return F2FErrBufferFull;
+		receiveBuffer.binary = 1;
+		memcpy(receiveBuffer.buffer, mesExt, mesExtLen );
+		receiveBuffer.size = mesExtLen;
+		receiveBuffer.group = group;
+		receiveBuffer.sourcePeer = srcPeer;
+		receiveBuffer.destPeer = dstPeer;
+		receiveBuffer.filled = 1;
 		break;
 	case F2FMessageTypeText:
+		if(receiveBuffer.filled)
+			return F2FErrBufferFull;
+		receiveBuffer.binary = 0;
+		memcpy(receiveBuffer.buffer, mesExt, mesExtLen );
+		receiveBuffer.size = mesExtLen;
+		receiveBuffer.group = group;
+		receiveBuffer.sourcePeer = srcPeer;
+		receiveBuffer.destPeer = dstPeer;
+		receiveBuffer.filled = 1;
 		break;
 	default:
 		return F2FErrMessageTypeUnknown;
@@ -647,11 +669,13 @@ F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
 			srcPeer = f2fPeerListNew( ntohl(hdr->sourcePeerID.hi),	ntohl(hdr->sourcePeerID.lo) );
 			if( srcPeer == NULL ) return F2FErrListFull;
 			srcPeer->localPeerId = localPeerId;
+			srcPeer->activeprovider = F2FProviderIM; // Only IM at this time
 			srcPeer->identifier[F2FMaxNameLength] = 0;
 			strncpy( srcPeer->identifier, identifier, F2FMaxNameLength );
 		}
 		/* TODO: is the else branch here important for security? */
 	}
+	/* maybe check the src for Invitemessageanswers here */
 	return parseMessage( tmpbuffer, size );
 }
 
