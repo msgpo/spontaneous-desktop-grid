@@ -24,6 +24,8 @@
  *   This is the F2FCore interface implementation
  ***************************************************************************/
 
+#include <stdio.h>
+#include <sys/stat.h>
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
@@ -119,6 +121,8 @@ static inline size_t strnlen( const char *str, size_t max )
 	}
 	return size;
 }
+
+F2FError f2fPeerSubmitJob( const F2FGroup *group, F2FPeer *peer );
 
 /** Do the initialization - especially create a random seed and get your own PeerID 
  * Must be called first.
@@ -510,6 +514,22 @@ static F2FError processInviteMessageAnswer(
 			ntohl(msg->realSourceID.hi), ntohl(msg->realSourceID.lo) );
 	if( error != F2FErrOK ) return error;
 	waitingPeer -> status = F2FPeerActive; /* active now */
+	/* For all groups, where a job is submitted, get the corresponding
+	 * tickets */
+	int index;
+	for( index = 0; index < waitingPeer->groupsListSize; index ++)
+	{
+		if( waitingPeer->groups[index]->jobfilepath[0] )
+		{
+			/* TODO: This works at the moment only, if there is only one group */
+			if(index>0)
+			{
+				printf("processInviteMessageAnswer: Multiple groups not supported\n");
+				return F2FErrWierdError;
+			}
+			f2fPeerSubmitJob( waitingPeer->groups[index], waitingPeer );
+		}
+	}
 	return F2FErrOK;
 }
 
@@ -538,6 +558,24 @@ static F2FError processMessageData( const char * buffer)
 	return F2FErrOK;
 }
 */
+
+/** process a Job-Ticket-Request sent to me and send ticket back */
+static F2FError processGetJobTicket( 
+		F2FGroup *group, F2FPeer *srcPeer, F2FPeer *dstPeer,
+		const F2FMessageGetJobTicket *msg )
+{
+	/* TODO: proceeed here !!! */
+	return F2FErrOK;
+}
+
+/** process a Job-Ticket-Answer (send the job) */
+static F2FError processGetJobTicketAnswer( 
+		F2FGroup *group, F2FPeer *srcPeer, F2FPeer *dstPeer,
+		const F2FMessageGetJobTicketAnswer *msg )
+{
+	/* TODO: proceeed here !!! */
+	return F2FErrOK;
+}
 
 /** parse messages (internal or IM messages), they are already encoded */
 static F2FError parseMessage( const char * buffer, F2FSize len )
@@ -617,6 +655,18 @@ static F2FError parseMessage( const char * buffer, F2FSize len )
 		receiveBuffer.sourcePeer = srcPeer;
 		receiveBuffer.destPeer = dstPeer;
 		receiveBuffer.filled = 1;
+		break;
+	case F2FMessageTypeGetJobTicket:
+		error = processGetJobTicket(
+					group, srcPeer, dstPeer, 
+					(F2FMessageGetJobTicket *) mesExt);
+		if( error != F2FErrOK ) return error;
+		break;
+	case F2FMessageTypeGetJobTicketAnswer:
+		error = processGetJobTicketAnswer(
+					group, srcPeer, dstPeer, 
+					(F2FMessageGetJobTicketAnswer *) mesExt);
+		if( error != F2FErrOK ) return error;
 		break;
 	default:
 		return F2FErrMessageTypeUnknown;
@@ -750,6 +800,7 @@ F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
 		F2FMessageType type,
 		const char *data, const F2FWord32 dataLen )
 {
+	/* TODO: make sure, bigger blocks can be sent !!! */
 	F2FError error = prepareSendBuffersWithData( group, peer, type, data, dataLen );
 	if (error != F2FErrOK ) return error;
 	/* prepare the right destinations for the buffer
@@ -807,10 +858,42 @@ F2FError f2fEmptyData()
  * If tickets are received back, the job will be sent to these clients.
  * The Job must be available as a local file in a special archive format
  */ 
-F2FError f2fGroupSubmitJob( const char * jobpath )
+F2FError f2fGroupSubmitJob( F2FGroup *group, const char * jobpath )
 {
+	F2FMessageGetJobTicket ticketRequest;
+	struct stat jobfilestat;
+	F2FSize jobpathlen;
 	
-	// TODO: implement	
+	jobpathlen = strnlen( jobpath, F2FMaxPathLength + 1 );
+	if(jobpathlen > F2FMaxPathLength )
+		return F2FErrPathTooLong;
+	if(stat(jobpath, & jobfilestat)<0)
+		return F2FErrFileOpen;
+	if( ! S_ISREG( jobfilestat.st_mode ) )
+		return F2FErrFileOpen;
+	group -> jobfilepath[jobpathlen] = 0;
+	memcpy(group->jobfilepath, jobpath, jobpathlen );
+	group -> jobarchivesize =  jobfilestat.st_size;
+	ticketRequest.archivesize = jobfilestat.st_size;
+	ticketRequest.hdspace = 0; /* Nothing at the moment, TODO: use */
+	groupSend( group, F2FMessageTypeGetJobTicket,
+			(char *) &ticketRequest, sizeof(ticketRequest) );
+	/** TODO: Should a challenge be sent out, to make shure, that only the clients
+	 * addressed here can answer? */
+	return F2FErrOK;
+}
+
+/** Send a job ticket request to a peer which joined later */
+F2FError f2fPeerSubmitJob( const F2FGroup *group, F2FPeer *peer )
+{
+	F2FMessageGetJobTicket ticketRequest;
+
+	ticketRequest.archivesize = group->jobarchivesize;
+	ticketRequest.hdspace = 0; /* Nothing at the moment, TODO: use */
+	f2fPeerSendData(group, peer, F2FMessageTypeGetJobTicket,
+			(char *) &ticketRequest, sizeof(ticketRequest) );
+	/** TODO: Should a challenge be sent out, to make shure, that only the clients
+	 * addressed here can answer? */
 	return F2FErrOK;
 }
 

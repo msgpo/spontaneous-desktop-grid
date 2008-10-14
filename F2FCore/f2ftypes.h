@@ -56,6 +56,9 @@ typedef enum  {
 	F2FErrMessageTypeUnknown = -11, /** This message type was unknown */
 	F2FErrMessageTooLong = -12, /** This message is too long */
 	F2FErrMessageTooShort = -13, /** This message is too short to be parsed */
+	F2FErrFileOpen = -14, /** Problems opening a file */
+	F2FErrFileRead = -15, /** Problems reading from a file */
+	F2FErrPathTooLong = -16, /** Path too long */
 	F2FErrWierdError = -200, /** This error should not happen */
 } F2FError;
 

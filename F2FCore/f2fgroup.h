@@ -56,9 +56,11 @@ typedef struct F2FGroupStruct
 								   * might be something like: "Ulno's blender computing group" */	
 	F2FGroupPeer sortedPeerList [ F2FMaxPeers ]; /** peers belonging to this group */
 	F2FSize listSize; /** current size of the sorted IDs list */
-	F2FString jobfilepath; /** points to the name of the submitted job
-							* NULL, if no job was submitted
-	 						* TODO: consider multiple jobs in one group */
+	char jobfilepath[F2FMaxPathLength+1]; /** points to the name
+	 	* of the submitted job
+		* empty, if no job was submitted
+	 	* TODO: consider multiple jobs in one group */
+	F2FSize jobarchivesize; /** Length in byte of the jobarchive on disk */
 } F2FGroup;
 
 /** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */

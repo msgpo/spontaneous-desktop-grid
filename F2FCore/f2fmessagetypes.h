@@ -80,11 +80,15 @@ typedef struct
 	F2FUID realSourceID; /** the real SourceID of the answering peer */
 } F2FMessageInviteAnswer;
 
-///** Request for a job ticket, which can be used to run a job
-// * on a peer */
-//typedef struct
-//{
-//} F2FMessageGetJobTicket;
+/** Request for a job ticket, which can be used to run a job
+ * on a peer */
+typedef struct
+{
+	/** Request some space and other QoS parameters */
+	F2FSize archivesize;
+	F2FSize hdspace; /* maybe demand here 64 bit */
+	/* medium bandwith, key with which the job will be signed */
+} F2FMessageGetJobTicket;
 
 /** A job ticket, which can be used to run a job
  * on a peer */

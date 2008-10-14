@@ -215,7 +215,7 @@ F2FError f2fEmptyData();
  * If tickets are received back, the job will be sent to these clients.
  * The Job must be available as a local file in a special archive format
  */ 
-F2FError f2fGroupSubmitJob( const char * jobpath );
+F2FError f2fGroupSubmitJob( F2FGroup *group, const char * jobpath );
 
 /** distribute file */
 F2FError f2fGroupDistributeFile( const char * publishname,

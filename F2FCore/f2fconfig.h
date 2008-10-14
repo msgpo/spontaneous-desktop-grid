@@ -30,6 +30,9 @@
 /** Maximum length of name strings */
 #define F2FMaxNameLength 255
 
+/** Maximum length of file pathes */
+#define F2FMaxPathLength 1024
+
 /** Number of maximum known peers in one F2FCore */
 #define F2FMaxPeers 1024
 
