@@ -99,7 +99,7 @@ typedef struct
 } F2FMessageGetJobTicketAnswer;
 
 /** A job ticket, which can be used to run a job
- * on a peer */
+ * on a peer, Actual data of the job comes afterwards */
 typedef struct
 {
 	F2FTicket ticket; /** the ticket, which allows to execute the job */

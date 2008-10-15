@@ -10,6 +10,8 @@
 # Imports
 import sys
 import os
+from threading import Thread
+
 # Add path for f2fcore module
 sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], "..","F2FCore" )))
@@ -143,7 +145,7 @@ def disconnectedCB(con):
 con.registerHandler('message',receiveMessageCB)
 #con.registerHandler('presence',presenceCB)
 #con.registerHandler('iq',iqCB)
-#con.setDisconnectHandler(disconnectedCB)
+con.setDisconnectHandler(disconnectedCB)
 
 if con.auth(username,password,resource):
     print "Logged in as %s to server %s" % ( username, servername )
@@ -177,6 +179,14 @@ if( groupname ): # a job shall be submitted
         f2fcore.f2fGroupRegisterPeer( mygroupid, index, friendlist[index], "headless invite", "" )
         # check sendIMBuffer (to send away the created invitemessage)
         sendOutSendIMBuffer()
+    # Start the job
+    f2fcore.f2fGroupSubmitJob( mygroupid, jobarchive )
+    # Start the master
+    jobfile = open(jobarchive)
+    exec(jobfile) # very insecure
+    jobfile.close()
+    jobslavethread = Thread(target=master)
+    jobslavethread.start()
 else:
     mygroupid = None
         
@@ -192,27 +202,42 @@ def showPeerList():
 
 def evaluateReceiveBuffer():
     if f2fcore.f2fReceiveBufferIsFilled():
-        if f2fcore.f2fReceiveBufferIsBinary():
+        if f2fcore.f2fReceiveBufferIsRaw():
             print "Buffer is binary, content not shown."
-        else:
+            f2fcore.f2fReceiveBufferRelease()
+        if f2fcore.f2fReceiveBufferIsText():
             print "Buffer is text. Content:", \
-                f2fcore.f2fReceiveBufferGetContent(4096)
-        f2fcore.f2fReceiveBufferRelease()
-        
+               f2fcore.f2fReceiveBufferGetContent(4096)
+            f2fcore.f2fReceiveBufferRelease()
+        if f2fcore.f2fReceiveBufferIsJob():
+            job = f2fcore.f2fReceiveJob(4096)
+            # TODO: make sure to execute only one
+            #print "Job:",job,":Jobend"
+            exec(job.strip() + "\n") # very insecure, make sure it ends with a new line and no blanks
+            jobslavethread = Thread(target=slave)
+            jobslavethread.start()
+            f2fcore.f2fReceiveBufferRelease()
+
+# show path
+print "Path:",  os.path.realpath(".")
+
 # big loop
 from time import sleep, time
 oldtime = time()
 while(1):
-    con.process(0.5) 
+    con.process(0.1) 
     #sleep (1)
+    #while( f2fcore.f2fReceiveBufferIsFilled() ):
+    f2fcore.f2fReceive()
+    f2fcore.f2fReceiveBufferParse()
+    evaluateReceiveBuffer()
+    f2fcore.f2fTicketRequestGrant() # For a start grant all, TODO: secure this!
     evaluateReceivedIMMessages()
     f2fcore.f2fSend()
-    f2fcore.f2fReceive()
-    evaluateReceiveBuffer()
     newtime = time()
     if newtime-oldtime > 10:
         oldtime = newtime
         showPeerList()
-        if( groupname ):
-            f2fcore.f2fGroupSendText( mygroupid, "Hello World!" )
+        #if( groupname ):
+        #    f2fcore.f2fGroupSendText( mygroupid, "Hello World!" )
     

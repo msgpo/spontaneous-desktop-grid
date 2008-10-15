@@ -83,10 +83,12 @@ F2FError f2fTicketRequestGrant()
 	msg.ticket.hi = htonl(groupPeer->receiveTicket.hi);
 	msg.ticket.lo = htonl(groupPeer->receiveTicket.lo);
 	/* send generated answer message */
-	f2fPeerSendData(ticketRequestList[0].group,
+	F2FError error = f2fPeerSendData(ticketRequestList[0].group,
 			ticketRequestList[0].requestingPeer, 
-			F2FMessageTypeInviteAnswer,
+			F2FMessageTypeGetJobTicketAnswer,
 			(char *) & msg, sizeof( F2FMessageGetJobTicketAnswer ) );
+	if( error != F2FErrOK )
+		return error;
 	/* delete request */
 	ticketRequestListSize --;
 	memmove( ticketRequestList, ticketRequestList + 1, ticketRequestListSize * sizeof (TicketRequest) );

@@ -13,7 +13,7 @@ sys.argv=["headlessclient",
       "f2fheadless", # resource
       "f2f02@jabber.ulno.net", # list of friends (only one)
       "test computation group", # name of computation group
-      "testjob" # submitted job archive
+      "testjob.py" # submitted job archive
       ]
 
 import headlessclient

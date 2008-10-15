@@ -30,6 +30,7 @@
 %{
 #include "f2ftypes.h"
 #include "f2fcore.h"
+#include "f2fticketrequest.h"
 %}
 
 // make sure you can use numbers
@@ -37,6 +38,7 @@
 
 %include "f2ftypes.h"
 %include "f2fcore.h"
+%include "f2fticketrequest.h"
 
 // redefine some char * which are returned
 

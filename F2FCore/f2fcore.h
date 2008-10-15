@@ -147,7 +147,13 @@ F2FError f2fReceive();
 int f2fReceiveBufferIsFilled();
 
 /** return 1, if the data in the ReceiveBuffer is binary data */
-int f2fReceiveBufferIsBinary();
+int f2fReceiveBufferIsRaw();
+
+/** return 1, if the data in the ReceiveBuffer is text data */
+int f2fReceiveBufferIsText();
+
+/** return 1, if the data in the ReceiveBuffer is a job */
+int f2fReceiveBufferIsJob();
 
 /** get the group of the received data */
 F2FGroup * f2fReceiveBufferGetGroup();
@@ -169,8 +175,14 @@ char * f2fReceiveBufferGetContentPtr();
 #endif
 void f2fReceiveBufferGetContent(char *content, int *maxlen );
 
+/* analog to the last function (f2fReceiveBufferGetContent) receives a job */
+void f2fReceiveJob(char *content, int *maxlen );
+
 /** show that the buffer has been read and can be filled again */
 F2FError f2fReceiveBufferRelease();
+
+/* Parse the contents of the receive buffer and release it, if successfull */
+F2FError f2fReceiveBufferParse();
 
 /** Send content of the local sendBuffer */
 F2FError f2fSend();
