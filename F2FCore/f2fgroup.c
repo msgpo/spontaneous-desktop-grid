@@ -69,17 +69,25 @@ static int f2fGroupFindNearestUpperPeer( F2FGroup *group,
 	return searchpos;
 }
 
-/** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
-F2FPeer * f2fGroupFindPeer( F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo )
+/** Try to find the exact group-peer. If it does not exist, return NULL. Else return the group-peer */
+F2FGroupPeer * f2fGroupFindGroupPeer( F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo )
 {
 	if( group->listSize == 0 ) return NULL;
 	int index = f2fGroupFindNearestUpperPeer( group, uidhi, uidlo );
 	if( index == 0) return NULL;
-	F2FPeer *candidate = group->sortedPeerList[ index - 1 ].peer;
-	if( candidate->id.hi == uidhi || candidate->id.lo == uidlo )
+	F2FGroupPeer *candidate = group->sortedPeerList + index - 1;
+	if( candidate->peer->id.hi == uidhi || candidate->peer->id.lo == uidlo )
 		return candidate;
 	else
 		return NULL;
+}
+
+/** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
+F2FPeer * f2fGroupFindPeer( F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo )
+{
+	F2FGroupPeer *candidate = f2fGroupFindGroupPeer( group, uidhi, uidlo );
+	if( candidate == NULL ) return NULL;
+	return candidate->peer;
 }
 
 /** add one peer to the list, return peer or NULL if no space left */

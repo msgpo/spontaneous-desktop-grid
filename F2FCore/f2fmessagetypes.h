@@ -36,6 +36,7 @@ typedef enum F2FMessageTypeEnum
 	F2FMessageTypeInviteAnswer, /** Answer of the invited peer */
 	F2FMessageTypeGetJobTicket, /** Ask for ticket to submit jobs */
 	F2FMessageTypeGetJobTicketAnswer, /** The answer including the ticket */
+	F2FMessageTypeJob, /** A job archive */
 	F2FMessageTypeRaw, /** Just some unstructured data (binary) */
 	F2FMessageTypeText, /** Just some text (which will be displayed in the group chat) */
 	/* here should be a lot of types to inquire status data, pinging, 
@@ -96,6 +97,16 @@ typedef struct
 {
 	F2FTicket ticket;          /** The requested ticket  */
 } F2FMessageGetJobTicketAnswer;
+
+/** A job ticket, which can be used to run a job
+ * on a peer */
+typedef struct
+{
+	F2FTicket ticket; /** the ticket, which allows to execute the job */
+	F2FSize size; /** The total size of the job */
+	int blocknr; /** The number of the block */
+} F2FMessageJob;
+
 
 ///** raw data */
 //typedef struct

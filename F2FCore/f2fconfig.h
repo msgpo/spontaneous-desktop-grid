@@ -50,4 +50,7 @@
 
 #define F2FMaxEncodedMessageSize ((F2FMaxMessageSize + 3)* 4 / 3 + F2FMessageMarkLength)
 
+/** Maximum ticket requests hadled at the same time */
+#define F2FMaxTicketRequests 256
+
 #endif /*F2FCONFIG_H_*/

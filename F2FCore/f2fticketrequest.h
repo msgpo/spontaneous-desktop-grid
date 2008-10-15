@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fticket.c
+ *   Filename: ticketrequest.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath 
@@ -21,35 +21,16 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
  ***************************************************************************
  *   Description:
- *   Implements the methods of f2fticket
+ *   Handles Ticketrequests.
  ***************************************************************************/
 
-#include "f2fticket.h"
 #include "f2fcore.h"
 
-/** check if ticket is null (all values null) */
-int f2fTicketNull( F2FTicket *ticket )
-{
-	return ticket->hi == 0 && ticket->lo == 0;
-}
+F2FError f2fTicketRequestAdd( F2FGroup *group, F2FPeer *peer );
 
-/** set ticket to null (all values null) -> uninitialized */
-void f2fTicketSetNull( F2FTicket *ticket )
-{
-	ticket->hi = 0;
-	ticket->lo = 0;
-}
+F2FGroup * f2fTicketRequestGetGroup();
 
-/** create values for an F2FTicket and initialize the given structure **/
-F2FError f2fTicketInitialize( F2FTicket *newticket )
-{
-	newticket->hi = f2fRandomNotNull();
-	newticket->lo = f2fRandomNotNull();
-	return F2FErrOK; 
-}
+F2FPeer * f2fTicketRequestGetPeer();
 
-/** Test if two F2FTickets are equal */
-int f2fTicketEqual( const F2FTicket *ticket1, const F2FTicket *ticket2 )
-{
-	return ticket1->hi == ticket2->hi && ticket1->lo == ticket2->lo;
-}
+/** Grant a ticket-request and send a ticket back */
+F2FError f2fTicketRequestGrant();

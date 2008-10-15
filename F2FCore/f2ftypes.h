@@ -59,6 +59,8 @@ typedef enum  {
 	F2FErrFileOpen = -14, /** Problems opening a file */
 	F2FErrFileRead = -15, /** Problems reading from a file */
 	F2FErrPathTooLong = -16, /** Path too long */
+	F2FErrTicketListFull = -17, /** Ticket Request List full */
+	F2FErrTicketListEmpty = -18, /** Ticket Request List empty */
 	F2FErrWierdError = -200, /** This error should not happen */
 } F2FError;
 

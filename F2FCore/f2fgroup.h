@@ -66,6 +66,9 @@ typedef struct F2FGroupStruct
 /** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
 F2FPeer * f2fGroupFindPeer( F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo );
 
+/** Try to find the exact group-peer. If it does not exist, return NULL. Else return the group-peer */
+F2FGroupPeer * f2fGroupFindGroupPeer( F2FGroup *group, const F2FWord32 uidhi, const F2FWord32 uidlo );
+
 /** add one peer to the list, return peer or NULL if no space left */
 F2FError f2fGroupPeerListAdd( /* out */ F2FGroup *group, F2FPeer *peer );
 

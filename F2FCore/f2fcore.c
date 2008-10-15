@@ -35,8 +35,10 @@
 #include "b64/b64.h"
 #include "f2fcore.h"
 #include "f2fpeerlist.h"
+#include "f2fgroup.h"
 #include "f2fgrouplist.h"
 #include "f2fmessagetypes.h"
+#include "f2fticketrequest.h"
 
 static int initWasCalled = 0; // this will be set if init was successful
 static F2FError globalError = F2FErrOK; // a global error variable
@@ -559,13 +561,13 @@ static F2FError processMessageData( const char * buffer)
 }
 */
 
-/** process a Job-Ticket-Request sent to me and send ticket back */
+/** process a Job-Ticket-Request sent and create ticket request to user */
 static F2FError processGetJobTicket( 
 		F2FGroup *group, F2FPeer *srcPeer, F2FPeer *dstPeer,
 		const F2FMessageGetJobTicket *msg )
 {
-	/* TODO: proceeed here !!! */
-	return F2FErrOK;
+	F2FError error = f2fTicketRequestAdd( group, srcPeer );
+	return error;
 }
 
 /** process a Job-Ticket-Answer (send the job) */
@@ -573,8 +575,33 @@ static F2FError processGetJobTicketAnswer(
 		F2FGroup *group, F2FPeer *srcPeer, F2FPeer *dstPeer,
 		const F2FMessageGetJobTicketAnswer *msg )
 {
-	/* TODO: proceeed here !!! */
-	return F2FErrOK;
+	/* TODO: Check, if this was requested */
+	/* Save ticket and then initiate sending the job */
+	F2FGroupPeer *groupPeer = f2fGroupFindGroupPeer( group, 
+			srcPeer->id.hi, srcPeer->id.lo );
+	if( groupPeer == NULL ) return F2FErrNotFound;
+	groupPeer->sendTicket.hi = ntohl( msg->ticket.hi );
+	groupPeer->sendTicket.lo = ntohl( msg->ticket.lo );
+	groupPeer->sendTicket.validUntil = ntohl( msg->ticket.validUntil );
+	/* Set up job */
+	struct
+	{
+		F2FMessageJob job;
+		char data[F2FMaxMessageSize-sizeof(F2FMessageHeader)-sizeof(F2FMessageJob)];
+	} jobmsg;
+	if( group->jobarchivesize > F2FMaxMessageSize-sizeof(F2FMessageHeader)-sizeof(F2FMessageJob))
+		return F2FErrWierdError; 	/* TODO: deal with multiple blocks */
+	jobmsg.job.size = group->jobarchivesize;
+	jobmsg.job.blocknr = 0;
+	/* Read job from file */
+	FILE * jobfile = fopen( group->jobfilepath, "r");
+	fread(jobmsg.data, jobmsg.job.size, 1, jobfile);
+	/* TODO: check errors */
+	/* send data */
+	F2FError error = f2fPeerSendData( group, srcPeer, F2FMessageTypeJob, 
+			(char *)& jobmsg, sizeof(F2FMessageJob) + jobmsg.job.size );
+	fclose( jobfile );	
+	return error;
 }
 
 /** parse messages (internal or IM messages), they are already encoded */
@@ -892,7 +919,7 @@ F2FError f2fPeerSubmitJob( const F2FGroup *group, F2FPeer *peer )
 	ticketRequest.hdspace = 0; /* Nothing at the moment, TODO: use */
 	f2fPeerSendData(group, peer, F2FMessageTypeGetJobTicket,
 			(char *) &ticketRequest, sizeof(ticketRequest) );
-	/** TODO: Should a challenge be sent out, to make shure, that only the clients
+	/** TODO: Should a challenge be sent out, to make sure, that only the clients
 	 * addressed here can answer? */
 	return F2FErrOK;
 }
