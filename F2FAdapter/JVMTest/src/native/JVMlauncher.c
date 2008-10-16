@@ -21,7 +21,6 @@ int main() {
 	//options[4].optionString ="-Djava.compiler=NONE";
 
 	/* user classes */
-	//options[0].optionString = "-Djava.class.path=/home/mac/workspace/JVMTest/Debug/classes";
 	options[0].optionString = "-Djava.class.path=./classes";
 
 	/* native lib path */
