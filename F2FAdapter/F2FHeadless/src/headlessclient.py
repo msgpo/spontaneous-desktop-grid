@@ -181,12 +181,12 @@ if( groupname ): # a job shall be submitted
         sendOutSendIMBuffer()
     # Start the job
     f2fcore.f2fGroupSubmitJob( mygroupid, jobarchive )
-    # Start the master
-    jobfile = open(jobarchive)
-    exec(jobfile) # very insecure
-    jobfile.close()
-    jobslavethread = Thread(target=master)
-    jobslavethread.start()
+    ## Start the master
+    #jobfile = open(jobarchive)
+    #exec(jobfile) # very insecure
+    #jobfile.close()
+    #jobslavethread = Thread(target=master)
+    #jobslavethread.start()
 else:
     mygroupid = None
         
@@ -200,6 +200,9 @@ def showPeerList():
             f2fcore.f2fPeerGetLocalPeerId(peer)
     print
 
+def runjob(job):
+    exec(job) # very insecure!!!
+
 def evaluateReceiveBuffer():
     if f2fcore.f2fReceiveBufferIsFilled():
         if f2fcore.f2fReceiveBufferIsRaw():
@@ -210,11 +213,11 @@ def evaluateReceiveBuffer():
                f2fcore.f2fReceiveBufferGetContent(4096)
             f2fcore.f2fReceiveBufferRelease()
         if f2fcore.f2fReceiveBufferIsJob():
-            job = f2fcore.f2fReceiveJob(4096)
+            job = f2fcore.f2fReceiveJob(4096).strip() + "\n"  # make sure it ends with a new line and no blanks
             # TODO: make sure to execute only one
             #print "Job:",job,":Jobend"
-            exec(job.strip() + "\n") # very insecure, make sure it ends with a new line and no blanks
-            jobslavethread = Thread(target=slave)
+            jobcompiled = compile( job, '<f2f job>', 'exec')
+            jobslavethread = Thread(target=runjob,args=(jobcompiled,))
             jobslavethread.start()
             f2fcore.f2fReceiveBufferRelease()
 
@@ -240,4 +243,8 @@ while(1):
         showPeerList()
         #if( groupname ):
         #    f2fcore.f2fGroupSendText( mygroupid, "Hello World!" )
-    
+
+
+#### Some f2f support functions #####
+# TODO: Move them to module
+

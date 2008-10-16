@@ -1,8 +1,4 @@
-def master():
-    print "Hello world (Master)!"
-    
-def slave():
-    print "Hello world (Slave)!"
+print "Hello world f2f!"
 
 # print "Initializing master/slave functions."
   
