@@ -1,4 +1,26 @@
-# Author: Ulrich Norbisrath (ulno)
+###########################################################################
+#   Filename: headlessclient.py
+#   Author: ulno
+###########################################################################
+#   Copyright (C) 2008 by Ulrich Norbisrath 
+#   devel@mail.ulno.net   
+#                                                                         
+#   This program is free software; you can redistribute it and/or modify  
+#   it under the terms of the GNU Library General Public License as       
+#   published by the Free Software Foundation; either version 2 of the    
+#   License, or (at your option) any later version.                       
+#                                                                         
+#   This program is distributed in the hope that it will be useful,       
+#   but WITHOUT ANY WARRANTY; without even the implied warranty of        
+#   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the         
+#   GNU General Public License for more details.                          
+#                                                                         
+#   You should have received a copy of the GNU Library General Public     
+#   License along with this program; if not, write to the                 
+#   Free Software Foundation, Inc.,                                       
+#   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.             
+###########################################################################
+#   Description:
 # Headless jabber client
 # This client allows to run a headless (without gui) client for the
 # f2f network
@@ -6,11 +28,22 @@
 # it will be used to develop a client which can be submitted to real grids
 # in a second instance it also should be able to submit jobs with it
 # TODO: Replace jabber.py with http://pyxmpp.jajcus.net/
+############################################################################
 
 # Imports
 import sys
 import os
 from threading import Thread
+
+# Add path for jabber module
+sys.path.insert(1, os.path.realpath(
+            os.path.join( sys.path[0], ".." )))
+from jabberpy import jabber
+
+from string import split
+
+import f2f
+import f2f.adapter
 
 # Add path for f2fcore module
 sys.path.insert(1, os.path.realpath(
@@ -21,58 +54,12 @@ sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
 import f2fcore
 
-# Add path for jabber module
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], ".." )))
-from jabberpy import jabber
+con = None
+friendlist = None
+#global con
+#global friendlist
 
-from string import split
-
-def usage():
-    print "%s: f2f headless client. " % sys.argv[0]
-    print "usage:"
-    print "%s <server> <username> <password> <resource>"   % sys.argv[0]
-    print "<friend1>,<friend2>,... [<groupname> <job-archive>]"
-    print "            - Connect to server and login."
-    print "              Allow the specified friends to use this resource."
-    print "              If group and job are specified,"
-    print "              add all friends to this group and submit job."
-    sys.exit(0)
-
-# check usage
-if len(sys.argv) < 5: usage()
-servername = sys.argv[1]
-username = sys.argv[2]
-password = sys.argv[3]
-resource = sys.argv[4]
-global friendlist
-if len(sys.argv) >= 6:
-    friendlist = split(sys.argv[5],',')
-else:
-    friendlist = []
-if len(sys.argv) >= 7:
-    if len(sys.argv) == 8:
-        groupname = sys.argv[6]
-        jobarchive = sys.argv[7]
-    else:
-        usage()
-else:
-    friendlist = []
-    groupname = ""
-    jobarchive = ""
-
-#con = jabber.Client(host=servername,debug=jabber.DBG_ALWAYS ,log=sys.stderr)
-con = jabber.Client(host=servername,log=None)
-
-try:
-    con.connect()
-except IOError, e:
-    print "Couldn't connect: %s" % e
-    sys.exit(0)
-else:
-    print "Connected"
-
-global messageStack
+#global messageStack
 messageStack=[]
 MaxMessageStackSize=1024
 def receiveMessageCB(con, msg):
@@ -141,22 +128,9 @@ def iqCB(con,iq):
 def disconnectedCB(con):
     print "Ouch, network error"
     sys.exit(1)
-            
-con.registerHandler('message',receiveMessageCB)
-#con.registerHandler('presence',presenceCB)
-#con.registerHandler('iq',iqCB)
-con.setDisconnectHandler(disconnectedCB)
-
-if con.auth(username,password,resource):
-    print "Logged in as %s to server %s" % ( username, servername )
-else:
-    print "eek -> ", con.lastErr, con.lastErrCode
-    sys.exit(1)
-
-#con.requestRoster()
-con.sendInitPresence()
 
 def sendMessage(localpeerid,messagetxt):
+    global friendlist
     destcontact = friendlist[localpeerid]
     msg = jabber.Message(destcontact, messagetxt)
     msg.setType('chat')
@@ -168,38 +142,7 @@ def sendOutSendIMBuffer():
         nextpeer = f2fcore.f2fSendIMBufferGetNextLocalPeerID()
         if( nextpeer < 0 ): break
         sendMessage( nextpeer, f2fcore.f2fSendIMBufferGetBuffer() )
-
-# Initialize f2f
-mypeerid = f2fcore.f2fInit( username + '@' + servername + '/' + resource, "")
-
-if( groupname ): # a job shall be submitted
-    mygroupid = f2fcore.f2fCreateGroup( groupname )
-    # Invite all the friends to this group
-    for index in range(len(friendlist)):
-        f2fcore.f2fGroupRegisterPeer( mygroupid, index, friendlist[index], "headless invite", "" )
-        # check sendIMBuffer (to send away the created invitemessage)
-        sendOutSendIMBuffer()
-    # Start the job
-    f2fcore.f2fGroupSubmitJob( mygroupid, jobarchive )
-    ## Start the master
-    #jobfile = open(jobarchive)
-    #exec(jobfile) # very insecure
-    #jobfile.close()
-    #jobslavethread = Thread(target=master)
-    #jobslavethread.start()
-else:
-    mygroupid = None
         
-
-def showPeerList():
-    print "Peerlist:"
-    for index in range(f2fcore.f2fPeerListGetSize()):
-        peer = f2fcore.f2fPeerListGetPeer(index)
-        print "Peerid:", f2fcore.f2fPeerGetUIDHi(peer),\
-            ",", f2fcore.f2fPeerGetUIDLo(peer), "localpeerid:",\
-            f2fcore.f2fPeerGetLocalPeerId(peer)
-    print
-
 def runjob(job):
     exec(job) # very insecure!!!
 
@@ -217,34 +160,123 @@ def evaluateReceiveBuffer():
             # TODO: make sure to execute only one
             #print "Job:",job,":Jobend"
             jobcompiled = compile( job, '<f2f job>', 'exec')
+            #jobcompiled = job
             jobslavethread = Thread(target=runjob,args=(jobcompiled,))
+            #exec(jobcompiled)
             jobslavethread.start()
             f2fcore.f2fReceiveBufferRelease()
 
-# show path
-print "Path:",  os.path.realpath(".")
+def f2fHeadless(servername, username, password, resource, friendlistlocal, groupname, jobarchive):
+    #con = jabber.Client(host=servername,debug=jabber.DBG_ALWAYS ,log=sys.stderr)
+    global con
+    global friendlist
+    con = jabber.Client(host=servername,log=None)
+    friendlist = friendlistlocal
+    
+    try:
+        con.connect()
+    except IOError, e:
+        print "Couldn't connect: %s" % e
+        sys.exit(0)
+    else:
+        print "Connected"
 
-# big loop
-from time import sleep, time
-oldtime = time()
-while(1):
-    con.process(0.1) 
-    #sleep (1)
-    #while( f2fcore.f2fReceiveBufferIsFilled() ):
-    f2fcore.f2fReceive()
-    f2fcore.f2fReceiveBufferParse()
-    evaluateReceiveBuffer()
-    f2fcore.f2fTicketRequestGrant() # For a start grant all, TODO: secure this!
-    evaluateReceivedIMMessages()
-    f2fcore.f2fSend()
-    newtime = time()
-    if newtime-oldtime > 10:
-        oldtime = newtime
-        showPeerList()
-        #if( groupname ):
-        #    f2fcore.f2fGroupSendText( mygroupid, "Hello World!" )
+    # Register fCallbacks for jabber            
+    con.registerHandler('message',receiveMessageCB)
+    #con.registerHandler('presence',presenceCB)
+    #con.registerHandler('iq',iqCB)
+    con.setDisconnectHandler(disconnectedCB)
+    
+    if con.auth(username,password,resource):
+        print "Logged in as %s to server %s" % ( username, servername )
+    else:
+        print "eek -> ", con.lastErr, con.lastErrCode
+        sys.exit(1)
+    
+    #con.requestRoster()
+    con.sendInitPresence()
+    
+    # Initialize f2f
+    mypeer = f2f.adapter.init(username + '@' + servername + '/' + resource, "")
+    
+    if( groupname ): # a job shall be submitted
+        mygroup = f2f.adapter.createGroup( groupname, jobarchive )
+        # Invite all the friends to this group
+        for index in range(len(friendlist)):
+            mygroup.invitePeer( index, friendlist[index], "headless invite", "" )
+            # check sendIMBuffer (to send away the created invitemessage)
+            sendOutSendIMBuffer()
+        # Start the job
+        mygroup.submitJob()
+        ## Start the master
+        #jobfile = open(jobarchive)
+        #exec(jobfile) # very insecure
+        #jobfile.close()
+        #jobslavethread = Thread(target=master)
+        #jobslavethread.start()
+    else:
+        mygroup = None
+        
+    # show path
+    #print "Path:",  os.path.realpath(".")
+    
+    # big loop
+    from time import sleep, time
+    oldtime = time()
+    while(1):
+        con.process(0.1) 
+        #sleep (1)
+        #while( f2fcore.f2fReceiveBufferIsFilled() ):
+        f2fcore.f2fReceive()
+        f2fcore.f2fReceiveBufferParse()
+        evaluateReceiveBuffer()
+        f2fcore.f2fTicketRequestGrant() # For a start grant all, TODO: secure this!
+        evaluateReceivedIMMessages()
+        f2fcore.f2fSend()
+        newtime = time()
+        if newtime-oldtime > 10:
+            oldtime = newtime
+            f2f.adapter.showPeerList()
+            #if( groupname ):
+            #    f2fcore.f2fGroupSendText( mygroupid, "Hello World!" )
+def main():
+    def usage():
+        print "%s: f2f headless client. " % sys.argv[0]
+        print "usage:"
+        print "%s <server> <username> <password> <resource>"   % sys.argv[0]
+        print "<friend1>,<friend2>,... [<groupname> <job-archive>]"
+        print "            - Connect to server and login."
+        print "              Allow the specified friends to use this resource."
+        print "              If group and job are specified,"
+        print "              add all friends to this group and submit job."
+        sys.exit(0)
+    
+    # check usage and read parameters
+    if len(sys.argv) < 5: usage()
+    servername = sys.argv[1]
+    username = sys.argv[2]
+    password = sys.argv[3]
+    resource = sys.argv[4]
 
+    if len(sys.argv) >= 6:
+        friendlist = split(sys.argv[5],',')
+    else:
+        friendlist = []
+    if len(sys.argv) >= 7:
+        if len(sys.argv) == 8:
+            groupname = sys.argv[6]
+            jobarchive = sys.argv[7]
+        else:
+            usage()
+    else:
+        friendlist = []
+        groupname = ""
+        jobarchive = ""
+    f2fheadless(servername, username, password, resource, friendlist, groupname, jobarchive)
+    
+    
+# allow this file to be called as module
+if __name__ == "__main__":
+    main()
 
-#### Some f2f support functions #####
-# TODO: Move them to module
-
+# TODO: Move functions to f2f package
