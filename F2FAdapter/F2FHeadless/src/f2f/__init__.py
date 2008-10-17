@@ -83,6 +83,14 @@ class Group:
         # TODO: check error and fire exception
     def equals(self, othergroup):
         return self.getUid() == othergroup.getUid()
+    # Get all the peers in this group
+    def getPeers(self):
+        peerlist=[]
+        # not very thread save (TODO: think to make in safer)
+        for index in range(f2fcore.f2fPeerListGetSize()):
+            peerlist.append(Peer(f2fcore.f2fPeerListGetPeer(index)))
+        return peerlist
+
 
 # Receive data (block until received)
 def receive():
@@ -96,8 +104,11 @@ def receive():
     answer = (Group(f2fcore.f2fReceiveBufferGetGroup(), "unknown"),
               Peer(f2fcore.f2fReceiveBufferGetSourcePeer()),
               obj)
-    f2fcore.f2fReceiveBufferRelease()
     return answer
+
+# release the content buffer
+def release():
+    f2fcore.f2fReceiveBufferRelease()
 
 def myPeer():
     from adapter import myPeer as adapterMyPeer # avoid cyclic imports

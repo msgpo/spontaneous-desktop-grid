@@ -65,7 +65,7 @@ messageStack=[]
 MaxMessageStackSize=1024
 def receiveMessageCB(con, msg):
     if msg.getBody(): # If message not empty
-        print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
+        #print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
         if len(messageStack) > MaxMessageStackSize: # Don't let stack grow too big
             messageStack.pop() # forget one message
         messageStack.insert(0,msg)
@@ -135,7 +135,7 @@ def sendMessage(localpeerid,messagetxt):
     destcontact = friendlist[localpeerid]
     msg = jabber.Message(destcontact, messagetxt)
     msg.setType('chat')
-    print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
+    #print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
     con.send(msg)
     
 def sendOutSendIMBuffer():

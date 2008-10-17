@@ -4,7 +4,7 @@ import f2f
 import threading
 from time import sleep, time
 
-PointsToGather = 1000000 # How many points to gather
+PointsToGather = 5000000 # How many points to gather
 
 print "Monte Carlo Pi"
 print
@@ -15,41 +15,56 @@ print "myInitiator (Peer):", f2fInitiator.getUid()
 print
 
 # global vars
+countlock = threading.Lock()
 pointcount = 1L # How many points have been count (don't start with 0 for division)
 hitcount = 1L # How many hits
 terminate = False
 
 def master():
+    global terminate
     resultpointcount = 0L
     resulthitcount = 0L
+    starttime=time()
     def showresult():
-        print "%s of %s Points."%(resultpointcount, PointsToGather),\
-            "Current Pi is:", float(resulthitcount * 4L) / float(resultpointcount)
+        print "Master: %s of %s Points."%(resultpointcount, PointsToGather),\
+            "Master: Current Pi is:", float(resulthitcount * 4L) / float(resultpointcount)
     while( resultpointcount < PointsToGather ):
-        recv = f2f.receive()
-        if recv[0].equals(f2fGroup):
-            resultpointcount += recv[2][0]
-            resulthitcount += recv[2][1]
-            showresult()
+        (group,src,data) = f2f.receive()
+        if group.equals(f2fGroup):
+            if isinstance(data,tuple):
+                (points,hits) = data
+                resultpointcount += points
+                resulthitcount += hits
+                showresult()
+                f2f.release()
     # Send terminate to all clients
-    # continue here!!!
-    print "Endresult:"
+    terminate = True # also inform local slave
+    for peer in f2fGroup.getPeers():
+        peer.send(f2fGroup, "terminate")
+    print "Master: Endresult:"
     showresult()
+    print "Master: This took %s seconds"%(time()-starttime)
 
 #### Slave specific
 # wait until term-signal is sent
 def waitterminate():
     global terminate
-    recv = f2f.receive()
-    if recv[0].equals(f2fGroup) and recv[1].equals(myself) and recv[2] == "terminate":
-        terminate = True
+    while(not terminate):
+        (grp,src,data) = f2f.receive()
+        if grp.equals(f2fGroup) and src.equals(f2fInitiator) and data == "terminate":
+            terminate = True
+            f2f.release()
+        sleep(0.01)
 
 def findpoints():
     global pointcount, hitcount, terminate
     while(not terminate):
         (x,y) = (f2f.randomDouble(),f2f.randomDouble())
+        countlock.acquire()
         if x**2 + y**2 < 1.0: hitcount += 1
         pointcount += 1
+        countlock.release()
+
     
 def slave():
     global pointcount, hitcount, terminate
@@ -57,8 +72,10 @@ def slave():
     threading.Thread(target=waitterminate).start()
     while(not terminate):
         sendtuple = (pointcount, hitcount)
+        countlock.acquire()
         (pointcount,hitcount) = (0,0)
-        print "Sending", sendtuple
+        countlock.release()
+        print "Slave: Sending", sendtuple
         f2fInitiator.send(f2fGroup,sendtuple)
         sleep(1.0) # results every second
 
@@ -66,8 +83,9 @@ def slave():
 if( myself.equals(f2fInitiator) ):
     print "I am master (initiator)."
     print
-    threading.Thread(target=slave).start() # take part as slave
-    master()
+    # take part as slave
+    threading.Thread(target=master).start()
+    slave()
 else:
     print "I am slave (not initiator)."
     print
