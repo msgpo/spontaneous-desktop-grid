@@ -52,7 +52,7 @@ class Peer:
         return self.getUid() == otherpeer.getUid()
     # send data to this peer, block until sent
     def send(self, group, obj):
-        serialdata = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
+        serialdata = pickle.dumps(obj, 2) # TODO: think if we could take HIGHEST_PROTOCOL
         while(1):
             error = f2fcore.f2fPeerSendRaw( group.getCPtr(), 
                                         self.__id_cptr, 
