@@ -102,6 +102,12 @@ F2FSize f2fGroupGetPeerListSize( const F2FGroup *group );
 F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group, 
 		F2FWord32 peerindex );
 
+/** Getter for GroupUID */
+F2FWord32 f2fGroupGetUIDHi(const F2FGroup * group);
+
+/** Getter for GroupUID */
+F2FWord32 f2fGroupGetUIDLo(const F2FGroup * group);
+
 /** hand over messages from the IM program to the core, before this function can be
  * called the second time f2fGroupReceive must be called to be able to clear
  * the buffers.

@@ -337,6 +337,18 @@ F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group,
 	return group->sortedPeerList[peerindex].peer;
 }
 
+/** Getter for GroupUID */
+F2FWord32 f2fGroupGetUIDHi(const F2FGroup * group)
+{
+	return group->id.hi;
+}
+
+/** Getter for GroupUID */
+F2FWord32 f2fGroupGetUIDLo(const F2FGroup * group)
+{
+	return group->id.lo;
+}
+
 /** tries to receive a message. If succesful, this gives a peer and the corresponding
  * message, if not peer and message will be NULL and F2FErrNothingAvail will be returned.
  * In success case F2FErrOK will be returned.
