@@ -219,6 +219,10 @@ F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
 		F2FMessageType type,
 		const char *data, const F2FWord32 dataLen );
 
+/** Fill send buffer for a specific peer in a group with raw data */
+F2FError f2fPeerSendRaw( const F2FGroup *group, F2FPeer *peer, 
+		const char *data, const F2FWord32 dataLen );
+
 /** test, if data in buffer has been sent */
 int f2fDataSent();
 

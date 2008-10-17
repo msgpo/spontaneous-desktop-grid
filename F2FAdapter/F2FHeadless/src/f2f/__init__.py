@@ -24,6 +24,8 @@
 #   f2f computing support functions for Python
 ###########################################################################
 
+import pickle
+from time import sleep
 import sys
 import os
 # Add path for f2fcore module
@@ -48,6 +50,18 @@ class Peer:
         return []
     def equals(self, otherpeer):
         return self.getUid() == otherpeer.getUid()
+    # send data to this peer, block until sent
+    def send(self, group, obj):
+        serialdata = pickle.dumps(obj, pickle.HIGHEST_PROTOCOL)
+        while(1):
+            error = f2fcore.f2fPeerSendRaw( group.getCPtr(), 
+                                        self.__id_cptr, 
+                                        serialdata, 
+                                        len(serialdata) )
+            if error == f2fcore.F2FErrOK:
+                break
+            sleep(0.01)
+        return error
 
 class Group:
     __id_cptr = None
@@ -55,6 +69,8 @@ class Group:
     def __init__(self,cptr,jobarchivepath):
         self.__id_cptr = cptr
         self.__jobarchivepath = jobarchivepath
+    def getCPtr(self): # should be only used internal
+        return self.__id_cptr;
     def getUid(self):
         return ( f2fcore.f2fGroupGetUIDHi(self.__id_cptr),\
                  f2fcore.f2fGroupGetUIDLo(self.__id_cptr) )
@@ -65,7 +81,36 @@ class Group:
     def submitJob(self):
         f2fcore.f2fGroupSubmitJob( self.__id_cptr, self.__jobarchivepath )
         # TODO: check error and fire exception
+    def equals(self, othergroup):
+        return self.getUid() == othergroup.getUid()
+
+# Receive data (block until received)
+def receive():
+    while(1):
+        if f2fcore.f2fReceiveBufferIsFilled():
+            if f2fcore.f2fReceiveBufferIsRaw():
+                content = f2fcore.f2fReceiveBufferGetContent(4096)
+                break
+        sleep(0.01)
+    obj = pickle.loads(content)
+    answer = (Group(f2fcore.f2fReceiveBufferGetGroup(), "unknown"),
+              Peer(f2fcore.f2fReceiveBufferGetSourcePeer()),
+              obj)
+    f2fcore.f2fReceiveBufferRelease()
+    return answer
 
 def myPeer():
     from adapter import myPeer as adapterMyPeer # avoid cyclic imports
     return adapterMyPeer()
+
+# return random numbers from the initialized c-mersenne twister
+def random32Bit():
+    return f2fcore.f2fRandom()
+
+# get a random float between 0 and 1 (created from 2 64bit integers)
+# 2147483647L not 2147483648L as random32Bit never 0
+def randomDouble():
+    bignr1=((2147483648L+random32Bit())<<32)+(2147483647L+random32Bit())
+    bignr2=((2147483648L+random32Bit())<<32)+(2147483647L+random32Bit())
+    if(bignr1<bignr2): return float(bignr1)/float(bignr2)
+    else: return float(bignr2)/float(bignr1)

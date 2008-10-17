@@ -56,6 +56,7 @@ import f2fcore
 
 con = None
 friendlist = None
+jobterminated = False # (job has not been executed)
 #global con
 #global friendlist
 
@@ -144,18 +145,20 @@ def sendOutSendIMBuffer():
         sendMessage( nextpeer, f2fcore.f2fSendIMBufferGetBuffer() )
         
 def runjob(group,peer,job):
+    global jobterminated
     varlist=globals()
     # define two variables local to the job as
     # its global variables
     varlist['f2fGroup'] = group
     varlist['f2fInitiator'] = peer
     exec(job,varlist,varlist) # very insecure!!!
+    jobterminated = True
 
 def evaluateReceiveBuffer():
     if f2fcore.f2fReceiveBufferIsFilled():
-        if f2fcore.f2fReceiveBufferIsRaw():
-            print "Buffer is binary, content not shown."
-            f2fcore.f2fReceiveBufferRelease()
+        #if f2fcore.f2fReceiveBufferIsRaw():
+        #    print "Buffer is binary, content not shown."
+        #    f2fcore.f2fReceiveBufferRelease()
         if f2fcore.f2fReceiveBufferIsText():
             print "Buffer is text. Content:", \
                f2fcore.f2fReceiveBufferGetContent(4096)
@@ -230,7 +233,7 @@ def f2fHeadless(servername, username, password, resource, friendlistlocal, group
     # big loop
     from time import sleep, time
     oldtime = time()
-    while(1):
+    while(not jobterminated ):
         con.process(0.1) 
         #sleep (1)
         #while( f2fcore.f2fReceiveBufferIsFilled() ):
@@ -241,7 +244,7 @@ def f2fHeadless(servername, username, password, resource, friendlistlocal, group
         evaluateReceivedIMMessages()
         f2fcore.f2fSend()
         newtime = time()
-        if newtime-oldtime > 10:
+        if newtime-oldtime > 20:
             oldtime = newtime
             f2f.adapter.showPeerList()
             #if( groupname ):

@@ -939,6 +939,13 @@ F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer,
 	return F2FErrOK;
 }
 
+/** Fill send buffer for a specific peer in a group with raw data */
+F2FError f2fPeerSendRaw( const F2FGroup *group, F2FPeer *peer, 
+		const char *data, const F2FWord32 dataLen )
+{
+	return f2fPeerSendData( group, peer, F2FMessageTypeRaw, data, dataLen );
+}
+
 /** Fill send buffer with data for all group members */
 F2FError f2fGroupSendData( const F2FGroup *group, 
 		const char * message, F2FSize len )
