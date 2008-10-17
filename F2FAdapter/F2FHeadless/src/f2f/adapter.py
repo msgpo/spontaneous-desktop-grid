@@ -35,14 +35,20 @@ sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
 import f2fcore
 
+# Add path for f2f
+#sys.path.insert(1, os.path.realpath(
+#            os.path.join( sys.path[0], "..", ".." ) ) )
+
 from f2f import Peer, Group
 
 # Global variables
 mypeer = None
 
 def init( name, key ):
+    global mypeer
     mypeerid_cptr = f2fcore.f2fInit( name, key )
-    return Peer(mypeerid_cptr)
+    mypeer = Peer(mypeerid_cptr)
+    return mypeer
 
 def createGroup( groupname, jobarchivepath ):
     groupid_cptr = f2fcore.f2fCreateGroup( groupname )

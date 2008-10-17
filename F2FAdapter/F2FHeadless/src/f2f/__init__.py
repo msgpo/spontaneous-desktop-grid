@@ -35,7 +35,6 @@ sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
 import f2fcore
 
-
 class Peer:
     __id_cptr = None
     def __init__(self,cptr):
@@ -57,8 +56,8 @@ class Group:
         self.__id_cptr = cptr
         self.__jobarchivepath = jobarchivepath
     def getUid(self):
-        return ( f2fcore.f2fGroupGetUIDHi(__id_cptr),\
-                 f2fcore.f2fGroupGetUIDLo(__id_cptr) )
+        return ( f2fcore.f2fGroupGetUIDHi(self.__id_cptr),\
+                 f2fcore.f2fGroupGetUIDLo(self.__id_cptr) )
     def invitePeer(self, localpeerid, identifier, inviteMessage, otherPeersPublicKey ):
         f2fcore.f2fGroupRegisterPeer( self.__id_cptr, localpeerid, identifier, \
                                       inviteMessage, otherPeersPublicKey )
@@ -66,3 +65,7 @@ class Group:
     def submitJob(self):
         f2fcore.f2fGroupSubmitJob( self.__id_cptr, self.__jobarchivepath )
         # TODO: check error and fire exception
+
+def myPeer():
+    from adapter import myPeer as adapterMyPeer # avoid cyclic imports
+    return adapterMyPeer()

@@ -1,16 +1,15 @@
-print "Hello world f2f! (1)"
+# f2f job example
+import f2f
 
-import sys
-import os
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], ".." )))
+print "Hello world f2f!"
 
-print "Hello world f2f! (2)"
+myself = f2f.myPeer()
 
-import f2fdfg
+print "myUid:", myself.getUid()
+print "myGroupUid", f2fGroup.getUid()
+print "myInitiator (Peer)", f2fInitiator.getUid()
 
-print "Hello world f2f! (3)"
-
-#print f2f.myGroup()
-
-# print "Initializing master/slave functions."
+if( myself.equals(f2fInitiator) ):
+    print "I am master."
+else:
+    print "I am slave."

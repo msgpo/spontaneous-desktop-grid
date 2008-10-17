@@ -143,8 +143,13 @@ def sendOutSendIMBuffer():
         if( nextpeer < 0 ): break
         sendMessage( nextpeer, f2fcore.f2fSendIMBufferGetBuffer() )
         
-def runjob(job):
-    exec(job) # very insecure!!!
+def runjob(group,peer,job):
+    varlist=globals()
+    # define two variables local to the job as
+    # its global variables
+    varlist['f2fGroup'] = group
+    varlist['f2fInitiator'] = peer
+    exec(job,varlist,varlist) # very insecure!!!
 
 def evaluateReceiveBuffer():
     if f2fcore.f2fReceiveBufferIsFilled():
@@ -156,12 +161,14 @@ def evaluateReceiveBuffer():
                f2fcore.f2fReceiveBufferGetContent(4096)
             f2fcore.f2fReceiveBufferRelease()
         if f2fcore.f2fReceiveBufferIsJob():
+            myGroup = f2f.Group(f2fcore.f2fReceiveBufferGetGroup(),"unknown") # TODO: make sure it is not unknown
+            myInitiator = f2f.Peer(f2fcore.f2fReceiveBufferGetSourcePeer())
             job = f2fcore.f2fReceiveJob(4096).strip() + "\n"  # make sure it ends with a new line and no blanks
             # TODO: make sure to execute only one
             #print "Job:",job,":Jobend"
             jobcompiled = compile( job, '<f2f job>', 'exec')
             #jobcompiled = job
-            jobslavethread = Thread(target=runjob,args=(jobcompiled,))
+            jobslavethread = Thread(target=runjob,args=(myGroup,myInitiator,jobcompiled))
             #exec(jobcompiled)
             jobslavethread.start()
             f2fcore.f2fReceiveBufferRelease()
