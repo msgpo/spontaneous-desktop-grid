@@ -65,7 +65,7 @@ messageStack=[]
 MaxMessageStackSize=1024
 def receiveMessageCB(con, msg):
     if msg.getBody(): # If message not empty
-        #print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
+        print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
         if len(messageStack) > MaxMessageStackSize: # Don't let stack grow too big
             messageStack.pop() # forget one message
         messageStack.insert(0,msg)
@@ -135,7 +135,7 @@ def sendMessage(localpeerid,messagetxt):
     destcontact = friendlist[localpeerid]
     msg = jabber.Message(destcontact, messagetxt)
     msg.setType('chat')
-    #print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
+    print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
     con.send(msg)
     
 def sendOutSendIMBuffer():
@@ -172,6 +172,7 @@ def evaluateReceiveBuffer():
             jobcompiled = compile( job, '<f2f job>', 'exec')
             #jobcompiled = job
             jobslavethread = Thread(target=runjob,args=(myGroup,myInitiator,jobcompiled))
+            print "Starting job***************"
             #exec(jobcompiled)
             jobslavethread.start()
             f2fcore.f2fReceiveBufferRelease()
@@ -249,6 +250,7 @@ def f2fHeadless(servername, username, password, resource, friendlistlocal, group
             f2f.adapter.showPeerList()
             #if( groupname ):
             #    f2fcore.f2fGroupSendText( mygroupid, "Hello World!" )
+            
 def main():
     def usage():
         print "%s: f2f headless client. " % sys.argv[0]
