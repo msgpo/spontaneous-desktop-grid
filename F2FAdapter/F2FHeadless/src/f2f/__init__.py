@@ -28,13 +28,7 @@ import pickle
 from time import sleep
 import sys
 import os
-# Add path for f2fcore module
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..","F2FCore" )))
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..", "..","F2FCore" )))
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
+
 import f2fcore
 
 class Peer:

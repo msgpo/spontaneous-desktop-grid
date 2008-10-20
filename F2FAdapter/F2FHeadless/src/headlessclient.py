@@ -42,16 +42,20 @@ from jabberpy import jabber
 
 from string import split
 
+# Add path for f2fcore module
+#sys.path.insert(1, os.path.realpath(
+#            os.path.join( sys.path[0], "..","F2FCore" )))
+#sys.path.insert(1, os.path.realpath(
+#            os.path.join( sys.path[0], "..", "..","F2FCore" )))
+#sys.path.insert(1, os.path.realpath(
+#            os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
+sys.path.insert(1, os.path.realpath(
+            os.path.join( sys.path[0], "..", "..", "..","F2FCore","build" )))
+sys.path.insert(1, os.path.realpath(
+            os.path.join( sys.path[0], "..", "..", "..","F2FCore","build","libf2fcore" )))
+
 import f2f
 import f2f.adapter
-
-# Add path for f2fcore module
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..","F2FCore" )))
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..", "..","F2FCore" )))
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
 import f2fcore
 
 con = None

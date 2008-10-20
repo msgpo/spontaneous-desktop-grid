@@ -26,13 +26,7 @@
 
 import os
 import sys
-# Add path for f2fcore module
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..","F2FCore" )))
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..", "..","F2FCore" )))
-sys.path.insert(1, os.path.realpath(
-            os.path.join( sys.path[0], "..", "..", "..","F2FCore" )))
+
 import f2fcore
 
 # Add path for f2f
