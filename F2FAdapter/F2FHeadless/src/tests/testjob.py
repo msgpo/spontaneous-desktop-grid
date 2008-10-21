@@ -77,7 +77,7 @@ def slave():
         countlock.release()
         print "Slave: Sending", sendtuple
         f2fInitiator.send(f2fGroup,sendtuple)
-        sleep(1.0) # results every second
+        sleep(3.0) # results every second
 
 ##### Main program (select, master/slave)
 if( myself.equals(f2fInitiator) ):

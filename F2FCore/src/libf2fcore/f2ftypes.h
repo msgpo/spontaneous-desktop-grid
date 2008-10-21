@@ -62,6 +62,7 @@ typedef enum  {
 	F2FErrTicketListFull = -17, /** Ticket Request List full */
 	F2FErrTicketListEmpty = -18, /** Ticket Request List empty */
 	F2FErrNotParsed = -19, /** This cannot be internally parsed, must be parsed by adapter */
+	F2FErrBufferStillFull = -20, /** Not really an error, just shows, there is still data to process */
 	F2FErrWierdError = -200, /** This error should not happen */
 } F2FError;
 

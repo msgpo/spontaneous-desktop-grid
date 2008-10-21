@@ -24,11 +24,18 @@ os.chdir(currentpath) # back to buildpath
 
 print "Using these sources:", sources
 
-## go to the build path, to create all files there
-#os.chdir(buildpath)
+if ARGUMENTS.get('debug', 0):
+    print "Enabling debug information."
+    ccflags = '-g'
+else:
+    ccflags = ''
+    print "Disabling debug information."
+
 env = Environment(SWIGFLAGS=['-python'],
                   CPPPATH=[distutils.sysconfig.get_python_inc(), os.path.join(srcpath,f2fcorepath)],
-                  SHLIBPREFIX="")
+                  SHLIBPREFIX="",
+                  CCFLAGS = ccflags )
+
 
 Repository( srcpath )
  

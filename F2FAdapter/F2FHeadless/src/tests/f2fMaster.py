@@ -8,6 +8,15 @@ sys.path.insert(1, os.path.realpath(
 
 from headlessclient import f2fHeadless
 
+#f2fHeadless( "localhost", # server
+#      "f2f01", # username
+#      "f2f", # password
+#      "f2fheadless", # resource
+#      [], # list of friends (empty)
+#      "test computation group", # name of computation group
+#      "testjob.py" # submitted job archive
+#      )
+
 f2fHeadless( "localhost", # server
       "f2f01", # username
       "f2f", # password

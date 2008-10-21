@@ -72,13 +72,13 @@ def receiveMessageCB(con, msg):
         print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
         if len(messageStack) > MaxMessageStackSize: # Don't let stack grow too big
             messageStack.pop() # forget one message
-        messageStack.insert(0,msg)
+        messageStack.append(msg)
 
 # Work through the messageStack and hand these messages over to the F2FCore
 def evaluateReceivedIMMessages():
-    sendOutSendIMBuffer() # flush the send buffer, if something is in there
-    while len(messageStack) > 0:
-        msg = messageStack.pop()
+    #  all on toplevel sendOutSendIMBuffer() # flush the send buffer, if something is in there
+    if len(messageStack) > 0:
+        msg = messageStack[0] # get the top
         msgfrom = str(msg.getFrom())
         try:
             localPeerId = friendlist.index(msgfrom)
@@ -87,9 +87,10 @@ def evaluateReceivedIMMessages():
             friendlist.append(msgfrom)
         # send message to f2fcore, TODO: check result
         body = str(msg.getBody())
-        f2fcore.f2fNotifyCoreWithReceived( localPeerId, msgfrom,
-                                           body, len(body) )
-        sendOutSendIMBuffer() # flush the send buffer, if here is an answer
+        if f2fcore.f2fNotifyCoreWithReceived( localPeerId, msgfrom,
+                                           body, len(body) ) == f2fcore.F2FErrOK :
+            del messageStack[0] # only remove, if successfull, else we have to try again later
+        # all on toplevel sendOutSendIMBuffer() # flush the send buffer, if here is an answer
 
 def presenceCB(con, prs):
     """Called when a presence is received"""
@@ -141,7 +142,8 @@ def sendMessage(localpeerid,messagetxt):
     msg.setType('chat')
     print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
     con.send(msg)
-    
+
+# There is no risk calling this function to block any queue
 def sendOutSendIMBuffer():
     while (True):
         nextpeer = f2fcore.f2fSendIMBufferGetNextLocalPeerID()
@@ -159,7 +161,7 @@ def runjob(group,peer,job):
     jobterminated = True
 
 def evaluateReceiveBuffer():
-    if f2fcore.f2fReceiveBufferIsFilled():
+    if f2fcore.f2fReceiveBufferDataAvailable():
         #if f2fcore.f2fReceiveBufferIsRaw():
         #    print "Buffer is binary, content not shown."
         #    f2fcore.f2fReceiveBufferRelease()
@@ -239,17 +241,23 @@ def f2fHeadless(servername, username, password, resource, friendlistlocal, group
     from time import sleep, time
     oldtime = time()
     while(not jobterminated ):
-        con.process(0.1) 
+        con.process(0.01) 
         #sleep (1)
-        #while( f2fcore.f2fReceiveBufferIsFilled() ):
-        f2fcore.f2fReceive()
-        f2fcore.f2fReceiveBufferParse()
-        evaluateReceiveBuffer()
-        f2fcore.f2fTicketRequestGrant() # For a start grant all, TODO: secure this!
+        #while( f2fcore.f2fReceiveBufferDataAvailable() ):
+        #while( f2fcore.f2fSend() == f2fcore.F2FErrBufferStillFull ):
+        sendOutSendIMBuffer() # flush the IM send buffer
+        f2fcore.f2fSend() # Send on the internal network
+        # not needed at the moment f2fcore.f2fReceive() # Receive on the internal network (fill evtl. internal receive buffer)
+        f2fcore.f2fReceiveBufferParse() # internally evaluate  the buffer, could fill send buffers
+        sendOutSendIMBuffer() # flush the IM send buffer
+        f2fcore.f2fSend() # Send on the internal network
+        evaluateReceiveBuffer() # Evtl. there is something still in the buffer for the adapter
         evaluateReceivedIMMessages()
-        f2fcore.f2fSend()
+        sendOutSendIMBuffer() # flush the IM send buffer
+        f2fcore.f2fSend() # Send on the internal network
+        f2fcore.f2fTicketRequestGrant() # For a start grant all, TODO: secure this!
         newtime = time()
-        if newtime-oldtime > 20:
+        if newtime-oldtime > 10:
             oldtime = newtime
             f2f.adapter.showPeerList()
             #if( groupname ):

@@ -150,7 +150,7 @@ F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 F2FError f2fReceive();
 
 /** return 1, if there is data in the ReceiveBuffer */
-int f2fReceiveBufferIsFilled();
+int f2fReceiveBufferDataAvailable();
 
 /** return 1, if the data in the ReceiveBuffer is binary data */
 int f2fReceiveBufferIsRaw();
