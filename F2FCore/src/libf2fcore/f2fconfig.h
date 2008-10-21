@@ -41,7 +41,7 @@
 
 /** maximum message size, must be bigger than the maximum uuencoded different possible 
  * message types */
-#define F2FMaxMessageSize 4096
+#define F2FMaxMessageSize 8192
 
 /** the mark of f2f messages */
 #define F2FMessageMark "<F2F/>"

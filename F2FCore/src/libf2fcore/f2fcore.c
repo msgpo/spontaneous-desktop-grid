@@ -523,6 +523,14 @@ F2FError f2fSend()
 					sendBuffer.buffer + sizeof(F2FMessageHeader),
 					ntohl(msg->len) ); TODO: enable again!!! 
 			if(error!=F2FErrOK) return  error; */
+			error =	fillReceiveBuffer(
+								ntohl(msg->groupID.hi), ntohl(msg->groupID.lo),
+								ntohl(msg->sourcePeerID.hi), ntohl(msg->sourcePeerID.lo),
+								ntohl(msg->destPeerID.hi), ntohl(msg->destPeerID.lo),
+								msg->messagetype,
+								sendBuffer.buffer + sizeof(F2FMessageHeader),
+								ntohl(msg->len) );
+			if(error!=F2FErrOK) return error;
 			/* receiveBuffer.group ? */
 			/* parseMessage(sendBuffer.buffer, sendBuffer.size); will be called in f2fReceive */
 			break;
