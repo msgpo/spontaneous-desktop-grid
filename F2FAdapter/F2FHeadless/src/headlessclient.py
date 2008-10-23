@@ -183,11 +183,12 @@ def evaluateReceiveBuffer():
             jobslavethread.start()
             f2fcore.f2fReceiveBufferRelease()
 
-def f2fHeadless(servername, username, password, resource, friendlistlocal, groupname, jobarchive):
+def f2fHeadless(servername, username, password, resource, connectport, friendlistlocal, groupname, jobarchive):
     #con = jabber.Client(host=servername,debug=jabber.DBG_ALWAYS ,log=sys.stderr)
     global con
     global friendlist
-    con = jabber.Client(host=servername,log=None)
+#    con = jabber.Client(host=servername,log=None,port=25222)
+    con = jabber.Client(host=servername,log=None, port=connectport) # TODO: add port
     friendlist = friendlistlocal
     
     try:
@@ -267,7 +268,7 @@ def main():
     def usage():
         print "%s: f2f headless client. " % sys.argv[0]
         print "usage:"
-        print "%s <server> <username> <password> <resource>"   % sys.argv[0]
+        print "%s <server> <username> <password> <resource> <port>"   % sys.argv[0]
         print "<friend1>,<friend2>,... [<groupname> <job-archive>]"
         print "            - Connect to server and login."
         print "              Allow the specified friends to use this resource."
@@ -276,27 +277,28 @@ def main():
         sys.exit(0)
     
     # check usage and read parameters
-    if len(sys.argv) < 5: usage()
+    if len(sys.argv) < 6: usage()
     servername = sys.argv[1]
     username = sys.argv[2]
     password = sys.argv[3]
     resource = sys.argv[4]
+    connectport = sys.argv[5]
 
-    if len(sys.argv) >= 6:
-        friendlist = split(sys.argv[5],',')
+    if len(sys.argv) >= 7:
+        friendlist = split(sys.argv[6],',')
     else:
         friendlist = []
-    if len(sys.argv) >= 7:
-        if len(sys.argv) == 8:
-            groupname = sys.argv[6]
-            jobarchive = sys.argv[7]
+    if len(sys.argv) >= 8:
+        if len(sys.argv) == 9:
+            groupname = sys.argv[7]
+            jobarchive = sys.argv[8]
         else:
             usage()
     else:
         friendlist = []
         groupname = ""
         jobarchive = ""
-    f2fheadless(servername, username, password, resource, friendlist, groupname, jobarchive)
+    f2fheadless(servername, username, password, resource, connectport, friendlist, groupname, jobarchive)
     
     
 # allow this file to be called as module

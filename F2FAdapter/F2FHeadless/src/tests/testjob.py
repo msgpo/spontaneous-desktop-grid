@@ -29,14 +29,18 @@ def master():
         print "Master: %s of %s Points."%(resultpointcount, PointsToGather),\
             "Master: Current Pi is:", float(resulthitcount * 4L) / float(resultpointcount)
     while( resultpointcount < PointsToGather ):
-        (group,src,data) = f2f.receive()
-        if group.equals(f2fGroup):
-            if isinstance(data,tuple):
-                (points,hits) = data
-                resultpointcount += points
-                resulthitcount += hits
-                showresult()
-                f2f.release()
+        answer = f2f.receive()
+        if answer != None:
+            (group,src,data) = answer
+            if group.equals(f2fGroup):
+                if isinstance(data,tuple):
+                    (points,hits) = data
+                    resultpointcount += points
+                    resulthitcount += hits
+                    showresult()
+                    f2f.release()
+        else:
+            f2f.release()
     # Send terminate to all clients
     terminate = True # also inform local slave
     for peer in f2fGroup.getPeers():

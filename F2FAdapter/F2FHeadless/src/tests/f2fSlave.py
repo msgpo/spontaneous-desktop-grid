@@ -8,10 +8,11 @@ sys.path.insert(1, os.path.realpath(
 
 from headlessclient import f2fHeadless
 
-f2fHeadless(       "localhost", # server
+f2fHeadless( "jabber.ulno.net", # server
       "f2f02", # username
       "f2f", # password
       "f2fheadless", # resource
+      25222,
       ["f2f01@jabber.ulno.net"], # list of friends, who can demand resources
       "",
       ""

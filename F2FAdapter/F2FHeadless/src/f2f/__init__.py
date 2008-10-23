@@ -94,10 +94,14 @@ def receive():
                 content = f2fcore.f2fReceiveBufferGetContent(4096)
                 break
         sleep(0.01)
-    obj = pickle.loads(content)
-    answer = (Group(f2fcore.f2fReceiveBufferGetGroup(), "unknown"),
+    try:
+        obj = pickle.loads(content)
+        answer = (Group(f2fcore.f2fReceiveBufferGetGroup(), "unknown"),
               Peer(f2fcore.f2fReceiveBufferGetSourcePeer()),
               obj)
+    except pickle.PicklingError, pickle.KeyError:
+        print "Problem unpickling." # TODO: find better solution
+        answer = None
     return answer
 
 # release the content buffer
