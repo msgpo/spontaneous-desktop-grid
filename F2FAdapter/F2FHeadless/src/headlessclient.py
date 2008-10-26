@@ -132,8 +132,10 @@ def iqCB(con,iq):
     pass
 
 def disconnectedCB(con):
-    print "Ouch, network error"
-    sys.exit(1)
+    print "Ouch, network error. Trying to connect again."
+    con.disconnect()
+    con.connect()
+    #sys.exit(1)
 
 def sendMessage(localpeerid,messagetxt):
     global friendlist
@@ -282,7 +284,7 @@ def main():
     username = sys.argv[2]
     password = sys.argv[3]
     resource = sys.argv[4]
-    connectport = sys.argv[5]
+    connectport = int(sys.argv[5])
 
     if len(sys.argv) >= 7:
         friendlist = split(sys.argv[6],',')
@@ -298,7 +300,7 @@ def main():
         friendlist = []
         groupname = ""
         jobarchive = ""
-    f2fheadless(servername, username, password, resource, connectport, friendlist, groupname, jobarchive)
+    f2fHeadless(servername, username, password, resource, connectport, friendlist, groupname, jobarchive)
     
     
 # allow this file to be called as module

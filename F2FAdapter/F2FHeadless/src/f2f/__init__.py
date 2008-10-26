@@ -46,7 +46,7 @@ class Peer:
         return self.getUid() == otherpeer.getUid()
     # send data to this peer, block until sent
     def send(self, group, obj):
-        serialdata = pickle.dumps(obj, 2) # TODO: think if we could take HIGHEST_PROTOCOL
+        serialdata = pickle.dumps(obj, 1) # TODO: think if we could take HIGHEST_PROTOCOL
         while(1):
             error = f2fcore.f2fPeerSendRaw( group.getCPtr(), 
                                         self.__id_cptr, 
@@ -99,7 +99,7 @@ def receive():
         answer = (Group(f2fcore.f2fReceiveBufferGetGroup(), "unknown"),
               Peer(f2fcore.f2fReceiveBufferGetSourcePeer()),
               obj)
-    except pickle.PicklingError, pickle.KeyError:
+    except (pickle.PicklingError, IndexError, KeyError):
         print "Problem unpickling." # TODO: find better solution
         answer = None
     return answer
