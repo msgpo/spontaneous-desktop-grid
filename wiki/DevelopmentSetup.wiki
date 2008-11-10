@@ -1,6 +1,9 @@
 #summary Setup and configuration of development environment.
 #labels Phase-Implementation,Featured
 
+This is only valid for the old f2f version.
+For newer developments look at the documentation at http://f2f.ulno.net/development
+
 = Requirements =
 
  * jdk-6 (jdk-5 is not possible because we are using couple of methods from jdk-6)
