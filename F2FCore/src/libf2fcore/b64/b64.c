@@ -526,9 +526,9 @@ size_t b64encode( const char * src, char * dst,
     while( srcpos < inputlen ) {
         len = 0;
         // Get 3 input bytes (less, if less are left)
-        for( i = 0; i < 3; i++ ) \
+        for( i = 0; i < 3; i++ )
         {
-            if( srcpos < inputlen ) \
+            if( srcpos < inputlen )
             {
                 in[i] = (unsigned char) src[ srcpos ];
                 len++;
