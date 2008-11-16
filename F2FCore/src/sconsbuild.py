@@ -4,6 +4,7 @@
 
 import os, glob
 import distutils.sysconfig
+import platform
 
 currentpath = os.path.realpath('.')
 
@@ -31,7 +32,14 @@ else:
     ccflags = ''
     print "Disabling debug information."
 
+if platform.system() == 'Darwin':
+    ldFlagsList = ['-framework','python']
+else:
+    ldFlagsList = []
+
+
 env = Environment(SWIGFLAGS=['-python'],
+                  LINKFLAGS=ldFlagsList,
                   CPPPATH=[distutils.sysconfig.get_python_inc(), os.path.join(srcpath,f2fcorepath)],
                   SHLIBPREFIX="",
                   CCFLAGS = ccflags )
