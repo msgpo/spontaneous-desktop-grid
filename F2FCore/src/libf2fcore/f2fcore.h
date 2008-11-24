@@ -34,6 +34,13 @@
 #include "f2fgroup.h"
 #include "f2fmessagetypes.h"
 
+
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+
+    
 /**
  *
  * sendMethodIM is a non blocking method, which must be implemented and will be used for doing
@@ -246,5 +253,9 @@ F2FError f2fGroupDistributeFile( const char * publishname,
 /** distribute data in distr. hash table */
 F2FError f2fGroupDistributeData( const char * publishname,
 		char * memorypool, F2FSize len );
+
+#ifdef __cplusplus
+    }
+#endif
 
 #endif /*F2FCORE_H_*/
