@@ -30,6 +30,11 @@
 #include "f2ftypes.h"
 #include "f2fticket.h"
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+
 typedef enum F2FMessageTypeEnum
 {
 	F2FMessageTypeInvite, /** Invite peer to group */
@@ -117,5 +122,9 @@ typedef struct
 //typedef struct
 //{
 //} F2FMessageText;
+
+#ifdef __cplusplus
+    }
+#endif
 
 #endif /*F2FMESSAGETYPES_H_*/

@@ -27,6 +27,12 @@
 #ifndef B64_H_
 #define B64_H_
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+    
+
 /* Here are ulno's extensions for coding whole strings,
  * they return the size of the output */
 size_t b64encode( const char * src, char * dst, 
@@ -35,5 +41,9 @@ size_t b64encode( const char * src, char * dst,
 size_t b64decode( const char * src, char * dst, 
 		size_t inputlen, size_t maxoutputlen );
 
+
+#ifdef __cplusplus
+    }
+#endif
 
 #endif /*B64_H_*/

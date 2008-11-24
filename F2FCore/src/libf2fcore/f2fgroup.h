@@ -31,6 +31,11 @@
 #include "f2fpeer.h"
 #include "f2fticket.h"
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+
 enum F2FTicketStateEnum
 {
 	F2FTicketStateEmpty = 0,
@@ -81,5 +86,9 @@ F2FError f2fGroupAddPeer( F2FGroup *group, F2FPeer *peer );
 /** Remove peer from group (update lists in peer and in group) */
 F2FError f2fGroupRemovePeer( F2FGroup *group, F2FPeer *peer );
 
+
+#ifdef __cplusplus
+    }
+#endif
 
 #endif /*F2FGROUP_H_*/

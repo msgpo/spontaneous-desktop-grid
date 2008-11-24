@@ -29,6 +29,12 @@
 
 #include "f2ftypes.h"
 
+
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+    
 /** add one peer to the list, return peer or NULL if no space left */
 F2FPeer * f2fPeerListNew( F2FWord32 uidhi, F2FWord32 uidlo );
 
@@ -45,5 +51,9 @@ F2FPeer * f2fPeerListFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
 
 /** move a peer in the list, changing its id */
 F2FError f2fPeerListChange( F2FPeer *peer, F2FWord32 hi, F2FWord32 lo );
+
+#ifdef __cplusplus
+    }
+#endif
 
 #endif /* F2FPEERLIST_H_ */

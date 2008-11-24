@@ -30,6 +30,11 @@
 #include <time.h>
 #include "f2ftypes.h"
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+
 /** a ticket which allows to execute jobs, if known.
  * The direct use of this structure is discouraged, use the access methods */
 typedef struct F2FTicketStruct
@@ -51,4 +56,8 @@ void f2fTicketSetNull( F2FTicket *ticket );
 /** check if ticket is null (all values null) */
 int f2fTicketNull( F2FTicket *ticket );
 
+#ifdef __cplusplus
+    }
+#endif
+    
 #endif /*F2FTICKET_H_*/

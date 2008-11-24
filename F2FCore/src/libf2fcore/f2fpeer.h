@@ -28,6 +28,11 @@
 
 #include "f2ftypes.h"
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+
 enum F2FProviderTypeEnum
 {
 	F2FProviderMyself, /** This is the own peerid, so direct communication is
@@ -82,4 +87,8 @@ int f2fPeerFindGroupIndex( const F2FPeer *peer, const struct F2FGroupStruct *gro
 F2FError f2fPeerChangeUID( F2FPeer *peer, 
 		const F2FWord32 hi, const F2FWord32 lo );
 
+#ifdef __cplusplus
+    }
+#endif
+    
 #endif /*F2FPEER_H_*/

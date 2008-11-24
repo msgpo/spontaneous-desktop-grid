@@ -121,9 +121,10 @@
  */
 
 #include <stdio.h>
-#ifdef __cplusplus
-#include <iostream>
-#endif /* __cplusplus */
+//#ifdef __cplusplus
+//#include <iostream>
+//#include <stlport/iostream>
+//#endif /* __cplusplus */
 
 #ifndef MT_MACHINE_BITS
 #include <limits.h>
@@ -139,7 +140,7 @@
  * Define an unsigned type that is guaranteed to be 32 bits wide.
  */
 #include <stdint.h> /* here we have the 32bit int [ulno] */
-#ifdef _STDINT_H
+#if _STDINT_H || __cplusplus
 typedef int32_t mt_u32bit_t;
 #else
 #if MT_MACHINE_BITS == 32
@@ -750,10 +751,13 @@ class mt_prng
 			    {
 			    mts_bestseed(&state);
 			    }
+
+#ifndef __cplusplus
 	friend std::ostream&
 			operator<<(std::ostream& stream, const mt_prng& rng);
 	friend std::istream&
 			operator>>(std::istream& stream, mt_prng& rng);
+#endif
 
 	/*
 	 * PRNG generation functions
@@ -802,6 +806,7 @@ class mt_prng
 /*
  * Save state to a stream.  See mts_savestate.
  */
+#ifndef __cplusplus
 MT_INLINE std::ostream& operator<<(
     std::ostream&	stream,		// Stream to save to
     const mt_prng&	rng)		// PRNG to save
@@ -814,10 +819,12 @@ MT_INLINE std::ostream& operator<<(
 
     return stream << rng.state.stateptr;
     }
+#endif
 
 /*
  * Restore state from a stream.  See mts_loadstate.
  */
+#ifndef __cplusplus
 MT_INLINE std::istream& operator>>(
     std::istream&	stream,		// Stream to laod from
     mt_prng&		rng)		// PRNG to load
@@ -848,6 +855,8 @@ MT_INLINE std::istream& operator>>(
 
     return stream;
     }
+#endif
+
 #endif
 
 #endif /* MTWIST_H */

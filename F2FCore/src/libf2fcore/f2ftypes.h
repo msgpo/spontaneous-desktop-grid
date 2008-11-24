@@ -32,6 +32,11 @@
 
 #include "f2fconfig.h"
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+    
 typedef int32_t F2FWord32;
 
 typedef char *F2FString; // The string of F2F on C layer is just an array of characters terminated with 0
@@ -75,5 +80,9 @@ typedef struct F2FUIDStruct
 } F2FUID;
 
 #include "f2fticket.h"
+
+#ifdef __cplusplus
+    }
+#endif
 
 #endif /*F2FTYPES_H_*/

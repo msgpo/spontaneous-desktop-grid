@@ -27,6 +27,11 @@
 #ifndef F2FCONFIG_H_
 #define F2FCONFIG_H_
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+    
 /** Maximum length of name strings */
 #define F2FMaxNameLength 255
 
@@ -52,5 +57,10 @@
 
 /** Maximum ticket requests hadled at the same time */
 #define F2FMaxTicketRequests 256
+
+
+#ifdef __cplusplus
+    }
+#endif
 
 #endif /*F2FCONFIG_H_*/

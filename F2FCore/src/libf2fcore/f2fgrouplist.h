@@ -30,6 +30,11 @@
 #include "f2ftypes.h"
 #include "f2fgroup.h"
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+
 /** Try to find the exact group. If it does not exist, return NULL. Else return the peer */
 F2FGroup * f2fGroupListFindGroup( const F2FWord32 uidhi, const F2FWord32 uidlo );
 
@@ -42,5 +47,8 @@ F2FGroup * f2fGroupListAdd( const F2FString name, const F2FWord32 hiuid, const F
 /** remove a peer from the list */
 F2FError f2fGroupListRemove( F2FGroup *group );
 
+#ifdef __cplusplus
+    }
+#endif
 
 #endif /*F2FGROUPLIST_H_*/

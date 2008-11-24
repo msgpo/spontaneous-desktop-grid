@@ -26,6 +26,11 @@
 
 #include "f2fcore.h"
 
+#ifdef __cplusplus
+extern "C"
+    {
+#endif
+    
 F2FError f2fTicketRequestAdd( F2FGroup *group, F2FPeer *peer );
 
 F2FGroup * f2fTicketRequestGetGroup();
@@ -34,3 +39,7 @@ F2FPeer * f2fTicketRequestGetPeer();
 
 /** Grant a ticket-request and send a ticket back */
 F2FError f2fTicketRequestGrant();
+
+#ifdef __cplusplus
+    }
+#endif
