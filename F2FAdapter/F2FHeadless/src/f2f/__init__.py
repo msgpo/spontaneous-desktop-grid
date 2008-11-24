@@ -91,7 +91,7 @@ def receive():
     while(1):
         if f2fcore.f2fReceiveBufferDataAvailable():
             if f2fcore.f2fReceiveBufferIsRaw():
-                content = f2fcore.f2fReceiveBufferGetContent(4096)
+                content = f2fcore.f2fReceiveBufferGetContent(8192)
                 break
         sleep(0.01)
     try:

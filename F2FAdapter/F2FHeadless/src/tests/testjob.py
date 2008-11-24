@@ -4,7 +4,7 @@ import f2f
 import threading
 from time import sleep, time
 
-PointsToGather = 5000000 # How many points to gather
+PointsToGather = 10000000 # How many points to gather
 
 print "Monte Carlo Pi"
 print
@@ -35,6 +35,8 @@ def master():
             if group.equals(f2fGroup):
                 if isinstance(data,tuple):
                     (points,hits) = data
+                    print "Master: Received from %s: %s"\
+                        %(src.getUid(),data)
                     resultpointcount += points
                     resulthitcount += hits
                     showresult()
@@ -75,8 +77,8 @@ def slave():
     threading.Thread(target=findpoints).start()
     threading.Thread(target=waitterminate).start()
     while(not terminate):
-        sendtuple = (pointcount, hitcount)
         countlock.acquire()
+        sendtuple = (pointcount, hitcount)
         (pointcount,hitcount) = (0,0)
         countlock.release()
         print "Slave: Sending", sendtuple

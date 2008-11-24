@@ -69,7 +69,7 @@ messageStack=[]
 MaxMessageStackSize=1024
 def receiveMessageCB(con, msg):
     if msg.getBody(): # If message not empty
-        print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
+        #print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
         if len(messageStack) > MaxMessageStackSize: # Don't let stack grow too big
             messageStack.pop() # forget one message
         messageStack.append(msg)
@@ -102,7 +102,7 @@ def presenceCB(con, prs):
     # - accept their subscription
     # - send request for subscription to their presence
     if type == 'subscribe':
-        print "subscribe request from %s" % (who)
+        #print "subscribe request from %s" % (who)
         con.send(jabber.Presence(to=who, type='subscribed'))
         con.send(jabber.Presence(to=who, type='subscribe'))
 
@@ -142,7 +142,7 @@ def sendMessage(localpeerid,messagetxt):
     destcontact = friendlist[localpeerid]
     msg = jabber.Message(destcontact, messagetxt)
     msg.setType('chat')
-    print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
+    #print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
     con.send(msg)
 
 # There is no risk calling this function to block any queue
