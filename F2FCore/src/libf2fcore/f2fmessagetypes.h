@@ -29,6 +29,7 @@
 
 #include "f2ftypes.h"
 #include "f2fticket.h"
+#include "f2fcore.h"
 
 #ifdef __cplusplus
 extern "C"
@@ -39,6 +40,7 @@ typedef enum F2FMessageTypeEnum
 {
 	F2FMessageTypeInvite, /** Invite peer to group */
 	F2FMessageTypeInviteAnswer, /** Answer of the invited peer */
+	F2FMessageTypeAnnounceNewPeerInGroup, /** Announce peer in group to other peers */
 	F2FMessageTypeGetJobTicket, /** Ask for ticket to submit jobs */
 	F2FMessageTypeGetJobTicketAnswer, /** The answer including the ticket */
 	F2FMessageTypeJob, /** A job archive */
@@ -86,6 +88,13 @@ typedef struct
 	F2FUID realSourceID; /** the real SourceID of the answering peer */
 } F2FMessageInviteAnswer;
 
+/** This is used to announce a new peer to other group memebers 
+ * TODO: add a challenge respond here*/
+typedef struct
+{
+	F2FUID newpeer; /* the id of the announced peer */
+} F2FMessageAnnounceNewPeerInGroup;
+
 /** Request for a job ticket, which can be used to run a job
  * on a peer */
 typedef struct
@@ -113,10 +122,13 @@ typedef struct
 } F2FMessageJob;
 
 
-///** raw data */
-//typedef struct
-//{
-//} F2FMessageRaw;
+/** raw data, this will be used to sent big packages */
+typedef struct
+{
+	F2FUID id; /* Id of data package */
+	F2FSize count; /* how many packages will be sent in total */
+	F2FSize nr; /* which package is this */
+} F2FMessageRaw;
 
 ///** text data */
 //typedef struct

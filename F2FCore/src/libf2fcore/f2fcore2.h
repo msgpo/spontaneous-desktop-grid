@@ -40,33 +40,6 @@ extern "C"
     {
 #endif
 
-    
-/**
- *
- * sendMethodIM is a non blocking method, which must be implemented and will be used for doing
- * the reliable IM communication in F2FCore.
- * this send-method will be called in f2fGroupSendText, f2fGroupPeerSendData, and f2fRegisterPeer
- * and must be given as a parameter to init
- *
- * The method is replaced with a buffer based callback
- * Refactor this funtion in fillSendBuffer (the buffer has to be checked after the calling the
- * send method)
- *
- *
-typedef F2FError (*F2FSendMethodIM) ( F2FWord32 localPeerID, F2FString message, F2FSize size );
- */
-
-/** get the 0 terminated sendIMBuffer */
-char * f2fSendIMBufferGetBuffer();
-
-/** get the size of the message in sendIMBuffer */
-F2FSize f2fSendIMBufferGetBufferSize();
-
-/** Return the next peer id of the buffer where data has to be sent and
- * decrease list
- * return -1 if there is nothing to send */ 
-F2FWord32 f2fSendIMBufferGetNextLocalPeerID();
-
 /** return the Error code of the last problematic operation */
 F2FError f2fGetErrorCode( );
 
@@ -115,20 +88,20 @@ F2FWord32 f2fGroupGetUIDHi(const F2FGroup * group);
 /** Getter for GroupUID */
 F2FWord32 f2fGroupGetUIDLo(const F2FGroup * group);
 
-/** hand over messages from the IM program to the core, before this function can be
- * called the second time f2fGroupReceive must be called to be able to clear
- * the buffers.
- * The messages have start with the right header and must be base64 encoded to be detectable.
+/** Forward messages from the IM program to the core.
+ * To avoid letting the receivebuffer get too full 
+ * f2fReceive should be called to be able to clear
+ * the receive buffers.
+ * The messages have to start with the right header and must be base64 encoded to be detectable.
  * If any other message is passed here, the function will return F2FErrNotF2FMessage.
- * We send here only the local peerid and the local identifier as this peer might not
+ * We send here the local peerid and the local identifier as this peer might not
  * be in our peer list.
- * The IMBuffer has to be checked after the call of this function.
  *
  * @param F2FString identifier - display name of contact in list
  * @param F2FWord32 localPeerId - local reference for Peer
  *
  * */
-F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
+F2FError f2fForward( const F2FWord32 localPeerId,
 		const F2FString identifier, const F2FString message,
 		const F2FSize size );
 
@@ -139,66 +112,51 @@ static inline int f2fSizeValid( const F2FSize size )
 /* Send a text message to all group members */
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
-/** Send data to a peer in this group */
-/* TODO: think if this is obsolet
- * F2FError f2fGroupPeerSendData( const F2FGroup *group, const F2FPeer *peer,
-		const char *data, const F2FWord32 dataLen, int * datasentflag );*/
-
-
-/** tries to receive a message. If succesful, this gives a peer and the corresponding
- * message, if not peer and message will be NULL and F2FErrNothingAvail will be returned.
- * In success case F2FErrOK will be returned.
+/** tries to receive a message. If succesful, this gives a pointer to a receive-message.
+ * If not, the returned messagepointer will be NULL and F2FErrNothingAvail will be in F2FError.
  * This routine must be called on a regulary interval - it can't be used in parallel to
- * the other methods here in this interface. 
- * If the timeout value is >0 then it will be used in an internal select. The function will
- * then block to the maximum timeout ms. 
- * This function returns F2FErrBufferFull, if there is still data to receive available.
- * The function should be called directly again (after processing the received data) */
-F2FError f2fReceive();
+ * the other methods here in this interface. */
+F2FAdapterReceiveMessage * f2fReceiveMessage();
 
-/** return 1, if there is data in the ReceiveBuffer */
-int f2fReceiveBufferDataAvailable();
+/** This will return F2FErrBufferFull, if there is still data to receive available, F2FErrOk, if not.
+ * It furthermore releases the buffer.
+ * The function should then be called directly again (after processing the received data) */
+F2FError f2fMessageRelease();
+
+/** return 1, if there is data in the ReceiveBuffer available */
+int f2fMessageAvailable();
 
 /** return 1, if the data in the ReceiveBuffer is binary data */
-int f2fReceiveBufferIsRaw();
+int f2fMessageIsRaw( F2FAdapterReceiveMessage *msg );
 
 /** return 1, if the data in the ReceiveBuffer is text data */
-int f2fReceiveBufferIsText();
+int f2fMessageIsText( F2FAdapterReceiveMessage *msg );
 
 /** return 1, if the data in the ReceiveBuffer is a job */
-int f2fReceiveBufferIsJob();
+int f2fMessageIsJob( F2FAdapterReceiveMessage *msg );
 
 /** get the group of the received data */
-F2FGroup * f2fReceiveBufferGetGroup();
+F2FGroup * f2fMessageGetGroup( F2FAdapterReceiveMessage *msg );
 
 /** get received Source peer */
-F2FPeer * f2fReceiveBufferGetSourcePeer();
+F2FPeer * f2fMessageGetSourcePeer( F2FAdapterReceiveMessage *msg );
 
 /** get received destination peer */
-F2FPeer * f2fReceiveBufferGetDestPeer();
+F2FPeer * f2fMessageGetDestPeer( F2FAdapterReceiveMessage *msg );
 
 /** get size of current buffer */
-F2FSize f2fReceiveBufferGetSize();
+F2FSize f2fMessageGetSize( F2FAdapterReceiveMessage *msg );
 
 /** get a pointer to the content of the buffer */
-char * f2fReceiveBufferGetContentPtr();
+char * f2fMessageGetContentPtr( F2FAdapterReceiveMessage *msg );
 
 #ifdef SWIG
 %cstring_output_withsize(char *content, int *maxlen);
 #endif
-void f2fReceiveBufferGetContent(char *content, int *maxlen );
+void f2fReceiveBufferGetContent(char *content, int *maxlen, F2FAdapterReceiveMessage *msg );
 
 /* analog to the last function (f2fReceiveBufferGetContent) receives a job */
-void f2fReceiveJob(char *content, int *maxlen );
-
-/** show that the buffer has been read and can be filled again */
-F2FError f2fReceiveBufferRelease();
-
-/* Parse the contents of the receive buffer and release it, if successfull */
-F2FError f2fReceiveBufferParse();
-
-/** Send content of the local sendBuffer */
-F2FError f2fSend();
+void f2fReceiveJob(char *content, int *maxlen, F2FAdapterReceiveMessage *msg  );
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 f2fRandom();
@@ -231,10 +189,10 @@ F2FError f2fPeerSendRaw( const F2FGroup *group, F2FPeer *peer,
 		const char *data, const F2FWord32 dataLen );
 
 /** test, if data in buffer has been sent */
-int f2fDataSent();
+int f2fSentAvailable();
 
 /** empty, send buffer for data, even if it has not been sent */
-F2FError f2fEmptyData();
+F2FError f2fSentEmpty();
 
 /** submit a job to a f2f group
  * This will first ask for allowance tickets from 

@@ -1,5 +1,5 @@
 /***************************************************************************
- *   Filename: f2fcore.h
+ *   Filename: f2fmain.h
  *   Author: ulno
  ***************************************************************************
  *   Copyright (C) 2008 by Ulrich Norbisrath
@@ -21,7 +21,7 @@
  *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
  ***************************************************************************
  *   Description:
- *   This is the F2FCore interface implementation
+ *   This is the main part the F2FCore implementation
  ***************************************************************************/
 
 #include <stdio.h>
@@ -272,7 +272,7 @@ F2FError f2fIMDecode( const F2FString message, const F2FSize messagelen,
 /** Finally friends (other peers) can be added to this group. This function triggers
  * the registration to ask the specified peer to join a F2F Computing group
  * If we know his public key, we can send it as a challenge. He would then also get our publickey,
- * which could be compared to a allready cached one, to create an own challenge, and later used to
+ * which could be compared to an allready cached one, to create an own challenge, and later used to
  * do encrypted and authenticated communication. Of course our own peerid from f2fInit is also
  * included.
  * - localPeerId will be the id used to send an IM message to this friend, it has to be managed
@@ -578,7 +578,7 @@ static F2FError processInviteMessageAnswer(
 {
 	F2FError error;
 
-	/* Check if peer waits for an invite */
+	/* Check if peer waits for an invite answer*/
 	F2FPeer * waitingPeer = f2fPeerListFindPeer(
 					ntohl(msg->tmpIDAndChallenge.hi), ntohl(msg->tmpIDAndChallenge.lo) );
 	if( ! waitingPeer )
@@ -587,13 +587,40 @@ static F2FError processInviteMessageAnswer(
 		return F2FErrNotAuthenticated;
 	if( f2fPeerFindGroupIndex( waitingPeer, group ) < 0 )
 		return F2FErrNotAuthenticated;
+	if(! f2fDataSent()) /* as joining has to be announced, check send buffer */
+		return F2FErrBufferFull;
 	/* Change the id to the official id */
 	error = f2fPeerChangeUID( waitingPeer,
 			ntohl(msg->realSourceID.hi), ntohl(msg->realSourceID.lo) );
 	if( error != F2FErrOK ) return error;
 	waitingPeer -> status = F2FPeerActive; /* active now */
 	/* Send updates to the remaining peers, that there is a new group member */
-	/* TODO: implement */
+	F2FMessageAnnounceNewPeerInGroup announcemsg;
+	announcemsg.newpeer.lo = waitingPeer->id.lo;
+	announcemsg.newpeer.hi = waitingPeer->id.hi;
+	f2fPeerSendData( group, myself, F2FMessageTypeAnnounceNewPeerInGroup,
+				(char *)& announcemsg, sizeof(F2FMessageAnnounceNewPeerInGroup));
+    /* !!! */	
+	int peerindex;
+	for( peerindex = 0; peerindex < group->listSize; peerindex ++)
+	{
+		F2FPeer *peer = group->sortedPeerList[peerindex].peer;
+		if( peer->status == F2FPeerActive ) // Make sure, peer is active
+		{
+			if ( peer->activeprovider == F2FProviderIM )
+				sendIMBuffer.localPeerIDlist[sendIMBuffer.peercount++] =
+					peer->localPeerId;
+			else
+				sendBuffer.peerList[sendBuffer.peercount++] = peer;
+		}
+	}
+	F2FError error = prepareSendBuffersWithData( group, NULL, type, message, len );
+	if (error != F2FErrOK ) return error;
+	/* and the IM endbuffer */
+	if( sendIMBuffer.peercount > 0 )
+		error = encodeIMMessage( sendBuffer.buffer, sendBuffer.size );
+
+	
 	/* For all groups, where a job is submitted, get the corresponding
 	 * tickets */
 	int index;

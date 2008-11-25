@@ -26,11 +26,6 @@
 
 #ifndef F2FCONFIG_H_
 #define F2FCONFIG_H_
-
-#ifdef __cplusplus
-extern "C"
-    {
-#endif
     
 /** Maximum length of name strings */
 #define F2FMaxNameLength 255
@@ -58,9 +53,7 @@ extern "C"
 /** Maximum ticket requests hadled at the same time */
 #define F2FMaxTicketRequests 256
 
-
-#ifdef __cplusplus
-    }
-#endif
+/** size of the receive buffer for the adapter */
+#define F2FAdapterReceiveBufferSize 32
 
 #endif /*F2FCONFIG_H_*/
