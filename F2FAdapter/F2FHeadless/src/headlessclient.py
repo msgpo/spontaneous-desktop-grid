@@ -33,7 +33,7 @@
 # Imports
 import sys
 import os
-from threading import Thread
+from threading import Thread, Lock
 
 # Add path for jabber module
 sys.path.insert(1, os.path.realpath(
@@ -58,6 +58,7 @@ import f2f
 import f2f.adapter
 import f2fcore
 
+MAXMessageSize = 8192
 con = None
 friendlist = None
 jobterminated = False # (job has not been executed)
@@ -87,7 +88,7 @@ def evaluateReceivedIMMessages():
             friendlist.append(msgfrom)
         # send message to f2fcore, TODO: check result
         body = str(msg.getBody())
-        if f2fcore.f2fNotifyCoreWithReceived( localPeerId, msgfrom,
+        if f2fcore.f2fForward( localPeerId, msgfrom,
                                            body, len(body) ) == f2fcore.F2FErrOK :
             del messageStack[0] # only remove, if successfull, else we have to try again later
         # all on toplevel sendOutSendIMBuffer() # flush the send buffer, if here is an answer
@@ -145,13 +146,6 @@ def sendMessage(localpeerid,messagetxt):
     #print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
     con.send(msg)
 
-# There is no risk calling this function to block any queue
-def sendOutSendIMBuffer():
-    while (True):
-        nextpeer = f2fcore.f2fSendIMBufferGetNextLocalPeerID()
-        if( nextpeer < 0 ): break
-        sendMessage( nextpeer, f2fcore.f2fSendIMBufferGetBuffer() )
-        
 def runjob(group,peer,job):
     global jobterminated
     varlist=globals()
@@ -162,28 +156,47 @@ def runjob(group,peer,job):
     exec(job,varlist,varlist) # very insecure!!!
     jobterminated = True
 
+# There is no risk calling this function to block any queue
+def sendOutSendIMBuffer(messagePtr):
+    while (True):
+        nextpeer = f2fcore.f2fMessageGetNextLocalPeerID(messagePtr)
+        if( nextpeer < 0 ): break
+        sendMessage( nextpeer, f2fcore.f2fMessageGetContent(messagePtr,MAXMessageSize) )
+
 def evaluateReceiveBuffer():
-    if f2fcore.f2fReceiveBufferDataAvailable():
-        #if f2fcore.f2fReceiveBufferIsRaw():
-        #    print "Buffer is binary, content not shown."
-        #    f2fcore.f2fReceiveBufferRelease()
-        if f2fcore.f2fReceiveBufferIsText():
-            print "Buffer is text. Content:", \
-               f2fcore.f2fReceiveBufferGetContent(4096)
-            f2fcore.f2fReceiveBufferRelease()
-        if f2fcore.f2fReceiveBufferIsJob():
-            myGroup = f2f.Group(f2fcore.f2fReceiveBufferGetGroup(),"unknown") # TODO: make sure it is not unknown
-            myInitiator = f2f.Peer(f2fcore.f2fReceiveBufferGetSourcePeer())
-            job = f2fcore.f2fReceiveJob(4096).strip() + "\n"  # make sure it ends with a new line and no blanks
-            # TODO: make sure to execute only one
-            #print "Job:",job,":Jobend"
-            jobcompiled = compile( job, '<f2f job>', 'exec')
-            #jobcompiled = job
-            jobslavethread = Thread(target=runjob,args=(myGroup,myInitiator,jobcompiled))
-            print "Starting job***************"
-            #exec(jobcompiled)
-            jobslavethread.start()
-            f2fcore.f2fReceiveBufferRelease()
+    while( f2fcore.f2fMessageAvailable()): # There can be several messages
+        messagePtr = f2fcore.f2fReceiveMessage()
+        if messagePtr:
+            if f2fcore.f2fMessageIsForward( messagePtr ): # forward message
+                sendOutSendIMBuffer( messagePtr )
+            if(f2fcore.f2fMessageIsRaw( messagePtr )):
+                content = f2fcore.f2fMessageGetContent(MAXMessageSize)
+                try:
+                    obj = pickle.loads(content)
+                    answer = (Group(f2fcore.f2fReceiveBufferGetGroup( messagePtr ), "unknown"),
+                              Peer(f2fcore.f2fReceiveBufferGetSourcePeer( messagePtr )),
+                              obj)
+                    f2f.pushReceiveData( answer )
+                except (pickle.PicklingError, IndexError, KeyError):
+                    print "Problem unpickling." # TODO: find better solution
+                f2fcore.f2fMessageRelease( messagePtr )
+            if f2fcore.f2fMessageIsText(messagePtr):
+                print "Buffer is text. Content:", \
+                    f2fcore.f2fMessageGetContent(MAXMessageSize)
+                f2fcore.f2fMessageRelease( messagePtr )
+            if f2fcore.f2fMessageIsJob(messagePtr):
+                myGroup = f2f.Group(f2fcore.f2fMessageGetGroup( messagePtr ),"unknown") # TODO: make sure it is not unknown
+                myInitiator = f2f.Peer(f2fcore.f2fMessageGetSourcePeer( messagePtr ) )
+                job = f2fcore.f2fReceiveJob(MAXMessageSize).strip() + "\n"  # make sure it ends with a new line and no blanks
+                # TODO: make sure to execute only one
+                #print "Job:",job,":Jobend"
+                jobcompiled = compile( job, '<f2f job>', 'exec')
+                #jobcompiled = job
+                jobslavethread = Thread(target=runjob,args=(myGroup,myInitiator,jobcompiled))
+                print "Starting job***************"
+                #exec(jobcompiled)
+                jobslavethread.start()
+                f2fcore.f2fMessageRelease( messagePtr )
 
 def f2fHeadless(servername, username, password, resource, connectport, friendlistlocal, groupname, jobarchive):
     #con = jabber.Client(host=servername,debug=jabber.DBG_ALWAYS ,log=sys.stderr)
@@ -225,7 +238,7 @@ def f2fHeadless(servername, username, password, resource, connectport, friendlis
         for index in range(len(friendlist)):
             mygroup.invitePeer( index, friendlist[index], "headless invite", "" )
             # check sendIMBuffer (to send away the created invitemessage)
-            sendOutSendIMBuffer()
+            evaluateReceiveBuffer()
         # Start the job
         mygroup.submitJob()
         ## Start the master
@@ -244,20 +257,9 @@ def f2fHeadless(servername, username, password, resource, connectport, friendlis
     from time import sleep, time
     oldtime = time()
     while(not jobterminated ):
-        con.process(0.01) 
-        #sleep (1)
-        #while( f2fcore.f2fReceiveBufferDataAvailable() ):
-        #while( f2fcore.f2fSend() == f2fcore.F2FErrBufferStillFull ):
-        sendOutSendIMBuffer() # flush the IM send buffer
-        f2fcore.f2fSend() # Send on the internal network
-        # not needed at the moment f2fcore.f2fReceive() # Receive on the internal network (fill evtl. internal receive buffer)
-        f2fcore.f2fReceiveBufferParse() # internally evaluate  the buffer, could fill send buffers
-        sendOutSendIMBuffer() # flush the IM send buffer
-        f2fcore.f2fSend() # Send on the internal network
-        evaluateReceiveBuffer() # Evtl. there is something still in the buffer for the adapter
-        evaluateReceivedIMMessages()
-        sendOutSendIMBuffer() # flush the IM send buffer
-        f2fcore.f2fSend() # Send on the internal network
+        con.process(0.01) # Process IM messages
+        evaluateReceivedIMMessages() # Process messages received from IM
+        evaluateReceiveBuffer() # Process messages received from f2fcore
         f2fcore.f2fTicketRequestGrant() # For a start grant all, TODO: secure this!
         newtime = time()
         if newtime-oldtime > 10:

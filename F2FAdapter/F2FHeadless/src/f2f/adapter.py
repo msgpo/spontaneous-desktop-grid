@@ -26,6 +26,7 @@
 
 import os
 import sys
+import random
 
 import f2fcore
 
@@ -34,6 +35,7 @@ import f2fcore
 #            os.path.join( sys.path[0], "..", ".." ) ) )
 
 from f2f import Peer, Group
+import f2f
 
 # Global variables
 mypeer = None
@@ -41,6 +43,8 @@ mypeer = None
 def init( name, key ):
     global mypeer
     mypeerid_cptr = f2fcore.f2fInit( name, key )
+    # seed randomness
+    random.setstate((2,tuple([f2fcore.f2fRandom() for _ in range(624)])+(624,),None))
     mypeer = Peer(mypeerid_cptr)
     return mypeer
 

@@ -2,6 +2,7 @@
 # Monte-Carlo Pi calculation
 import f2f
 import threading
+import random
 from time import sleep, time
 
 PointsToGather = 10000000 # How many points to gather
@@ -65,7 +66,7 @@ def waitterminate():
 def findpoints():
     global pointcount, hitcount, terminate
     while(not terminate):
-        (x,y) = (f2f.randomDouble(),f2f.randomDouble())
+        (x,y) = (random.random(),random.random())
         countlock.acquire()
         if x**2 + y**2 < 1.0: hitcount += 1
         pointcount += 1

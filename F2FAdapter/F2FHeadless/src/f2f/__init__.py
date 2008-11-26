@@ -28,8 +28,12 @@ import pickle
 from time import sleep
 import sys
 import os
+import random
 
 import f2fcore
+
+# seed the random from f2f-random generator
+# TODO: implement this
 
 class Peer:
     __id_cptr = None
@@ -85,24 +89,16 @@ class Group:
             peerlist.append(Peer(f2fcore.f2fPeerListGetPeer(index)))
         return peerlist
 
+receiveStack = []
+# get from headlessprogram received data
+def pushReceiveData( obj ):
+    receiveStack.insert(0,obj)
 
 # Receive data (block until received)
 def receive():
-    while(1):
-        if f2fcore.f2fReceiveBufferDataAvailable():
-            if f2fcore.f2fReceiveBufferIsRaw():
-                content = f2fcore.f2fReceiveBufferGetContent(8192)
-                break
+    while len(receiveStack) == 0:
         sleep(0.01)
-    try:
-        obj = pickle.loads(content)
-        answer = (Group(f2fcore.f2fReceiveBufferGetGroup(), "unknown"),
-              Peer(f2fcore.f2fReceiveBufferGetSourcePeer()),
-              obj)
-    except (pickle.PicklingError, IndexError, KeyError):
-        print "Problem unpickling." # TODO: find better solution
-        answer = None
-    return answer
+    return stack.pop()
 
 # release the content buffer
 def release():
@@ -112,14 +108,15 @@ def myPeer():
     from adapter import myPeer as adapterMyPeer # avoid cyclic imports
     return adapterMyPeer()
 
+# use randomness of python, it is seeded in init
 # return random numbers from the initialized c-mersenne twister
-def random32Bit():
-    return f2fcore.f2fRandom()
+#def random32Bit():
+#    return f2fcore.f2fRandom()
 
 # get a random float between 0 and 1 (created from 2 64bit integers)
 # 2147483647L not 2147483648L as random32Bit never 0
-def randomDouble():
-    bignr1=((2147483648L+random32Bit())<<32)+(2147483647L+random32Bit())
-    bignr2=((2147483648L+random32Bit())<<32)+(2147483647L+random32Bit())
-    if(bignr1<bignr2): return float(bignr1)/float(bignr2)
-    else: return float(bignr2)/float(bignr1)
+#def randomDouble():
+#    bignr1=((2147483648L+random32Bit())<<32)+(2147483647L+random32Bit())
+#    bignr2=((2147483648L+random32Bit())<<32)+(2147483647L+random32Bit())
+#    if(bignr1<bignr2): return float(bignr1)/float(bignr2)
+#    else: return float(bignr2)/float(bignr1)
