@@ -285,7 +285,7 @@ F2FAdapterReceiveMessage * f2fReceiveMessage()
 {
 	/* Try now to receive stuff from the internal network (not IM) */
 	/* call then parseMessage, this might fill the receiveBuffer */
-	f2fProcess(); // Do some processing and fill eventually the buffer TODO: check error
+	// TODO: necessary? f2fProcess(); // Do some processing and fill eventually the buffer TODO: check error
 	F2FAdapterReceiveMessage * msg = f2fAdapterReceiveBufferGetMessage();
 	if( msg == NULL)
 	{
@@ -425,7 +425,7 @@ static F2FError processInviteMessageAnswer(
 		return F2FErrNotAuthenticated;
 	if( f2fPeerFindGroupIndex( waitingPeer, group ) < 0 )
 		return F2FErrNotAuthenticated;
-	if(! f2fIsSentBufferEmpty() ) /* as joining has to be announced, check send buffer */
+	if(! f2fSentBufferEmpty() ) /* as joining has to be announced, check send buffer */
 		return F2FErrBufferFull;
 	F2FAdapterReceiveMessage * freebuffer =  f2fAdapterReceiveBufferReserve();
 	if( freebuffer == NULL )
@@ -593,7 +593,6 @@ static F2FError processJob(
 	}
 	else
 	{
-		f2fReceiveBufferRelease(); /* discard and release buffer */
 		return F2FErrNotAuthenticated;
 	}
 }

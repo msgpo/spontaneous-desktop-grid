@@ -131,7 +131,13 @@ int f2fMessageAvailable();
 /** Return the next peer id of the buffer where data has to be sent and
  * decrease list
  * return -1 if there is nothing to send */ 
-F2FWord32 f2fMessageGetNextLocalPeerID();
+F2FWord32 f2fMessageGetNextLocalPeerID( F2FAdapterReceiveMessage *msg );
+
+/** return 1, if the data in the ReceiveBuffer is to be forwarded */
+int f2fMessageIsForward( F2FAdapterReceiveMessage *msg );
+
+/** return 1, if the data in the ReceiveBuffer is to be received by the adapter */
+int f2fMessageIsReceive( F2FAdapterReceiveMessage *msg );
 
 /** return 1, if the data in the ReceiveBuffer is binary data */
 int f2fMessageIsRaw( F2FAdapterReceiveMessage *msg );
@@ -196,12 +202,6 @@ F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 /** Fill send buffer for a specific peer in a group with raw data */
 F2FError f2fPeerSendRaw( F2FGroup *group, F2FPeer *peer, 
 		const char *data, const F2FWord32 dataLen );
-
-/** test, if data in buffer has been sent */
-int f2fIsSentBufferEmpty();
-
-/** empty send buffer for data, even if it has not been sent */
-F2FError f2fSentEmpty();
 
 /** submit a job to a f2f group
  * This will first ask for allowance tickets from 

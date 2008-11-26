@@ -87,6 +87,14 @@ F2FWord32 f2fGroupGetUIDLo(const F2FGroup * group)
 	return group->id.lo;
 }
 
+/** return 1, if the data in the ReceiveBuffer is to be forwarded */
+int f2fMessageIsForward( F2FAdapterReceiveMessage *msg )
+{ return msg->buffertype == F2FAdapterReceiveMessageTypeIMForward; }
+
+/** return 1, if the data in the ReceiveBuffer is to be received by the adapter */
+int f2fMessageIsReceive( F2FAdapterReceiveMessage *msg )
+{ return msg->buffertype == F2FAdapterReceiveMessageTypeData; }
+
 /** return 1, if the data in the ReceiveBuffer is raw data */
 int f2fMessageIsRaw( F2FAdapterReceiveMessage *msg )
 { return msg->messagetype == F2FMessageTypeRaw; }
@@ -100,15 +108,15 @@ int f2fMessageIsJob( F2FAdapterReceiveMessage *msg )
 { return msg->messagetype == F2FMessageTypeJob; }
 
 /** get the group of the received data */
-F2FGroup * f2fReceiveBufferGetGroup( F2FAdapterReceiveMessage *msg )
+F2FGroup * f2fMessageGetGroup( F2FAdapterReceiveMessage *msg )
 { return msg->group; }
 
 /** get received Source peer */
-F2FPeer * f2fReceiveBufferGetSourcePeer( F2FAdapterReceiveMessage *msg )
+F2FPeer * f2fMessageGetSourcePeer( F2FAdapterReceiveMessage *msg )
 { return msg->sourcePeer; }
 
 /** get received destination peer */
-F2FPeer * f2fReceiveBufferGetDestPeer( F2FAdapterReceiveMessage *msg )
+F2FPeer * f2fMessageGetDestPeer( F2FAdapterReceiveMessage *msg )
 { return msg->destPeer; }
 
 /** get the size of the message in the buffer */
@@ -148,6 +156,3 @@ void f2fMessageGetJob(F2FAdapterReceiveMessage *msg, char *content, int *maxlen 
 F2FError f2fMessageRelease( F2FAdapterReceiveMessage *msg )
 { return f2fAdapterReceiveBufferRelease( msg ); }
 
-#ifdef __cplusplus
-}
-#endif
