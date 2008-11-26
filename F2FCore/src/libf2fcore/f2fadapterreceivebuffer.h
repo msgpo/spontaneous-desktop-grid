@@ -30,7 +30,7 @@
 
 #include "f2fconfig.h"
 #include "f2ftypes.h"
-#include "f2fmessagetype.h"
+#include "f2fmessagetypes.h"
 #include "f2fgroup.h"
 
 #ifdef __cplusplus
@@ -56,7 +56,7 @@ typedef struct F2FAdapterReceiveMessageStruct
 	F2FWord32 localPeerIDlist[ F2FMaxPeers ]; /* a number of ids, to which this has to be sent */
 	F2FSize peercount; /* the number of ids in list */
 	/* This is data needed for F2FAdapterReceiveMessageTypeData */
-	F2FMessageType messageType; /** what kind of data is in here */
+	unsigned char messagetype; /** Type of message, see F2FMessageType */
 	F2FGroup *group; /** The group in which this data was sent */
 	F2FPeer *sourcePeer; /** The sourcepeer of this data */
 	F2FPeer *destPeer; /** The Destination Peer */

@@ -47,10 +47,10 @@
 /** return the next peer id of the buffer where data has to be sent and
  * decrease list
  * return -1 if there is nothing to send */
-F2FWord32 f2fMessageGetNextLocalPeerID()
+F2FWord32 f2fMessageGetNextLocalPeerID( F2FAdapterReceiveMessage *msg )
 {
-	if (sendIMBuffer.peercount <= 0) return -1; // none left
-	return sendIMBuffer.localPeerIDlist[-- sendIMBuffer.peercount];
+	if (msg->peercount <= 0) return -1; // none left
+	return msg->localPeerIDlist[-- msg->peercount];
 }
 
 /** get the 0 terminated sendIMBuffer */
@@ -89,15 +89,15 @@ F2FWord32 f2fGroupGetUIDLo(const F2FGroup * group)
 
 /** return 1, if the data in the ReceiveBuffer is raw data */
 int f2fMessageIsRaw( F2FAdapterReceiveMessage *msg )
-{ return msg->messageType == F2FMessageTypeRaw; }
+{ return msg->messagetype == F2FMessageTypeRaw; }
 
 /** return 1, if the data in the ReceiveBuffer is text data */
-int f2fMessageIsText()
-{ return msg->messageType == F2FMessageTypeText; }
+int f2fMessageIsText( F2FAdapterReceiveMessage *msg )
+{ return msg->messagetype == F2FMessageTypeText; }
 
 /** return 1, if the data in the ReceiveBuffer is a job */
-int f2fMessageIsJob()
-{ return msg->messageType == F2FMessageTypeJob; }
+int f2fMessageIsJob( F2FAdapterReceiveMessage *msg )
+{ return msg->messagetype == F2FMessageTypeJob; }
 
 /** get the group of the received data */
 F2FGroup * f2fReceiveBufferGetGroup( F2FAdapterReceiveMessage *msg )
@@ -112,7 +112,7 @@ F2FPeer * f2fReceiveBufferGetDestPeer( F2FAdapterReceiveMessage *msg )
 { return msg->destPeer; }
 
 /** get the size of the message in the buffer */
-F2FSize f2fMessageGetSize( F2FAdapterReceiveMessage *msg );
+F2FSize f2fMessageGetSize( F2FAdapterReceiveMessage *msg )
 { return msg->buffersize; }
 
 /** get a pointer to the content of the buffer */
@@ -123,7 +123,7 @@ char * f2fMessageGetContentPtr( F2FAdapterReceiveMessage *msg )
  * maxlen is a pointer to a variable, which specifies the maximum len, which can be taken and
  * will have the actual length of copied data at the end
  * The data must be copied into content */
-void f2fMessageGetContent(F2FAdapterReceiveMessage *msg, char *content, int *maxlen);
+void f2fMessageGetContent(F2FAdapterReceiveMessage *msg, char *content, int *maxlen)
 {
 	if ( *maxlen > msg->buffersize ) *maxlen = msg->buffersize;
 	memcpy( content, msg->buffer, *maxlen );
@@ -147,3 +147,7 @@ void f2fMessageGetJob(F2FAdapterReceiveMessage *msg, char *content, int *maxlen 
 /** show that the buffer has been read and can be filled again */
 F2FError f2fMessageRelease( F2FAdapterReceiveMessage *msg )
 { return f2fAdapterReceiveBufferRelease( msg ); }
+
+#ifdef __cplusplus
+}
+#endif

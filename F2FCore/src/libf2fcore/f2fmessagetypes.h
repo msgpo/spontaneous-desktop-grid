@@ -29,7 +29,6 @@
 
 #include "f2ftypes.h"
 #include "f2fticket.h"
-#include "f2fcore.h"
 
 #ifdef __cplusplus
 extern "C"

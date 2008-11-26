@@ -31,11 +31,6 @@
 #include <time.h>
 
 #include "f2fconfig.h"
-
-#ifdef __cplusplus
-extern "C"
-    {
-#endif
     
 typedef int32_t F2FWord32;
 
@@ -78,11 +73,5 @@ typedef struct F2FUIDStruct
 	F2FWord32 hi;
 	F2FWord32 lo;
 } F2FUID;
-
-#include "f2fticket.h"
-
-#ifdef __cplusplus
-    }
-#endif
 
 #endif /*F2FTYPES_H_*/

@@ -116,10 +116,6 @@ F2FError f2fNotifyCoreWithReceived( const F2FWord32 localPeerId,
 		const F2FString identifier, const F2FString message,
 		const F2FSize size );
 
-/** check if a returned size  is valid */
-static inline int f2fSizeValid( const F2FSize size )
-{ return size >= 0; }
-
 /* Send a text message to all group members */
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
@@ -182,7 +178,7 @@ F2FError f2fReceiveBufferRelease();
 F2FError f2fReceiveBufferParse();
 
 /** Send content of the local sendBuffer */
-F2FError f2fSend();
+//F2FError f2fSend();
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 f2fRandom();
@@ -205,20 +201,20 @@ F2FError f2fGroupSendData( const F2FGroup *group,
 /** Fill send buffer with a text message for all group members */
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
-/** Fill send buffer for a specific peer in a group */
-F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer, 
+/** Send data to specific peer in a group */
+F2FError f2fPeerSendData( F2FGroup *group, F2FPeer *peer,
 		F2FMessageType type,
 		const char *data, const F2FWord32 dataLen );
 
 /** Fill send buffer for a specific peer in a group with raw data */
-F2FError f2fPeerSendRaw( const F2FGroup *group, F2FPeer *peer, 
+F2FError f2fPeerSendRaw( F2FGroup *group, F2FPeer *peer, 
 		const char *data, const F2FWord32 dataLen );
 
 /** test, if data in buffer has been sent */
-int f2fDataSent();
+int f2fSentBufferEmpty();
 
 /** empty, send buffer for data, even if it has not been sent */
-F2FError f2fEmptyData();
+F2FError f2fEmptySentBuffer();
 
 /** submit a job to a f2f group
  * This will first ask for allowance tickets from 

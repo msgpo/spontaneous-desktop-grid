@@ -33,6 +33,8 @@
 #include "f2fpeer.h"
 #include "f2fgroup.h"
 #include "f2fmessagetypes.h"
+#include "f2fadapterreceivebuffer.h"
+#include "f2fcore.h"
 
 
 #ifdef __cplusplus
@@ -164,7 +166,7 @@ void f2fMessageGetContent(F2FAdapterReceiveMessage *msg, char *content, int *max
 char * f2fMessageGetText( F2FAdapterReceiveMessage *msg );
 
 /* analog to the last function (f2fReceiveBufferGetContent) receives a job */
-void f2fMessageGetJob(char *content, int *maxlen, F2FAdapterReceiveMessage *msg  );
+void f2fMessageGetJob( F2FAdapterReceiveMessage *msg, char *content, int *maxlen );
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 f2fRandom();
@@ -186,13 +188,13 @@ F2FError f2fGroupSendData( const F2FGroup *group,
 /** Fill send buffer with a text message for all group members */
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
-/** Fill send buffer for a specific peer in a group */
-F2FError f2fPeerSendData( const F2FGroup *group, F2FPeer *peer, 
+/** Send data to specific peer in a group */
+/*F2FError f2fPeerSendData( F2FGroup *group, F2FPeer *peer,
 		F2FMessageType type,
-		const char *data, const F2FWord32 dataLen );
+		const char *data, const F2FWord32 dataLen );*/
 
 /** Fill send buffer for a specific peer in a group with raw data */
-F2FError f2fPeerSendRaw( const F2FGroup *group, F2FPeer *peer, 
+F2FError f2fPeerSendRaw( F2FGroup *group, F2FPeer *peer, 
 		const char *data, const F2FWord32 dataLen );
 
 /** test, if data in buffer has been sent */
