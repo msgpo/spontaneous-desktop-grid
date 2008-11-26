@@ -121,10 +121,15 @@ F2FAdapterReceiveMessage * f2fReceiveMessage();
 /** This will return F2FErrBufferFull, if there is still data to receive available, F2FErrOk, if not.
  * It furthermore releases the buffer.
  * The function should then be called directly again (after processing the received data) */
-F2FError f2fMessageRelease();
+F2FError f2fMessageRelease( F2FAdapterReceiveMessage *msg );
 
 /** return 1, if there is data in the ReceiveBuffer available */
 int f2fMessageAvailable();
+
+/** Return the next peer id of the buffer where data has to be sent and
+ * decrease list
+ * return -1 if there is nothing to send */ 
+F2FWord32 f2fMessageGetNextLocalPeerID();
 
 /** return 1, if the data in the ReceiveBuffer is binary data */
 int f2fMessageIsRaw( F2FAdapterReceiveMessage *msg );
@@ -153,10 +158,13 @@ char * f2fMessageGetContentPtr( F2FAdapterReceiveMessage *msg );
 #ifdef SWIG
 %cstring_output_withsize(char *content, int *maxlen);
 #endif
-void f2fReceiveBufferGetContent(char *content, int *maxlen, F2FAdapterReceiveMessage *msg );
+void f2fMessageGetContent(F2FAdapterReceiveMessage *msg, char *content, int *maxlen);
+
+/** get the 0 terminated sendIMBuffer */
+char * f2fMessageGetText( F2FAdapterReceiveMessage *msg );
 
 /* analog to the last function (f2fReceiveBufferGetContent) receives a job */
-void f2fReceiveJob(char *content, int *maxlen, F2FAdapterReceiveMessage *msg  );
+void f2fMessageGetJob(char *content, int *maxlen, F2FAdapterReceiveMessage *msg  );
 
 /** Return a random number from the seeded mersenne twister */
 F2FWord32 f2fRandom();
@@ -175,7 +183,6 @@ F2FPeer * f2fPeerListGetPeer( F2FWord32 peerindex );
 /** Fill send buffer with data for all group members */
 F2FError f2fGroupSendData( const F2FGroup *group, 
 		const char * message, F2FSize len );
-
 /** Fill send buffer with a text message for all group members */
 F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
 
@@ -189,9 +196,9 @@ F2FError f2fPeerSendRaw( const F2FGroup *group, F2FPeer *peer,
 		const char *data, const F2FWord32 dataLen );
 
 /** test, if data in buffer has been sent */
-int f2fSentAvailable();
+int f2fIsSentBufferEmpty();
 
-/** empty, send buffer for data, even if it has not been sent */
+/** empty send buffer for data, even if it has not been sent */
 F2FError f2fSentEmpty();
 
 /** submit a job to a f2f group

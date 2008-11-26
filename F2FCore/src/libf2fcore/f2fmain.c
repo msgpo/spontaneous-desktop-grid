@@ -39,21 +39,22 @@
 #include "f2fgrouplist.h"
 #include "f2fmessagetypes.h"
 #include "f2fticketrequest.h"
+#include "f2fadapterreceivebuffer.h"
 
 static int initWasCalled = 0; // this will be set if init was successful
 static F2FError globalError = F2FErrOK; // a global error variable
 
 F2FError f2fGetErrorCode()
-{
-	return globalError;
-}
+{ return globalError; }
 
 /** Static state vector for randomness of mersenne twister, this is global in this module */
-mt_state randomnessState;
+static mt_state randomnessState;
 
 static F2FPeer *myself; /* saves own peer information */
 
-/** Send buffer, this can be also sent to multiple peers */
+/** Internal send buffer, this can be also sent to multiple peers 
+ * This is used to store data, which should be sent internally or via the network
+ * It is not used to send data via IM */
 static struct
 {
 	char buffer[F2FMaxMessageSize];
@@ -62,66 +63,12 @@ static struct
 	F2FSize peercount; /* the number of ids in list */
 } sendBuffer;
 
-/** Send IM buffer.
- * This buffer stores IM messages, which have to be sent
- * They could be sent to multiple peers.
- * This is, why there is a list of local peer ids.
- */
-static struct
-{
-	char buffer[F2FMaxEncodedMessageSize+1]; /* usually cleartext, so reserve space
-								for terminating 0 */
-	F2FSize size; /* how much is filled */
-	F2FWord32 localPeerIDlist[ F2FMaxPeers ];
-	F2FSize peercount; /* the number of ids in list */
-} sendIMBuffer;
-
-/** get the 0 terminated sendIMBuffer */
-char * f2fSendIMBufferGetBuffer()
-{
-	if(sendIMBuffer.size > F2FMaxEncodedMessageSize) sendIMBuffer.size = F2FMaxEncodedMessageSize;
-	sendIMBuffer.buffer[sendIMBuffer.size] = 0; /* make sure this is terminated */
-	return sendIMBuffer.buffer;
-}
-
-/** get the size of the message in sendIMBuffer */
-F2FSize f2fSendIMBufferGetBufferSize()
-{
-	return sendIMBuffer.size;
-}
-
-/** return the next peer id of the buffer where data has to be sent and
- * decrease list
- * return -1 if there is nothing to send */
-F2FWord32 f2fSendIMBufferGetNextLocalPeerID()
-{
-	if (sendIMBuffer.peercount <= 0) return -1; // none left
-	return sendIMBuffer.localPeerIDlist[-- sendIMBuffer.peercount];
-}
-
-/** Receive buffer */
-static struct
-{
-	F2FGroup *group; /** The group in which this data was sent */
-	F2FPeer *sourcePeer; /** The sourcepeer of this data */
-	F2FPeer *destPeer; /** The destination peer of this data
-	 					 * TODO: if this is not this peer, the data should
-	 					 * be forwarded*/
-	int filled; /** indicate, if something is in here */
-	int parsed; /** indicate, if buffer was already parsed, else it is not free to read by the adapter */
-	F2FMessageType messageType; /** what kind of data is in here */
-	F2FSize size; /* how much is filled */
-	char buffer[F2FMaxMessageSize];
-} receiveBuffer;
-
 /* this is a secure strlen with no buffer overrun */
 static inline size_t strnlen( const char *str, size_t max )
 {
 	size_t size;
-
-	for (size = 0; size < max; ++size) {
-		if( ! str[size] ) break;
-	}
+	for (size = 0; size < max; ++size)
+	{ if( ! str[size] ) break; }
 	return size;
 }
 
@@ -216,48 +163,51 @@ F2FGroup * f2fCreateGroup( const F2FString groupname )
 
 /** encode a message for sending via the f2f IM channel in the
  * sendIMBuffer ignore localpeerids */
-F2FError encodeIMMessage( const char * message,
-		const F2FSize size )
+static F2FError encodeIMMessage( const char * message,
+		const F2FSize size, F2FAdapterReceiveMessage *dest )
 {
 	F2FSize currentsize, newsize;
 
 	/* Encode message for sending in f2f framework */
-	strcpy( sendIMBuffer.buffer, F2FMessageMark ); /* header */
+	strcpy( dest->buffer, F2FMessageMark ); /* header */
 	currentsize = F2FMessageMarkLength;
-	newsize = b64encode( message, sendIMBuffer.buffer + currentsize,
-				size, F2FMaxEncodedMessageSize-currentsize );
+	newsize = b64encode( message, dest->buffer + currentsize,
+				size, F2FMaxEncodedMessageSize - currentsize );
 	if(newsize == 0) return F2FErrMessageTooLong;
 	currentsize += newsize;	/* prepare sending of the new message */
-	sendIMBuffer.size = currentsize;
+	dest->buffersize = currentsize;
 	return F2FErrOK;
 }
 
 /** prepare message to send an IM message to one locally known peer */
-F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message,
+static F2FError f2fIMSend( const F2FWord32 localpeerid, const F2FString message,
 		const F2FSize size )
 {
 	F2FError error;
 
-	if( sendIMBuffer.peercount > 0 ) // not empty
+	// Get free buffer
+	F2FAdapterReceiveMessage * freebuffer = f2fAdapterReceiveBufferReserve();
+	if( freebuffer == NULL ) // not space left
 	{
 		return F2FErrBufferFull;
 	}
-	error = encodeIMMessage( message, size );
-	sendIMBuffer.localPeerIDlist[ 0 ] = localpeerid;
-	sendIMBuffer.peercount = 1;
+	freebuffer->buffertype = F2FAdapterReceiveMessageTypeIMForward;
+	error = encodeIMMessage( message, size, freebuffer );
+	freebuffer->localPeerIDlist[ 0 ] = localpeerid;
+	freebuffer->peercount = 1;
 	return F2FErrOK;
 }
 
 /** Add a local peer to the sendIMBuffer */
-F2FError f2fIMAddPeer( const F2FWord32 localpeerid )
+static F2FError f2fIMAddPeer( const F2FWord32 localpeerid, F2FAdapterReceiveMessage *dest )
 {
-	if( sendIMBuffer.peercount >= F2FMaxPeers ) return F2FErrListFull;
-	sendIMBuffer.localPeerIDlist[ ++ sendIMBuffer.peercount ] = localpeerid;
+	if( dest->peercount >= F2FMaxPeers ) return F2FErrListFull;
+	dest->localPeerIDlist[ ++ dest->peercount ] = localpeerid;
 	return F2FErrOK;
 }
 
-/* use the special send function to send a IM message to a local known peer */
-F2FError f2fIMDecode( const F2FString message, const F2FSize messagelen,
+/* Decode a received instant message */
+static F2FError f2fIMDecode( const F2FString message, const F2FSize messagelen,
 		F2FString decodebuffer, const F2FSize maxdecodelen )
 {
 	/* TODO: eventually remove whitespace */
@@ -325,131 +275,25 @@ F2FError f2fGroupUnregisterPeer( F2FGroup *group, F2FPeer *peer )
 	// TODO: implement notfication
 }
 
-/** Return size of a peerlist in a group */
-F2FSize f2fGroupGetPeerListSize( const F2FGroup *group )
-{
-	return group->listSize;
-}
-
-/** Return a pointer to a peer of a group */
-F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group,
-		F2FWord32 peerindex )
-{
-	if(peerindex<0 || peerindex>group->listSize) return NULL;
-	return group->sortedPeerList[peerindex].peer;
-}
-
-/** Getter for GroupUID */
-F2FWord32 f2fGroupGetUIDHi(const F2FGroup * group)
-{
-	return group->id.hi;
-}
-
-/** Getter for GroupUID */
-F2FWord32 f2fGroupGetUIDLo(const F2FGroup * group)
-{
-	return group->id.lo;
-}
-
-/** tries to receive a message. If succesful, this gives a peer and the corresponding
- * message, if not peer and message will be NULL and F2FErrNothingAvail will be returned.
- * In success case F2FErrOK will be returned.
+/** tries to receive a message. If succesful, this gives a pointer to a receive-message.
+ * If not, the returned messagepointer will be NULL and F2FErrNothingAvail will be in F2FError.
  * This routine must be called on a regulary interval - it can't be used in parallel to
- * the other methods here in this interface.
- * If the timeout value is >0 then it will be used in an internal select. The function will
- * then block to the maximum timeout ms.
- * This function returns F2FErrBufferFull, if there is still data to receive available.
- * The function should be called directly again (after processing the received data) */
-F2FError f2fReceive()
+ * the other methods here in this interface. */
+F2FAdapterReceiveMessage * f2fReceiveMessage()
 {
-	if(receiveBuffer.filled) // Can't receive with full buffer
-		return F2FErrBufferFull;
-	/* From here on receive.filled is 0 */
 	/* Try now to receive stuff from the internal network (not IM) */
 	/* call then parseMessage, this might fill the receiveBuffer */
-	/* TODO: select(... */
-	return F2FErrOK;
-}
-
-/** return 1, if there is data in the ReceiveBuffer */
-int f2fReceiveBufferDataAvailable()
-{ return receiveBuffer.filled && receiveBuffer.parsed; }
-
-/** return 1, if the data in the ReceiveBuffer is raw data */
-int f2fReceiveBufferIsRaw()
-{ return receiveBuffer.messageType == F2FMessageTypeRaw; }
-
-/** return 1, if the data in the ReceiveBuffer is text data */
-int f2fReceiveBufferIsText()
-{ return receiveBuffer.messageType == F2FMessageTypeText; }
-
-/** return 1, if the data in the ReceiveBuffer is a job */
-int f2fReceiveBufferIsJob()
-{ return receiveBuffer.messageType == F2FMessageTypeJob; }
-
-/** get the group of the received data */
-F2FGroup * f2fReceiveBufferGetGroup()
-{ return receiveBuffer.group; }
-
-/** get received Source peer */
-F2FPeer * f2fReceiveBufferGetSourcePeer()
-{ return receiveBuffer.sourcePeer; }
-
-/** get received destination peer */
-F2FPeer * f2fReceiveBufferGetDestPeer()
-{ return receiveBuffer.destPeer; }
-
-/** get size of current buffer */
-F2FSize f2fReceiveBufferGetSize()
-{ return receiveBuffer.size; }
-
-/** get a pointer to the content of the buffer */
-char * f2fReceiveBufferGetContentPtr()
-{
-	if (f2fReceiveBufferDataAvailable() ) return receiveBuffer.buffer;
-	else return NULL;
-}
-
-/** special function for SWIG to return a binary buffer
- * maxlen is a pointer to a variable, which specifies the maximum len, which can be taken and
- * will have the actual length of copied data at the end
- * The data must be copied into content */
-void f2fReceiveBufferGetContent(char *content, int *maxlen )
-{
-	if (*maxlen > receiveBuffer.size) *maxlen = receiveBuffer.size;
-	memcpy(content,receiveBuffer.buffer,*maxlen);
-}
-
-/* analog to the last function (f2fReceiveBufferGetContent) receive a job */
-void f2fReceiveJob(char *content, int *maxlen )
-{
-	if( !f2fReceiveBufferDataAvailable() || !f2fReceiveBufferIsJob() )
+	f2fProcess(); // Do some processing and fill eventually the buffer TODO: check error
+	F2FAdapterReceiveMessage msg = f2fAdapterReceiveBufferGetMessage();
+	if( msg == NULL)
 	{
-		*maxlen = 0;
-		return;
+		globalError = F2FErrNothingAvail;
+		return NULL;
 	}
-	F2FMessageJob *jobmsg = (F2FMessageJob *) receiveBuffer.buffer;
-	F2FSize jobsize = ntohl(jobmsg->size);
-	if (*maxlen > jobsize) *maxlen = jobsize;
-	memcpy(content,receiveBuffer.buffer + sizeof(F2FMessageJob),*maxlen);
-	/* TODO: adapt to longer jobs */
+	globalError = F2FErrOK;
+	return msg;
 }
-
-
-/** show that the buffer has been read and can be filled again */
-F2FError f2fReceiveBufferRelease()
-{
-	receiveBuffer.filled = 0;
-	return F2FErrOK;
-}
-
-/* Parse the contents of the receive buffer and release it, if successfull */
-F2FError f2fReceiveBufferParse()
-{
-	F2FError error = parseReceiveBuffer();
-	return error;
-}
-
+ /* !!! proceed here */
 static F2FError fillReceiveBuffer( F2FWord32 grouphi, F2FWord32 grouplo,
 		F2FWord32 srchi, F2FWord32 srclo,
 		F2FWord32 desthi, F2FWord32 destlo,

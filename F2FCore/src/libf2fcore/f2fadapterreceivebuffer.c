@@ -90,3 +90,8 @@ F2FAdapterReceiveMessage * f2fAdapterReceiveBufferGetMessage( void )
 	}
 	return NULL;
 }
+
+/** return 1, if there is data in the ReceiveBuffer available */
+int f2fMessageAvailable()
+{ return buffersize > 0; }
+

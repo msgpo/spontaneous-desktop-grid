@@ -48,7 +48,7 @@ typedef enum F2FAdapterReceiveMessageTypeEnum
  * from the AdapterReceiveBuffer */
 typedef struct F2FAdapterReceiveMessageStruct
 {
-	enum F2FAdapterReceiveMessageTypeEnum type; /* type of this buffer */
+	enum F2FAdapterReceiveMessageTypeEnum buffertype; /* type of this buffer */
 	char buffer[F2FMaxEncodedMessageSize+1]; /* usually cleartext, so reserve space
 								for terminating 0 */
 	F2FSize buffersize; /* how much of the buffer is filled */
@@ -59,8 +59,17 @@ typedef struct F2FAdapterReceiveMessageStruct
 	F2FMessageType messageType; /** what kind of data is in here */
 	F2FGroup *group; /** The group in which this data was sent */
 	F2FPeer *sourcePeer; /** The sourcepeer of this data */
+	F2FPeer *destPeer; /** The Destination Peer */
 } F2FAdapterReceiveMessage;
 
+/** get a free slot in the receive buffer */
+F2FAdapterReceiveMessage * f2fAdapterReceiveBufferReserve( void );
+
+/** release a specific buffer slot */
+F2FError f2fAdapterReceiveBufferRelease( F2FAdapterReceiveMessage *msg );
+
+/** get an occupied slot in the receive buffer */
+F2FAdapterReceiveMessage * f2fAdapterReceiveBufferGetMessage( void );
 
 #ifdef __cplusplus
 }
