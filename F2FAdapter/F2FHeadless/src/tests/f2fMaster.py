@@ -22,9 +22,9 @@ f2fHeadless( "jabber.ulno.net", # server
       "f2f", # password
       "f2fheadless", # resource
       25222, # port
-      ["f2f02@jabber.ulno.net"], # list of friends (only one)
+      ["f2f02@jabber.ulno.net","f2f03@jabber.ulno.net"], # list of friends
       "test computation group", # name of computation group
-      "testjob.py" # submitted job archive
+      "p2psimple.py" # submitted job archive
       )
 
 #sys.argv=["headlessclient",

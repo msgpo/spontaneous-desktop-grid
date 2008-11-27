@@ -183,6 +183,7 @@ F2FWord32 f2fRandomNotNull();
 F2FWord32 f2fPeerGetUIDLo( const F2FPeer *peer );
 F2FWord32 f2fPeerGetUIDHi( const F2FPeer *peer );
 F2FWord32 f2fPeerGetLocalPeerId( const F2FPeer *peer );
+F2FWord32 f2fPeerIsActive( const F2FPeer *peer );
 /** Return size of the general peerlist */
 F2FSize f2fPeerListGetSize();
 /** Return a pointer to a peer in the global peerlist */

@@ -158,3 +158,9 @@ F2FWord32 f2fPeerGetLocalPeerId( const F2FPeer *peer )
 {
 	return peer->localPeerId;
 }
+
+F2FWord32 f2fPeerIsActive( const F2FPeer *peer )
+{
+	return peer->status == F2FPeerActive;
+}
+

@@ -97,7 +97,9 @@ class Group:
         peerlist=[]
         # not very thread save (TODO: think to make in safer)
         for index in range(f2fcore.f2fPeerListGetSize()):
-            peerlist.append(Peer(f2fcore.f2fPeerListGetPeer(index)))
+            peerptr = f2fcore.f2fPeerListGetPeer(index)
+            if f2fcore.f2fPeerIsActive( peerptr ):
+                peerlist.append(Peer(peerptr))
         return peerlist
 
 receiveStack = []

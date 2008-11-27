@@ -45,6 +45,7 @@ typedef enum F2FMessageTypeEnum
 	F2FMessageTypeJob, /** A job archive */
 	F2FMessageTypeRaw, /** Just some unstructured data (binary) */
 	F2FMessageTypeText, /** Just some text (which will be displayed in the group chat) */
+	F2FMessageTypePeerListInfo, /** Infos about known peers */
 	/* here should be a lot of types to inquire status data, pinging, 
 	 * and exchanging routing information */ 
 } F2FMessageType;
@@ -133,6 +134,15 @@ typedef struct
 //typedef struct
 //{
 //} F2FMessageText;
+
+#define F2FMaxPeerListInfoEntries ((F2FMaxMessageSize - sizeof(F2FMessageHeader) - sizeof(F2FSize))/sizeof(F2FUID))
+/** Infors about known peers */
+typedef struct
+{
+	F2FSize count; // nr of entries
+	F2FUID ids[ F2FMaxPeerListInfoEntries ];
+} F2FMessagePeerListInfo;
+
 
 #ifdef __cplusplus
     }

@@ -30,48 +30,41 @@
 #include "f2fconfig.h"
 #include "f2fadapterreceivebuffer.h"
 
-typedef struct BufferSlotStruct
+/*typedef struct BufferSlotStruct
 {
 	int filled;
 	F2FAdapterReceiveMessage msg;
-} BufferSlot;
+} BufferSlot;*/
 
-static BufferSlot buffer[F2FAdapterReceiveBufferSize];
-static buffersize = 0;
+static F2FAdapterReceiveMessage buffer[F2FAdapterReceiveBufferSize];
+static int firstfilled=0; // Lowerend of circular buffer
+static int firstfree=0; // Higher end of circular buffer
+static buffersize = 0; // size of the buffer
 
 /** get a free slot in the receive buffer */
 F2FAdapterReceiveMessage * f2fAdapterReceiveBufferReserve( void )
 {
 	if (buffersize < F2FAdapterReceiveBufferSize)
 	{
-		/* find free spot */
-		int i;
-		for(i=0; i<F2FAdapterReceiveBufferSize; i++)
-		{
-			if(! buffer[i].filled)
-			{
-				buffer[i].filled = 1;
-				buffersize ++;
-				return & (buffer[i].msg);
-			}
-		}
+		F2FAdapterReceiveMessage * retval = & (buffer[firstfree]);
+		buffersize ++;
+		firstfree = (firstfree+1) % F2FAdapterReceiveBufferSize;
+		return retval;
 	}
 	return NULL;
 }
 
-/** release a specific buffer slot */
+/** release a specific buffer slot (only lowest allowed) */
 F2FError f2fAdapterReceiveBufferRelease( F2FAdapterReceiveMessage *msg )
 {
 	if(buffersize < 0) return F2FErrListEmpty;
 	
-	size_t position = ((char *)msg - (char *) buffer) / sizeof(BufferSlot);
+	size_t position = ((char *)msg - (char *) buffer) / sizeof(F2FAdapterReceiveMessage);
 	
-	if (&(buffer[position].msg) != msg)
-	{
+	if( position != firstfilled)
 		return F2FErrNotFound;
-	}
 	buffersize --;
-	buffer[position].filled = 0;
+	firstfilled = (firstfilled+1) % F2FAdapterReceiveBufferSize;
 	return F2FErrOK;
 }
 
@@ -80,15 +73,7 @@ F2FAdapterReceiveMessage * f2fAdapterReceiveBufferGetMessage( void )
 {
 	if (buffersize > 0)
 	{
-		/* find filled spot */
-		int i;
-		for(i=0; i<F2FAdapterReceiveBufferSize; i++)
-		{
-			if(buffer[i].filled)
-			{
-				return & (buffer[i].msg);
-			}
-		}
+		return & (buffer[firstfilled]);
 	}
 	return NULL;
 }
