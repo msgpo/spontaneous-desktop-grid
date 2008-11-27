@@ -1,5 +1,6 @@
 package ee.ut.f2f.util.stun;
 
+import java.net.Inet4Address;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
 import java.net.NetworkInterface;
@@ -23,9 +24,17 @@ public class LocalStunInfo
 	final private int STUN_SERVER_DEFAULT_PORT = 3478;
 	final private static int IS_REACHABLE_TIMEOUT = 5000;
 	final private int MAX_WAIT_FILTERED = 100;
+	final private String PING_HOST = "math.ut.ee";
+	
+	private InetAddress pingHost = null;
 	
 	private LocalStunInfo()
 	{
+		try{
+			pingHost = InetAddress.getByName(PING_HOST);
+		} catch (UnknownHostException e) {
+			log.error("Unknown Ping Host [" + PING_HOST + "]");
+		}
 	}
 	
 	private static LocalStunInfo instance = null;
@@ -53,6 +62,9 @@ public class LocalStunInfo
 	private boolean filteringInProcess = false;
 	public boolean isUpdating() { return updateInProgress; }
 	public boolean isFiltering() { return filteringInProcess; }
+	public InetAddress getPingHost(){
+		return this.pingHost;
+	}
 	
 	public void updateSTUNInfo()
 	{
@@ -74,8 +86,12 @@ public class LocalStunInfo
 		
 		new StunServersFilteringThread().start();
 	}
-	
+		
 	private class StunServersFilteringThread extends Thread implements Activity{
+		
+		public StunServersFilteringThread() {
+			this.setName(this.getClass().getName());
+		}
 		
 		public void run(){
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
@@ -102,47 +118,53 @@ public class LocalStunInfo
 			log.info("Found total [" + localIps.size() + "] active local IPs");
 			
 			Collection<InetSocketAddress> reachableStunServers = new ArrayList<InetSocketAddress>();
-			for(String stunServer : rawStunServers)
-			{
-				String address = null;
-				int port = -1;
-				if(stunServer.split(":").length >= 2)
-				{
-					address = stunServer.split(":")[0];
-					port = Integer.parseInt(stunServer.split(":")[1]);
-				}
-				else
-				{
-					address = stunServer;
-					port = STUN_SERVER_DEFAULT_PORT;
-				}
-				InetAddress stunServerIas = null;
-				try{
-					stunServerIas = InetAddress.getByName(address);
-				} catch (UnknownHostException e){
-					log.warn("Unknown StunServer [" + address + "]",e);
-				}
-				if (stunServerIas == null)
-					continue;
-				// try if stun server is reachable from specific local ip
-				for (InetAddress localIas : localIps) {
-					if (isReachable(localIas, stunServerIas)) {
-						reachableStunServers.add(new InetSocketAddress(stunServerIas, port));
-						log.info("Found reachable StunServer ["
-								+ stunServerIas.getHostAddress() 
-								+ "] from localIp ["
-								+ localIas.getHostAddress()
-								+ "]");
-						//synchronized (LocalStunInfo.class){
-							LocalStunInfo.this.stunServers.put(localIas, reachableStunServers);
-						//}
-					} else {
-						log.warn("StunServer unreachable ["
-								+ stunServerIas.getHostAddress() 
-								+ "] from localIp ["
-								+ localIas.getHostAddress()
-								+ "]");
+			// try if stun server is reachable from specific local ip
+			for (InetAddress localIas : localIps) {
+				if (isReachable(localIas, LocalStunInfo.this.getPingHost())){
+					for(String stunServer : rawStunServers){
+						String address = null;
+						int port = -1;
+						if(stunServer.split(":").length >= 2)
+						{
+							address = stunServer.split(":")[0];
+							port = Integer.parseInt(stunServer.split(":")[1]);
+						}
+						else
+						{
+							address = stunServer;
+							port = STUN_SERVER_DEFAULT_PORT;
+						}
+						InetAddress stunServerIas = null;
+						try{
+							stunServerIas = InetAddress.getByName(address);
+						} catch (UnknownHostException e){
+							log.warn("Unknown StunServer [" + address + "]",e);
+						}
+						if (stunServerIas == null)
+							continue;
+						
+					
+						if (isReachable(localIas, stunServerIas)) {
+							reachableStunServers.add(new InetSocketAddress(stunServerIas, port));
+							log.info("Found reachable StunServer ["
+									+ stunServerIas.getHostAddress() 
+									+ "] from localIp ["
+									+ localIas.getHostAddress()
+									+ "]");
+							//synchronized (LocalStunInfo.class){
+								LocalStunInfo.this.stunServers.put(localIas, reachableStunServers);
+							//}
+						} else {
+							log.warn("StunServer unreachable ["
+									+ stunServerIas.getHostAddress() 
+									+ "] from localIp ["
+									+ localIas.getHostAddress()
+									+ "]");
+						}
 					}
+				} else {
+					log.debug("Ip [" + localIas.getHostAddress() + "] can't reach internet");
+					continue;
 				}
 			}
 			StringBuffer sb = new StringBuffer();
@@ -160,7 +182,7 @@ public class LocalStunInfo
 		}
 		
 		public String getActivityName() {
-			return "StunServersFilteringThread";
+			return this.getName();
 		}
 
 		public Activity getParentActivity() {
@@ -171,6 +193,10 @@ public class LocalStunInfo
 	
 	private class StunInfoUpdateThread extends Thread implements Activity
 	{		
+		public StunInfoUpdateThread() {
+			this.setName(this.getClass().getName());
+		}
+		
 		public void run()
 		{
 			ActivityManager.getDefault().emitEvent(new ActivityEvent(this, ActivityEvent.Type.STARTED));
@@ -240,7 +266,7 @@ public class LocalStunInfo
 
 		public String getActivityName()
 		{
-			return "StunInfoUpdateThread";
+			return this.getName();
 		}
 
 		public Activity getParentActivity() {

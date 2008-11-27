@@ -646,9 +646,9 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		//listen for incoming packets
 		try{	
 			DatagramPacket receivePacket = new DatagramPacket(new byte[200], 200);
-			log.debug("STUN SERVER MAPPED ADDRESS REQUEST >>>>>");
+			//log.debug("STUN SERVER MAPPED ADDRESS REQUEST >>>>>");
 			soc.receive(receivePacket);
-			log.debug("STUN SERVER MAPPED ADDRESS REQUEST <<<<<");
+			//log.debug("STUN SERVER MAPPED ADDRESS REQUEST <<<<<");
 			receiveMh = MessageHeader.parseHeader(receivePacket.getData());
 		} catch (SocketTimeoutException e){
 			log.warn(getActivityName() 
