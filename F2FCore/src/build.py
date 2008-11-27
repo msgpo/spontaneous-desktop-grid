@@ -2,26 +2,30 @@
 # Automation script for the build process
 # Author ulno
 #
-# just call build.py build to build and build.py release to create a relase zip-archive
+# build.py [target]
+# - build to build and build.py 
+# - release to create a relase zip-archive
+# - srcrelease to create a spource release
+# - clean to clean
 
 
 import os, stat, glob
 from os.path import join
 import sys
 import shutil
+import re
 
 import killableprocess
 
 sconspath = "scons"
 zippath = "zip"
+builddir = join("..","build")
 pythonShell = sys.executable
 
 def build():
-    os.chdir("..")
-    builddir = "build"
     # make sure the build directory exists
-    if not stat.S_ISDIR(os.stat(builddir)[stat.ST_MODE]):
-        os.mkdir(builddir)
+    try: os.mkdir(builddir)
+    except OSError: pass
     os.chdir(builddir)
     killableprocess.call([sconspath,"-f", join("..","src","sconsbuild.py"),"debug=1"])
 
@@ -55,19 +59,47 @@ def release():
         shutil.copy(from_, to)
     print "Packing."
     killableprocess.call([zippath, "-r", "F2FComputing.zip", "F2FComputing"])
-    
+
+def srcrelease():
+    clean()
+    # pack all py, i, h, and c files
+    # make sure the build directory exists
+    try: os.mkdir(builddir)
+    except OSError: pass
+    os.chdir(builddir)
+    #os.walk("..","..","F2FHeadless")
+    srcbuildpath = "F2FComputingSrc" 
+    os.mkdir(srcbuildpath)
+    for (dirpath, dirnames,filenames) in os.walk(".."):
+        if not re.search(r"\.svn\b",dirpath):
+            print (dirpath, filenames)
+            destpath = join(srcbuildpath,dirpath)
+            if dirpath != "..": os.mkdir(destpath)
+            for file in filenames:
+                shutil.copy(join(dirpath,file), destpath)
+
+def clean():
+    print "Doing clean."
+    # just remove the build directory
+    shutils.rmtree( builddir )
+    os.mkdir(builddir)
+
 def run(target):
     if target == "build":
         build()
     elif target == "release":
         release()
+    elif target == "srcrelease":
+        srcrelease()
+    elif target == "clean":
+        clean()
     else: usage() 
 
 def main():
     def usage():
         print "%s: f2f build system. " % sys.argv[0]
         print "usage:"
-        print "%s [build|release]"   % sys.argv[0]
+        print "%s [build|release|srcrelease|clean]"   % sys.argv[0]
         print "            - Built f2fcore or build a release."
         print "              The build archive will end up in the build drectory."
         sys.exit(0)
