@@ -61,27 +61,48 @@ def release():
     killableprocess.call([zippath, "-r", "F2FComputing.zip", "F2FComputing"])
 
 def srcrelease():
-    clean()
     # pack all py, i, h, and c files
-    # make sure the build directory exists
-    try: os.mkdir(builddir)
-    except OSError: pass
-    os.chdir(builddir)
-    #os.walk("..","..","F2FHeadless")
-    srcbuildpath = "F2FComputingSrc" 
+    clean()
+    os.chdir("..")
+    srcbuildpath = join("build","F2FComputingSrc") 
+    dirlist = [(x,z) for (x,y,z) in os.walk(".")]
     os.mkdir(srcbuildpath)
-    for (dirpath, dirnames,filenames) in os.walk(".."):
+    for (dirpath,filenames) in dirlist:
         if not re.search(r"\.svn\b",dirpath):
-            print (dirpath, filenames)
-            destpath = join(srcbuildpath,dirpath)
-            if dirpath != "..": os.mkdir(destpath)
+            if(dirpath=="."):
+                destpath = join(srcbuildpath,"F2FCore")
+            else:
+                destpath = join(srcbuildpath,"F2FCore",dirpath)
+            print "Creating directory: %s"%destpath
+            os.mkdir(destpath)
             for file in filenames:
-                shutil.copy(join(dirpath,file), destpath)
+                if not re.search(r"\.pyc$",file):
+                    print "Copying: %s"%file
+                    shutil.copy(join(dirpath,file), destpath)
+    os.chdir(join("..","F2FHeadless"))
+    dirlist = [(x,z) for (x,y,z) in os.walk(".")]
+    srcbuildpath = join("..","F2FCore","build","F2FComputingSrc") 
+    for (dirpath,filenames) in dirlist:
+        if not re.search(r"\.svn\b",dirpath):
+            if(dirpath=="."):
+                destpath = join(srcbuildpath,"F2FHeadless")
+            else:
+                destpath = join(srcbuildpath,"F2FHeadless",dirpath)
+            print "Creating directory: %s"%destpath
+            os.mkdir(destpath)
+            for file in filenames:
+               if not re.search(r"\.pyc$",file):
+                   print "Copying: %s"%file
+                   shutil.copy(join(dirpath,file), destpath)
+    print "Packing."
+    os.chdir(join("..","F2FCore","build"))
+    killableprocess.call([zippath, "-r", "F2FComputingSrc.zip", "F2FComputingSrc"])
+   
 
 def clean():
     print "Doing clean."
     # just remove the build directory
-    shutils.rmtree( builddir )
+    shutil.rmtree( builddir )
     os.mkdir(builddir)
 
 def run(target):
