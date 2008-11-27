@@ -35,6 +35,8 @@ import f2fcore
 # seed the random from f2f-random generator
 # TODO: implement this
 
+localsendstack=[]
+
 class Peer:
     __id_cptr = None
     def __init__(self,cptr):
@@ -46,20 +48,29 @@ class Peer:
         return f2fcore.f2fPeerGetLocalPeerId(self.__id_cptr)
     def getGroups(self):
         return []
+    def getCPtr(self): # should be only used internal
+        return self.__id_cptr;
     def equals(self, otherpeer):
         return self.getUid() == otherpeer.getUid()
     # send data to this peer, block until sent
     def send(self, group, obj):
+        localsendstack.insert(0, (self, group, obj))
+        
+def sendOutSendStack():
+    error = f2fcore.F2FErrOK
+    while(len(localsendstack)>0):
+        (peer,group,obj) = localsendstack.pop()
         serialdata = pickle.dumps(obj, 1) # TODO: think if we could take HIGHEST_PROTOCOL
         while(1):
             error = f2fcore.f2fPeerSendRaw( group.getCPtr(), 
-                                        self.__id_cptr, 
+                                        peer.getCPtr(), 
                                         serialdata, 
                                         len(serialdata) )
             if error == f2fcore.F2FErrOK:
                 break
+            print "Trouble sending data."
             sleep(0.01)
-        return error
+    return error
 
 class Group:
     __id_cptr = None
@@ -98,11 +109,11 @@ def pushReceiveData( obj ):
 def receive():
     while len(receiveStack) == 0:
         sleep(0.01)
-    return stack.pop()
+    return receiveStack.pop()
 
 # release the content buffer
-def release():
-    f2fcore.f2fReceiveBufferRelease()
+#def release():
+#    f2fcore.f2fReceiveBufferRelease()
 
 def myPeer():
     from adapter import myPeer as adapterMyPeer # avoid cyclic imports

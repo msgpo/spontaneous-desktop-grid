@@ -35,6 +35,8 @@ import sys
 import os
 from threading import Thread, Lock
 
+import pickle
+
 # Add path for jabber module
 sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], ".." )))
@@ -54,6 +56,7 @@ sys.path.insert(1, os.path.realpath(
 sys.path.insert(1, os.path.realpath(
             os.path.join( sys.path[0], "..", "..", "..","F2FCore","build","libf2fcore" )))
 
+from f2f import Group, Peer
 import f2f
 import f2f.adapter
 import f2fcore
@@ -70,7 +73,7 @@ messageStack=[]
 MaxMessageStackSize=1024
 def receiveMessageCB(con, msg):
     if msg.getBody(): # If message not empty
-        #print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
+        print "Receiving:",msg.getBody(),"Len:",len(msg.getBody())
         if len(messageStack) > MaxMessageStackSize: # Don't let stack grow too big
             messageStack.pop() # forget one message
         messageStack.append(msg)
@@ -143,7 +146,7 @@ def sendMessage(localpeerid,messagetxt):
     destcontact = friendlist[localpeerid]
     msg = jabber.Message(destcontact, messagetxt)
     msg.setType('chat')
-    #print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
+    print "Sending:", msg.getBody(), "Len:", len(msg.getBody())
     con.send(msg)
 
 def runjob(group,peer,job):
@@ -163,40 +166,41 @@ def sendOutSendIMBuffer(messagePtr):
         if( nextpeer < 0 ): break
         sendMessage( nextpeer, f2fcore.f2fMessageGetContent(messagePtr,MAXMessageSize) )
 
-def evaluateReceiveBuffer():
+def evaluateF2FCoreMessages():
     while( f2fcore.f2fMessageAvailable()): # There can be several messages
         messagePtr = f2fcore.f2fReceiveMessage()
         if messagePtr:
             if f2fcore.f2fMessageIsForward( messagePtr ): # forward message
                 sendOutSendIMBuffer( messagePtr )
-            if(f2fcore.f2fMessageIsRaw( messagePtr )):
-                content = f2fcore.f2fMessageGetContent(MAXMessageSize)
+                f2fcore.f2fMessageRelease( messagePtr )
+            elif(f2fcore.f2fMessageIsRaw( messagePtr )):
+                content = f2fcore.f2fMessageGetContent( messagePtr, MAXMessageSize)
                 try:
                     obj = pickle.loads(content)
-                    answer = (Group(f2fcore.f2fReceiveBufferGetGroup( messagePtr ), "unknown"),
-                              Peer(f2fcore.f2fReceiveBufferGetSourcePeer( messagePtr )),
+                    answer = (Group(f2fcore.f2fMessageGetGroup( messagePtr ), "unknown"),
+                              Peer(f2fcore.f2fMessageGetSourcePeer( messagePtr )),
                               obj)
                     f2f.pushReceiveData( answer )
                 except (pickle.PicklingError, IndexError, KeyError):
-                    print "Problem unpickling." # TODO: find better solution
+                    print "Problem unpickling: %s"%repr(content) # TODO: find better solution
                 f2fcore.f2fMessageRelease( messagePtr )
-            if f2fcore.f2fMessageIsText(messagePtr):
+            elif f2fcore.f2fMessageIsText(messagePtr):
                 print "Buffer is text. Content:", \
                     f2fcore.f2fMessageGetContent(MAXMessageSize)
                 f2fcore.f2fMessageRelease( messagePtr )
-            if f2fcore.f2fMessageIsJob(messagePtr):
+            elif f2fcore.f2fMessageIsJob(messagePtr):
                 myGroup = f2f.Group(f2fcore.f2fMessageGetGroup( messagePtr ),"unknown") # TODO: make sure it is not unknown
                 myInitiator = f2f.Peer(f2fcore.f2fMessageGetSourcePeer( messagePtr ) )
-                job = f2fcore.f2fReceiveJob(MAXMessageSize).strip() + "\n"  # make sure it ends with a new line and no blanks
+                job = f2fcore.f2fMessageGetJob(messagePtr, MAXMessageSize).strip() + "\n"  # make sure it ends with a new line and no blanks
+                f2fcore.f2fMessageRelease( messagePtr ) # release before starting to avoid double starts
                 # TODO: make sure to execute only one
+                print "Starting job***************"
                 #print "Job:",job,":Jobend"
                 jobcompiled = compile( job, '<f2f job>', 'exec')
                 #jobcompiled = job
                 jobslavethread = Thread(target=runjob,args=(myGroup,myInitiator,jobcompiled))
-                print "Starting job***************"
                 #exec(jobcompiled)
                 jobslavethread.start()
-                f2fcore.f2fMessageRelease( messagePtr )
 
 def f2fHeadless(servername, username, password, resource, connectport, friendlistlocal, groupname, jobarchive):
     #con = jabber.Client(host=servername,debug=jabber.DBG_ALWAYS ,log=sys.stderr)
@@ -214,7 +218,7 @@ def f2fHeadless(servername, username, password, resource, connectport, friendlis
     else:
         print "Connected"
 
-    # Register fCallbacks for jabber            
+    # Register callbacks for jabber            
     con.registerHandler('message',receiveMessageCB)
     #con.registerHandler('presence',presenceCB)
     #con.registerHandler('iq',iqCB)
@@ -232,13 +236,14 @@ def f2fHeadless(servername, username, password, resource, connectport, friendlis
     # Initialize f2f
     mypeer = f2f.adapter.init(username + '@' + servername + '/' + resource, "")
     
+    # if this is the initiator
     if( groupname ): # a job shall be submitted
         mygroup = f2f.adapter.createGroup( groupname, jobarchive )
         # Invite all the friends to this group
         for index in range(len(friendlist)):
             mygroup.invitePeer( index, friendlist[index], "headless invite", "" )
             # check sendIMBuffer (to send away the created invitemessage)
-            evaluateReceiveBuffer()
+            evaluateF2FCoreMessages()
         # Start the job
         mygroup.submitJob()
         ## Start the master
@@ -259,7 +264,8 @@ def f2fHeadless(servername, username, password, resource, connectport, friendlis
     while(not jobterminated ):
         con.process(0.01) # Process IM messages
         evaluateReceivedIMMessages() # Process messages received from IM
-        evaluateReceiveBuffer() # Process messages received from f2fcore
+        evaluateF2FCoreMessages() # Process messages received from f2fcore
+        f2f.sendOutSendStack() # Process the local message send stack
         f2fcore.f2fTicketRequestGrant() # For a start grant all, TODO: secure this!
         newtime = time()
         if newtime-oldtime > 10:

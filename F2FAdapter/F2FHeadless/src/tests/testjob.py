@@ -41,9 +41,8 @@ def master():
                     resultpointcount += points
                     resulthitcount += hits
                     showresult()
-                    f2f.release()
-        else:
-            f2f.release()
+                elif data == "terminate":
+                    terminate = True
     # Send terminate to all clients
     terminate = True # also inform local slave
     for peer in f2fGroup.getPeers():
@@ -53,14 +52,13 @@ def master():
     print "Master: This took %s seconds"%(time()-starttime)
 
 #### Slave specific
-# wait until term-signal is sent
+# wait until term-signal is sent, started only in slave
 def waitterminate():
     global terminate
     while(not terminate):
         (grp,src,data) = f2f.receive()
         if grp.equals(f2fGroup) and src.equals(f2fInitiator) and data == "terminate":
             terminate = True
-            f2f.release()
         sleep(0.01)
 
 def findpoints():

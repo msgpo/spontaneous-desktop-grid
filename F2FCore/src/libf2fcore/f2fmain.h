@@ -89,7 +89,7 @@ F2FWord32 f2fGroupGetUIDHi(const F2FGroup * group);
 F2FWord32 f2fGroupGetUIDLo(const F2FGroup * group);
 
 /* Send a text message to all group members */
-F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
+F2FError f2fGroupSendText( F2FGroup *group, const F2FString message );
 
 /** Send data to a peer in this group */
 /* TODO: think if this is obsolet
@@ -111,11 +111,11 @@ F2FSize f2fPeerListGetSize();
 F2FPeer * f2fPeerListGetPeer( F2FWord32 peerindex );
 
 /** Fill send buffer with data for all group members */
-F2FError f2fGroupSendData( const F2FGroup *group, 
+F2FError f2fGroupSendData( F2FGroup *group, 
 		const char * message, F2FSize len );
 
 /** Fill send buffer with a text message for all group members */
-F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
+F2FError f2fGroupSendText( F2FGroup *group, const F2FString message );
 
 /** Send data to specific peer in a group */
 F2FError f2fPeerSendData( F2FGroup *group, F2FPeer *peer,
@@ -127,10 +127,10 @@ F2FError f2fPeerSendRaw( F2FGroup *group, F2FPeer *peer,
 		const char *data, const F2FWord32 dataLen );
 
 /** test, if data in buffer has been sent */
-int f2fSentBufferEmpty();
+int f2fTestSentBufferEmpty();
 
 /** empty, send buffer for data, even if it has not been sent */
-F2FError f2fEmptySentBuffer();
+F2FError f2fSetSentBufferEmpty();
 
 /** submit a job to a f2f group
  * This will first ask for allowance tickets from 

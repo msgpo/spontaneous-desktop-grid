@@ -112,7 +112,7 @@ static inline int f2fSizeValid( const F2FSize size )
 { return size >= 0; }
 
 /* Send a text message to all group members */
-F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
+F2FError f2fGroupSendText( F2FGroup *group, const F2FString message );
 
 /** tries to receive a message. If succesful, this gives a pointer to a receive-message.
  * If not, the returned messagepointer will be NULL and F2FErrNothingAvail will be in F2FError.
@@ -189,10 +189,10 @@ F2FSize f2fPeerListGetSize();
 F2FPeer * f2fPeerListGetPeer( F2FWord32 peerindex );
 
 /** Fill send buffer with data for all group members */
-F2FError f2fGroupSendData( const F2FGroup *group, 
+F2FError f2fGroupSendData( F2FGroup *group, 
 		const char * message, F2FSize len );
 /** Fill send buffer with a text message for all group members */
-F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message );
+F2FError f2fGroupSendText( F2FGroup *group, const F2FString message );
 
 /** Send data to specific peer in a group */
 /*F2FError f2fPeerSendData( F2FGroup *group, F2FPeer *peer,

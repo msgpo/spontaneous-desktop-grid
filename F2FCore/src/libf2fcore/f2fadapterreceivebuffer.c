@@ -62,6 +62,8 @@ F2FAdapterReceiveMessage * f2fAdapterReceiveBufferReserve( void )
 /** release a specific buffer slot */
 F2FError f2fAdapterReceiveBufferRelease( F2FAdapterReceiveMessage *msg )
 {
+	if(buffersize < 0) return F2FErrListEmpty;
+	
 	size_t position = ((char *)msg - (char *) buffer) / sizeof(BufferSlot);
 	
 	if (&(buffer[position].msg) != msg)

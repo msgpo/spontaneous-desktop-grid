@@ -44,6 +44,10 @@
 #include "f2fticketrequest.h"
 #include "f2fadapterreceivebuffer.h"
 
+/** show that the buffer has been read and can be filled again */
+F2FError f2fMessageRelease( F2FAdapterReceiveMessage *msg )
+{ return f2fAdapterReceiveBufferRelease( msg ); }
+
 /** return the next peer id of the buffer where data has to be sent and
  * decrease list
  * return -1 if there is nothing to send */
@@ -145,14 +149,11 @@ void f2fMessageGetJob(F2FAdapterReceiveMessage *msg, char *content, int *maxlen 
 		*maxlen = 0;
 		return;
 	}
-	F2FMessageJob *jobmsg = (F2FMessageJob *) msg->buffer;
-	F2FSize jobsize = ntohl(jobmsg->size);
+	//F2FMessageJob *jobmsg = (F2FMessageJob *) msg->buffer;
+	//F2FSize jobsize = ntohl(jobmsg->size);
+	F2FSize jobsize = msg->buffersize;
 	if (*maxlen > jobsize) *maxlen = jobsize;
-	memcpy(content, msg->buffer + sizeof(F2FMessageJob),*maxlen);
+	memcpy(content, msg->buffer/* + sizeof(F2FMessageJob)*/, *maxlen);
 	/* TODO: adapt to longer jobs */
 }
-
-/** show that the buffer has been read and can be filled again */
-F2FError f2fMessageRelease( F2FAdapterReceiveMessage *msg )
-{ return f2fAdapterReceiveBufferRelease( msg ); }
 

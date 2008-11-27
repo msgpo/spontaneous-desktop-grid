@@ -78,7 +78,7 @@ static F2FError prepareBufferWithData( char * buffer,
 		F2FMessageType type,
 		const char * data, F2FSize len);
 static F2FError parseBuffer(F2FPeer *srcPeer, F2FPeer *dstPeer, F2FGroup *group, 
-		F2FMessageType type, char * buffer, F2FSize buffersize );
+		F2FMessageType type, const char * buffer, F2FSize buffersize );
 
 /** Do the initialization - especially create a random seed and get your own PeerID
  * Must be called first.
@@ -179,25 +179,25 @@ static F2FError encodeIMMessage( const char * message,
 	return F2FErrOK;
 }
 
-/** prepare message to send an IM message to one locally known peer */
-/* TODO: unused???!!! */
-static F2FAdapterReceiveMessage * f2fIMSend( const F2FWord32 localpeerid, const F2FString message,
-		const F2FSize size )
-{
-	F2FError error;
-
-	// Get free buffer
-	F2FAdapterReceiveMessage * freebuffer = f2fAdapterReceiveBufferReserve();
-	if( freebuffer == NULL ) // not space left
-	{
-		return NULL;
-	}
-	freebuffer->buffertype = F2FAdapterReceiveMessageTypeIMForward;
-	error = encodeIMMessage( message, size, freebuffer );
-	freebuffer->localPeerIDlist[ 0 ] = localpeerid;
-	freebuffer->peercount = 1;
-	return freebuffer;
-}
+///** prepare message to send an IM message to one locally known peer */
+///* TODO: unused???!!! */
+//static F2FAdapterReceiveMessage * f2fIMSend( const F2FWord32 localpeerid, const F2FString message,
+//		const F2FSize size )
+//{
+//	F2FError error;
+//
+//	// Get free buffer
+//	F2FAdapterReceiveMessage * freebuffer = f2fAdapterReceiveBufferReserve();
+//	if( freebuffer == NULL ) // not space left
+//	{
+//		return NULL;
+//	}
+//	freebuffer->buffertype = F2FAdapterReceiveMessageTypeIMForward;
+//	error = encodeIMMessage( message, size, freebuffer );
+//	freebuffer->localPeerIDlist[ 0 ] = localpeerid;
+//	freebuffer->peercount = 1;
+//	return freebuffer;
+//}
 
 /** Add a local peer to the sendIMBuffer */
 /* TODO: unused???!!! */
@@ -297,7 +297,8 @@ F2FAdapterReceiveMessage * f2fReceiveMessage()
 }
 
  /* !!! proceed here */
-static F2FError fillAdapterReceiveBuffer( F2FWord32 grouphi, F2FWord32 grouplo,
+static F2FError fillAdapterReceiveBuffer( F2FAdapterReceiveMessageType buffertype,
+		F2FWord32 grouphi, F2FWord32 grouplo,
 		F2FWord32 srchi, F2FWord32 srclo,
 		F2FWord32 desthi, F2FWord32 destlo,
 		F2FMessageType type, const char *buf, F2FSize size )
@@ -312,20 +313,20 @@ static F2FError fillAdapterReceiveBuffer( F2FWord32 grouphi, F2FWord32 grouplo,
 	if(!group) return F2FErrNotFound;
 	src = f2fPeerListFindPeer(srchi, srclo);
 	/* if(!src) return F2FErrNotFound;might be zero, if invitemessage answer */
-	/*if(desthi == 0 && destlo == 0)
+	if(desthi == 0 && destlo == 0)
 	{ // If both 0 then don't route just assume message is to me
-		dst = myself; Should not happen 
+		dst = myself; 
 	}
-	else
-	{ obsolet now, message should never be for myself, should be parsed then directly */
-		dst = f2fPeerListFindPeer(desthi, destlo);
-		if(dst != myself)
-		{
-			printf("Found a package to route - not supported, package discarded.\n");
-			return F2FErrOK; // Routing not supported at the moment
-		}
-		// TODO: Consider, what has to be done for routing
-	/*}*/
+	//else
+	//{ 
+	//	dst = f2fPeerListFindPeer(desthi, destlo);
+	//	if(dst != myself)
+	//	{
+	//		printf("Found a package to route - not supported, package discarded.\n");
+	//		return F2FErrOK; // Routing not supported at the moment
+	//	}
+	//	// TODO: Consider, what has to be done for routing
+	//}
 	if(!dst) return F2FErrNotFound;
 	// Acquire a new ReceiveBuffer
 	F2FAdapterReceiveMessage * newbuffer = f2fAdapterReceiveBufferReserve();
@@ -334,6 +335,7 @@ static F2FError fillAdapterReceiveBuffer( F2FWord32 grouphi, F2FWord32 grouplo,
 	newbuffer->group = group;
 	newbuffer->sourcePeer = src;
 	newbuffer->destPeer = dst;
+	newbuffer->buffertype = buffertype;
 	newbuffer->messagetype = type;
 	memcpy( newbuffer->buffer, buf, size );
 	newbuffer->buffersize = size;
@@ -384,7 +386,7 @@ static F2FError f2fSend(F2FPeer * srcPeer, F2FPeer * dstPeer, F2FGroup * group)
 		}
 		sendBuffer.peercount --;
 	}
-	f2fSentBufferEmpty(); /* Release the SentBuffer again */
+	// should be done automatically f2fSetSentBufferEmpty(); /* Release the SentBuffer again */
 	return F2FErrOK;
 }
 
@@ -425,7 +427,7 @@ static F2FError processInviteMessageAnswer(
 		return F2FErrNotAuthenticated;
 	if( f2fPeerFindGroupIndex( waitingPeer, group ) < 0 )
 		return F2FErrNotAuthenticated;
-	if(! f2fSentBufferEmpty() ) /* as joining has to be announced, check send buffer */
+	if(! f2fTestSentBufferEmpty() ) /* as joining has to be announced, check send buffer */
 		return F2FErrBufferFull;
 	F2FAdapterReceiveMessage * freebuffer =  f2fAdapterReceiveBufferReserve();
 	if( freebuffer == NULL )
@@ -439,15 +441,15 @@ static F2FError processInviteMessageAnswer(
 	
 	/* Send updates to the remaining peers, that there is a new group member */
 	F2FMessageAnnounceNewPeerInGroup announcemsg;
-	announcemsg.newpeer.lo = waitingPeer->id.lo;
-	announcemsg.newpeer.hi = waitingPeer->id.hi;
+	announcemsg.newpeer.lo = htonl(waitingPeer->id.lo);
+	announcemsg.newpeer.hi = htonl(waitingPeer->id.hi);
 	int peerindex;
 	for( peerindex = 0; peerindex < group->listSize; peerindex ++)
 	{
 		F2FPeer *peer = group->sortedPeerList[peerindex].peer;
 		if( peer->status == F2FPeerActive ) // Make sure, peer is active
 		{
-			if ( peer != myself	&& peer != srcPeer ) /* Don't send to sender and myself */
+			if ( peer != myself	&& peer != waitingPeer ) /* Don't send to sender and myself */
 			{
 				if ( peer->activeprovider == F2FProviderIM  )
 				{
@@ -466,6 +468,7 @@ static F2FError processInviteMessageAnswer(
 	{
 		error = encodeIMMessage( sendBuffer.buffer, sendBuffer.size, freebuffer );
 		if (error != F2FErrOK ) return error;
+		freebuffer ->buffertype = F2FAdapterReceiveMessageTypeIMForward;
 	}
 	else f2fAdapterReceiveBufferRelease( freebuffer );
 	
@@ -589,7 +592,10 @@ static F2FError processJob(
 	if( ntohl(msg->ticket.hi) ==  grouppeer->receiveTicket.hi
 			&& ntohl(msg->ticket.lo) ==  grouppeer->receiveTicket.lo )
 	{
-		return F2FErrOK;
+		return fillAdapterReceiveBuffer(F2FAdapterReceiveMessageTypeData, 
+				group->id.hi, group->id.lo, srcPeer->id.hi, srcPeer->id.lo, 
+				dstPeer->id.hi, dstPeer->id.lo, F2FMessageTypeJob, 
+				((char *) msg )+ sizeof(F2FMessageJob), size );
 	}
 	else
 	{
@@ -599,7 +605,7 @@ static F2FError processJob(
 
 /** parse messages (internal or IM messages), they are already decoded */
 static F2FError parseBuffer(F2FPeer *srcPeer, F2FPeer *dstPeer, F2FGroup *group, 
-		F2FMessageType type, char * buffer, F2FSize buffersize )
+		F2FMessageType type, const char * buffer, F2FSize buffersize )
 {
 	F2FError error;
 
@@ -642,7 +648,12 @@ static F2FError parseBuffer(F2FPeer *srcPeer, F2FPeer *dstPeer, F2FGroup *group,
 		receiveBuffer.sourcePeer = srcPeer;
 		receiveBuffer.destPeer = dstPeer;
 		receiveBuffer.filled = 1; */
-		return F2FErrNotParsed;
+		fillAdapterReceiveBuffer(F2FAdapterReceiveMessageTypeData, 
+				group->id.hi, group->id.lo, srcPeer->id.hi, srcPeer->id.lo, 
+				dstPeer->id.hi, dstPeer->id.lo, type, 
+				mesExt, mesExtLen );
+		// they are parsed now return F2FErrNotParsed;
+		return F2FErrOK;
 		break;
 	case F2FMessageTypeText:
 		/* allready in there
@@ -655,7 +666,12 @@ static F2FError parseBuffer(F2FPeer *srcPeer, F2FPeer *dstPeer, F2FGroup *group,
 		receiveBuffer.sourcePeer = srcPeer;
 		receiveBuffer.destPeer = dstPeer;
 		receiveBuffer.filled = 1; */
-		return F2FErrNotParsed;
+		fillAdapterReceiveBuffer(F2FAdapterReceiveMessageTypeData, 
+				group->id.hi, group->id.lo, srcPeer->id.hi, srcPeer->id.lo, 
+				dstPeer->id.hi, dstPeer->id.lo, type, 
+				mesExt, mesExtLen );
+		// they are parsed now return F2FErrNotParsed;
+		return F2FErrOK;
 		break;
 	case F2FMessageTypeGetJobTicket:
 		error = processGetJobTicket(
@@ -674,6 +690,14 @@ static F2FError parseBuffer(F2FPeer *srcPeer, F2FPeer *dstPeer, F2FGroup *group,
 					group, srcPeer, dstPeer,
 					(F2FMessageJob *) mesExt);
 		if( error != F2FErrOK ) return error;
+		// they are parsed now else return F2FErrNotParsed;
+		return F2FErrOK;
+		break;
+	case F2FMessageTypeAnnounceNewPeerInGroup:
+		/*error = processAnnounceNewPeerInGroup(
+					group, srcPeer, dstPeer,
+					(F2FMessageAnnounceNewPeerInGroup *) mesExt);
+		if( error != F2FErrOK ) return error;*/
 		break;
 	default:
 		return F2FErrMessageTypeUnknown;
@@ -750,6 +774,29 @@ F2FError f2fForward( const F2FWord32 localPeerId,
 		}
 		/* TODO: is the else branch here important for security? */
 	}
+	else if (hdr->messagetype == F2FMessageTypeAnnounceNewPeerInGroup )
+	{
+		if( dstPeer == NULL ) // TODO: Here should be more security
+		{
+			dstPeer = myself;
+		}
+		if( srcPeer == NULL) // need to know this as I trust this one
+		{
+			return F2FErrNotAuthenticated;
+		}
+		// TODO: move the rest to parseBuffer
+		F2FMessageAnnounceNewPeerInGroup * msgannounce =
+			(F2FMessageAnnounceNewPeerInGroup *) (tmpbuffer + sizeof (F2FMessageHeader));
+		
+		F2FPeer * newPeer = f2fPeerListNew( ntohl(msgannounce->newpeer.hi),
+				ntohl(msgannounce->newpeer.lo) );
+		if( newPeer == NULL ) return F2FErrListFull;
+		newPeer->localPeerId = srcPeer->localPeerId;
+		newPeer->activeprovider = srcPeer->activeprovider; // Only IM at this time
+		strncpy( srcPeer->identifier, "unknown", F2FMaxNameLength );
+		error = f2fGroupAddPeer(group, newPeer);
+		if(error != F2FErrOK) return error;
+	}
 	if( group == NULL ) return F2FErrNotFound;
 	/*if( srcPeer == NULL ) return F2FErrNotFound; can be NULL if InviteMessageAnswer */
 	if( dstPeer == NULL ) return F2FErrNotFound;
@@ -759,7 +806,7 @@ F2FError f2fForward( const F2FWord32 localPeerId,
 				hdr->messagetype, tmpbuffer + sizeof(F2FMessageHeader), ntohl(hdr->len) );
 	// Message is not for myself, so send it either internally or give it back to send via IM
 	if( dstPeer->activeprovider == F2FProviderIM )
-		return fillAdapterReceiveBuffer(
+		return fillAdapterReceiveBuffer( F2FAdapterReceiveMessageTypeIMForward,
 			group->id.hi, group->id.lo,
 			ntohl(hdr->sourcePeerID.hi), ntohl(hdr->sourcePeerID.lo),
 			dstPeer->id.hi, dstPeer->id.lo,
@@ -808,12 +855,12 @@ static F2FError prepareBufferWithData( char * buffer,
 }
 
 /** Fill send buffer with data for all group members */
-static F2FError groupSend( const F2FGroup *group,
+static F2FError groupSend( F2FGroup *group,
 		F2FMessageType type,
 		const char * message, F2FSize len)
 {
 	/* Check if send-buffers are empty */
-	if(! f2fSentBufferEmpty())
+	if(! f2fTestSentBufferEmpty())
 		return F2FErrBufferFull;
 	/* fill the lists of peers to send data to */
 	/* go through all peers in this group and add these to the
@@ -829,7 +876,7 @@ static F2FError groupSend( const F2FGroup *group,
 	for( peerindex = 0; peerindex < group->listSize; peerindex ++)
 	{
 		F2FPeer *peer = group->sortedPeerList[peerindex].peer;
-		if( peer->status == F2FPeerActive ) // Make sure, peer is active
+		if( peer != myself && peer->status == F2FPeerActive ) // Make sure, peer is active and not myself
 		{
 			if ( peer->activeprovider == F2FProviderIM )
 				freebuffer->localPeerIDlist[freebuffer->peercount++] =
@@ -845,10 +892,14 @@ static F2FError groupSend( const F2FGroup *group,
 	if( freebuffer->peercount > 0 )
 	{
 		error = encodeIMMessage( sendBuffer.buffer, sendBuffer.size, freebuffer );
+		if (error != F2FErrOK ) return error;
 		freebuffer->buffertype = F2FAdapterReceiveMessageTypeIMForward;
 	}
 	else f2fAdapterReceiveBufferRelease( freebuffer ); /* Was not necessary */
-	return error;
+	error = f2fSend(myself, NULL, group); /* send it out */
+	if (error != F2FErrOK ) return error;
+	// Send the message to myself
+	return parseBuffer(myself,myself,group,type,message,len);
 }
 
 /** Send data to specific peer in a group */
@@ -856,7 +907,11 @@ F2FError f2fPeerSendData( F2FGroup *group, F2FPeer *peer,
 		F2FMessageType type,
 		const char *data, const F2FWord32 dataLen )
 {
-	if(! f2fSentBufferEmpty())
+	if( peer == myself)
+	{
+		return parseBuffer(myself,myself,group,type,data,dataLen);
+	}
+	if(! f2fTestSentBufferEmpty())
 		return F2FErrBufferFull;
 	/* TODO: make sure, bigger blocks can be sent !!! */
 	F2FError error = prepareBufferWithData( sendBuffer.buffer, group, peer, type, data, dataLen );
@@ -873,6 +928,7 @@ F2FError f2fPeerSendData( F2FGroup *group, F2FPeer *peer,
 		if ( error!= F2FErrOK ) return error;
 		freebuffer->localPeerIDlist[0] = peer->localPeerId;
 		freebuffer->peercount = 1;
+		freebuffer->buffertype = F2FAdapterReceiveMessageTypeIMForward;
 	}
 	else
 	{
@@ -891,27 +947,27 @@ F2FError f2fPeerSendRaw( F2FGroup *group, F2FPeer *peer,
 }
 
 /** Fill send buffer with data for all group members */
-F2FError f2fGroupSendData( const F2FGroup *group,
+F2FError f2fGroupSendData( F2FGroup *group,
 		const char * message, F2FSize len )
 {
 	return groupSend( group, F2FMessageTypeRaw, message, len );
 }
 
 /** Fill send buffer with a text message for all group members */
-F2FError f2fGroupSendText( const F2FGroup *group, const F2FString message )
+F2FError f2fGroupSendText( F2FGroup *group, const F2FString message )
 {
 	F2FSize len = strnlen( message, F2FMaxMessageSize );
 	return groupSend( group, F2FMessageTypeText, message, len );
 }
 
 /** test, if data in buffer has been sent (Buffers are empty) */
-int f2fSentBufferEmpty( )
+int f2fTestSentBufferEmpty( )
 {
 	return sendBuffer.peercount == 0;
 }
 
 /** empty, send buffers for data, even if it has not been sent */
-F2FError f2fEmptySentBuffer()
+F2FError f2fSetSentBufferEmpty()
 {
 	/* TODO: maybe return F2FErrBufferFull if buffer not empty before? */
 	sendBuffer.peercount = 0;
