@@ -13,6 +13,7 @@ import shutil
 import killableprocess
 
 sconspath = "scons"
+zippath = "zip"
 pythonShell = sys.executable
 
 def build():
@@ -53,7 +54,7 @@ def release():
         print "Copying %s to %s."%(from_, to)
         shutil.copy(from_, to)
     print "Packing."
-    killableprocess.call(["zip", "-r", "F2FComputing.zip", "F2FComputing"])
+    killableprocess.call([zippath, "-r", "F2FComputing.zip", "F2FComputing"])
     
 def run(target):
     if target == "build":
