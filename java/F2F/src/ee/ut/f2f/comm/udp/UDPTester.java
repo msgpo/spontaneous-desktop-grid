@@ -79,7 +79,8 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		return this.status = status;
 	}
 	
-	public void sendUDPTestMessage(UDPTestMessage udpTestMessage) throws CommunicationFailedException{
+	public void sendUDPTestMessage(UDPTestMessage udpTestMessage) 
+	throws CommunicationFailedException{
 		remotePeer.sendMessage(udpTestMessage);
 	}
 	
@@ -116,6 +117,11 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
                 if (msg.mappedAddress == null) return;
 				this.remoteMappedAddress = msg.mappedAddress;
 				this.remotePortMappingRule = msg.portMappingRule;
+				//setStatus(Status.GOT_MAPPED_ADDRESS);
+			}
+			else if (msg.type == UDPTestMessage.Type.MAPPED_ADDRESS_RECEIVED &&
+					 this.remoteMappedAddress != null &&
+					 this.remotePortMappingRule != null ) {
 				setStatus(Status.GOT_MAPPED_ADDRESS);
 			}
             else
@@ -130,10 +136,12 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
             {
 				setStatus(Status.CONNECTION_ESTABLISHED);
 			}
+			/*
             else if (msg.type == UDPTestMessage.Type.MAPPED_ADDRESS)
             {
 				this.remoteMappedAddress = msg.mappedAddress;
 			}
+			*/
             else
             {
 				log.warn(" " + getName() 
@@ -979,7 +987,12 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){
 			try{
                 sendUDPTestMessage(new UDPTestMessage(localMappedAddress, localPortMappingRule));
-				if (remoteMappedAddress != null) return;
+				if (remoteMappedAddress != null && 
+						this.status == Status.GOT_STUN_INFO) {
+					sendUDPTestMessage(new UDPTestMessage(
+							UDPTestMessage.Type.MAPPED_ADDRESS_RECEIVED));
+				} else if (remoteMappedAddress != null && 
+						this.status == Status.GOT_MAPPED_ADDRESS) return;
 				Thread.sleep(1000);
 			} catch (InterruptedException e) {}
 		}
@@ -1001,7 +1014,9 @@ class UDPTestMessage implements Serializable
 	{
 		INIT,
 		STUN_INFO,
+		STUN_INFO_RECEIVED,
 		MAPPED_ADDRESS,
+		MAPPED_ADDRESS_RECEIVED,
 		//CONNECTION_ID,
 		RECEIVED_PING
 	}
