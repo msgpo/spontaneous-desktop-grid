@@ -117,13 +117,15 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
                 if (msg.mappedAddress == null) return;
 				this.remoteMappedAddress = msg.mappedAddress;
 				this.remotePortMappingRule = msg.portMappingRule;
-				//setStatus(Status.GOT_MAPPED_ADDRESS);
+				setStatus(Status.GOT_MAPPED_ADDRESS);
 			}
+			/*
 			else if (msg.type == UDPTestMessage.Type.MAPPED_ADDRESS_RECEIVED &&
 					 this.remoteMappedAddress != null &&
 					 this.remotePortMappingRule != null ) {
 				setStatus(Status.GOT_MAPPED_ADDRESS);
 			}
+			*/
             else
             {
 				log.warn("Illegal message type at this moment [" + msg.type + "]"
@@ -984,6 +986,37 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 				ActivityEvent.Type.CHANGED,
 				"Mapped Address Exchange"));
 		//exchange mapped addresses
+		sendUDPTestMessage(new UDPTestMessage(localMappedAddress, localPortMappingRule));
+		// wait at most 30 seconds for remote addresses
+		for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++)
+		{
+			if (status == Status.GOT_MAPPED_ADDRESS) break;
+			try
+			{
+				Thread.sleep(500);
+			}
+			catch (InterruptedException e) {}
+		}
+		if (status != Status.GOT_MAPPED_ADDRESS)
+		{
+			log.error("Timeout while waiting mapped address");
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "Timeout while waiting mapped address"));
+			return;
+		}
+		if (remoteMappedAddress == null)
+		{
+			log.error("remoteMappedAddress == null" );
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "remoteMappedAddress == null"));
+			return;
+		}
+		if (remotePortMappingRule == null)
+		{
+			log.error("remotePortMappingRule == null" );
+			ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.FAILED, "remotePortMappingRule == null"));
+			return;
+		}
+		
+		/*
 		for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){
 			try{
                 sendUDPTestMessage(new UDPTestMessage(localMappedAddress, localPortMappingRule));
@@ -1003,6 +1036,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 					"Timeout while waiting mapped address"));
 			return;
 		}
+		*/
 	}
 }
 
@@ -1014,9 +1048,9 @@ class UDPTestMessage implements Serializable
 	{
 		INIT,
 		STUN_INFO,
-		STUN_INFO_RECEIVED,
+		//STUN_INFO_RECEIVED,
 		MAPPED_ADDRESS,
-		MAPPED_ADDRESS_RECEIVED,
+		//MAPPED_ADDRESS_RECEIVED,
 		//CONNECTION_ID,
 		RECEIVED_PING
 	}
