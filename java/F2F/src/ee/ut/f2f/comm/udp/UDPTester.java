@@ -1093,7 +1093,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			if (udpTestMessage == null) throw new NullPointerException("udpTestMessage == null");
 			if (isBlocking){
 				synchronized (udpTestMessage) {
-					this.setReceivedMessage(udpTestMessage);
+					this.udpTestMessage = udpTestMessage;
 				}
 				this.notify();
 			} else {
