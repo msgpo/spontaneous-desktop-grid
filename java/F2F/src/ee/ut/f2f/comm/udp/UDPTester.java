@@ -1077,29 +1077,26 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	
 	private class BlockingReceiveQueue {
 		
-		private boolean valueSet = false;
+		private boolean isBlocking = false;
 		private UDPTestMessage udpTestMessage = null;
 		
 		public synchronized UDPTestMessage getUDPTestMessage() 
 								throws ReceiveQueueException{
-			if (!valueSet){
+			if (!isBlocking){
+				isBlocking = true;
 				try {
 					wait();
 				} catch (InterruptedException e){}
-				valueSet = false;
-				notify();
+				UDPTestMessage udpTestMessage = this.udpTestMessage;
+				isBlocking = false;
 				return udpTestMessage;
 			} else throw new ReceiveQueueException("Queue blocked, awaiting messages ...");
 		}
 		
 		public synchronized void setUDPTestMessage(UDPTestMessage udpTestMessage) 
 										throws ReceiveQueueException{
-			if (valueSet){
-				try{
-					wait();
-				} catch (InterruptedException e) {}
+			if (isBlocking){
 				this.udpTestMessage = udpTestMessage;
-				valueSet = true;
 				notify();
 			} else throw new ReceiveQueueException("Queue unblocked, awaiting no messages ...");
 		}
