@@ -1106,7 +1106,9 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			if (isBlocking) {
 				throw new ReceiveThreadException("Receive Thread Blocked, awaiting messages ...");
 			} else {
-				return this.udpTestMessage;
+				UDPTestMessage udpTestMessage = this.udpTestMessage;
+				this.udpTestMessage = null;
+				return udpTestMessage;
 			}
 		}
 		
@@ -1114,7 +1116,6 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			if (!isBlocking){
 				this.isBlocking = true;
 				synchronized (udpTestMessage) {
-					this.udpTestMessage = null;
 					while (udpTestMessage == null) {
 						try{
 							this.wait();
