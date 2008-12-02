@@ -265,6 +265,17 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener {
 		
 		log.debug("Local peer ID\t[" + localPeerId.toString() + "]");
 		log.debug("Remote peer ID\t[" + remotePeerId.toString() + "]");
+		
+		try {
+			if (localPeerId.compareTo(remotePeerId) > 0){
+				blockingSend(new UDPTestMessage());	
+			} else {
+				UDPTestMessage udpTestMessage = blockingReceive(UDPTestMessage.Type.INIT, true);
+				log.debug("Received message [" + udpTestMessage.toString() + "]");
+			}
+		} catch (Exception e) {
+			e.printStackTrace();
+		}
 
 		/*
 		 * ActivityManager.getDefault().emitEvent(new
