@@ -78,10 +78,15 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		log.info("UDPTester set status " + status);
 		return this.status = status;
 	}
+	private BlockingReceiveThread blockingReceiveThread = new BlockingReceiveThread();
 	
+	//blocking send method
 	public void sendUDPTestMessage(UDPTestMessage udpTestMessage) 
 	throws CommunicationFailedException{
+		//send message
 		remotePeer.sendMessage(udpTestMessage);
+		//wait for confirmation
+		//udpTestMessage = receiveUDPTestMessage();
 	}
 	
 	public void messageReceived(Object message, F2FPeer sender)
@@ -95,8 +100,22 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		}
 	}
 	
-	private void receivedUDPTestMessage(UDPTestMessage msg)
-	{
+	//blocking receive method
+	private UDPTestMessage receiveUDPTestMessage() throws ReceiveThreadException {
+		this.blockingReceiveThread.start();
+		try {
+			blockingReceiveThread.join();
+		} catch (InterruptedException e) {}
+		return blockingReceiveThread.getReceivedMessage();
+	}
+	
+	private void receivedUDPTestMessage(UDPTestMessage msg) {
+		try {
+			blockingReceiveThread.setReceivedMessage(msg);
+		} catch (ReceiveThreadException e){
+			log.warn("Discarding incomming message [" + msg.type.toString() + "]", e);
+		}
+/*
 		if (status == Status.INIT)
 		{
 			if (msg.type == UDPTestMessage.Type.INIT);
@@ -126,6 +145,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 				setStatus(Status.GOT_MAPPED_ADDRESS);
 			}
 			*/
+/*
             else
             {
 				log.warn("Illegal message type at this moment [" + msg.type + "]"
@@ -144,7 +164,8 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 				this.remoteMappedAddress = msg.mappedAddress;
 			}
 			*/
-            else
+/*
+			else
             {
 				log.warn(" " + getName() 
 							 + " Illegal message type at this moment [" 
@@ -158,6 +179,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
             {
         		this.remoteConnectionId = udpm.id;
         	}*/
+/*
  		}
         else
         {
@@ -166,6 +188,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 						 + msg.type + "]"
 						 + " status [" + this.status + "]");
 		}
+*/       
 	}
 	
 	public void stopTesting()
@@ -196,10 +219,22 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	
 	private void testProcess() throws CommunicationFailedException
 	{
+		
+		sendUDPTestMessage(new UDPTestMessage());
+		try {
+			UDPTestMessage udpTestMessage = receiveUDPTestMessage();
+			log.debug("Received udpTestMessage [" + udpTestMessage.toString() + "]");
+			sendUDPTestMessage(new UDPTestMessage());
+		} catch (ReceiveThreadException e){
+			log.warn("Receive Method Blocked",e);
+		}
+		
+		/*
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.STARTED));
 		log.debug(getActivityName() + "started");
 		
 		// make sure that other peer has started the test too
+		
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,ActivityEvent.Type.CHANGED, "waiting for init"));
 		Thread thread = new Thread()
 		{
@@ -223,6 +258,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 				break;
 			} catch (InterruptedException e) {}
 		}
+		
 		if (status == Status.INIT)
 		{
 			log.error("timeout while waiting for init from remote UDP test thread");
@@ -298,7 +334,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 					this,ActivityEvent.Type.FINISHED, "UDP Communication not needed"));
 			return;
 		}*/
-		
+		/*
 		initUDPTests();
 		
 		if (this.status != Status.CONNECTION_ESTABLISHED)
@@ -310,7 +346,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
         }
 		ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
 				ActivityEvent.Type.FINISHED));
-	
+		*/
 	}
 
 	public String getActivityName()
@@ -990,7 +1026,10 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		// wait at most 30 seconds for remote addresses
 		for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++)
 		{
-			if (status == Status.GOT_MAPPED_ADDRESS) break;
+			if (status == Status.GOT_MAPPED_ADDRESS) {
+				
+				break;
+			}
 			try
 			{
 				Thread.sleep(500);
@@ -1037,6 +1076,76 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 			return;
 		}
 		*/
+	}
+	
+	private class BlockingReceiveThread extends Thread {
+		
+		//private final Logger log = Logger.getLogger(BlockingReceiveThread.class);
+		
+		private boolean isBlocking = false;
+		private UDPTestMessage udpTestMessage = null;
+		
+		public BlockingReceiveThread() {
+			this.setName(this.getClass().getName());
+		}
+				
+		public void setReceivedMessage(UDPTestMessage udpTestMessage) throws ReceiveThreadException{
+			if (udpTestMessage == null) throw new NullPointerException("udpTestMessage == null");
+			if (isBlocking){
+				synchronized (udpTestMessage) {
+					this.setReceivedMessage(udpTestMessage);
+				}
+				this.notify();
+			} else {
+				throw new ReceiveThreadException("Receive Thread Unblocked, " +
+						"avaiting no messages at this time ...");
+			}
+		}
+		
+		public UDPTestMessage getReceivedMessage() throws ReceiveThreadException{
+			if (isBlocking) {
+				throw new ReceiveThreadException("Receive Thread Blocked, avaiting messages ...");
+			} else {
+				return this.udpTestMessage;
+			}
+		}
+		
+		public void run(){
+			if (!isBlocking){
+				this.isBlocking = true;
+				synchronized (udpTestMessage) {
+					this.udpTestMessage = null;
+					while (udpTestMessage == null) {
+						try{
+							this.wait();
+						} catch (InterruptedException e){
+							this.isBlocking = false;
+						}
+					}
+				}
+			}
+		}
+	}
+	
+	private class ReceiveThreadException extends Exception {
+
+		private static final long serialVersionUID = -6666347154011719243L;
+
+		public ReceiveThreadException() {
+			super();
+		}
+
+		public ReceiveThreadException(String message, Throwable cause) {
+			super(message, cause);
+		}
+
+		public ReceiveThreadException(String message) {
+			super(message);
+		}
+
+		public ReceiveThreadException(Throwable cause) {
+			super(cause);
+		}
 	}
 }
 
