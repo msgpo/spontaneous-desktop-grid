@@ -41,7 +41,7 @@ typedef struct F2FTicketStruct
 {
 	F2FWord32 hi;
 	F2FWord32 lo;
-	time_t validUntil;
+	F2FWord32 validUntil;
 } F2FTicket;
 
 /** create valus for an F2FTicket and initialize the given structure **/
