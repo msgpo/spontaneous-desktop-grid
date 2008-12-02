@@ -588,7 +588,7 @@ static F2FError processGetJobTicketAnswer(
 	if( group->jobarchivesize > F2FMaxMessageSize-sizeof(F2FMessageHeader)-sizeof(F2FMessageJob))
 		return F2FErrWierdError; 	/* TODO: deal with multiple blocks */
 	jobmsg.job.size = htonl(group->jobarchivesize);
-	jobmsg.job.blocknr = 0;
+	jobmsg.job.blocknr = htonl(0);
 	/* Set the ticket */
 	jobmsg.job.ticket.hi = msg->ticket.hi; /* Endian transfer not necessary */
 	jobmsg.job.ticket.lo = msg->ticket.lo;
@@ -1060,7 +1060,7 @@ F2FError f2fGroupSubmitJob( F2FGroup *group, const char * jobpath )
 	group -> jobfilepath[jobpathlen] = 0;
 	memcpy(group->jobfilepath, jobpath, jobpathlen );
 	group -> jobarchivesize =  jobfilestat.st_size;
-	ticketRequest.archivesize = jobfilestat.st_size;
+	ticketRequest.archivesize = htonl(group -> jobarchivesize);
 	ticketRequest.hdspace = 0; /* Nothing at the moment, TODO: use */
 	groupSend( group, F2FMessageTypeGetJobTicket,
 			(char *) &ticketRequest, sizeof(ticketRequest) );
@@ -1075,7 +1075,7 @@ F2FError f2fPeerSubmitJob( F2FGroup *group, F2FPeer *peer )
 	F2FMessageGetJobTicket ticketRequest;
 	F2FError error;
 
-	ticketRequest.archivesize = group->jobarchivesize;
+	ticketRequest.archivesize = htonl( group->jobarchivesize );
 	ticketRequest.hdspace = 0; /* Nothing at the moment, TODO: use */
 	error = f2fPeerSendData(group, peer, F2FMessageTypeGetJobTicket,
 			(char *) &ticketRequest, sizeof(ticketRequest) );

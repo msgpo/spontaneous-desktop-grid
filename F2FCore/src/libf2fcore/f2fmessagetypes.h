@@ -118,7 +118,7 @@ typedef struct
 {
 	F2FTicket ticket; /** the ticket, which allows to execute the job */
 	F2FSize size; /** The total size of the job */
-	int blocknr; /** The number of the block */
+	F2FWord32 blocknr; /** The number of the block */
 } F2FMessageJob;
 
 
