@@ -78,7 +78,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		log.info("UDPTester set status " + status);
 		return this.status = status;
 	}
-	private BlockingReceiveThread blockingReceiveThread = new BlockingReceiveThread();
+	private BlockingReceiveQueue blockingReceiveQueue = new BlockingReceiveQueue();
 	
 	//blocking send method
 	public void sendUDPTestMessage(UDPTestMessage udpTestMessage) 
@@ -101,18 +101,15 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 	}
 	
 	//blocking receive method
-	private UDPTestMessage receiveUDPTestMessage() throws ReceiveThreadException {
-		this.blockingReceiveThread.start();
-		try {
-			blockingReceiveThread.join();
-		} catch (InterruptedException e) {}
-		return blockingReceiveThread.getReceivedMessage();
+	private UDPTestMessage blockingReceiveUDPTestMessage() throws ReceiveQueueException {
+		UDPTestMessage udpTestMessage = blockingReceiveQueue.getUDPTestMessage();
+		return udpTestMessage;
 	}
 	
 	private void receivedUDPTestMessage(UDPTestMessage msg) {
 		try {
-			blockingReceiveThread.setReceivedMessage(msg);
-		} catch (ReceiveThreadException e){
+			blockingReceiveQueue.setUDPTestMessage(msg);
+		} catch (ReceiveQueueException e){
 			log.warn("Discarding incomming message [" + msg.type.toString() + "]", e);
 		}
 /*
@@ -222,10 +219,10 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		
 		sendUDPTestMessage(new UDPTestMessage());
 		try {
-			UDPTestMessage udpTestMessage = receiveUDPTestMessage();
+			UDPTestMessage udpTestMessage = blockingReceiveUDPTestMessage();
 			log.debug("Received udpTestMessage [" + udpTestMessage.toString() + "]");
 			sendUDPTestMessage(new UDPTestMessage());
-		} catch (ReceiveThreadException e){
+		} catch (ReceiveQueueException e){
 			log.warn("Receive Method Blocked",e);
 		}
 		
@@ -1078,67 +1075,53 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		*/
 	}
 	
-	private class BlockingReceiveThread extends Thread {
+	private class BlockingReceiveQueue {
 		
-		//private final Logger log = Logger.getLogger(BlockingReceiveThread.class);
-		
-		private boolean isBlocking = false;
+		private boolean valueSet = false;
 		private UDPTestMessage udpTestMessage = null;
 		
-		public BlockingReceiveThread() {
-			this.setName(this.getClass().getName());
-		}
-				
-		public void setReceivedMessage(UDPTestMessage udpTestMessage) throws ReceiveThreadException{
-			if (udpTestMessage == null) throw new NullPointerException("udpTestMessage == null");
-			if (isBlocking){
-				this.udpTestMessage = udpTestMessage;
-				this.interrupt();
-			} else {
-				throw new ReceiveThreadException("Receive Thread Unblocked, " +
-						"awaiting no messages at this time ...");
-			}
-		}
-		
-		public UDPTestMessage getReceivedMessage() throws ReceiveThreadException{
-			if (isBlocking) {
-				throw new ReceiveThreadException("Receive Thread Blocked, awaiting messages ...");
-			} else {
-				UDPTestMessage udpTestMessage = this.udpTestMessage;
-				this.udpTestMessage = null;
+		public synchronized UDPTestMessage getUDPTestMessage() 
+								throws ReceiveQueueException{
+			if (!valueSet){
+				try {
+					wait();
+				} catch (InterruptedException e){}
+				valueSet = false;
+				notify();
 				return udpTestMessage;
-			}
+			} else throw new ReceiveQueueException("Queue blocked, awaiting messages ...");
 		}
 		
-		public void run(){
-			if (!isBlocking){
-				this.isBlocking = true;
+		public synchronized void setUDPTestMessage(UDPTestMessage udpTestMessage) 
+										throws ReceiveQueueException{
+			if (valueSet){
 				try{
-					this.wait();
-				} catch (InterruptedException e){
-					this.isBlocking = false;
-				}
-			}
+					wait();
+				} catch (InterruptedException e) {}
+				this.udpTestMessage = udpTestMessage;
+				valueSet = true;
+				notify();
+			} else throw new ReceiveQueueException("Queue unblocked, awaiting no messages ...");
 		}
 	}
 	
-	private class ReceiveThreadException extends Exception {
+	private class ReceiveQueueException extends Exception {
 
 		private static final long serialVersionUID = -6666347154011719243L;
 
-		public ReceiveThreadException() {
+		public ReceiveQueueException() {
 			super();
 		}
 
-		public ReceiveThreadException(String message, Throwable cause) {
+		public ReceiveQueueException(String message, Throwable cause) {
 			super(message, cause);
 		}
 
-		public ReceiveThreadException(String message) {
+		public ReceiveQueueException(String message) {
 			super(message);
 		}
 
-		public ReceiveThreadException(Throwable cause) {
+		public ReceiveQueueException(Throwable cause) {
 			super(cause);
 		}
 	}
