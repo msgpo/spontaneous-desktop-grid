@@ -1095,16 +1095,16 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 				synchronized (udpTestMessage) {
 					this.udpTestMessage = udpTestMessage;
 				}
-				this.notify();
+				this.interrupt();
 			} else {
 				throw new ReceiveThreadException("Receive Thread Unblocked, " +
-						"avaiting no messages at this time ...");
+						"awaiting no messages at this time ...");
 			}
 		}
 		
 		public UDPTestMessage getReceivedMessage() throws ReceiveThreadException{
 			if (isBlocking) {
-				throw new ReceiveThreadException("Receive Thread Blocked, avaiting messages ...");
+				throw new ReceiveThreadException("Receive Thread Blocked, awaiting messages ...");
 			} else {
 				return this.udpTestMessage;
 			}
