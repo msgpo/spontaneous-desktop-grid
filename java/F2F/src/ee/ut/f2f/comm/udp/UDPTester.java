@@ -1092,9 +1092,7 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		public void setReceivedMessage(UDPTestMessage udpTestMessage) throws ReceiveThreadException{
 			if (udpTestMessage == null) throw new NullPointerException("udpTestMessage == null");
 			if (isBlocking){
-				synchronized (udpTestMessage) {
-					this.udpTestMessage = udpTestMessage;
-				}
+				this.udpTestMessage = udpTestMessage;
 				this.interrupt();
 			} else {
 				throw new ReceiveThreadException("Receive Thread Unblocked, " +
@@ -1115,14 +1113,10 @@ public class UDPTester extends Thread implements Activity, F2FMessageListener
 		public void run(){
 			if (!isBlocking){
 				this.isBlocking = true;
-				synchronized (udpTestMessage) {
-					while (udpTestMessage == null) {
-						try{
-							this.wait();
-						} catch (InterruptedException e){
-							this.isBlocking = false;
-						}
-					}
+				try{
+					this.wait();
+				} catch (InterruptedException e){
+					this.isBlocking = false;
 				}
 			}
 		}
