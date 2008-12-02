@@ -61,7 +61,7 @@ import f2f
 import f2f.adapter
 import f2fcore
 
-DEBUG = 0
+DEBUG = 1
 MAXMessageSize = 8192
 con = None
 friendlist = None

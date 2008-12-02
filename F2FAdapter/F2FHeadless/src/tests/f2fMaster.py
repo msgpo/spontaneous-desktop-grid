@@ -17,12 +17,12 @@ from headlessclient import f2fHeadless
 #      "testjob.py" # submitted job archive
 #      )
 
-f2fHeadless( "jabber.ulno.net", # server
+f2fHeadless( "kheiron.at.mt.ut.ee", # server
       "f2f01", # username
       "f2f", # password
       "f2fheadless", # resource
-      25222, # port
-      ["f2f02@jabber.ulno.net","f2f03@jabber.ulno.net"], # list of friends
+      5222, # port
+      ["f2f02@kheiron.at.mt.ut.ee"], # list of friends
       "test computation group", # name of computation group
       "p2psimple.py" # submitted job archive
       )

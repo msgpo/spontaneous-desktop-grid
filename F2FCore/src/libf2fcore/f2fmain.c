@@ -62,9 +62,9 @@ static struct
 } sendBuffer;
 
 /* this is a secure strlen with no buffer overrun */
-static inline size_t strnlen( const char *str, size_t max )
+static inline F2FSize strnlen( const char *str, F2FSize max )
 {
-	size_t size;
+	F2FSize size;
 	for (size = 0; size < max; ++size)
 	{ if( ! str[size] ) break; }
 	return size;
@@ -88,7 +88,7 @@ F2FPeer * f2fInit( const F2FString myName, const F2FString myPublicKey )
 #define MAXBUFFERSIZE 1024
 	char buffer[MAXBUFFERSIZE+1]; // Buffer for concatenation of name and key
 	buffer [MAXBUFFERSIZE]=0; // Make sure this is 0 terminated
-	size_t buffersize;
+	F2FSize buffersize;
 	F2FWord32 seeds[ MT_STATE_SIZE ];
 
 	// First create the seed for the mersenne twister

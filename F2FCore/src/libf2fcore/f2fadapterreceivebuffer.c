@@ -59,7 +59,7 @@ F2FError f2fAdapterReceiveBufferRelease( F2FAdapterReceiveMessage *msg )
 {
 	if(buffersize < 0) return F2FErrListEmpty;
 	
-	size_t position = ((char *)msg - (char *) buffer) / sizeof(F2FAdapterReceiveMessage);
+	F2FSize position = ((char *)msg - (char *) buffer) / sizeof(F2FAdapterReceiveMessage);
 	
 	if( position != firstfilled)
 		return F2FErrNotFound;

@@ -27,6 +27,8 @@
 #ifndef B64_H_
 #define B64_H_
 
+#include "f2ftypes.h"
+
 #ifdef __cplusplus
 extern "C"
     {
@@ -35,11 +37,11 @@ extern "C"
 
 /* Here are ulno's extensions for coding whole strings,
  * they return the size of the output */
-size_t b64encode( const char * src, char * dst, 
-		size_t inputlen, size_t maxoutputlen );
+F2FSize b64encode( const char * src, char * dst, 
+		F2FSize inputlen, F2FSize maxoutputlen );
 
-size_t b64decode( const char * src, char * dst, 
-		size_t inputlen, size_t maxoutputlen );
+F2FSize b64decode( const char * src, char * dst, 
+		F2FSize inputlen, F2FSize maxoutputlen );
 
 
 #ifdef __cplusplus

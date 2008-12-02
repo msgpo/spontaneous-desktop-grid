@@ -204,6 +204,8 @@ VERSION HISTORY:
 #include <stdio.h>
 #include <stdlib.h>
 
+#include "f2ftypes.h"
+
 /*
 ** Translation Table as described in RFC1113
 */
@@ -513,15 +515,15 @@ void b64decodeblock( unsigned char in[4], unsigned char out[3] )
  * they return the size of the output
  * The function returns 0, if the created code
  * would be too big to fit  in a buffer of size maxoutputlen */
-size_t b64encode( const char * src, char * dst, 
-		size_t inputlen, size_t maxoutputlen )
+F2FSize b64encode( const char * src, char * dst, 
+		F2FSize inputlen, F2FSize maxoutputlen )
 {
 	if( (inputlen + 3) / 3 * 4 > maxoutputlen )
 		return 0;
 	
 	unsigned char in[3], out[4];
     int i, len/*, blocksout = 0*/;
-    size_t srcpos = 0, dstpos = 0;
+    F2FSize srcpos = 0, dstpos = 0;
 
     while( srcpos < inputlen ) {
         len = 0;
@@ -554,12 +556,12 @@ size_t b64encode( const char * src, char * dst,
     return dstpos;
 }
 
-size_t b64decode( const char * src, char * dst, 
-		size_t inputlen, size_t maxoutputlen )
+F2FSize b64decode( const char * src, char * dst, 
+		F2FSize inputlen, F2FSize maxoutputlen )
 {
     unsigned char in[4], out[3], v;
     int i, len;
-    size_t srcpos = 0, dstpos = 0;
+    F2FSize srcpos = 0, dstpos = 0;
 
     while( srcpos < inputlen ) {
         for( len = 0, i = 0; i < 4 && srcpos < inputlen; i++ ) {

@@ -36,7 +36,7 @@ typedef int32_t F2FWord32;
 
 typedef char *F2FString; // The string of F2F on C layer is just an array of characters terminated with 0
 
-typedef long F2FSize; // a length of something (is signed as it could be negative in an error case)
+typedef F2FWord32 F2FSize; // a length of something (is signed as it could be negative in an error case) - also only 32bit length
 
 /** Error return codes */
 typedef enum  {
