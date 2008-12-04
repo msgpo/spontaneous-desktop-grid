@@ -14,6 +14,7 @@ print
 
 # global vars
 terminate = False
+indexlist=None
 
 #### Slave specific
 def receivethread():
@@ -26,32 +27,41 @@ def receivethread():
             print "Received:", data
 
 def slave():
-    global terminate
+    global terminate, indexlist
     while True:
         (grp,src,data) = f2f.receive()
         if grp.equals(f2fGroup):
             break;
         print "Got data from wrong group:", grp.getUid(), data 
-    myid = int(data)
-    print "Ok, I have number %s."%data
+    (myindex,indexlist) = data
+    print "Ok, I have number %s."%myindex
     threading.Thread(target=receivethread).start() # start terminate=thread
     while(not terminate):
-        for peer in f2fGroup.getPeers():
-            if not peer.equals(myself):
-                greetings = "Greetings from F2F Id: %s."%myid
-                print "Sending --%s-- to %s."%(greetings,peer.getUid())
-                peer.send(f2fGroup, greetings)
+        # send to next a message
+        nextindex = (myindex + 1) % len(indexlist)
+        nextpeer = Peer( id = indexlist[nextindex] )
+        #for peer in f2fGroup.getPeers():
+        #    if not peer.equals(myself):
+        greetings = "Greetings from F2F Id: %s."%myindex
+        print "Sending --%s-- to %s."%(greetings,nextpeer.getUid())
+        nextpeer.send(f2fGroup, greetings)
         sleep(5.0) # results every second
 
 #### master specific
 def master():
     global terminate
-    index = 1
     while len(f2fGroup.getPeers())<2:
           print "Waiting for enough peers."
           sleep(5)
+    # create indexlist
+    indexlist = dict()
+    index = 0
     for peer in f2fGroup.getPeers():
-        peer.send(f2fGroup, index)
+        indexlist[index] = peer.getUid()
+        index += 1
+    index = 0
+    for peer in f2fGroup.getPeers(): # send to every peer the indexlist
+        peer.send(f2fGroup, (index,indexlist))
         index += 1
     print "Master: switching to be slave now."
     threading.Thread(target=slave).start()

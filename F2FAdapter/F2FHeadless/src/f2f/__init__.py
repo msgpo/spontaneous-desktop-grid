@@ -39,8 +39,12 @@ localsendstack=[]
 
 class Peer:
     __id_cptr = None
-    def __init__(self,cptr):
-        self.__id_cptr = cptr
+    def __init__(self,cptr=None,id=None):
+        if id:
+            (idhi,idlo) = id
+            cptr = f2fcore.f2fPeerListFindPeer(idhi, idlo);
+        if cptr:
+            self.__id_cptr = cptr
     def getUid(self):
         return ( f2fcore.f2fPeerGetUIDHi(self.__id_cptr),\
                  f2fcore.f2fPeerGetUIDLo(self.__id_cptr) )
