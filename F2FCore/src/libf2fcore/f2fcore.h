@@ -222,6 +222,10 @@ F2FError f2fGroupDistributeFile( const char * publishname,
 F2FError f2fGroupDistributeData( const char * publishname,
 		char * memorypool, F2FSize len );
 
+/** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
+F2FPeer * f2fPeerListFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
+
+
 #ifdef __cplusplus
     }
 #endif
