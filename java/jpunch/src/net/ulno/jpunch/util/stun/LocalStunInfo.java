@@ -51,8 +51,24 @@ public class LocalStunInfo {
 		this.rawStunServers = rawStunServers;
 	}
 	
-	public StunInfo getStunInfo() {
-		return stunInfo;
+	public synchronized StunInfo getStunInfo() {
+		if(LocalStunInfo.this.stunInfo == null){
+			updateSTUNInfo();
+			try {
+				wait();
+			} catch(InterruptedException e){
+				
+			}
+			return LocalStunInfo.this.stunInfo;
+		}
+		return LocalStunInfo.this.stunInfo;
+	}
+	
+	public synchronized void setStunInfo(StunInfo stunInfo){
+		if(LocalStunInfo.this.stunInfo == null){
+			LocalStunInfo.this.stunInfo = stunInfo;
+			notify();
+		}
 	}
 
 	public Collection<InetSocketAddress> getStunServers(InetAddress localIp) {
@@ -214,8 +230,7 @@ public class LocalStunInfo {
 
 			StunInfo stunInfo = null;
 			for (InetAddress ip : LocalStunInfo.this.stunServers.keySet()) {
-				for (InetSocketAddress stunServer : LocalStunInfo.this.stunServers
-						.get(ip)) {
+				for (InetSocketAddress stunServer : LocalStunInfo.this.stunServers.get(ip)) {
 					String address = stunServer.getAddress().getHostAddress();
 					int port = stunServer.getPort();
 					if (isReachable(ip, address)) {
@@ -229,7 +244,7 @@ public class LocalStunInfo {
 							stunInfo = new StunInfo(diTest.test());
 							stunInfo.setLocalIP(ip.getHostAddress());
 							log.info("Getting STUN info succeeded!");
-							LocalStunInfo.this.stunInfo = stunInfo;
+							LocalStunInfo.this.setStunInfo(stunInfo);
 							break;
 						} catch (Exception e) {
 							log.error(

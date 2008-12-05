@@ -72,10 +72,14 @@ public class UDPTester extends Thread {
 	}
 
 	private StunInfo remoteStunInfo = null;
-	private StunInfo localStunInfo = LocalStunInfo.getInstance().getStunInfo();
+	private StunInfo localStunInfo = null;
 	
 	// Receive Queue used for blocking receive
 	private BlockingReceiveQueue blockingReceiveQueue = new BlockingReceiveQueue();
+	
+	public UDPTester(){
+		super(UDPTester.class.getName());
+	}
 	
 	/*
 	public UDPTester(F2FPeer peer) {
@@ -178,7 +182,7 @@ public class UDPTester extends Thread {
 	 * Method blocks execution until incoming message
 	 * arrives
 	 */
-	private synchronized UDPTestMessage blockingReceive() throws CommunicationFailedException {
+	private synchronized UDPTestMessage receive() throws CommunicationFailedException {
 		try{
 			BufferedReader br = new BufferedReader( new InputStreamReader(System.in));
 			String message = br.readLine();
@@ -213,7 +217,10 @@ public class UDPTester extends Thread {
 	private void testProcess() throws CommunicationFailedException {
 
 		log.debug(getName() + " started");
-		LocalStunInfo.getInstance().updateSTUNInfo();
+		
+		//get local stun info
+		localStunInfo = LocalStunInfo.getInstance().getStunInfo();
+		
 /*
 		// make sure that other peer has started the test too
 		
