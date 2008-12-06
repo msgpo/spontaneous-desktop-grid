@@ -70,12 +70,18 @@ public class UDPTester extends Thread {
 		log.info("UDPTester set status " + status);
 		return this.status = status;
 	}
-
+	
 	private StunInfo remoteStunInfo = null;
 	private StunInfo localStunInfo = null;
 	
+	private Integer remotePortMappingRule = null;
+	private InetSocketAddress remoteMappedAddress = null;
+	
 	// Receive Queue used for blocking receive
-	private BlockingReceiveQueue blockingReceiveQueue = new BlockingReceiveQueue();
+	//private BlockingReceiveQueue blockingReceiveQueue = new BlockingReceiveQueue();
+	
+	//Receiving thread
+	private MessageReceivingThread messageReceivingThread = null;
 	
 	public UDPTester(){
 		super(UDPTester.class.getName());
@@ -88,14 +94,31 @@ public class UDPTester extends Thread {
 		setStatus(Status.INIT);
 	}
 	*/
-
+	
+	private synchronized StunInfo getRemoteStunInfo(){
+		if(this.remoteStunInfo == null){
+			try {
+				wait();
+			} catch (InterruptedException e) {}
+			return this.remoteStunInfo;
+		}
+		return this.remoteStunInfo;
+	}
+	
+	private synchronized void setRemoteStunInfo(StunInfo stunInfo){
+		if(this.remoteStunInfo == null){
+			this.remoteStunInfo = stunInfo;
+			notify();
+		}
+	}
+	
 	/**
 	 * Non-Blocking send.
 	 * 
 	 * @param udpTestMessage
 	 * @throws CommunicationFailedException
 	 */
-	public void send(UDPTestMessage udpTestMessage) throws CommunicationFailedException{
+	private void send(UDPTestMessage udpTestMessage) throws CommunicationFailedException{
 			try {
 				byte[] bytes = Util.serializeObject(udpTestMessage);
 				byte[] compressed = Util.zip(bytes);
@@ -111,6 +134,30 @@ public class UDPTester extends Thread {
 						+ udpTestMessage.toString() + "]",e);
 			}
 	}
+	
+	/*
+	 * Blocking receive method
+	 * Method blocks execution until incoming message
+	 * arrives
+	 */
+	private synchronized UDPTestMessage receive() throws CommunicationFailedException {
+		try{
+			BufferedReader br = new BufferedReader( new InputStreamReader(System.in));
+			String message = null;
+			while (message == null){
+				message = br.readLine();
+			}
+			//br.close();
+			log.debug("Received message [" + message + "]");
+			byte[] compressed = Util.decode(message);
+			byte[] bytes = Util.unzip(compressed);
+			Object obj = Util.deserializeObject(bytes);
+			if (obj instanceof UDPTestMessage) return (UDPTestMessage)obj;
+		} catch (Exception e){
+			throw new CommunicationFailedException("Failed Receiving UDP Test Message",e);
+		}
+		return null;
+	}
 
 
 	/**
@@ -119,7 +166,7 @@ public class UDPTester extends Thread {
 	 * @param message
 	 *            incoming message, only UDPTestMessage instances allowed
 	 */
-	public void messageReceived(Object message) {
+	private void messageReceived(Object message) {
 		if (message instanceof UDPTestMessage)
 			messageReceived((UDPTestMessage) message);
 		else
@@ -132,12 +179,14 @@ public class UDPTester extends Thread {
 	 * then discard message
 	 */
 	private void messageReceived(UDPTestMessage msg) {
-		try {
-			blockingReceiveQueue.setUDPTestMessage(msg);
-		} catch (ReceiveQueueException e) {
-			log.warn("Discarding incomming message [" + msg.type.toString()
-					+ "]", e);
+		if (msg.type == UDPTestMessage.Type.INIT){
+			
+		} else if (msg.type == UDPTestMessage.Type.STUN_INFO) {
+			this.setRemoteStunInfo(msg.stunInfo);
+		} else if (msg.type == UDPTestMessage.Type.MAPPED_ADDRESS) {
+			
 		}
+		
 		/*
 		 * if (status == Status.INIT) { if (msg.type ==
 		 * UDPTestMessage.Type.INIT); setStatus(Status.WAITING_STUN_INFO); }
@@ -176,27 +225,7 @@ public class UDPTester extends Thread {
 		 * " status [" + this.status + "]"); }
 		 */
 	}
-	
-	/*
-	 * Blocking receive method
-	 * Method blocks execution until incoming message
-	 * arrives
-	 */
-	private synchronized UDPTestMessage receive() throws CommunicationFailedException {
-		try{
-			BufferedReader br = new BufferedReader( new InputStreamReader(System.in));
-			String message = br.readLine();
-			br.close();
-			byte[] compressed = Util.decode(message);
-			byte[] bytes = Util.unzip(compressed);
-			Object obj = Util.deserializeObject(bytes);
-			if (obj instanceof UDPTestMessage) return (UDPTestMessage)obj;
-		} catch (Exception e){
-			throw new CommunicationFailedException("Failed Receiving UDP Test Message",e);
-		}
-		throw new CommunicationFailedException("Failed Receiving UDP Test Message");
-	}
-	
+		
 	public void stopTesting() {
 		log
 				.info("Received stop signal, closing all testing and established connections");
@@ -217,6 +246,10 @@ public class UDPTester extends Thread {
 	private void testProcess() throws CommunicationFailedException {
 
 		log.debug(getName() + " started");
+		
+		//start receiving thread
+		messageReceivingThread = new MessageReceivingThread();
+		messageReceivingThread.start();
 		
 		//get local stun info
 		localStunInfo = LocalStunInfo.getInstance().getStunInfo();
@@ -250,10 +283,11 @@ public class UDPTester extends Thread {
 			log
 					.error("timeout while waiting for init from remote UDP test thread");
 			// stop INIT sender setStatus(null); return; }
-		
+*/		
 			// exchange the STUN info
-			// remotePeer.sendMessage( new UDPTestMessage(localStunInfo));
-			// wait at most 30 seconds for remote addresses
+			 this.send( new UDPTestMessage(localStunInfo));
+			 remoteStunInfo = this.getRemoteStunInfo();
+/*		
 			for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++) {
 				if (status == Status.GOT_STUN_INFO)
 					break;
@@ -328,9 +362,6 @@ public class UDPTester extends Thread {
 		}
 */
 	}
-
-	Integer remotePortMappingRule = null;
-	InetSocketAddress remoteMappedAddress = null;
 
 	private void initUDPTests() throws CommunicationFailedException {
 		// if (localIp == null ) throw new
@@ -929,6 +960,26 @@ public class UDPTester extends Thread {
 		 */
 	}
 
+	private class MessageReceivingThread extends Thread{
+		public MessageReceivingThread() {
+			this.setName(this.getClass().getName());
+		}
+		
+		public void run(){
+			while(true){
+				try {
+					UDPTestMessage udpTestMessage = receive();
+					if (udpTestMessage != null){
+						messageReceived(udpTestMessage);
+					}
+				} catch (CommunicationFailedException e){
+					log.error("Unable to receive a message ",e);
+					log.warn(this.getName() + " continue listening for incoming messages ");
+				}
+			}
+		}
+	}
+	
 	private class BlockingReceiveQueue {
 
 		private boolean isBlocking = false;
@@ -1033,13 +1084,14 @@ class UDPTestMessage implements Serializable {
 	private static final long serialVersionUID = 8503336434324780827L;
 
 	enum Type {
-		INIT, STUN_INFO,
+		INIT, 
+		STUN_INFO,
 		// STUN_INFO_RECEIVED,
 		MAPPED_ADDRESS,
 		// MAPPED_ADDRESS_RECEIVED,
 		// CONNECTION_ID,
 		RECEIVED_PING,
-		CONFIRM
+		//CONFIRM
 	}
 
 	Type type = null;
