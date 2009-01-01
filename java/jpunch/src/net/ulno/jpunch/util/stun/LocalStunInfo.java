@@ -1,5 +1,8 @@
 package net.ulno.jpunch.util.stun;
 
+import java.io.BufferedInputStream;
+import java.io.FileInputStream;
+import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
@@ -9,8 +12,10 @@ import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
 import java.util.ArrayList;
+import java.util.Arrays;
 import java.util.Collection;
 import java.util.Hashtable;
+import java.util.Properties;
 
 import de.javawi.jstun.test.DiscoveryTest;
 import net.ulno.jpunch.util.LocalAddresses;
@@ -25,10 +30,31 @@ public class LocalStunInfo {
 	final private int MAX_WAIT_FILTERED = 100;
 	final private static String PING_HOST = "www.google.com";
 	final private static int PING_PORT = 80;
-	
+
+	//properties
+	final private static String RAW_STUN_SERVERS = "net.ulno.jpunch.StunServers";
+	final private static String JPUNCH_PROPERTIES = "net.ulno.jpunch.PropertiesFile";
 
 	private LocalStunInfo() {
-
+		String propertiesFile = System.getProperty(JPUNCH_PROPERTIES);
+		if (propertiesFile == null || "".equals(propertiesFile)){
+			throw new NullPointerException("No properties file name specified ["
+					+ JPUNCH_PROPERTIES + "= ]");
+		}
+		try {
+			String rawStunServers = (String) loadPoperties(propertiesFile).get(RAW_STUN_SERVERS);
+			setRawStunServers(rawStunServers, ",");
+		} catch (Exception e) {
+			log.error("Unable to load StunServers, wrong properties", e);
+		}
+	}
+	
+	private Properties loadPoperties(String file) throws FileNotFoundException, IOException{
+		Properties properties = new Properties();
+		BufferedInputStream bufferedInputStream = 
+			new BufferedInputStream(new FileInputStream(file));
+		properties.load(bufferedInputStream);
+		return properties;
 	}
 
 	private static LocalStunInfo instance = null;
@@ -47,6 +73,25 @@ public class LocalStunInfo {
 	private Hashtable<InetAddress, Collection<InetSocketAddress>> stunServers = new Hashtable<InetAddress, Collection<InetSocketAddress>>();;
 	private Collection<String> rawStunServers = null;
 
+	public void	setRawStunServers(String rawStunServers, String separator){
+		IllegalArgumentException ex = new IllegalArgumentException("Illegal StunServers string ["
+				+ rawStunServers + "]");
+		if (rawStunServers == null || "".equals(rawStunServers)){
+			throw ex;
+		}
+		if (separator == null || "".equals(separator)){
+			throw new IllegalArgumentException("Illegal separator ["
+					+ separator + "]");
+		}
+		String[] rawStunServersArray = rawStunServers.split(separator);
+		if (rawStunServersArray == null || rawStunServersArray.length < 1) {
+			throw ex;
+		}
+		
+		Collection<String> rawStunServersCollection = Arrays.asList(rawStunServersArray);
+		setRawStunServers(rawStunServersCollection);
+	}
+	
 	public void setRawStunServers(Collection<String> rawStunServers){
 		this.rawStunServers = rawStunServers;
 	}
@@ -159,7 +204,7 @@ public class LocalStunInfo {
 						try {
 							stunServerIas = InetAddress.getByName(address);
 						} catch (UnknownHostException e) {
-							log.warn("Unknown StunServer [" + address + "]", e);
+							log.warn("Unknown StunServer [" + address + "]");
 						}
 						if (stunServerIas == null)
 							continue;

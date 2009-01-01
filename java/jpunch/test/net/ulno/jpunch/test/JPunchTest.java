@@ -24,19 +24,19 @@ public class JPunchTest {
 	public static void main(String[] args){
 		JPunchTest jPunchTest = new JPunchTest();
 		
-		String vmargs = System.getProperty("net.ulno.jpunch.StunServers");
+		//String vmargs = System.getProperty("net.ulno.jpunch.StunServers");
 		
 		//log.debug("Vmargs = [" + vmargs + "]");
 		
-		String[] sservers = vmargs.split(",");
+		//String[] sservers = vmargs.split(",");
 		
 		//log.debug("Sservers = [" + Arrays.toString(sservers) + "]");
 		
-		Collection<String> rawServers = Arrays.asList(sservers);
+		//Collection<String> rawServers = Arrays.asList(sservers);
 		
 		//log.debug("RawServers = [" + rawServers + "]");
 		
-		LocalStunInfo.getInstance().setRawStunServers(rawServers);
+		//LocalStunInfo.getInstance().setRawStunServers(rawServers);
 		
 		//jPunchTest.testStunInfo();
 		jPunchTest.testUDP();
