@@ -112,6 +112,11 @@ public class UDPTester extends Thread {
 		}
 	}
 	
+	private String getMessageTag(boolean start){
+		if (start) return "<" + MESSAGE_TAG + ">";
+		else return "</" + MESSAGE_TAG + ">";
+	}
+	
 	/**
 	 * Non-Blocking send.
 	 * 
@@ -125,9 +130,9 @@ public class UDPTester extends Thread {
 				String message = Util.encode(compressed);
 				StringBuffer sb = new StringBuffer();
 				sb.append(udpTestMessage.toString());
-				sb.append("<" + MESSAGE_TAG + ">");
+				sb.append(getMessageTag(true));
 				sb.append(message);
-				sb.append("</" + MESSAGE_TAG + ">");
+				sb.append(getMessageTag(false));
 				System.out.println(sb.toString());
 			} catch (IOException e){
 				throw new CommunicationFailedException("Failed Sending UDP Test Message ["
@@ -147,9 +152,13 @@ public class UDPTester extends Thread {
 			while (message == null){
 				message = br.readLine();
 			}
-			//br.close();
+			br.close();
 			log.debug("Received message [" + message + "]");
-			byte[] compressed = Util.decode(message);
+			int start = message.indexOf(getMessageTag(true)) + getMessageTag(true).length();
+			int end = message.indexOf(getMessageTag(false));
+			String content = message.substring(start, end);
+			
+			byte[] compressed = Util.decode(content);
 			byte[] bytes = Util.unzip(compressed);
 			Object obj = Util.deserializeObject(bytes);
 			if (obj instanceof UDPTestMessage) return (UDPTestMessage)obj;
