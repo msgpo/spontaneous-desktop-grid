@@ -106,7 +106,7 @@ public class UDPTester extends Thread {
 	}
 	
 	private synchronized void setRemoteStunInfo(StunInfo stunInfo){
-		if(this.remoteStunInfo == null){
+		if(this.remoteStunInfo == null && stunInfo != null && !"".equals(stunInfo)){
 			this.remoteStunInfo = stunInfo;
 			notify();
 		}
@@ -140,35 +140,6 @@ public class UDPTester extends Thread {
 			}
 	}
 	
-	/*
-	 * Blocking receive method
-	 * Method blocks execution until incoming message
-	 * arrives
-	 */
-	private synchronized UDPTestMessage receive() throws CommunicationFailedException {
-		try{
-			BufferedReader br = new BufferedReader( new InputStreamReader(System.in));
-			String message = null;
-			while (message == null){
-				message = br.readLine();
-			}
-			br.close();
-			log.debug("Received message [" + message + "]");
-			int start = message.indexOf(getMessageTag(true)) + getMessageTag(true).length();
-			int end = message.indexOf(getMessageTag(false));
-			String content = message.substring(start, end);
-			
-			byte[] compressed = Util.decode(content);
-			byte[] bytes = Util.unzip(compressed);
-			Object obj = Util.deserializeObject(bytes);
-			if (obj instanceof UDPTestMessage) return (UDPTestMessage)obj;
-		} catch (Exception e){
-			throw new CommunicationFailedException("Failed Receiving UDP Test Message",e);
-		}
-		return null;
-	}
-
-
 	/**
 	 * Handles incoming messages for UDPTester
 	 * 
@@ -329,7 +300,7 @@ public class UDPTester extends Thread {
 					+ localStunInfo.isPortRestrictedCone() + "\n"
 					+ "\tisSymmetricCone : " + localStunInfo.isSymmetricCone()
 					+ "\n");
-/*
+
 			log.debug("Remote :\n" + "\tisOpenAccess : "
 					+ remoteStunInfo.isOpenAccess() + "\n"
 					+ "\tisBlockedUDP : " + remoteStunInfo.isBlockedUDP()
@@ -342,6 +313,7 @@ public class UDPTester extends Thread {
 					+ remoteStunInfo.isPortRestrictedCone() + "\n"
 					+ "\tisSymmetricCone : " + remoteStunInfo.isSymmetricCone()
 					+ "\n");
+/*					
 			// decide which test should be run
 			// if one of the sides has blocked UDP
 			if (remoteStunInfo.isBlockedUDP() || localStunInfo.isBlockedUDP()) {
@@ -976,14 +948,27 @@ public class UDPTester extends Thread {
 		
 		public void run(){
 			while(true){
-				try {
-					UDPTestMessage udpTestMessage = receive();
-					if (udpTestMessage != null){
-						messageReceived(udpTestMessage);
+				try{
+					BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+					String message = null;
+					while (message == null || "".equals(message)){
+						message = br.readLine();
 					}
-				} catch (CommunicationFailedException e){
-					log.error("Unable to receive a message ",e);
-					log.warn(this.getName() + " continue listening for incoming messages ");
+					log.debug("Received message [" + message + "]");
+					int start = message.indexOf(getMessageTag(true)) + getMessageTag(true).length();
+					int end = message.indexOf(getMessageTag(false));
+					String content = message.substring(start, end);
+					log.debug("Message Content [" + content + "]");
+					byte[] compressed = Util.decode(content);
+					byte[] bytes = Util.unzip(compressed);
+					Object obj = Util.deserializeObject(bytes);
+					if (obj instanceof UDPTestMessage)  messageReceived((UDPTestMessage)obj);
+				} catch (IndexOutOfBoundsException e) {
+					log.debug("Illegal message format");
+				} catch (IOException e) {
+					log.debug("Unable to receive message, IO Exception");
+				} catch (ClassNotFoundException e){
+					log.debug("Unable to deserialize message");
 				}
 			}
 		}
