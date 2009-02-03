@@ -193,8 +193,7 @@ public class UDPTester extends Thread {
 	}
 		
 	public void stopTesting() {
-		log
-				.info("Received stop signal, closing all testing and established connections");
+		log.info("Received stop signal, closing all testing and established connections");
 		setStatus(Status.CLOSING);
 	}
 
@@ -206,7 +205,6 @@ public class UDPTester extends Thread {
 			e.printStackTrace();
 			log.warn(e.getMessage());
 		}
-		// TODO: F2FComputing.removeMessageListener(UDPTestMessage.class, this);
 	}
 
 	private void testProcess() throws CommunicationFailedException {
@@ -219,87 +217,46 @@ public class UDPTester extends Thread {
 		
 		//get local stun info
 		localStunInfo = LocalStunInfo.getInstance().getStunInfo();
-		
-/*
-		// make sure that other peer has started the test too
-		
-		Thread thread = new Thread() {
-			public void run() {
-				for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++) {
-					try {
-						// remotePeer.sendMessage(new UDPTestMessage());
-						if (status != Status.INIT)
-							return;
-						Thread.sleep(1000);
-					} catch (Exception e) {
-					}
-				}
-			}
-		};
-		thread.start();
-		while (true) {
-			try {
-				thread.join();
-				break;
-			} catch (InterruptedException e) {
-			}
-		}
+				
+		// exchange the STUN info
+		 this.send( new UDPTestMessage(localStunInfo));
+		 remoteStunInfo = this.getRemoteStunInfo();
 
-		if (status == Status.INIT) {
-			log
-					.error("timeout while waiting for init from remote UDP test thread");
-			// stop INIT sender setStatus(null); return; }
-*/		
-			// exchange the STUN info
-			 this.send( new UDPTestMessage(localStunInfo));
-			 remoteStunInfo = this.getRemoteStunInfo();
-/*		
-			for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++) {
-				if (status == Status.GOT_STUN_INFO)
-					break;
-				try {
-					Thread.sleep(500);
-				} catch (InterruptedException e) {
-				}
-			}
-			if (status != Status.GOT_STUN_INFO) {
-				log.error("timeout while waiting for remote STUN info");
-				return;
-			}
-			if (remoteStunInfo == null) {
-				log.error("remoteStunInfo == null");
-				return;
-			}
+		// now remote and local STUN info is known -> try to establish UDP
+		// connection!
 
-			// now remote and local STUN info is known -> try to establish UDP
-			// connection!
-*/
-			log.debug("Local :\n" + "\tisOpenAccess : "
-					+ localStunInfo.isOpenAccess() + "\n" + "\tisBlockedUDP : "
-					+ localStunInfo.isBlockedUDP() + "\n"
-					+ "\tisSymmetricUDPFirewall : "
-					+ localStunInfo.isSymmetricUDPFirewall() + "\n"
-					+ "\tisFullCone() : " + localStunInfo.isFullCone() + "\n"
-					+ "\tisRestrictedCone : "
-					+ localStunInfo.isRestrictedCone() + "\n"
-					+ "\tisPortRestrictedCone : "
-					+ localStunInfo.isPortRestrictedCone() + "\n"
-					+ "\tisSymmetricCone : " + localStunInfo.isSymmetricCone()
-					+ "\n");
+		log.debug("Local :\n" 
+				+ "\tLocalIP [" + localStunInfo.getLocalIp() + "]\n"
+				+ "\tPublicIP [" + localStunInfo.getPublicIp() + "]\n"
+				+ "\tisOpenAccess : "
+				+ localStunInfo.isOpenAccess() + "\n" + "\tisBlockedUDP : "
+				+ localStunInfo.isBlockedUDP() + "\n"
+				+ "\tisSymmetricUDPFirewall : "
+				+ localStunInfo.isSymmetricUDPFirewall() + "\n"
+				+ "\tisFullCone() : " + localStunInfo.isFullCone() + "\n"
+				+ "\tisRestrictedCone : "
+				+ localStunInfo.isRestrictedCone() + "\n"
+				+ "\tisPortRestrictedCone : "
+				+ localStunInfo.isPortRestrictedCone() + "\n"
+				+ "\tisSymmetricCone : " + localStunInfo.isSymmetricCone()
+				+ "\n");
 
-			log.debug("Remote :\n" + "\tisOpenAccess : "
-					+ remoteStunInfo.isOpenAccess() + "\n"
-					+ "\tisBlockedUDP : " + remoteStunInfo.isBlockedUDP()
-					+ "\n" + "\tisSymmetricUDPFirewall : "
-					+ remoteStunInfo.isSymmetricUDPFirewall() + "\n"
-					+ "\tisFullCone() : " + remoteStunInfo.isFullCone() + "\n"
-					+ "\tisRestrictedCone : "
-					+ remoteStunInfo.isRestrictedCone() + "\n"
-					+ "\tisPortRestrictedCone : "
-					+ remoteStunInfo.isPortRestrictedCone() + "\n"
-					+ "\tisSymmetricCone : " + remoteStunInfo.isSymmetricCone()
-					+ "\n");
-/*					
+		log.debug("Remote :\n" 
+				+ "\tLocalIP [" + remoteStunInfo.getLocalIp() + "]\n"
+				+ "\tPublicIP [" + remoteStunInfo.getPublicIp() + "]\n"
+				+ "\tisOpenAccess : "
+				+ remoteStunInfo.isOpenAccess() + "\n"
+				+ "\tisBlockedUDP : " + remoteStunInfo.isBlockedUDP()
+				+ "\n" + "\tisSymmetricUDPFirewall : "
+				+ remoteStunInfo.isSymmetricUDPFirewall() + "\n"
+				+ "\tisFullCone() : " + remoteStunInfo.isFullCone() + "\n"
+				+ "\tisRestrictedCone : "
+				+ remoteStunInfo.isRestrictedCone() + "\n"
+				+ "\tisPortRestrictedCone : "
+				+ remoteStunInfo.isPortRestrictedCone() + "\n"
+				+ "\tisSymmetricCone : " + remoteStunInfo.isSymmetricCone()
+				+ "\n");
+					
 			// decide which test should be run
 			// if one of the sides has blocked UDP
 			if (remoteStunInfo.isBlockedUDP() || localStunInfo.isBlockedUDP()) {
@@ -308,7 +265,7 @@ public class UDPTester extends Thread {
 				log.warn("UDP communication impossible, stopping test thread");
 				return;
 			}
-
+/*
 			// if one of the sides has open access
 			if (remoteStunInfo.isOpenAccess() || localStunInfo.isOpenAccess()) {
 				// UDP communication not needed -> At least one of the sides has
@@ -320,14 +277,8 @@ public class UDPTester extends Thread {
 
 				return;
 			}
-
-			initUDPTests();
-
-			if (this.status != Status.CONNECTION_ESTABLISHED) {
-				log.warn(" Test Failed");
-			}
-		}
 */
+			initUDPTests();
 	}
 
 	private void initUDPTests() throws CommunicationFailedException {
@@ -450,6 +401,7 @@ public class UDPTester extends Thread {
 					+ localMappedAddress.getAddress().getHostAddress() + ":"
 					+ localMappedAddress.getPort() + "]");
 			// exchange MappedAddress
+/*
 			exchangeMappedAddress(localMappedAddress, localPortMappingRule);
 
 			if (remoteMappedAddress == null) {
@@ -469,6 +421,7 @@ public class UDPTester extends Thread {
 				new Thread(new UDPConnection(localSocket, remoteMappedAddress)).start();
 				createdConnections++;
 			}
+*/
 		}// for -udpConnections
 	}
 
@@ -479,7 +432,6 @@ public class UDPTester extends Thread {
 		Collection<InetSocketAddress> stunServers = Collections
 				.synchronizedCollection(LocalStunInfo.getInstance()
 						.getStunServers(localSocket.getLocalAddress()));
-		// Collections.shuffle(stunServers);
 
 		Integer rule = null;
 		int previousMappedPort = -1;
