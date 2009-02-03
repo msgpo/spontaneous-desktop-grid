@@ -43,11 +43,6 @@ public class UDPTester extends Thread {
 	// SO Timeouts
 	private final static int RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT = 1000;
 	private final static int HOLE_PUNCHING_SO_TIMEOUT = 10000;
-	
-	//Message tags
-	private final String MESSAGE_TAG = "UDPTESTMESSAGE";
-
-	//private F2FPeer remotePeer = null;
 
 	/*
 	F2FPeer getRemotePeer() {
@@ -111,11 +106,7 @@ public class UDPTester extends Thread {
 			notify();
 		}
 	}
-	
-	private String getMessageTag(boolean start){
-		if (start) return "<" + MESSAGE_TAG + ">";
-		else return "</" + MESSAGE_TAG + ">";
-	}
+
 	
 	/**
 	 * Non-Blocking send.
@@ -128,12 +119,7 @@ public class UDPTester extends Thread {
 				byte[] bytes = Util.serializeObject(udpTestMessage);
 				byte[] compressed = Util.zip(bytes);
 				String message = Util.encode(compressed);
-				StringBuffer sb = new StringBuffer();
-				sb.append(udpTestMessage.toString());
-				sb.append(getMessageTag(true));
-				sb.append(message);
-				sb.append(getMessageTag(false));
-				System.out.println(sb.toString());
+				System.out.println(message);
 			} catch (IOException e){
 				throw new CommunicationFailedException("Failed Sending UDP Test Message ["
 						+ udpTestMessage.toString() + "]",e);
@@ -955,16 +941,10 @@ public class UDPTester extends Thread {
 						message = br.readLine();
 					}
 					log.debug("Received message [" + message + "]");
-					int start = message.indexOf(getMessageTag(true)) + getMessageTag(true).length();
-					int end = message.indexOf(getMessageTag(false));
-					String content = message.substring(start, end);
-					log.debug("Message Content [" + content + "]");
-					byte[] compressed = Util.decode(content);
+					byte[] compressed = Util.decode(message);
 					byte[] bytes = Util.unzip(compressed);
 					Object obj = Util.deserializeObject(bytes);
 					if (obj instanceof UDPTestMessage)  messageReceived((UDPTestMessage)obj);
-				} catch (IndexOutOfBoundsException e) {
-					log.debug("Illegal message format");
 				} catch (IOException e) {
 					log.debug("Unable to receive message, IO Exception");
 				} catch (ClassNotFoundException e){
