@@ -14,6 +14,7 @@ public class JPunchTest {
 	
 	//Constants
 	private static final String MASTER_PROPERTY = "net.ulno.jpunch.Master";
+	private static final String FILENAME_PROPERTY = "net.ulno.jpunch.Filename";
 	
 	public void testUDP() throws CommunicationFailedException {
 		log.debug(isMaster() ? "Master Node" : "Slave Node");
@@ -47,8 +48,8 @@ public class JPunchTest {
 	
 	private void slaveTest(){
 		log.debug("Slave will receive message");
-		//String message = (String)udpConnection.receiveMessage();
-		//log.debug("Received message [" + message + "]");	
+		String message = (String)udpConnection.receiveMessage();
+		log.debug("Received message [" + message + "]");	
 	}
 	
 	private boolean isMaster(){

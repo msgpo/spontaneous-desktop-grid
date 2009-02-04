@@ -366,7 +366,8 @@ public class UDPConnection extends Thread
                     
 //                    messageReceived(message, remotePeer.getID());
                     
-                    log.info("Received Object [" + ((String)message) + "]");
+                    //log.info("Received Object [" + ((String)message) + "]");
+                    setReceivedObject(message);
                 } catch (Exception e)
                 {
                     e.printStackTrace();
@@ -546,5 +547,25 @@ public class UDPConnection extends Thread
         {
             throw new CommunicationFailedException(e);
         }
+    }
+    
+    
+    private Object receivedObject = null;
+    
+    private synchronized void setReceivedObject(Object object){
+    	if (this.receivedObject == null && object != null){
+    		this.receivedObject = object;
+    		notify();
+    	}
+    }
+    
+    public synchronized Object receiveMessage(){
+    	if (this.receivedObject == null){
+    		try{
+    			wait();
+    		} catch (InterruptedException e) {}
+    		return receivedObject;
+    	}
+    	return receivedObject;
     }
 }
