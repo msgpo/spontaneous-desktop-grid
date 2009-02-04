@@ -4,6 +4,7 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
+import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
@@ -76,6 +77,7 @@ public class UDPConnection extends BlockingMessageSender implements Runnable
     		//first send the SYN packet to initialize data transfer
     		this.status = Status.SENDING;
 //            localSynTag = F2FComputing.getLocalPeerID().hashCode();
+    		localSynTag = this.localSocket.getInetAddress().getHostName().hashCode();  
             bytesToSend = bytes;
     		
             byte[] integer = intToBytes(localSynTag);
