@@ -43,37 +43,17 @@ public class UDPTester extends Thread {
 	// SO Timeouts
 	private final static int RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT = 1000;
 	private final static int HOLE_PUNCHING_SO_TIMEOUT = 10000;
-
-	/*
-	F2FPeer getRemotePeer() {
-		return remotePeer;
-	}
-	*/
-
-	private enum Status {
-		INIT, 
-		WAITING_STUN_INFO, 
-		GOT_STUN_INFO, 
-		GOT_MAPPED_ADDRESS, 
-		CONNECTION_ESTABLISHED, 
-		CLOSING
-	}
-
-	private Status status = null;
 	
-	private Status setStatus(Status status) {
-		log.info("UDPTester set status " + status);
-		return this.status = status;
-	}
-	
+	// StunInfo
 	private StunInfo remoteStunInfo = null;
 	private StunInfo localStunInfo = null;
 	
+	// Mappings
 	private Integer remotePortMappingRule = null;
 	private InetSocketAddress remoteMappedAddress = null;
 	
 	// Receive Queue used for blocking receive
-	//private BlockingReceiveQueue blockingReceiveQueue = new BlockingReceiveQueue();
+	private BlockingReceiveQueue blockingReceiveQueue = new BlockingReceiveQueue();
 	
 	//Receiving thread
 	private MessageReceivingThread messageReceivingThread = null;
@@ -81,14 +61,6 @@ public class UDPTester extends Thread {
 	public UDPTester(){
 		super(UDPTester.class.getName());
 	}
-	
-	/*
-	public UDPTester(F2FPeer peer) {
-		super("UDPTester [" + peer.getDisplayName() + "]");
-		remotePeer = peer;
-		setStatus(Status.INIT);
-	}
-	*/
 	
 	private synchronized StunInfo getRemoteStunInfo(){
 		if(this.remoteStunInfo == null){
@@ -103,6 +75,40 @@ public class UDPTester extends Thread {
 	private synchronized void setRemoteStunInfo(StunInfo stunInfo){
 		if(this.remoteStunInfo == null && stunInfo != null && !"".equals(stunInfo)){
 			this.remoteStunInfo = stunInfo;
+			notify();
+		}
+	}
+	
+	private synchronized InetSocketAddress getRemoteMappedAddress(){
+		if (this.remoteMappedAddress == null){
+			try {
+				wait();
+			} catch (InterruptedException e) {}
+			return this.remoteMappedAddress;
+		}
+		return this.remoteMappedAddress;
+	}
+	
+	private synchronized void setRemoteMappedAddress(InetSocketAddress remoteMappedAddress){
+		if (this.remoteMappedAddress == null && remoteMappedAddress != null){
+			this.remoteMappedAddress = remoteMappedAddress;
+			notify();
+		}
+	}
+	
+	private synchronized Integer getRemotePortMappingRule(){
+		if (this.remotePortMappingRule == null){
+			try {
+				wait();
+			} catch (InterruptedException e) {}
+			return this.remotePortMappingRule;
+		}
+		return this.remotePortMappingRule;
+	}
+	
+	private synchronized void setRemotePortMappingRule (Integer remotePortMappingRule){
+		if (this.remotePortMappingRule == null && remotePortMappingRule != null){
+			this.remotePortMappingRule = remotePortMappingRule;
 			notify();
 		}
 	}
@@ -135,9 +141,7 @@ public class UDPTester extends Thread {
 	private void messageReceived(Object message) {
 		if (message instanceof UDPTestMessage)
 			messageReceived((UDPTestMessage) message);
-		else
-			log
-					.warn("UDPTester.messageRecieved() handles only UDPTestMessage");
+		else log.warn("UDPTester.messageRecieved() handles only UDPTestMessage");
 	}
 
 	/*
@@ -150,51 +154,18 @@ public class UDPTester extends Thread {
 		} else if (msg.type == UDPTestMessage.Type.STUN_INFO) {
 			this.setRemoteStunInfo(msg.stunInfo);
 		} else if (msg.type == UDPTestMessage.Type.MAPPED_ADDRESS) {
-			
+			this.setRemoteMappedAddress(msg.mappedAddress);
+			this.setRemotePortMappingRule(msg.portMappingRule);
+		} else if (msg.type == UDPTestMessage.Type.RECEIVED_PING) {
+			// stop hole punching sending loop
+			remoteSideReceivedPing = true;
+			log.debug("Remote Sode Received Ping");
 		}
 		
-		/*
-		 * if (status == Status.INIT) { if (msg.type ==
-		 * UDPTestMessage.Type.INIT); setStatus(Status.WAITING_STUN_INFO); }
-		 * else if (status == Status.WAITING_STUN_INFO) { if (msg.type ==
-		 * UDPTestMessage.Type.STUN_INFO) { remoteStunInfo = msg.stunInfo;
-		 * setStatus(Status.GOT_STUN_INFO); } } else if (this.status ==
-		 * Status.GOT_STUN_INFO) { if(msg.type ==
-		 * UDPTestMessage.Type.MAPPED_ADDRESS) { if (msg.mappedAddress == null)
-		 * return; this.remoteMappedAddress = msg.mappedAddress;
-		 * this.remotePortMappingRule = msg.portMappingRule;
-		 * setStatus(Status.GOT_MAPPED_ADDRESS); } / else if (msg.type ==
-		 * UDPTestMessage.Type.MAPPED_ADDRESS_RECEIVED &&
-		 * this.remoteMappedAddress != null && this.remotePortMappingRule !=
-		 * null ) { setStatus(Status.GOT_MAPPED_ADDRESS); }
-		 */
-		/*
-		 * else { log.warn("Illegal message type at this moment [" + msg.type +
-		 * "]" + " status [" + this.status + "]"); } } else if (this.status ==
-		 * Status.GOT_MAPPED_ADDRESS) { if (msg.type ==
-		 * UDPTestMessage.Type.RECEIVED_PING) {
-		 * setStatus(Status.CONNECTION_ESTABLISHED); } / else if (msg.type ==
-		 * UDPTestMessage.Type.MAPPED_ADDRESS) { this.remoteMappedAddress =
-		 * msg.mappedAddress; }
-		 */
-		/*
-		 * else { log.warn(" " + getName() +
-		 * " Illegal message type at this moment [" + msg.type + "]" +
-		 * " status [" + this.status + "]"); } } else if (this.status ==
-		 * Status.CONNECTION_ESTABLISHED) { /if (udpm.type ==
-		 * UDPTestMessage.Type.CONNECTION_ID) { this.remoteConnectionId =
-		 * udpm.id; }
-		 */
-		/*
-		 * } else { log.warn(" " + getName() +
-		 * " Illegal message type at this moment [" + msg.type + "]" +
-		 * " status [" + this.status + "]"); }
-		 */
 	}
 		
 	public void stopTesting() {
 		log.info("Received stop signal, closing all testing and established connections");
-		setStatus(Status.CLOSING);
 	}
 
 	public void run() {
@@ -307,9 +278,7 @@ public class UDPTester extends Thread {
 		}
 
 		int createdConnections = 0;
-		while (createdConnections < MAX_UDP_CONNECTIONS
-				&& this.status != Status.CLOSING) {
-			setStatus(Status.GOT_STUN_INFO);
+		while (createdConnections < MAX_UDP_CONNECTIONS) {
 			DatagramSocket localSocket = null;
 			Integer localPortMappingRule = null;
 			remotePortMappingRule = null;
@@ -401,9 +370,16 @@ public class UDPTester extends Thread {
 					+ localMappedAddress.getAddress().getHostAddress() + ":"
 					+ localMappedAddress.getPort() + "]");
 			// exchange MappedAddress
-/*
-			exchangeMappedAddress(localMappedAddress, localPortMappingRule);
 
+			log.debug("Mapped Address Exchange");
+			// send localMappedAddress
+			send(new UDPTestMessage(localMappedAddress,
+					localPortMappingRule));
+			// receive remote mapped address
+			getRemoteMappedAddress();
+			// receive remote port mapping rule
+			getRemotePortMappingRule();
+			
 			if (remoteMappedAddress == null) {
 				log.error("RemoteMappedAddress == null");
 				return;
@@ -413,7 +389,9 @@ public class UDPTester extends Thread {
 					+ remoteMappedAddress.getPort() + "]");
 
 			// start Hole Punching
+			
 			punchHole(localSocket);
+/*
 			if (this.status != Status.CONNECTION_ESTABLISHED) {
 				setStatus(Status.CLOSING);
 			} else {
@@ -658,52 +636,59 @@ public class UDPTester extends Thread {
 		return mostFrequent;
 	}
 
+	//common variables for send/receive loops 
 	private Integer coneToSymPortRangePing = 0;
 	private Integer attackOnRemotePort = 0;
-
+	private boolean holePunchingRunning = true;
+	
+	private boolean localSideReceivedPing = false;
+	private boolean remoteSideReceivedPing = false;
+	
 	private void punchHole(final DatagramSocket localSocket) {
 		log.debug("Hole Punching");
-
+		
+		// set SO_TIMEOUT
 		try {
 			if (localSocket.getSoTimeout() != HOLE_PUNCHING_SO_TIMEOUT) {
 				localSocket.setSoTimeout(HOLE_PUNCHING_SO_TIMEOUT);
 			}
 		} catch (SocketException e) {
-			log.error(
-					"Unable to set socket timeout to HOLE_PUNCHING_SO_TIMEOUT",
-					e);
+			log.error( "Unable to set socket timeout to HOLE_PUNCHING_SO_TIMEOUT",e);
 		}
-
+		
+		// set target port for attacking
 		synchronized (attackOnRemotePort) {
 			attackOnRemotePort = remoteMappedAddress.getPort();
 		}
+		
+		// set range ping
 		synchronized (coneToSymPortRangePing) {
 			if (remoteStunInfo.isSymmetricCone()
 					&& !LocalStunInfo.getInstance().getStunInfo()
 							.isSymmetricCone()) {
 				coneToSymPortRangePing = 1;
 			}
-			// else if ()
 		}
-
-		final int AFTER_CONNECTION_ESTABLISHED_PING_AMOUNT = 3;
-
+		
+		// separate thread for listening UDP packets
 		Thread udpListener = new Thread() {
 			public void run() {
 				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1 + 4 + 4];
-				while (status != Status.CLOSING
-				/* UDPConnection.this.status != Status.CONNECTION_ESTABLISHED */) {
+				while (holePunchingRunning) {
 					try {
+						// listen  for UDP packets
 						DatagramPacket receivePacket = new DatagramPacket(
 								receiveContent, receiveContent.length);
 						localSocket.receive(receivePacket);
 						UDPPacket udpp = new UDPPacket(receivePacket.getData());
+						//if packet is PING
 						if (UDPPacket.PING == udpp.getType()) {
 							log.debug("Received PING packet from ["
 									+ receivePacket.getAddress()
 											.getHostAddress() + ":"
 									+ receivePacket.getPort() + "]");
-
+							
+							// if destination address changed 
 							if (!(remoteMappedAddress.getAddress().equals(
 									receivePacket.getAddress()) && remoteMappedAddress
 									.getPort() == receivePacket.getPort())) {
@@ -716,8 +701,7 @@ public class UDPTester extends Thread {
 								// change the currently used target port
 								// stop the range attack
 								synchronized (attackOnRemotePort) {
-									attackOnRemotePort = receivePacket
-											.getPort();
+									attackOnRemotePort = receivePacket.getPort();
 								}
 								synchronized (coneToSymPortRangePing) {
 									coneToSymPortRangePing = 0;
@@ -727,51 +711,40 @@ public class UDPTester extends Thread {
 							// inform the other side that we have received a
 							// PING packet
 							try {
-								send(new UDPTestMessage(
-										UDPTestMessage.Type.RECEIVED_PING));
+								send(new UDPTestMessage(UDPTestMessage.Type.RECEIVED_PING));
+								localSideReceivedPing = true;
 								return;
 							} catch (CommunicationFailedException e) {
+								log.error("Unable to send messsage",e);
 							}
 						} else {
-							log.warn("Waited PING, received " + receivePacket);
+							log.warn("Illegal packet received " + receivePacket);
 						}
 					} catch (SocketTimeoutException e) {
-						/*
-						 * if(LocalStunInfo.getInstance().getStunInfo().
-						 * isSymmetricCone() &&
-						 * udpTester.getRemoteStunInfo().isSymmetricCone()){ //
-						 * } else if(
-						 * (LocalStunInfo.getInstance().getStunInfo().
-						 * isSymmetricCone() &&
-						 * !udpTester.getRemoteStunInfo().isSymmetricCone()) ||
-						 * (!LocalStunInfo.getInstance().getStunInfo().
-						 * isSymmetricCone() &&
-						 * udpTester.getRemoteStunInfo().isSymmetricCone()) ) {
-						 * counter++; if (counter ==
-						 * AFTER_CONNECTION_ESTABLISHED_RESEND_AMOUNT){
-						 * holePunchTimeout = true; } } else {log.warn(
-						 * "Hole punching timeout, no result, stopping thread");
-						 * holePunchTimeout = true; }
-						 */
+						log.error("Socket timeout exception receiving PING packet", e);
 					} catch (Exception e) {
-						log.warn("Exception receiving PING packet", e);
+						log.error("Exception receiving PING packet", e);
 					}
 				}
 				log.debug("HOLE Punching Receive Thread is STOPPING");
 			}
 		};
 		udpListener.start();
+		
 		// first try with remote mapping rule
 		synchronized (attackOnRemotePort) {
 			attackOnRemotePort = attackOnRemotePort + remotePortMappingRule;
 		}
 		long startTime = System.currentTimeMillis();
-		for (int pingsAfterTraversal = 0, ping_counter = 0, port_increment_counter = 0; pingsAfterTraversal < AFTER_CONNECTION_ESTABLISHED_PING_AMOUNT
-				&& status != Status.CLOSING; ping_counter++) {
+		for (int ping_counter = 0, port_increment_counter = 0; 
+				holePunchingRunning;  
+				ping_counter++) {
 			if (System.currentTimeMillis() - startTime > 60000) {
-				setStatus(Status.CLOSING);
+				// stop send/receive loops
+				holePunchingRunning = false;
 				break;
 			}
+			// prepare PING UDPPacket
 			UDPPacket sendUDPpacket = new UDPPacket(UDPPacket.PING);
 			byte[] sendContent = sendUDPpacket.getBytes();
 			DatagramPacket sendPacket = null;
@@ -781,6 +754,7 @@ public class UDPTester extends Thread {
 					+ (coneToSymPortRangePing * port_increment_counter * ((int) Math
 							.pow((-1), port_increment_counter)));
 
+			//prepare PING DatagramPacket
 			try {
 				InetSocketAddress ias = new InetSocketAddress(
 						remoteMappedAddress.getAddress(), p);
@@ -789,7 +763,8 @@ public class UDPTester extends Thread {
 			} catch (IllegalArgumentException e) {
 				if (p > 65535 || p < 1024) {
 					log.error("Remote Port number out of range [" + p + "]", e);
-					setStatus(Status.CLOSING);
+					// stop send/receive loops
+					holePunchingRunning = false;
 					break;
 				}
 			} catch (SocketException e) {
@@ -798,6 +773,7 @@ public class UDPTester extends Thread {
 			if (sendPacket == null)
 				continue;
 
+			//send packet
 			try {
 				localSocket.send(sendPacket);
 				log.debug("Sent PING packet to "
@@ -808,16 +784,13 @@ public class UDPTester extends Thread {
 						+ sendPacket.getAddress().getHostAddress() + " "
 						+ sendPacket.getPort() + "]", e);
 			}
-
+			
+			// sleep
 			try {
 				Thread.sleep(50);
 			} catch (InterruptedException e) {
 			}
 
-			if (status == Status.CONNECTION_ESTABLISHED) {
-				pingsAfterTraversal++;
-				startTime = System.currentTimeMillis();
-			}
 			if (ping_counter > 3) {
 				synchronized (attackOnRemotePort) {
 					attackOnRemotePort = p;
@@ -831,52 +804,6 @@ public class UDPTester extends Thread {
 		} catch (InterruptedException e) {
 		}
 		log.debug("Hole Punching Method is STOPPING");
-	}
-
-	private void exchangeMappedAddress(InetSocketAddress localMappedAddress,
-			Integer localPortMappingRule) throws CommunicationFailedException {
-		log.debug("Mapped Address Exchange");
-		// exchange mapped addresses
-		send(new UDPTestMessage(localMappedAddress,
-				localPortMappingRule));
-		// wait at most 30 seconds for remote addresses
-		for (int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++) {
-			if (status == Status.GOT_MAPPED_ADDRESS) {
-
-				break;
-			}
-			try {
-				Thread.sleep(500);
-			} catch (InterruptedException e) {
-			}
-		}
-		if (status != Status.GOT_MAPPED_ADDRESS) {
-			log.error("Timeout while waiting mapped address");
-			return;
-		}
-		if (remoteMappedAddress == null) {
-			log.error("remoteMappedAddress == null");
-			return;
-		}
-		if (remotePortMappingRule == null) {
-			log.error("remotePortMappingRule == null");
-			return;
-		}
-
-		/*
-		 * for(int i = 0; i < DEFAULT_WAITING_TIMEOUT; i++){ try{
-		 * sendUDPTestMessage(new UDPTestMessage(localMappedAddress,
-		 * localPortMappingRule)); if (remoteMappedAddress != null &&
-		 * this.status == Status.GOT_STUN_INFO) { sendUDPTestMessage(new
-		 * UDPTestMessage( UDPTestMessage.Type.MAPPED_ADDRESS_RECEIVED)); } else
-		 * if (remoteMappedAddress != null && this.status ==
-		 * Status.GOT_MAPPED_ADDRESS) return; Thread.sleep(1000); } catch
-		 * (InterruptedException e) {} } if( remoteMappedAddress == null){
-		 * log.error("Timeout while waiting mapped address");
-		 * ActivityManager.getDefault().emitEvent(new ActivityEvent(this,
-		 * ActivityEvent.Type.FAILED, "Timeout while waiting mapped address"));
-		 * return; }
-		 */
 	}
 
 	private class MessageReceivingThread extends Thread{
