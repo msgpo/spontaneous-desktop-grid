@@ -272,15 +272,15 @@ public class UDPTester{
 				// choose port range
 				int p = 49152 + (int) Math.round(Math.random() * 16383);
 				// bind socket
-				//localSocket = new DatagramSocket(new InetSocketAddress(
-				//		localIas, p));
+				localSocket = new DatagramSocket(new InetSocketAddress(
+						localIas, p));
 				
 				// test
 				// using DatagramChannel
-				SocketAddress socketAddress = new InetSocketAddress(localIas, p);
-				DatagramChannel datagramChannel = DatagramChannel.open();
-				localSocket = datagramChannel.socket();
-				localSocket.bind(socketAddress);
+				//SocketAddress socketAddress = new InetSocketAddress(localIas, p);
+				//DatagramChannel datagramChannel = DatagramChannel.open();
+				//localSocket = datagramChannel.socket();
+				//localSocket.bind(socketAddress);
 				
 				if (localSocket != null && localSocket.isBound()) {
 					log.debug("DatagrammSocket is bound on localAddress ["
