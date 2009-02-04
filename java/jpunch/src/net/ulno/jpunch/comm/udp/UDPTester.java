@@ -31,7 +31,7 @@ import de.javawi.jstun.header.MessageHeaderParsingException;
 import de.javawi.jstun.header.MessageHeaderInterface.MessageHeaderType;
 import de.javawi.jstun.util.UtilityException;
 
-public class UDPTester extends Thread {
+public class UDPTester{
 	final private static Logger log = Logger.getLogger(UDPTester.class);
 	
 	//Default values
@@ -61,32 +61,7 @@ public class UDPTester extends Thread {
 	//Established Connection
 	private UDPConnection udpConnection = null;
 	
-	public UDPTester(){
-		super(UDPTester.class.getName());
-	}
-	
-	/**
-	 * Returns tested UDPConnection
-	 * returned UDPConnection is in running state
-	 * method blocks until Connection is tested 
-	 * @return tested UDPConnection
-	 */
-	public synchronized UDPConnection getUDPConnection(){
-		if (this.udpConnection == null){
-			try{
-				wait();
-			} catch (InterruptedException e) {}
-			return udpConnection;
-		}
-		return udpConnection;
-	}
-	
-	private synchronized void setUdpConnection(UDPConnection udpConnection){
-		if (this.udpConnection == null && udpConnection != null){
-			this.udpConnection = udpConnection;
-			notify();
-		}
-	}
+	public UDPTester(){}
 	
 	private synchronized StunInfo getRemoteStunInfo(){
 		if(this.remoteStunInfo == null){
@@ -190,19 +165,13 @@ public class UDPTester extends Thread {
 		
 	}
 
-	public void run() {
-		// just for information catch any exceptions that may occur
-		try {
-			testProcess();
-		} catch (Exception e) {
-			e.printStackTrace();
-			log.warn(e.getMessage());
-		}
-	}
-
-	private void testProcess() throws CommunicationFailedException {
-
-		log.debug(getName() + " started");
+	/**
+	 * Returns tested UDPConnection
+	 * returned UDPConnection is in running state
+	 * method blocks until Connection is tested 
+	 * @return tested UDPConnection
+	 */
+	public UDPConnection getUDPConnection() throws CommunicationFailedException {
 		
 		//start receiving thread
 		messageReceivingThread = new MessageReceivingThread();
@@ -256,14 +225,14 @@ public class UDPTester extends Thread {
 				// UDP communication is impossible -> UDP blocked on one of the
 				// sides
 				log.warn("UDP communication impossible, stopping test thread");
-				return;
+				return null;
 			}
 			
 			//Try to establish UDP connection
 			UDPConnection udpConnection = UDPTest();
 			// run established connection
 			udpConnection.run();
-			setUdpConnection(udpConnection);
+			return udpConnection;
 	}
 
 	private UDPConnection UDPTest() throws CommunicationFailedException {
