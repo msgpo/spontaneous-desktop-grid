@@ -23,6 +23,7 @@ public class JPunchTest {
 		//
 		if (isMaster()) masterTest();
 		else slaveTest();
+
 	}
 	
 	public void testStunInfo(){
@@ -45,8 +46,8 @@ public class JPunchTest {
 	
 	private void slaveTest(){
 		log.debug("Slave will receive message");
-		String message = (String)udpConnection.receiveMessage();
-		log.debug("Received message [" + message + "]");	
+		//String message = (String)udpConnection.receiveMessage();
+		//log.debug("Received message [" + message + "]");	
 	}
 	
 	private boolean isMaster(){

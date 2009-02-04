@@ -367,8 +367,7 @@ public class UDPConnection extends BlockingMessageSender implements Runnable
                     
 //                    messageReceived(message, remotePeer.getID());
                     
-                    receivedObject = message;
-                    notify();
+                    log.info("Received Object [" + ((String)message) + "]");
                 } catch (Exception e)
                 {
                     e.printStackTrace();
@@ -550,8 +549,8 @@ public class UDPConnection extends BlockingMessageSender implements Runnable
         }
     }
     
-    private Object receivedObject = null;
-    
+//    private Object receivedObject = null;
+/*    
     public synchronized Object receiveMessage(){
     	if (receivedObject == null){
     		try{
@@ -561,5 +560,5 @@ public class UDPConnection extends BlockingMessageSender implements Runnable
     	}
     	return receivedObject;
     }
- 
+*/ 
 }
