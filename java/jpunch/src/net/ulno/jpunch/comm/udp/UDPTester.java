@@ -8,9 +8,11 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
+import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
+import java.nio.channels.DatagramChannel;
 import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Collections;
@@ -270,8 +272,15 @@ public class UDPTester{
 				// choose port range
 				int p = 49152 + (int) Math.round(Math.random() * 16383);
 				// bind socket
-				localSocket = new DatagramSocket(new InetSocketAddress(
-						localIas, p));
+				//localSocket = new DatagramSocket(new InetSocketAddress(
+				//		localIas, p));
+				
+				// test
+				// using DatagramChannel
+				SocketAddress socketAddress = new InetSocketAddress(localIas, p);
+				DatagramChannel datagramChannel = DatagramChannel.open();
+				localSocket = datagramChannel.socket();
+				localSocket.bind(socketAddress);
 				
 				if (localSocket != null && localSocket.isBound()) {
 					log.debug("DatagrammSocket is bound on localAddress ["
@@ -284,6 +293,10 @@ public class UDPTester{
 				log.error("Unable to bind DatagramSocket on localAddress ["
 						+ localSocket.getLocalAddress().getHostAddress()
 						+ ":" + localSocket.getLocalPort() + "]", e);
+				// destruct DatagramSocket
+				localSocket = null;
+			} catch (IOException e){
+				log.error("Unable to open DatagramChannel", e);
 				// destruct DatagramSocket
 				localSocket = null;
 			}// catch

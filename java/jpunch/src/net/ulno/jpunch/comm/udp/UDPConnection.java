@@ -4,17 +4,15 @@ import java.io.IOException;
 import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetSocketAddress;
-import java.net.NetworkInterface;
 import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import net.ulno.jpunch.comm.BlockingMessageSender;
 import net.ulno.jpunch.core.CommunicationFailedException;
 import net.ulno.jpunch.util.Util;
 import net.ulno.jpunch.util.logging.Logger;
 
-public class UDPConnection extends BlockingMessageSender implements Runnable
+public class UDPConnection extends Thread
 {
 	private final static Logger log = Logger.getLogger(UDPConnection.class);
 			
@@ -42,9 +40,10 @@ public class UDPConnection extends BlockingMessageSender implements Runnable
 		//this.remotePeer = remotePeer;
 	}
 	
-    private String name = null;
-    private void setName(String n) { name = n; }
-    private String getName() { return name; }
+//	private String name = null;
+//	private void setName(String n) { name = n; }
+//	private String getName() { return name; }
+	
 	public String getActivityName() { return getName(); }
 	
 	public void run()
@@ -548,17 +547,4 @@ public class UDPConnection extends BlockingMessageSender implements Runnable
             throw new CommunicationFailedException(e);
         }
     }
-    
-//    private Object receivedObject = null;
-/*    
-    public synchronized Object receiveMessage(){
-    	if (receivedObject == null){
-    		try{
-    			wait();
-    		} catch (InterruptedException e) {}
-    		return receivedObject;
-    	}
-    	return receivedObject;
-    }
-*/ 
 }
