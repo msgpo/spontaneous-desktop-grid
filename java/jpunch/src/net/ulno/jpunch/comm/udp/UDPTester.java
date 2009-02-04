@@ -35,7 +35,6 @@ public class UDPTester extends Thread {
 	final private static Logger log = Logger.getLogger(UDPTester.class);
 	
 	//Default values
-	final private static int MAX_UDP_CONNECTIONS = 1;
 	final private static int MAX_BINDING_ERRORS = 20;
 	final private static int DEFAULT_WAITING_TIMEOUT = 600;
 	private final static int DEFAULT_PORT_MAPPING_RULE = 1;
@@ -249,20 +248,20 @@ public class UDPTester extends Thread {
 
 				return;
 			}
-*/
-			initUDPTests();
+*/			
+			//Try to establish UDP connection
+			UDPConnection udpConnection = UDPTest();
+			// run established connection
+			udpConnection.run();
 	}
 
-	private void initUDPTests() throws CommunicationFailedException {
-		// if (localIp == null ) throw new
-		// NullPointerException("localIp == null");
-		// if ("".equals(localIp)) throw new
-		// IllegalArgumentException("localIp == \"\"");
+	private UDPConnection UDPTest() throws CommunicationFailedException {
 
 		log.debug("Initiating UDP Tests");
 
 		InetAddress localIas = null;
 		InetAddress remoteIas = null;
+		
 		try {
 			localIas = InetAddress.getByName(localStunInfo.getLocalIp());
 			remoteIas = InetAddress.getByName(remoteStunInfo.getPublicIp());
@@ -271,137 +270,151 @@ public class UDPTester extends Thread {
 		}
 		if (localIas == null) {
 			log.error("Local InetAddress is not resolved");
-			return;
+			return null;
 		}
 		if (remoteIas == null) {
 			log.error("Remote InetAddress is not resolved");
-			return;
+			return null;
 		}
-
-		int createdConnections = 0;
-		while (createdConnections < MAX_UDP_CONNECTIONS) {
-			DatagramSocket localSocket = null;
-			Integer localPortMappingRule = null;
-			remotePortMappingRule = null;
-			InetSocketAddress localMappedAddress = null;
-			remoteMappedAddress = null;
-			for (int j = 0; j < MAX_BINDING_ERRORS; j++) {
-				try {
-					int p = 49152 + (int) Math.round(Math.random() * 16383);
-					localSocket = new DatagramSocket(new InetSocketAddress(
-							localIas, p));
-					if (localSocket != null && localSocket.isBound()) {
-						log.debug("DatagrammSocket is bound on localAddress ["
-								+ localSocket.getLocalAddress()
-										.getHostAddress() + ":"
-								+ localSocket.getLocalPort() + "]");
-						break;
-					}
-				} catch (SocketException e) {
-					log.error("Unable to bind DatagramSocket on localAddress ["
-							+ localSocket.getLocalAddress().getHostAddress()
-							+ ":" + localSocket.getLocalPort() + "]", e);
-					// destruct DatagramSocket
-					localSocket = null;
-				}// catch
-			}// for -bindings
-			if (localSocket == null || !localSocket.isBound()) {
-				log.error("Timeout binding DatagramSocket on localIp ["
-						+ localIas.getHostAddress() + "]");
-				return;
-			}
-			// try to set reuse=true address on socket
+		
+		// test local socket
+		DatagramSocket localSocket = null;
+		
+		// local MappedAddress and MappinRule
+		Integer localPortMappingRule = null;
+		InetSocketAddress localMappedAddress = null;
+		
+		// remote MappedAddress and MappinRule
+		remotePortMappingRule = null;
+		remoteMappedAddress = null;
+		
+		// try to bind the socket
+		for (int j = 0; j < MAX_BINDING_ERRORS; j++) {
 			try {
-				localSocket.setReuseAddress(true);
-				if (!localSocket.getReuseAddress()) {
-					throw new SocketException("reuseAddress==false");
+				// choose port range
+				int p = 49152 + (int) Math.round(Math.random() * 16383);
+				// bind socket
+				localSocket = new DatagramSocket(new InetSocketAddress(
+						localIas, p));
+				
+				if (localSocket != null && localSocket.isBound()) {
+					log.debug("DatagrammSocket is bound on localAddress ["
+							+ localSocket.getLocalAddress()
+									.getHostAddress() + ":"
+							+ localSocket.getLocalPort() + "]");
+					break;
 				}
 			} catch (SocketException e) {
-				log.error("Unable to set reuse address on bound socket ["
-						+ localSocket.getLocalAddress().getHostAddress() + ":"
-						+ localSocket.getLocalPort() + "]", e);
-				return;
+				log.error("Unable to bind DatagramSocket on localAddress ["
+						+ localSocket.getLocalAddress().getHostAddress()
+						+ ":" + localSocket.getLocalPort() + "]", e);
+				// destruct DatagramSocket
+				localSocket = null;
+			}// catch
+		}// for -bindings
+		
+		// if timeout binding
+		if (localSocket == null || !localSocket.isBound()) {
+			log.error("Timeout binding DatagramSocket on localIp ["
+					+ localIas.getHostAddress() + "]");
+			return  null;
+		}
+		
+		// try to set reuse=true address on socket
+		try {
+			localSocket.setReuseAddress(true);
+			if (!localSocket.getReuseAddress()) {
+				throw new SocketException("reuseAddress==false");
 			}
+		} catch (SocketException e) {
+			log.error("Unable to set reuse address on bound socket ["
+					+ localSocket.getLocalAddress().getHostAddress() + ":"
+					+ localSocket.getLocalPort() + "]", e);
+			return null;
+		}
 
-			// if behind Symmetric firewall try to guess the allocated port
-			if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()) {
-				while (LocalStunInfo.getInstance().getStunServers(
-						localSocket.getLocalAddress()).size() < 4) {
-					try {
-						Thread.sleep(1000);
-					} catch (InterruptedException e) {
-					}
+		// if behind Symmetric firewall try to guess the allocated port
+		if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()) {
+			// get the needed amount of stun servers
+			while (LocalStunInfo.getInstance().getStunServers(
+					localSocket.getLocalAddress()).size() < 4) {
+				try {
+					Thread.sleep(1000);
+				} catch (InterruptedException e) {
 				}
-				List<Integer> rules = new ArrayList<Integer>();
-				for (int i = 0; i < 5; i++) {
-					try {
-						int rule = portMappingRuleDiscovery(localSocket);
-						rules.add(new Integer(rule));
-					} catch (PortMappingRuleDiscoveryException e) {
-						log.warn("Unable to Discover Port Mapping rule", e);
-					}
+			}
+			// get the possible port allocation rules
+			List<Integer> rules = new ArrayList<Integer>();
+			for (int i = 0; i < 5; i++) {
+				try {
+					int rule = portMappingRuleDiscovery(localSocket);
+					rules.add(new Integer(rule));
+				} catch (PortMappingRuleDiscoveryException e) {
+					log.warn("Unable to Discover Port Mapping rule", e);
 				}
-				log.debug("Discovered Port Allocation Rules :[" + rules + "]");
-				localPortMappingRule = getMostFrequentElem(rules);
-				if (localPortMappingRule == null) {
-					localPortMappingRule = DEFAULT_PORT_MAPPING_RULE;
-				}
-				log.debug("Using discovered Rule [" + localPortMappingRule
-						+ "]");
-			} else {
-				localPortMappingRule = 0;
 			}
-			// discover mapped IP address and port
-			InetSocketAddress ias = null;
-			try {
-				ias = resolveMappedAddress(localSocket);
-			} catch (MappedAddressResolvingException e) {
-				log.error("Unable to resolve Mapped Address", e);
-			}
-			localMappedAddress = new InetSocketAddress(ias.getAddress(), ias
-					.getPort()
-					+ localPortMappingRule);
-
-			if (localMappedAddress == null) {
-				log.error("Mapped address is not resolved");
-				return;
-			}
-
-			log.info("Mapped address\t["
-					+ localMappedAddress.getAddress().getHostAddress() + ":"
-					+ localMappedAddress.getPort() + "]");
-			// exchange MappedAddress
-
-			log.debug("Mapped Address Exchange");
-			// send localMappedAddress
-			send(new UDPTestMessage(localMappedAddress,
-					localPortMappingRule));
-			// receive remote mapped address
-			getRemoteMappedAddress();
-			// receive remote port mapping rule
-			getRemotePortMappingRule();
+			log.debug("Discovered Port Allocation Rules :[" + rules + "]");
 			
-			if (remoteMappedAddress == null) {
-				log.error("RemoteMappedAddress == null");
-				return;
+			// choose most frequent rule
+			localPortMappingRule = getMostFrequentElem(rules);
+			if (localPortMappingRule == null) {
+				localPortMappingRule = DEFAULT_PORT_MAPPING_RULE;
 			}
-			log.debug("RemoteMappedAddress ["
-					+ remoteMappedAddress.getAddress().getHostAddress() + ":"
-					+ remoteMappedAddress.getPort() + "]");
-
-			// start Hole Punching
 			
-			punchHole(localSocket);
-/*
-			if (this.status != Status.CONNECTION_ESTABLISHED) {
-				setStatus(Status.CLOSING);
-			} else {
-				// connection established
-				new Thread(new UDPConnection(localSocket, remoteMappedAddress)).start();
-				createdConnections++;
-			}
-*/
-		}// for -udpConnections
+			log.debug("Using discovered Rule [" + localPortMappingRule
+					+ "]");
+		} else {
+			// if not symmetric type, do not use MappingRule
+			localPortMappingRule = 0;
+		}
+		
+		// discover mapped IP address and port
+		InetSocketAddress ias = null;
+		try {
+			ias = resolveMappedAddress(localSocket);
+		} catch (MappedAddressResolvingException e) {
+			log.error("Unable to resolve Mapped Address", e);
+		}
+		//TODO: add allocation rule here or on remote side
+		localMappedAddress = new InetSocketAddress(ias.getAddress(), ias
+				.getPort()
+				+ localPortMappingRule);
+
+		if (localMappedAddress == null) {
+			log.error("Mapped address is not resolved, mappedAddress == null");
+			return null;
+		}
+
+		log.info("Mapped address\t["
+				+ localMappedAddress.getAddress().getHostAddress() + ":"
+				+ localMappedAddress.getPort() + "]");
+		// exchange MappedAddress
+
+		log.debug("Mapped Address Exchange");
+		// send localMappedAddress
+		send(new UDPTestMessage(localMappedAddress,
+				localPortMappingRule));
+		// receive remote mapped address
+		getRemoteMappedAddress();
+		// receive remote port mapping rule
+		getRemotePortMappingRule();
+		
+		if (remoteMappedAddress == null) {
+			log.error("Remote mapped address is not resolved, RemoteMappedAddress == null");
+			return null;
+		}
+		log.debug("RemoteMappedAddress ["
+				+ remoteMappedAddress.getAddress().getHostAddress() + ":"
+				+ remoteMappedAddress.getPort() + "]");
+
+		// start Hole Punching
+		// if hole punching succeeded, create UDP connection
+		if(punchHole(localSocket)){
+			return new UDPConnection(localSocket, remoteMappedAddress);
+		} else {
+			log.warn("Hole punching unsucceed, return null");
+			return null;
+		}
 	}
 
 	private int portMappingRuleDiscovery(DatagramSocket localSocket)
@@ -645,7 +658,7 @@ public class UDPTester extends Thread {
 	private boolean localSideReceivedPing = false;
 	private boolean remoteSideReceivedPing = false;
 	
-	private void punchHole(final DatagramSocket localSocket) {
+	private boolean punchHole(final DatagramSocket localSocket) {
 		log.debug("Hole Punching");
 		
 		// set SO_TIMEOUT
@@ -734,6 +747,7 @@ public class UDPTester extends Thread {
 		
 		// first try with remote mapping rule
 		synchronized (attackOnRemotePort) {
+			//TODO: add mapping rule here or on local side
 			attackOnRemotePort = attackOnRemotePort + remotePortMappingRule;
 		}
 		long startTime = System.currentTimeMillis();
@@ -785,6 +799,12 @@ public class UDPTester extends Thread {
 						+ sendPacket.getAddress().getHostAddress() + " "
 						+ sendPacket.getPort() + "]", e);
 			}
+			// if remote and local sides received pings 
+			// stop pinging
+			if ( localSideReceivedPing && remoteSideReceivedPing){
+				log.debug("Both sides received PING, hole punching succeed");
+				holePunchingRunning = false;
+			}
 			
 			// sleep
 			try {
@@ -805,6 +825,9 @@ public class UDPTester extends Thread {
 		} catch (InterruptedException e) {
 		}
 		log.debug("Hole Punching Method is STOPPING");
+		
+		// hole punching succeed if local and remote sides received pings
+		return localSideReceivedPing && remoteSideReceivedPing;
 	}
 
 	private class MessageReceivingThread extends Thread{
