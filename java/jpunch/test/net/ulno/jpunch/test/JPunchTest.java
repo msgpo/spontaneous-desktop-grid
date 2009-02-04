@@ -19,10 +19,10 @@ public class JPunchTest {
 		udpTester.start();
 		log.debug(isMaster() ? "Master Node" : "Slave Node");
 		log.debug("Waiting for connection");
-		udpConnection = udpTester.getUDPConnection();
-		log.debug("Connected");
-		if (isMaster()) masterTest();
-		else slaveTest();
+		//udpConnection = udpTester.getUDPConnection();
+		//log.debug("Connected");
+		//if (isMaster()) masterTest();
+		//else slaveTest();
 	}
 	
 	public void testStunInfo(){
