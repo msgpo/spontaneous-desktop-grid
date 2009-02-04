@@ -58,8 +58,34 @@ public class UDPTester extends Thread {
 	//Receiving thread
 	private MessageReceivingThread messageReceivingThread = null;
 	
+	//Established Connection
+	private UDPConnection udpConnection = null;
+	
 	public UDPTester(){
 		super(UDPTester.class.getName());
+	}
+	
+	/**
+	 * Returns tested UDPConnection
+	 * returned UDPConnection is in running state
+	 * method blocks until Connection is tested 
+	 * @return tested UDPConnection
+	 */
+	public synchronized UDPConnection getUDPConnection(){
+		if (this.udpConnection == null){
+			try{
+				wait();
+			} catch (InterruptedException e) {}
+			return udpConnection;
+		}
+		return udpConnection;
+	}
+	
+	private synchronized void setUdpConnection(UDPConnection udpConnection){
+		if (this.udpConnection == null && udpConnection != null){
+			this.udpConnection = udpConnection;
+			notify();
+		}
 	}
 	
 	private synchronized StunInfo getRemoteStunInfo(){
@@ -163,10 +189,6 @@ public class UDPTester extends Thread {
 		}
 		
 	}
-		
-	public void stopTesting() {
-		log.info("Received stop signal, closing all testing and established connections");
-	}
 
 	public void run() {
 		// just for information catch any exceptions that may occur
@@ -236,23 +258,12 @@ public class UDPTester extends Thread {
 				log.warn("UDP communication impossible, stopping test thread");
 				return;
 			}
-/*
-			// if one of the sides has open access
-			if (remoteStunInfo.isOpenAccess() || localStunInfo.isOpenAccess()) {
-				// UDP communication not needed -> At least one of the sides has
-				// open access
-				// TCP communication should be possible
-				log
-						.warn("UDP communication not needed -> At least one of the sides has open access - > "
-								+ "TCP communication should be possible, stopping test thread");
-
-				return;
-			}
-*/			
+			
 			//Try to establish UDP connection
 			UDPConnection udpConnection = UDPTest();
 			// run established connection
 			udpConnection.run();
+			setUdpConnection(udpConnection);
 	}
 
 	private UDPConnection UDPTest() throws CommunicationFailedException {
