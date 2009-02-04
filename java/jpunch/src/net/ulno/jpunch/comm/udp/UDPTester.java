@@ -166,9 +166,7 @@ public class UDPTester{
 	}
 
 	/**
-	 * Returns tested UDPConnection
-	 * returned UDPConnection is in running state
-	 * method blocks until Connection is tested 
+	 * Returns tested UDPConnection 
 	 * @return tested UDPConnection
 	 */
 	public UDPConnection getUDPConnection() throws CommunicationFailedException {
@@ -230,8 +228,6 @@ public class UDPTester{
 			
 			//Try to establish UDP connection
 			UDPConnection udpConnection = UDPTest();
-			// run established connection
-			udpConnection.run();
 			return udpConnection;
 	}
 
