@@ -77,7 +77,7 @@ public class UDPConnection extends BlockingMessageSender implements Runnable
     		//first send the SYN packet to initialize data transfer
     		this.status = Status.SENDING;
 //            localSynTag = F2FComputing.getLocalPeerID().hashCode();
-    		localSynTag = this.localSocket.getInetAddress().getHostName().hashCode();  
+    		localSynTag = this.localSocket.getLocalAddress().getHostName().hashCode();
             bytesToSend = bytes;
     		
             byte[] integer = intToBytes(localSynTag);
