@@ -39,6 +39,7 @@ public class UDPTester extends Thread {
 	final private static int MAX_BINDING_ERRORS = 20;
 	final private static int DEFAULT_WAITING_TIMEOUT = 600;
 	private final static int DEFAULT_PORT_MAPPING_RULE = 1;
+	private final static int DEFAULT_PING_INTERVAL = 1000;
 	
 	// SO Timeouts
 	private final static int RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT = 1000;
@@ -787,7 +788,7 @@ public class UDPTester extends Thread {
 			
 			// sleep
 			try {
-				Thread.sleep(50);
+				Thread.sleep(DEFAULT_PING_INTERVAL);
 			} catch (InterruptedException e) {
 			}
 
