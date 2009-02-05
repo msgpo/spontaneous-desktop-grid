@@ -4,7 +4,6 @@ import java.io.BufferedInputStream;
 import java.io.BufferedOutputStream;
 import java.io.File;
 import java.io.FileInputStream;
-import java.io.FileNotFoundException;
 import java.io.FileOutputStream;
 import java.io.IOException;
 
@@ -26,10 +25,10 @@ public class JPunchTest {
 	
 	public void testUDP() throws CommunicationFailedException, IOException {
 		log.debug(isMaster() ? "Master Node" : "Slave Node");
-		//log.debug("Waiting for connection");
-		//udpConnection = udpTester.getUDPConnection();
-		//udpConnection.start();
-		//log.debug("Connected");
+		log.debug("Waiting for connection");
+		udpConnection = udpTester.getUDPConnection();
+		udpConnection.start();
+		log.debug("Connected");
 		//
 		log.debug("Filename [" + getFilename() + "]");
 		if (isMaster()) masterTest();
@@ -78,8 +77,8 @@ public class JPunchTest {
 		}
 		log.debug("Message will be saved in file [" + filename + "]");
 		//while (true) {
-			//byte[] bytes = (byte[]) udpConnection.receiveMessage();
-			byte[] bytes = "asdfghjk".getBytes();
+			byte[] bytes = (byte[]) udpConnection.receiveMessage();
+			//byte[] bytes = "asdfghjk".getBytes();
 			BufferedOutputStream bOutput = 
 				new BufferedOutputStream(new FileOutputStream(file,true));
 			log.debug("Received message [" + bytes.length + "]");
