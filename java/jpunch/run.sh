@@ -1,40 +1,39 @@
 MASTER=" ";
+DEV="jPunch.jar";
+FILENAME="./file";
+HELP="off"
 
+#get the command line arguments
 if [ $# -ge 1 ]; then
-	if [ $1 = "-master" ]; then
-		MASTER="-Dnet.ulno.jpunch.Master=yes";
-	fi;
-	
-	if [ $# -ge 2 ]; then
-		if [ $2 = "-master" ]; then
-			MASTER="-Dnet.ulno.jpunch.Master=yes";
-		fi;
-	fi;
+	while getopts hdmf: opt
+	do
+		case $opt in
+			m) MASTER="-Dnet.ulno.jpunch.Master=yes";;
+			d) DEV="build/classes";;
+			f) FILENAME="$OPTARG";;
+			h) HELP="on" 
+		esac;
+	done;
+	shift `expr $OPTIND - 1`
+fi;
 
-	if [ $1 = "-dev" ]; then
-		java -cp build/classes:lib/commons-codec-1.3.jar:lib/jstun-0.6.1.jar \
-		-Djava.util.logging.config.file=./conf/logging.properties \
-		-Dnet.ulno.jpunch.PropertiesFile=./conf/jpunch.properties \
-		 $MASTER \
-		net.ulno.jpunch.test.JPunchTest;
-	elif [ $1 = "-master" ]; then
-		java -cp build/classes:lib/commons-codec-1.3.jar:lib/jstun-0.6.1.jar \
-		-Djava.util.logging.config.file=./conf/logging.properties \
-		-Dnet.ulno.jpunch.PropertiesFile=./conf/jpunch.properties \
-		 $MASTER \
-		net.ulno.jpunch.test.JPunchTest;
-	elif [ $1 = "-help" ]; then
+#echo "MASTER=${MASTER}"
+#echo "DEV=${DEV}"
+#echo "FILENAME=${FILENAME}"
+
+if [ $HELP = "on" ]; then
 		echo "Usage :";
 		echo "sh run.sh [options]";
 		echo "Options :";
-		echo "-help print this help message";
-		echo "-dev run in development mode";
-		echo "-master run master node";
-	fi;
+		echo "-h print this help message";
+		echo "-d run in development mode";
+		echo "-m run master node";
+		echo "-f filename in/out";	
 else
-		java -cp jPunch.jar:lib/commons-codec-1.3.jar:lib/jstun-0.6.1.jar \
+		java -cp ${DEV}:lib/commons-codec-1.3.jar:lib/jstun-0.6.1.jar \
 		-Djava.util.logging.config.file=./conf/logging.properties \
 		-Dnet.ulno.jpunch.PropertiesFile=./conf/jpunch.properties \
-		$MASTER \
+		${MASTER} \
+		-Dnet.ulno.jpunch.Filename=${FILENAME} \
 		net.ulno.jpunch.test.JPunchTest;
 fi;
