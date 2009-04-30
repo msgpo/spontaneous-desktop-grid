@@ -1,7 +1,5 @@
 package net.ulno.jpunch.util.stun;
 
-import java.io.BufferedInputStream;
-import java.io.FileInputStream;
 import java.io.FileNotFoundException;
 import java.io.IOException;
 import java.net.InetAddress;
@@ -15,50 +13,54 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.Collection;
 import java.util.Hashtable;
-import java.util.Properties;
 
-import de.javawi.jstun.test.DiscoveryTest;
+import org.apache.log4j.Logger;
+
+import net.ulno.jpunch.util.JPunchProperties;
 import net.ulno.jpunch.util.LocalAddresses;
-import net.ulno.jpunch.util.logging.Logger;
+import de.javawi.jstun.test.DiscoveryTest;
 
 public class LocalStunInfo {
 	final private static Logger log = Logger.getLogger(LocalStunInfo.class);
 
-	final private int STUN_SERVER_DEFAULT_PORT = 3478;
-	final private static int PING_TIMEOUT = 5000;
-	final private static int MAX_TTL = 0;
-	final private int MAX_WAIT_FILTERED = 100;
-	final private static String PING_HOST = "www.google.com";
-	final private static int PING_PORT = 80;
-
-	//properties
-	final private static String RAW_STUN_SERVERS = "net.ulno.jpunch.StunServers";
-	final private static String JPUNCH_PROPERTIES = "net.ulno.jpunch.PropertiesFile";
-
-	private LocalStunInfo() {
-		String propertiesFile = System.getProperty(JPUNCH_PROPERTIES);
-		if (propertiesFile == null || "".equals(propertiesFile)){
-			throw new NullPointerException("No properties file name specified ["
-					+ JPUNCH_PROPERTIES + "= ]");
-		}
-		try {
-			String rawStunServers = (String) loadPoperties(propertiesFile).get(RAW_STUN_SERVERS);
-			setRawStunServers(rawStunServers, ",");
-		} catch (Exception e) {
-			log.error("Unable to load StunServers, wrong properties", e);
-		}
-	}
-	
-	private Properties loadPoperties(String file) throws FileNotFoundException, IOException{
-		Properties properties = new Properties();
-		BufferedInputStream bufferedInputStream = 
-			new BufferedInputStream(new FileInputStream(file));
-		properties.load(bufferedInputStream);
-		return properties;
-	}
-
+	//The running instance of LocalStunInfo
 	private static LocalStunInfo instance = null;
+	
+	// Current StunInfo
+	private StunInfo currentStunInfo = null;
+	
+	//Hash table for filtered Stun servers 
+	private Hashtable<InetAddress, Collection<InetSocketAddress>> filteredStunServers = 
+		new Hashtable<InetAddress, Collection<InetSocketAddress>>();
 
+	//Not filtered Stun servers
+	private Collection<String> notFilteredStunServers = new ArrayList<String>();
+
+	// common variables for tracing the state of the threads 
+	private boolean updateInProgress = false;
+	private boolean filteringInProcess = false;
+	
+	/*
+	 * Default constructor
+	 * Loads properties
+	 * throws exception if no files found with such
+	 * throws IOException in case of I/O errors
+	 */
+	private LocalStunInfo() {
+		//load not filtered STUN servers
+		String stunNotFileteredServers =
+			JPunchProperties.getStringProperty(JPunchProperties.STUN_NOT_FILTERED_SERVERS);
+		//set the List of not filtered STUN servers
+		this.notFilteredStunServers = 
+			parseNotFilteredServers(stunNotFileteredServers, ",");
+	}
+
+	/**
+	 * Returns the current instance of LocalStunInfo, creates it if not exist
+	 * @return current instance of <code>LocalStunInfo</code>
+	 * @throws FileNotFoundException if can not found the properties file
+	 * @throws IOException	if I/O error ocures while reading properties file
+	 */
 	public static LocalStunInfo getInstance() {
 		if (instance != null)
 			return instance;
@@ -68,129 +70,143 @@ public class LocalStunInfo {
 			return (instance = new LocalStunInfo());
 		}
 	}
-
-	private StunInfo stunInfo = null;
-	private Hashtable<InetAddress, Collection<InetSocketAddress>> stunServers = new Hashtable<InetAddress, Collection<InetSocketAddress>>();;
-	private Collection<String> rawStunServers = null;
-
-	public void	setRawStunServers(String rawStunServers, String separator){
-		IllegalArgumentException ex = new IllegalArgumentException("Illegal StunServers string ["
-				+ rawStunServers + "]");
-		if (rawStunServers == null || "".equals(rawStunServers)){
-			throw ex;
-		}
-		if (separator == null || "".equals(separator)){
-			throw new IllegalArgumentException("Illegal separator ["
-					+ separator + "]");
-		}
-		String[] rawStunServersArray = rawStunServers.split(separator);
-		if (rawStunServersArray == null || rawStunServersArray.length < 1) {
-			throw ex;
-		}
-		
-		Collection<String> rawStunServersCollection = Arrays.asList(rawStunServersArray);
-		setRawStunServers(rawStunServersCollection);
-	}
 	
-	public void setRawStunServers(Collection<String> rawStunServers){
-		this.rawStunServers = rawStunServers;
-	}
-	
+	/**
+	 * Blocks until the StunInfo is available (network discovery is running)
+	 * @return StunInfo - current Stun info
+	 */
 	public synchronized StunInfo getStunInfo() {
-		if(LocalStunInfo.this.stunInfo == null){
+		if(LocalStunInfo.this.currentStunInfo == null){
 			updateSTUNInfo();
 			try {
 				wait();
-			} catch(InterruptedException e){
-				
-			}
-			return LocalStunInfo.this.stunInfo;
+			} catch(InterruptedException e){}
+			return LocalStunInfo.this.currentStunInfo;
 		}
-		return LocalStunInfo.this.stunInfo;
+		return LocalStunInfo.this.currentStunInfo;
 	}
 	
-	public synchronized void setStunInfo(StunInfo stunInfo){
-		if(LocalStunInfo.this.stunInfo == null){
-			LocalStunInfo.this.stunInfo = stunInfo;
+	/**
+	 * Sets current Stun info
+	 * Unblocks waiting threads
+	 * @param currentStunInfo
+	 */
+	private synchronized void setStunInfo(StunInfo currentStunInfo){
+		if(LocalStunInfo.this.currentStunInfo == null){
+			LocalStunInfo.this.currentStunInfo = currentStunInfo;
 			notify();
 		}
 	}
 
-	public Collection<InetSocketAddress> getStunServers(InetAddress localIp) {
-		if (localIp == null)
-			throw new NullPointerException("localIp == null");
-		Collection<InetSocketAddress> isas = stunServers.get(localIp);
+	/*
+	 * Returns the Collection of not filtered STUN servers
+	 * @param String notFilteredStunServers
+	 * @param String separator
+	 * @return Collection of not filtered STUN servers
+	 */
+	private Collection<String> parseNotFilteredServers(String notFilteredStunServers, 
+										   			   String separator){		
+		String[] rawStunServersArray = notFilteredStunServers.split(separator);		
+		Collection<String> rawStunServersCollection = Arrays.asList(rawStunServersArray);
+		return rawStunServersCollection;
+	}
+	
+
+	
+	/**
+	 * Returns active Stun servers for specific network interface
+	 * @param localIp - IP address of the local network interface for
+	 * which the active Stun servers would be returned
+	 * @return Collection of active Stun servers
+	 */
+	public Collection<InetSocketAddress> getActiveStunServers(InetAddress localIp) {
+		Collection<InetSocketAddress> isas = filteredStunServers.get(localIp);
 		if (isas == null)
 			isas = new ArrayList<InetSocketAddress>();
 		return isas;
 	}
 
-	private boolean updateInProgress = false;
-	private boolean filteringInProcess = false;
-
-	public boolean isUpdating() {
-		return updateInProgress;
-	}
-
-	public boolean isFiltering() {
-		return filteringInProcess;
-	}
-
+	/**
+	 * Forces the STUN info update thread to run
+	 */
 	public void updateSTUNInfo() {
 		synchronized (LocalStunInfo.class) {
-			if (updateInProgress == true)
-				return;
+			if (updateInProgress) return;
 			updateInProgress = true;
 		}
-
 		new StunInfoUpdateThread().start();
 	}
 
+	/**
+	 * Forces filtering thread to run
+	 */
 	public void updateReachableServers() {
 		synchronized (LocalStunInfo.this) {
-			if (LocalStunInfo.this.filteringInProcess)
-				return;
+			if (filteringInProcess) return;
 			filteringInProcess = true;
 		}
-
 		new StunServersFilteringThread().start();
 	}
 
+	/*
+	 * STUN servers filtering thread (internal)
+	 * Filters reachable servers using <code>isInternetReacheableFrom</code>
+	 * 
+	 */
 	private class StunServersFilteringThread extends Thread{
-
-		public StunServersFilteringThread() {
+		private final Logger logger = Logger.getLogger(StunServersFilteringThread.class);
+		//traces the state of the thread
+		private boolean filteringInProcess = false;
+		
+		/*
+		 * Returns the state of the thread
+		 */
+		boolean isFiltering() {
+			return filteringInProcess;
+		}
+		
+		/*
+		 * Default constructor
+		 * Set up Thread name
+		 */
+		StunServersFilteringThread() {
 			this.setName(this.getClass().getName());
 		}
 
 		public void run() {
-			// redefine reachable servers
-			LocalStunInfo.this.stunServers = 
+			// reinitialize filtered STUN servers
+			LocalStunInfo.this.filteredStunServers = 
 				new Hashtable<InetAddress, Collection<InetSocketAddress>>();
 
+			// get local IPv4 addresses
 			Collection<InetAddress> localIps = LocalAddresses.getInstance()
 					.getLocalIPv4Addresses();
+			
 			if (localIps.isEmpty()) {
-				log
-						.warn("STUN test can not be run if local machine has no IPs");
+				logger.fatal("No IPv4 addresses");
 				return;
 			}
 
-			if (rawStunServers == null || rawStunServers.size() == 0) {
+			if (notFilteredStunServers.size() == 0) {
 				log.warn("STUN test can not be run if no STUN " 
 						  + "server specified in properties file");
 				return;
 			}
 
-			log.info("Found total [" + rawStunServers.size()
-					+ "] STUN server addresses in the properties file");
-			log.info("Found total [" + localIps.size() + "] active local IPs");
+			log.info(String.format(
+					"Found total [%d] STUN server addresses in the properties file",
+					notFilteredStunServers.size()));
+			log.info(String.format(
+					"Found total [%d] active local IPs",localIps.size() ));
 
+			// For reachable StunServers
 			Collection<InetSocketAddress> reachableStunServers = 
 				new ArrayList<InetSocketAddress>();
+			
 			// try if stun server is reachable from specific local ip
 			for (InetAddress localIas : localIps) {
 				if (isInternetReacheableFrom(localIas.getHostAddress())) {
-					for (String stunServer : rawStunServers) {
+					for (String stunServer : notFilteredStunServers) {
 						String address = null;
 						int port = -1;
 						if (stunServer.split(":").length >= 2) {
@@ -198,7 +214,8 @@ public class LocalStunInfo {
 							port = Integer.parseInt(stunServer.split(":")[1]);
 						} else {
 							address = stunServer;
-							port = STUN_SERVER_DEFAULT_PORT;
+							port = JPunchProperties.getIntegerProperty(
+									JPunchProperties.STUN_SERVER_PORT);
 						}
 						InetAddress stunServerIas = null;
 						try {
@@ -217,7 +234,7 @@ public class LocalStunInfo {
 									+ "] from localIp ["
 									+ localIas.getHostAddress() + "]");
 							// synchronized (LocalStunInfo.class){
-							LocalStunInfo.this.stunServers.put(localIas,
+							LocalStunInfo.this.filteredStunServers.put(localIas,
 									reachableStunServers);
 							// }
 						} else {
@@ -234,9 +251,9 @@ public class LocalStunInfo {
 				}
 			}
 			StringBuffer sb = new StringBuffer();
-			for (InetAddress localIp : LocalStunInfo.this.stunServers.keySet()) {
+			for (InetAddress localIp : LocalStunInfo.this.filteredStunServers.keySet()) {
 				sb.append("\tTotal ["
-						+ LocalStunInfo.this.stunServers.get(localIp).size()
+						+ LocalStunInfo.this.filteredStunServers.get(localIp).size()
 						+ "]" + " from localIp [" + localIp.getHostAddress()
 						+ "]\n");
 			}
@@ -260,22 +277,24 @@ public class LocalStunInfo {
 			LocalStunInfo.this.updateReachableServers();
 
 			// wait for first filtered address
-			for (int n = 0; n < MAX_WAIT_FILTERED; n++) {
+			int timeout = JPunchProperties.getIntegerProperty(
+							JPunchProperties.STUN_FILTERING_TIMEOUT);
+			for (int n = 0; n < timeout; n++) {
 				try {
-					if (!LocalStunInfo.this.stunServers.isEmpty())
+					if (!LocalStunInfo.this.filteredStunServers.isEmpty())
 						break;
 					Thread.sleep(500);
 				} catch (InterruptedException e) {
 				}
 			}
-			if (LocalStunInfo.this.stunServers.values().isEmpty()) {
+			if (LocalStunInfo.this.filteredStunServers.values().isEmpty()) {
 				log.warn("No reachable servers in properties file");
 				return;
 			}
 
 			StunInfo stunInfo = null;
-			for (InetAddress ip : LocalStunInfo.this.stunServers.keySet()) {
-				for (InetSocketAddress stunServer : LocalStunInfo.this.stunServers.get(ip)) {
+			for (InetAddress ip : LocalStunInfo.this.filteredStunServers.keySet()) {
+				for (InetSocketAddress stunServer : LocalStunInfo.this.filteredStunServers.get(ip)) {
 					String address = stunServer.getAddress().getHostAddress();
 					int port = stunServer.getPort();
 					if (isReachable(ip, address)) {
@@ -357,7 +376,11 @@ public class LocalStunInfo {
 		}
 		boolean b = false;
 		try {
-			b = serverIP.isReachable(eth, MAX_TTL, PING_TIMEOUT);
+			int maxTtl = JPunchProperties.getIntegerProperty(
+							JPunchProperties.ITEST_MAX_TTL);
+			int pingTimeout = JPunchProperties.getIntegerProperty(
+								JPunchProperties.ITEST_PING_TIMEOUT);
+			b = serverIP.isReachable(eth, maxTtl, pingTimeout);
 		} catch (IOException e){
 			log.error("Unable to ping host [" + serverIP.getHostName() + "] from "
 					+ " local IP [" + yourIP.getHostAddress() + "]", e);
@@ -367,13 +390,20 @@ public class LocalStunInfo {
 	
 	public static boolean isInternetReacheableFrom(String localIp){
 		
-		InetSocketAddress remoteAddr = new InetSocketAddress(PING_HOST,PING_PORT);
-		InetSocketAddress localAddr = new InetSocketAddress(localIp,0);
+		int pingTimeout = JPunchProperties.getIntegerProperty(
+				JPunchProperties.ITEST_PING_TIMEOUT);
+		String pingHost = JPunchProperties.getStringProperty(
+						JPunchProperties.ITEST_PING_HOST);
+		int pingPort = JPunchProperties.getIntegerProperty(
+				JPunchProperties.ITEST_PING_PORT);
 		
+		InetSocketAddress remoteAddr = new InetSocketAddress(pingHost,pingPort);
+		InetSocketAddress localAddr = new InetSocketAddress(localIp,0);
+
 		Socket soc = new Socket();
 		try {
 			soc.bind(localAddr);
-			soc.connect(remoteAddr, PING_TIMEOUT);
+			soc.connect(remoteAddr, pingTimeout);
 			soc.close();
 			return true;
 		} catch (SocketTimeoutException e){

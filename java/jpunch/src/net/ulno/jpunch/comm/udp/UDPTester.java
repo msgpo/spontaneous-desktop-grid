@@ -8,22 +8,21 @@ import java.net.DatagramPacket;
 import java.net.DatagramSocket;
 import java.net.InetAddress;
 import java.net.InetSocketAddress;
-import java.net.SocketAddress;
 import java.net.SocketException;
 import java.net.SocketTimeoutException;
 import java.net.UnknownHostException;
-import java.nio.channels.DatagramChannel;
-import java.util.ArrayList;
 import java.util.Collection;
-import java.util.Collections;
-import java.util.List;
 import java.util.UUID;
 
-import net.ulno.jpunch.core.CommunicationFailedException;
+import net.ulno.jpunch.exceptions.CommunicationFailedException;
+import net.ulno.jpunch.exceptions.UdpTestException;
+import net.ulno.jpunch.util.JPunchProperties;
 import net.ulno.jpunch.util.Util;
-import net.ulno.jpunch.util.logging.Logger;
 import net.ulno.jpunch.util.stun.LocalStunInfo;
 import net.ulno.jpunch.util.stun.StunInfo;
+
+import org.apache.log4j.Logger;
+
 import de.javawi.jstun.attribute.ChangeRequest;
 import de.javawi.jstun.attribute.MappedAddress;
 import de.javawi.jstun.attribute.MessageAttributeParsingException;
@@ -36,35 +35,54 @@ import de.javawi.jstun.util.UtilityException;
 public class UDPTester{
 	final private static Logger log = Logger.getLogger(UDPTester.class);
 	
-	//Default values
-	final private static int MAX_BINDING_ERRORS = 20;
-	final private static int DEFAULT_WAITING_TIMEOUT = 600;
-	private final static int DEFAULT_PORT_MAPPING_RULE = 1;
-	private final static int DEFAULT_PING_INTERVAL = 1000;
-	
-	// SO Timeouts
-	private final static int RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT = 1000;
-	private final static int HOLE_PUNCHING_SO_TIMEOUT = 10000;
-	
 	// StunInfo
 	private StunInfo remoteStunInfo = null;
 	private StunInfo localStunInfo = null;
 	
-	// Mappings
-	private Integer remotePortMappingRule = null;
-	private InetSocketAddress remoteMappedAddress = null;
+	// Bindingsf
+	private InetSocketAddress remoteBoundAddress = null;
+	private InetSocketAddress localBoundAddress = null;
 	
 	// Receive Queue used for blocking receive
-	private BlockingReceiveQueue blockingReceiveQueue = new BlockingReceiveQueue();
+	//private BlockingReceiveQueue blockingReceiveQueue = new BlockingReceiveQueue();
 	
 	//Receiving thread
-	private MessageReceivingThread messageReceivingThread = null;
+	private UDPMessageReceiverThread udpTestMessageReceivingThread = null;
 	
 	//Established Connection
-	private UDPConnection udpConnection = null;
-	
+	//private UDPConnection udpConnection = null;
+
 	public UDPTester(){}
 	
+	/*
+	 * TODO: Find better way to close back-end channel without braking pipes
+	 * 
+	 * Workaround for closing UDPMessageReceiverThread
+	 * this should be called after all transmissions are done,
+	 * this method closes back-end channel (this breaks redirection pipes
+	 * and causes the application to exit)
+	 */
+	public void stopUDPTestMessageReceiverThread(){
+		if (this.udpTestMessageReceivingThread != null){
+			
+			try{
+				this.udpTestMessageReceivingThread.stopReceiverThread();
+			} catch (IOException e){
+				log.warn("Error stopping UDPMessageReceiverThread",e);
+			}
+			
+			try {
+				this.udpTestMessageReceivingThread.join();
+			} catch (InterruptedException e){
+				log.warn("Error stopping UDPMessageReceiverThread",e);
+			}
+		}
+	}
+	
+	/*
+	 * Returns Stun info of the remote host
+	 * Blocks until remote host sends it's Stun info
+	 */
 	private synchronized StunInfo getRemoteStunInfo(){
 		if(this.remoteStunInfo == null){
 			try {
@@ -75,6 +93,10 @@ public class UDPTester{
 		return this.remoteStunInfo;
 	}
 	
+	/*
+	 * Sets the Stun info of the remote host
+	 * Unblocks waiting methods
+	 */
 	private synchronized void setRemoteStunInfo(StunInfo stunInfo){
 		if(this.remoteStunInfo == null && stunInfo != null && !"".equals(stunInfo)){
 			this.remoteStunInfo = stunInfo;
@@ -82,43 +104,36 @@ public class UDPTester{
 		}
 	}
 	
-	private synchronized InetSocketAddress getRemoteMappedAddress(){
-		if (this.remoteMappedAddress == null){
+	/*
+	 * Returns bound address of the remote host
+	 * Blocks until remote host sends it's remote address
+	 */
+	private synchronized InetSocketAddress getRemoteBoundAddress(){
+		if (this.remoteBoundAddress == null){
 			try {
 				wait();
 			} catch (InterruptedException e) {}
-			return this.remoteMappedAddress;
+			return this.remoteBoundAddress;
 		}
-		return this.remoteMappedAddress;
+		return this.remoteBoundAddress;
 	}
 	
-	private synchronized void setRemoteMappedAddress(InetSocketAddress remoteMappedAddress){
-		if (this.remoteMappedAddress == null && remoteMappedAddress != null){
-			this.remoteMappedAddress = remoteMappedAddress;
+	/*
+	 * Sets the remote bound address
+	 * Unblocks waiting methods
+	 */
+	private synchronized void setRemoteBoundAddress(
+			InetSocketAddress remoteBoundAddress
+			){
+		if (this.remoteBoundAddress == null && remoteBoundAddress != null){
+			this.remoteBoundAddress = remoteBoundAddress;
 			notify();
 		}
 	}
-	
-	private synchronized Integer getRemotePortMappingRule(){
-		if (this.remotePortMappingRule == null){
-			try {
-				wait();
-			} catch (InterruptedException e) {}
-			return this.remotePortMappingRule;
-		}
-		return this.remotePortMappingRule;
-	}
-	
-	private synchronized void setRemotePortMappingRule (Integer remotePortMappingRule){
-		if (this.remotePortMappingRule == null && remotePortMappingRule != null){
-			this.remotePortMappingRule = remotePortMappingRule;
-			notify();
-		}
-	}
-
 	
 	/**
 	 * Non-Blocking send.
+	 * For sending UDP test messages to the remote host
 	 * 
 	 * @param udpTestMessage
 	 * @throws CommunicationFailedException
@@ -129,27 +144,15 @@ public class UDPTester{
 				byte[] compressed = Util.zip(bytes);
 				String message = Util.encode(compressed);
 				System.out.println(message);
+				System.out.flush();
 			} catch (IOException e){
 				throw new CommunicationFailedException("Failed Sending UDP Test Message ["
 						+ udpTestMessage.toString() + "]",e);
 			}
 	}
-	
-	/**
-	 * Handles incoming messages for UDPTester
-	 * 
-	 * @param message
-	 *            incoming message, only UDPTestMessage instances allowed
-	 */
-	private void messageReceived(Object message) {
-		if (message instanceof UDPTestMessage)
-			messageReceived((UDPTestMessage) message);
-		else log.warn("UDPTester.messageRecieved() handles only UDPTestMessage");
-	}
 
 	/*
-	 * If UDPTestMessage received try to unblock queue if queue was not blocked
-	 * then discard message
+	 * Handles incoming UDP test messages
 	 */
 	private void messageReceived(UDPTestMessage msg) {
 		if (msg.type == UDPTestMessage.Type.INIT){
@@ -157,37 +160,40 @@ public class UDPTester{
 		} else if (msg.type == UDPTestMessage.Type.STUN_INFO) {
 			this.setRemoteStunInfo(msg.stunInfo);
 		} else if (msg.type == UDPTestMessage.Type.MAPPED_ADDRESS) {
-			this.setRemoteMappedAddress(msg.mappedAddress);
-			this.setRemotePortMappingRule(msg.portMappingRule);
+			this.setRemoteBoundAddress(msg.mappedAddress);
 		} else if (msg.type == UDPTestMessage.Type.RECEIVED_PING) {
-			// stop hole punching sending loop
 			remoteSideReceivedPing = true;
-			log.debug("Remote Sode Received Ping");
+			log.debug("Remote Side Received Ping");
 		}
 		
 	}
 
 	/**
-	 * Returns tested UDPConnection 
-	 * @return tested UDPConnection
+	 * Makes proper tests for UDP connectivity tries to establish
+	 * UDP Connection
+	 * 
+	 * @return established UDPConnection
+	 * @return null if test failed
+	 * @throws CommunicationFailedException if back-end connectivity failures occur
+	 * @throws UdpTestException if some test preconditions unresolved
 	 */
-	public UDPConnection getUDPConnection() throws CommunicationFailedException {
+	public UDPConnection getUDPConnection() throws CommunicationFailedException,
+													UdpTestException{
 		
 		//start receiving thread
-		messageReceivingThread = new MessageReceivingThread();
-		messageReceivingThread.start();
+		log.debug("Starting UDP test message receiver thread");
+		udpTestMessageReceivingThread = new UDPMessageReceiverThread();
+		udpTestMessageReceivingThread.start();
 		
 		//get local stun info
+		log.debug("Discovering Local STUN Info");
 		localStunInfo = LocalStunInfo.getInstance().getStunInfo();
 				
 		// exchange the STUN info
-		 this.send( new UDPTestMessage(localStunInfo));
-		 remoteStunInfo = this.getRemoteStunInfo();
-
-		// now remote and local STUN info is known -> try to establish UDP
-		// connection!
-
-		log.debug("Local :\n" 
+		log.debug("STUN info exchange");
+		 this.send(new UDPTestMessage(localStunInfo));
+		 
+		log.info("Local STUN info:\n" 
 				+ "\tLocalIP [" + localStunInfo.getLocalIp() + "]\n"
 				+ "\tPublicIP [" + localStunInfo.getPublicIp() + "]\n"
 				+ "\tisOpenAccess : "
@@ -203,7 +209,9 @@ public class UDPTester{
 				+ "\tisSymmetricCone : " + localStunInfo.isSymmetricCone()
 				+ "\n");
 
-		log.debug("Remote :\n" 
+		remoteStunInfo = this.getRemoteStunInfo();
+		
+		log.info("Remote STUN info:\n" 
 				+ "\tLocalIP [" + remoteStunInfo.getLocalIp() + "]\n"
 				+ "\tPublicIP [" + remoteStunInfo.getPublicIp() + "]\n"
 				+ "\tisOpenAccess : "
@@ -218,269 +226,327 @@ public class UDPTester{
 				+ remoteStunInfo.isPortRestrictedCone() + "\n"
 				+ "\tisSymmetricCone : " + remoteStunInfo.isSymmetricCone()
 				+ "\n");
-					
-			// decide which test should be run
-			// if one of the sides has blocked UDP
-			if (remoteStunInfo.isBlockedUDP() || localStunInfo.isBlockedUDP()) {
-				// UDP communication is impossible -> UDP blocked on one of the
-				// sides
-				log.warn("UDP communication impossible, stopping test thread");
-				return null;
+		
+		// now remote and local STUN info is known -> try to establish UDP
+		// connection!
+		
+		try{
+			if (!remoteStunInfo.isBlockedUDP() && !localStunInfo.isBlockedUDP()) {
+				//Try to establish UDP connection
+				UDPConnection udpConnection = UDPTest();
+				return udpConnection;
+			} else {
+				// if one of the sides has blocked UDP
+				throw new UdpTestException(
+					"UDP communication impossible, one of the sides has blocked UDP");
 			}
-			
-			//Try to establish UDP connection
-			UDPConnection udpConnection = UDPTest();
-			return udpConnection;
+		} finally {
+			// don't forget to stop message receiver thread
+			/*
+			 * TODO: actually should be uncommented, but using pipes like
+			 * 		input | jPunch | output 
+			 * in Linux, the pipe will be broken if we stop receiver thread
+			 * here (close the InputStream)
+			 * 
+			try{
+				log.trace("Stopping UDP test message receiver thread");
+				udpTestMessageReceivingThread.stopReceiverThread();
+				udpTestMessageReceivingThread.join();
+				log.info("UDP test message receiver thread stopped");
+			} catch (InterruptedException e) {
+				log.warn("Wait for UDP Test Message receiver thread to stop",e);
+			} catch (IOException e1){
+				log.warn("IO Error closing UDP Test Message receiver thread", e1);
+			}
+			*/
+		}
 	}
-
-	private UDPConnection UDPTest() throws CommunicationFailedException {
+	
+	/*
+	 * Makes proper tests for UDP connectivity tries to establish
+	 * UDP Connection
+	 * 
+	 * @return established UDPConnection
+	 * @return null if test failed
+	 * @throws CommunicationFailedException if back-end connectivity failures occur
+	 * @throws UdpTestException if some test preconditions unresolved
+	 */
+	private UDPConnection UDPTest() throws CommunicationFailedException,
+											UdpTestException{
 
 		log.debug("Initiating UDP Tests");
-
-		InetAddress localIas = null;
-		InetAddress remoteIas = null;
-		
-		try {
+		InetAddress localIas;
+		try{
 			localIas = InetAddress.getByName(localStunInfo.getLocalIp());
-			remoteIas = InetAddress.getByName(remoteStunInfo.getPublicIp());
-		} catch (UnknownHostException e1) {
-			log.error("Unable to resolve InetAddress", e1);
-		}
-		if (localIas == null) {
-			log.error("Local InetAddress is not resolved");
-			return null;
-		}
-		if (remoteIas == null) {
-			log.error("Remote InetAddress is not resolved");
-			return null;
+		} catch (UnknownHostException e){
+			throw new UdpTestException(String.format(
+					"Uknown host [%s]", localStunInfo.getLocalIp()));
 		}
 		
-		// test local socket
-		DatagramSocket localSocket = null;
 		
-		// local MappedAddress and MappinRule
-		Integer localPortMappingRule = null;
-		InetSocketAddress localMappedAddress = null;
+		/*
+		 * LOCAL
+		 * ------------------------------------------------
+		 * HOST			localUdpTestSocket
+		 * 						|
+		 * 						V
+		 * NAT			localBoundAddress:(port+localPortBindingRule)
+		 * ------------------------------------------------
+		 * INET					| ^
+		 * 						V |
+		 * ------------------------------------------------
+		 * NAT			remoteBoundAddress:(port+remotePortBindingRule)
+		 * 						|
+		 * 						V
+		 * HOST					X (remote socket)
+		 * ------------------------------------------------
+		 * REMOTE
+		 */
 		
-		// remote MappedAddress and MappinRule
-		remotePortMappingRule = null;
-		remoteMappedAddress = null;
+		// local test socket
+		DatagramSocket localUdpTestSocket = null;
+		
+		// local Binding Rule
+		Integer localPortBindingRule = null;
+		
+		// remote Bound Address
+		remoteBoundAddress = null;
+		
+		int maxBindingErrors = JPunchProperties.getIntegerProperty(
+								JPunchProperties.HP_MAX_BINDING_ERRORS);
 		
 		// try to bind the socket
-		for (int j = 0; j < MAX_BINDING_ERRORS; j++) {
+		for (int j = 0; j < maxBindingErrors; j++) {
 			try {
 				// choose port range
+				//TODO: put these numbers into properties file
 				int p = 49152 + (int) Math.round(Math.random() * 16383);
 				// bind socket
-				localSocket = new DatagramSocket(new InetSocketAddress(
+				localUdpTestSocket = new DatagramSocket(new InetSocketAddress(
 						localIas, p));
 				
-				// test
-				// using DatagramChannel
+				// TODO: Try test using DatagramChannel
 				//SocketAddress socketAddress = new InetSocketAddress(localIas, p);
 				//DatagramChannel datagramChannel = DatagramChannel.open();
 				//localSocket = datagramChannel.socket();
 				//localSocket.bind(socketAddress);
 				
-				if (localSocket != null && localSocket.isBound()) {
-					log.debug("DatagrammSocket is bound on localAddress ["
-							+ localSocket.getLocalAddress()
+				if (localUdpTestSocket != null && localUdpTestSocket.isBound()) {
+					log.debug("UDPTest DatagrammSocket is bound on localAddress ["
+							+ localUdpTestSocket.getLocalAddress()
 									.getHostAddress() + ":"
-							+ localSocket.getLocalPort() + "]");
+							+ localUdpTestSocket.getLocalPort() + "]");
 					break;
 				}
 			} catch (SocketException e) {
-				log.error("Unable to bind DatagramSocket on localAddress ["
-						+ localSocket.getLocalAddress().getHostAddress()
-						+ ":" + localSocket.getLocalPort() + "]", e);
-				// destruct DatagramSocket
-				localSocket = null;
-			} catch (IOException e){
-				log.error("Unable to open DatagramChannel", e);
-				// destruct DatagramSocket
-				localSocket = null;
+				throw new UdpTestException(String.format(
+						"Timeout binding UDPTest DatagramSocket on localIp [%s]",
+						localIas.getHostAddress()),e);
 			}// catch
 		}// for -bindings
-		
-		// if timeout binding
-		if (localSocket == null || !localSocket.isBound()) {
-			log.error("Timeout binding DatagramSocket on localIp ["
-					+ localIas.getHostAddress() + "]");
-			return  null;
-		}
+
 		
 		// try to set reuse=true address on socket
-		try {
-			localSocket.setReuseAddress(true);
-			if (!localSocket.getReuseAddress()) {
-				throw new SocketException("reuseAddress==false");
-			}
-		} catch (SocketException e) {
-			log.error("Unable to set reuse address on bound socket ["
-					+ localSocket.getLocalAddress().getHostAddress() + ":"
-					+ localSocket.getLocalPort() + "]", e);
-			return null;
+		try{
+			localUdpTestSocket.setReuseAddress(true);
+		} catch (SocketException e){
+			throw new UdpTestException(String.format(
+				"Unable to set reuse address on local UDPTest DatagramSocket [%s:%d]",
+				localUdpTestSocket.getLocalAddress().getHostAddress(),
+				localUdpTestSocket.getLocalPort()));
 		}
 
-		// if behind Symmetric firewall try to guess the allocated port
+		// if host is behind the symmetric fire wall
+		// try to guess the allocated port
 		if (LocalStunInfo.getInstance().getStunInfo().isSymmetricCone()) {
-			// get the needed amount of stun servers
-			while (LocalStunInfo.getInstance().getStunServers(
-					localSocket.getLocalAddress()).size() < 4) {
+			
+			// wait for the needed amount of StunServers
+			// TODO: Put needed amount of stun servers into properties files
+			/*
+			 * 
+			while (LocalStunInfo.getInstance().getActiveStunServers(
+					localUdpTestSocket.getLocalAddress()).size() < 2) {
 				try {
 					Thread.sleep(1000);
 				} catch (InterruptedException e) {
+					log.warn("Wait for the needed amount of StunServers",e);
 				}
 			}
-			// get the possible port allocation rules
+			 *
+			 */
+			
+			// get the possible port binding rules
+			// TODO: Put possible count into properties files
+			/*
+			 * Temporary do no not use binding rule discovery
+			 * 
 			List<Integer> rules = new ArrayList<Integer>();
 			for (int i = 0; i < 5; i++) {
 				try {
-					int rule = portMappingRuleDiscovery(localSocket);
+					int rule = portBindingRuleDiscovery(localUdpTestSocket);
 					rules.add(new Integer(rule));
-				} catch (PortMappingRuleDiscoveryException e) {
-					log.warn("Unable to Discover Port Mapping rule", e);
+				} catch (PortBindingRuleDiscoveryException e) {
+					log.warn("Unable to Discover Port Binding rule", e);
 				}
 			}
-			log.debug("Discovered Port Allocation Rules :[" + rules + "]");
+			log.debug("Discovered Port Binding rules :[" + rules + "]");	
 			
-			// choose most frequent rule
-			localPortMappingRule = getMostFrequentElem(rules);
-			if (localPortMappingRule == null) {
-				localPortMappingRule = DEFAULT_PORT_MAPPING_RULE;
+			// choose most frequent port binding rule
+			localPortBindingRule = getMostFrequentElem(rules);
+			*/
+			if (localPortBindingRule == null) {	
+				localPortBindingRule = JPunchProperties.getIntegerProperty(
+						JPunchProperties.HP_BINDING_RULE);
 			}
-			
-			log.debug("Using discovered Rule [" + localPortMappingRule
-					+ "]");
 		} else {
-			// if not symmetric type, do not use MappingRule
-			localPortMappingRule = 0;
+			// if not symmetric type, do not use Port Binding Rule
+			localPortBindingRule = 0;
 		}
+		log.debug("Using Port Binding rule [" + localPortBindingRule
+				+ "]");
 		
-		// discover mapped IP address and port
-		InetSocketAddress ias = null;
+		// discover bound IP address and port
+		// in case of symmetric NAT the port is unreliable and 
+		// and discovered port binding rule is used
 		try {
-			ias = resolveMappedAddress(localSocket);
-		} catch (MappedAddressResolvingException e) {
-			log.error("Unable to resolve Mapped Address", e);
-		}
-		//TODO: add allocation rule here or on remote side
-		localMappedAddress = new InetSocketAddress(ias.getAddress(), ias
-				.getPort()
-				+ localPortMappingRule);
-
-		if (localMappedAddress == null) {
-			log.error("Mapped address is not resolved, mappedAddress == null");
-			return null;
+			InetSocketAddress ias = resolveBoundAddress(localUdpTestSocket);
+			//TODO: what is better ?
+			// add binding rule here or on remote side
+			localBoundAddress = new InetSocketAddress(ias.getAddress(), 
+					ias.getPort() + localPortBindingRule);
+		} catch (BoundAddressResolvingException e) {
+			throw new UdpTestException("Unable to resolve Local Bound Address",e);
 		}
 
-		log.info("Mapped address\t["
-				+ localMappedAddress.getAddress().getHostAddress() + ":"
-				+ localMappedAddress.getPort() + "]");
-		// exchange MappedAddress
-
-		log.debug("Mapped Address Exchange");
-		// send localMappedAddress
-		send(new UDPTestMessage(localMappedAddress,
-				localPortMappingRule));
-		// receive remote mapped address
-		getRemoteMappedAddress();
-		// receive remote port mapping rule
-		getRemotePortMappingRule();
+		log.info("Local Bound address\t["
+				+ localBoundAddress.getAddress().getHostAddress() + ":"
+				+ localBoundAddress.getPort() + "]");
 		
-		if (remoteMappedAddress == null) {
-			log.error("Remote mapped address is not resolved, RemoteMappedAddress == null");
-			return null;
+		// exchange the Bound Addresses
+		log.debug("Bound Address Exchange");
+		
+		// TODO: re-factor, throw exception if remoteBoundAddress could not
+		// be resolve instead of not-null check
+		
+		// send localBoundAddress
+		send(new UDPTestMessage(localBoundAddress,localPortBindingRule));
+		// receive remoteBoundAddress
+		getRemoteBoundAddress();
+		
+		if (remoteBoundAddress == null) {
+			throw new UdpTestException("Remote Bound Address is not resolved");
 		}
-		log.debug("RemoteMappedAddress ["
-				+ remoteMappedAddress.getAddress().getHostAddress() + ":"
-				+ remoteMappedAddress.getPort() + "]");
+		
+		log.debug("Remote Bound Address ["
+				+ remoteBoundAddress.getAddress().getHostAddress() + ":"
+				+ remoteBoundAddress.getPort() + "]");
 
 		// start Hole Punching
-		// if hole punching succeeded, create UDP connection
-		if(punchHole(localSocket)){
-			return new UDPConnection(localSocket, remoteMappedAddress);
-		} else {
-			log.warn("Hole punching unsucceed, return null");
-			return null;
+		// if UDP hole punching succeeded, create UDP connection
+		try{
+			if(udpHolePunching(localUdpTestSocket)){
+				log.warn("UDP Hole Punching succeed, return UDPConnection");
+				return new UDPConnection(localUdpTestSocket, remoteBoundAddress);
+			} else {
+				log.warn("UDP Hole Punching unsucceed, return null");
+				return null;
+			}
+		} catch (UdpHolePunchingException e){
+			throw new UdpTestException("Failure during UDP hole punching" ,e);
 		}
 	}
-
-	private int portMappingRuleDiscovery(DatagramSocket localSocket)
-			throws PortMappingRuleDiscoveryException {
-		log.debug("Port Mapping Rule Discovery");
-
+	
+	// TODO: find the better way for discovering port binding rule
+	/*
+	private int portBindingRuleDiscovery(DatagramSocket localSocket)
+			throws PortBindingRuleDiscoveryException{
+		
+		log.debug("Port Binding Rule Discovery");
+		
+		// Get active STUN servers
 		Collection<InetSocketAddress> stunServers = Collections
 				.synchronizedCollection(LocalStunInfo.getInstance()
-						.getStunServers(localSocket.getLocalAddress()));
+						.getActiveStunServers(localSocket.getLocalAddress()));
 
-		Integer rule = null;
-		int previousMappedPort = -1;
+		Integer bindingRule = null;		// Port Binding rule		
+		int previousBoundPort = -1;		// Store previous discovered bound port
+										//  to approximate the port binding rule 
 
-		DatagramSocket socket = null;
+		DatagramSocket pbrTestSocket = null;	// Random socket for PBR discovery
+		
 		try {
-			socket = new DatagramSocket(new InetSocketAddress(localSocket
-					.getLocalAddress(), 0));
-			if (socket != null && socket.isBound()) {
-				socket.setReuseAddress(true);
+			pbrTestSocket = new DatagramSocket(new InetSocketAddress(
+					localSocket.getLocalAddress(), 0));
+			if (pbrTestSocket != null && pbrTestSocket.isBound()) {
+				pbrTestSocket.setReuseAddress(true);
 			}
 		} catch (SocketException e) {
-			log.error("Unable to bind DatagramSocket on localIp ["
-					+ socket.getLocalAddress().getHostAddress() + "]");
-		}
-		if (socket == null) {
-			throw new PortMappingRuleDiscoveryException(
+			log.error("Port Binding Rule Discovery - " +
 					"Unable to bind DatagramSocket on localIp ["
-							+ socket.getLocalAddress().getHostAddress() + "]");
+					+ pbrTestSocket.getLocalAddress().getHostAddress() + "]");
 		}
 
+		//For each stun server try to resolve bound address and port for
+		//previously chosen pbrTestSocket
+		//use discovered bound port for
+		//approximation of port binding rule
 		for (InetSocketAddress stunServer : stunServers) {
 			try {
-				//log.debug("RESOLVE MAPPED ADDRESS >>>>>>>");
-				InetSocketAddress mappedAddress = resolveMappedAddress(socket,
-						stunServer);
-				//log.debug("RESOLVE MAPPED ADDRESS <<<<<<<");
-				if (rule == null && previousMappedPort == -1) {
-					previousMappedPort = mappedAddress.getPort();
-				} else if (rule == null && previousMappedPort > -1) {
-					rule = new Integer(mappedAddress.getPort()
-							- previousMappedPort);
-					previousMappedPort = mappedAddress.getPort();
-				} else if (rule != null && previousMappedPort > -1) {
-					/*
-					 * log.debug("Port allocation rule: [MappedPort:" +
-					 * mappedAddress.getPort() + "] [previous Port:" +
-					 * previousMappedPort + "] [Rule:" + rule.intValue() + "]");
-					 */
-					if (rule.intValue() == (mappedAddress.getPort() - previousMappedPort)) {
-						socket.disconnect();
-						socket.close();
-						return rule.intValue();
+				InetSocketAddress boundAddress = resolveBoundAddress(
+						pbrTestSocket, stunServer);
+				if (bindingRule == null && previousBoundPort == -1) {
+					// first set-up initial bound port
+					previousBoundPort = boundAddress.getPort();
+				} else if (bindingRule == null && previousBoundPort > -1) {
+					// next approximate the port binding rule
+					bindingRule = new Integer(
+							boundAddress.getPort() - previousBoundPort);
+					previousBoundPort = boundAddress.getPort();
+				} else if (bindingRule != null && previousBoundPort > -1) {
+					// if next bound port differs of previous in the
+					// value of discovered binding rule then the rule
+					// is not changing and can be used
+					if (bindingRule.intValue() == (boundAddress.getPort() - previousBoundPort)) {
+						pbrTestSocket.disconnect();
+						pbrTestSocket.close();
+						return bindingRule.intValue();
 					} else {
-						rule = new Integer(mappedAddress.getPort()
-								- previousMappedPort);
-						previousMappedPort = mappedAddress.getPort();
+						bindingRule = new Integer(
+								boundAddress.getPort()- previousBoundPort);
+						previousBoundPort = boundAddress.getPort();
 					}
 				}
-				log.debug("Port allocation rule: ["
+				log.debug("Discovering Port Binding Rule: ["
 						+ stunServer.getAddress().getHostAddress() + ":"
 						+ stunServer.getPort() + "] <- ["
-						+ mappedAddress.getAddress().getHostAddress() + ":"
-						+ mappedAddress.getPort() + "] <- ["
-						+ socket.getLocalAddress().getHostAddress() + ":"
-						+ socket.getLocalPort() + "] rule:" + rule + "]");
-			} catch (MappedAddressResolvingException e) {
+						+ boundAddress.getAddress().getHostAddress() + ":"
+						+ boundAddress.getPort() + "] <- ["
+						+ pbrTestSocket.getLocalAddress().getHostAddress() + ":"
+						+ pbrTestSocket.getLocalPort() + "] rule:" + bindingRule + "]");
+			} catch (BoundAddressResolvingException e) {
 				continue;
 			}
 		}
-		throw new PortMappingRuleDiscoveryException(
-				"Unable to discover Port Mapping rule ["
-						+ socket.getLocalAddress().getHostAddress() + "]");
+		throw new PortBindingRuleDiscoveryException(
+				"Unable to discover Port Binding Rule ["
+						+ pbrTestSocket.getLocalAddress().getHostAddress() + "]");
 	}
-
-	private InetSocketAddress resolveMappedAddress(DatagramSocket soc,
+	*/
+	
+	/**
+	 * Returns the bound address using local test DatagramSocket
+	 * and STUN server 
+	 * 
+	 * @param localTestSocket
+	 * @param stunServer
+	 * @return bound address for localTestSocket
+	 * @throws BoundAddressResolvingException
+	 */
+	private InetSocketAddress resolveBoundAddress(DatagramSocket localTestSocket,
 			InetSocketAddress stunServer)
-			throws MappedAddressResolvingException {
+			throws BoundAddressResolvingException {
+		
+		//Prepare test packet content
 		byte[] bytes = new byte[0];
 		MessageHeader sendMh = null;
 		try {
@@ -495,9 +561,9 @@ public class UDPTester{
 			bytes = new byte[0];
 			sendMh = null;
 		}
-		if (bytes.length == 0 || sendMh == null) {
+		if (bytes == null || sendMh == null || bytes.length == 0) { 
 			log.error("Unable to create content for DatagramPacket");
-			throw new MappedAddressResolvingException(
+			throw new BoundAddressResolvingException(
 					"Unable to create content for DatagramPacket");
 		}
 
@@ -505,124 +571,131 @@ public class UDPTester{
 		DatagramPacket sendPacket = new DatagramPacket(bytes, bytes.length);
 
 		try {
-			soc.connect(stunServer);
-			soc.send(sendPacket);
-		} catch (SocketException e) {
-			log.warn("Unable to connect to stun Server ["
-					+ stunServer.getAddress().getHostAddress() + ":"
-					+ stunServer.getPort() + "] from local Socket ["
-					+ soc.getLocalAddress().getHostAddress() + ":"
-					+ soc.getLocalPort() + "]", e);
-			throw new MappedAddressResolvingException(e);
+			// Connect to STUN server using localTestSocket
+			localTestSocket.connect(stunServer);
+			localTestSocket.send(sendPacket);
 		} catch (IOException e) {
 			log.warn("Unable to send Packet to StunServer ["
-					+ soc.getInetAddress().getHostAddress() + ":"
-					+ soc.getPort() + "] from local Socket ["
-					+ soc.getLocalAddress().getHostAddress() + ":"
-					+ soc.getLocalPort() + "]", e);
-			// skip this server
-			throw new MappedAddressResolvingException(e);
+					+ localTestSocket.getInetAddress().getHostAddress() + ":"
+					+ localTestSocket.getPort() + "] from local Socket ["
+					+ localTestSocket.getLocalAddress().getHostAddress() + ":"
+					+ localTestSocket.getLocalPort() + "]", e);
+			// TODO: instead of dropping, skip this server and use next one
+			throw new BoundAddressResolvingException(e);
 		}
 
-		//
+		// Receive response
 		MessageHeader receiveMh = new MessageHeader();
 		// listen for incoming packets
 		try {
-			DatagramPacket receivePacket = new DatagramPacket(new byte[200],
-					200);
-			// log.debug("STUN SERVER MAPPED ADDRESS REQUEST >>>>>");
-			soc.receive(receivePacket);
-			// log.debug("STUN SERVER MAPPED ADDRESS REQUEST <<<<<");
+			// Create receive packet
+			DatagramPacket receivePacket = new DatagramPacket(new byte[200],200);
+			localTestSocket.receive(receivePacket);
+			// Parse received packet
 			receiveMh = MessageHeader.parseHeader(receivePacket.getData());
 		} catch (SocketTimeoutException e) {
 			log.warn("Socket Timeout waiting answer from ["
-					+ soc.getInetAddress().getHostAddress() + ":"
-					+ soc.getPort() + "]");
-			throw new MappedAddressResolvingException(e);
+					+ localTestSocket.getInetAddress().getHostAddress() + ":"
+					+ localTestSocket.getPort() + "]");
+			throw new BoundAddressResolvingException(e);
 		} catch (IOException e) {
 			log.warn("IOException while listening on ["
-					+ soc.getInetAddress().getHostAddress() + ":"
-					+ soc.getPort() + "]", e);
-			throw new MappedAddressResolvingException(e);
+					+ localTestSocket.getInetAddress().getHostAddress() + ":"
+					+ localTestSocket.getPort() + "]", e);
+			throw new BoundAddressResolvingException(e);
 		} catch (MessageAttributeParsingException e1) {
-			log.warn("Unable to create content for DatagramPacket");
-			throw new MappedAddressResolvingException(e1);
+			log.warn("Unable to parse attributes, using content of received" +
+					" DatagramPacket");
+			throw new BoundAddressResolvingException(e1);
 		} catch (MessageHeaderParsingException e2) {
-			log.warn("Unable to create content for DatagramPacket");
-			throw new MappedAddressResolvingException(e2);
+			log.warn("Unable to parse header, using content of received " +
+					"DatagramPacket");
+			throw new BoundAddressResolvingException(e2);
 		}
+		// Discarding wrong packets
 		if (!receiveMh.equalTransactionID(sendMh)) {
 			log.warn("Discard wrong packet");
-			throw new MappedAddressResolvingException("Discard wrong packet");
+			throw new BoundAddressResolvingException("Discard wrong packet");
 		}
+		
+		// Extract Bound Address using packet contents
 		MappedAddress ma = (MappedAddress) receiveMh
 				.getMessageAttribute(MessageAttributeType.MappedAddress);
-		if (!(ma == null)) {
-			InetAddress mappedIas = null;
-			int mappedPort = -1;
-			try {
-				mappedIas = ma.getAddress().getInetAddress();
-				mappedPort = ma.getPort();
-			} catch (UtilityException e) {
-				log.error("JSTUN utility exception",
-						e);
-			} catch (UnknownHostException e) {
-				log.error(e.getMessage());
-			}
-			if (mappedIas == null || mappedPort <= 0) {
-				log.error("Unable to get mapped address from received packet");
-				throw new MappedAddressResolvingException(
-						"Unable to get mapped address from received packet");
-			}
-			InetSocketAddress mappedAddress = new InetSocketAddress(mappedIas,
-					mappedPort);
-			soc.disconnect();
-			return mappedAddress;
-		} else {
-			log.error("Unable to get mapped address using stunServer ["
-					+ stunServer.getAddress().getHostAddress() + ":"
-					+ stunServer.getPort() + "]");
-			throw new MappedAddressResolvingException(
-					"Unable to get mapped address using stunServer ["
-							+ stunServer.getAddress().getHostAddress() + ":"
-							+ stunServer.getPort() + "]");
+		
+		InetAddress resolvedBoundAddress = null;
+		int resolvedBoundPort = -1;
+		try {
+			resolvedBoundAddress = ma.getAddress().getInetAddress();
+			resolvedBoundPort = ma.getPort();
+		} catch (UtilityException e) {
+			log.error("JSTUN utility exception", e);
+			throw new BoundAddressResolvingException(
+					"Unable to resolveBoundAddress",e);
+		} catch (UnknownHostException e) {
+			log.error(e.getMessage());
+			throw new BoundAddressResolvingException(
+					"Unable to resolveBoundAddress",e);
 		}
+		
+		InetSocketAddress boundAddress = 
+			new InetSocketAddress(resolvedBoundAddress,resolvedBoundPort);
+		localTestSocket.disconnect();
+		return boundAddress;
 	}
 
-	private InetSocketAddress resolveMappedAddress(DatagramSocket soc)
-			throws MappedAddressResolvingException {
-		InetSocketAddress mappedAddress = null;
-		log.debug("Resolving Mapped Address");
+	/**
+	 * Iterates over STUN servers from properties file
+	 * tries to resolve the bound address for localTestSovket
+	 * using these STUN servers
+	 * 
+	 * @param localTestSocket
+	 * @return boundAddress
+	 * @throws BoundAddressResolvingException
+	 */
+	private InetSocketAddress resolveBoundAddress(DatagramSocket localTestSocket)
+			throws BoundAddressResolvingException{
+		
+		InetSocketAddress boundAddress = null;
+		log.debug("Resolving Bound Address");
 
-		Collection<InetSocketAddress> stunServers = LocalStunInfo.getInstance()
-				.getStunServers(soc.getLocalAddress());
-		Collections.shuffle((List<InetSocketAddress>) stunServers);
-		// log.info("Got total [" + stunServers.size() +
-		// "] STUN server addresses for localIp");
-
-		// set socket timeout
+		// Get the list of active STUN servers for local address
+		// and shuffle the list
+		Collection<InetSocketAddress> stunServers = 
+			LocalStunInfo.getInstance().getActiveStunServers(localTestSocket.getLocalAddress());
+		//Collections.shuffle((List<InetSocketAddress>) stunServers);
+		
+		// Prepare local test socket for resolving the bound address
+		// set SO_TIMEOUT	
+		int boundAddressSoTimeout = JPunchProperties.getIntegerProperty(
+					JPunchProperties.HP_BOUND_ADDRESS_RESOLVE_SO_TIMEOUT);
+		
 		try {
-			if (soc.getSoTimeout() != RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT) {
-				soc.setSoTimeout(RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT);
+			if (localTestSocket.getSoTimeout() != boundAddressSoTimeout) {
+				localTestSocket.setSoTimeout(boundAddressSoTimeout);
 			}
 		} catch (SocketException e) {
-			log
-					.error(
-							"Unable to set socket timeout to RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT",
-							e);
+			throw new BoundAddressResolvingException(
+					"Unable to change SO_TIMEOUT of the localTestSocket to ->" +
+					" RESOLVING_MAPPED_ADDRESS_SO_TIMEOUT [" + 
+					boundAddressSoTimeout + "]" ,e);
 		}
 
-		// loop over stunServers, ask for mapped address
+		// loop over stunServers, ask and try to resolve Bound address
 		for (InetSocketAddress stunServer : stunServers) {
-			mappedAddress = resolveMappedAddress(soc, stunServer);
-			if (mappedAddress == null)
-				throw new NullPointerException(
-						"mappedAddress == null after resolving");
-			break;
+			boundAddress = resolveBoundAddress(localTestSocket, stunServer);
+			// if bound address was resolved return, else iterate further
+			if (boundAddress != null){
+				return boundAddress;
+			}
 		}
-		return mappedAddress;
+		throw new BoundAddressResolvingException("Unable to resolve Bound Address," +
+				"tried [" + stunServers.size() + "] STUN servers");
 	}
 
+	/*
+	 * Returns most frequent element in list
+	 */
+	/*
 	private Integer getMostFrequentElem(List<Integer> list) {
 		Integer mostFrequent = null;
 		int count = 0;
@@ -638,8 +711,10 @@ public class UDPTester{
 		}
 		return mostFrequent;
 	}
-
-	//common variables for send/receive loops 
+	*/
+	//UDP Hole Punchings
+	//common variables for send/receive threads
+	// TODO: threads can be implemented in separate class
 	private Integer coneToSymPortRangePing = 0;
 	private Integer attackOnRemotePort = 0;
 	private boolean holePunchingRunning = true;
@@ -647,21 +722,29 @@ public class UDPTester{
 	private boolean localSideReceivedPing = false;
 	private boolean remoteSideReceivedPing = false;
 	
-	private boolean punchHole(final DatagramSocket localSocket) {
-		log.debug("Hole Punching");
+	private boolean udpHolePunching(final DatagramSocket localTestSocket) 
+			throws UdpHolePunchingException{
+		log.debug("UDP Hole Punching");
 		
+		// Prepare local test socket for UDP hole punching
 		// set SO_TIMEOUT
+		int hpSoTimeout = JPunchProperties.getIntegerProperty(
+							JPunchProperties.HP_TEST_SO_TIMEOUT);
 		try {
-			if (localSocket.getSoTimeout() != HOLE_PUNCHING_SO_TIMEOUT) {
-				localSocket.setSoTimeout(HOLE_PUNCHING_SO_TIMEOUT);
+			if (localTestSocket.getSoTimeout() != hpSoTimeout) {
+				localTestSocket.setSoTimeout(hpSoTimeout);
 			}
 		} catch (SocketException e) {
-			log.error( "Unable to set socket timeout to HOLE_PUNCHING_SO_TIMEOUT",e);
+			throw new UdpHolePunchingException("Unable to change SO_TIMEOUT of the localTestSocket to ->" +
+					" HP_TEST_SO_TIMEOUT [" + 
+					hpSoTimeout + "]" ,e);
 		}
 		
-		// set target port for attacking
+		//Setup common variables for send/receive threads
+		
+		// set target remote port for attacking
 		synchronized (attackOnRemotePort) {
-			attackOnRemotePort = remoteMappedAddress.getPort();
+			attackOnRemotePort = remoteBoundAddress.getPort();
 		}
 		
 		// set range ping
@@ -673,17 +756,24 @@ public class UDPTester{
 			}
 		}
 		
-		// separate thread for listening UDP packets
+		// separate thread for listening UDP packets (receive thread)
+		log.info(String.format("Listening for packets on bound address [%s:%d]",
+				localBoundAddress.getAddress().getHostAddress(),
+				localBoundAddress.getPort()));
 		Thread udpListener = new Thread() {
 			public void run() {
+				// Prepare content buffer for receiving
+				// TODO: re-factor 1 + 1 + 4 
 				byte[] receiveContent = new byte[UDPPacket.HASH_LENGTH + 1 + 4 + 4];
 				while (holePunchingRunning) {
 					try {
 						// listen  for UDP packets
 						DatagramPacket receivePacket = new DatagramPacket(
 								receiveContent, receiveContent.length);
-						localSocket.receive(receivePacket);
+						localTestSocket.receive(receivePacket);
+						// extract UDPPacket
 						UDPPacket udpp = new UDPPacket(receivePacket.getData());
+						
 						//if packet is PING
 						if (UDPPacket.PING == udpp.getType()) {
 							log.debug("Received PING packet from ["
@@ -692,13 +782,13 @@ public class UDPTester{
 									+ receivePacket.getPort() + "]");
 							
 							// if destination address changed 
-							if (!(remoteMappedAddress.getAddress().equals(
-									receivePacket.getAddress()) && remoteMappedAddress
+							if (!(remoteBoundAddress.getAddress().equals(
+									receivePacket.getAddress()) && remoteBoundAddress
 									.getPort() == receivePacket.getPort())) {
 								// multiple subnetworks case
 								// ping received from different remote address
 								// change the target IP and port for ping
-								remoteMappedAddress = new InetSocketAddress(
+								remoteBoundAddress = new InetSocketAddress(
 										receivePacket.getAddress(),
 										receivePacket.getPort());
 								// change the currently used target port
@@ -712,11 +802,11 @@ public class UDPTester{
 							}
 
 							// inform the other side that we have received a
-							// PING packet
+							// PING packet, and stop thread
 							try {
 								send(new UDPTestMessage(UDPTestMessage.Type.RECEIVED_PING));
 								localSideReceivedPing = true;
-								return;
+								break;
 							} catch (CommunicationFailedException e) {
 								log.error("Unable to send messsage",e);
 							}
@@ -729,29 +819,32 @@ public class UDPTester{
 						log.error("Exception receiving PING packet", e);
 					}
 				}
-				log.debug("HOLE Punching Receive Thread is STOPPING");
+				log.debug("UDP Hole Punching Ping Receive Thread is Stopping");
+				System.gc();
 			}
 		};
+		udpListener.setName("UDP Hole Punching Ping Receive Thread");
 		udpListener.start();
 		
-		// first try with remote mapping rule
-		synchronized (attackOnRemotePort) {
-			//TODO: add mapping rule here or on local side
-			attackOnRemotePort = attackOnRemotePort + remotePortMappingRule;
-		}
+		// Timeout for sending thread
+		int udpHpTimout = JPunchProperties.getIntegerProperty(
+							JPunchProperties.HP_TEST_RUN_TIMEOUT);
+		
 		long startTime = System.currentTimeMillis();
-		for (int ping_counter = 0, port_increment_counter = 0; 
+		for (int /*ping_counter = 0,*/ port_increment_counter = 0; 
 				holePunchingRunning;  
-				ping_counter++) {
-			if (System.currentTimeMillis() - startTime > 60000) {
+				/*ping_counter++*/) {
+			if (System.currentTimeMillis() - startTime > udpHpTimout) {
 				// stop send/receive loops
 				holePunchingRunning = false;
 				break;
 			}
+			
 			// prepare PING UDPPacket
 			UDPPacket sendUDPpacket = new UDPPacket(UDPPacket.PING);
 			byte[] sendContent = sendUDPpacket.getBytes();
 			DatagramPacket sendPacket = null;
+			
 			// next if there is cone -> symmetric case
 			// try to ping a range of ports on symmetric side
 			int p = attackOnRemotePort
@@ -761,10 +854,10 @@ public class UDPTester{
 			//prepare PING DatagramPacket
 			try {
 				InetSocketAddress ias = new InetSocketAddress(
-						remoteMappedAddress.getAddress(), p);
-				sendPacket = new DatagramPacket(sendContent,
-						sendContent.length, ias);
+						remoteBoundAddress.getAddress(), p);
+				sendPacket = new DatagramPacket(sendContent, sendContent.length, ias);
 			} catch (IllegalArgumentException e) {
+				// TODO: put the numbers into the properties file
 				if (p > 65535 || p < 1024) {
 					log.error("Remote Port number out of range [" + p + "]", e);
 					// stop send/receive loops
@@ -774,12 +867,15 @@ public class UDPTester{
 			} catch (SocketException e) {
 				log.error(e.getMessage(), e);
 			}
-			if (sendPacket == null)
+			if (sendPacket == null){
+				log.error("Unable to create Datagramm Packet");
 				continue;
+			}
+				
 
 			//send packet
 			try {
-				localSocket.send(sendPacket);
+				localTestSocket.send(sendPacket);
 				log.debug("Sent PING packet to "
 						+ sendPacket.getAddress().getHostAddress() + ":"
 						+ sendPacket.getPort());
@@ -788,6 +884,7 @@ public class UDPTester{
 						+ sendPacket.getAddress().getHostAddress() + " "
 						+ sendPacket.getPort() + "]", e);
 			}
+			
 			// if remote and local sides received pings 
 			// stop pinging
 			if ( localSideReceivedPing && remoteSideReceivedPing){
@@ -795,39 +892,74 @@ public class UDPTester{
 				holePunchingRunning = false;
 			}
 			
-			// sleep
+			// Set Default delay between sending ping packets
+			int defaultPingInterval = JPunchProperties.getIntegerProperty(
+										JPunchProperties.HP_PING_INTERVAL);
 			try {
-				Thread.sleep(DEFAULT_PING_INTERVAL);
+				Thread.sleep(defaultPingInterval);
 			} catch (InterruptedException e) {
+				log.warn("UDP Hole Punching Ping Interval Sleep iterrupted", e);
 			}
-
-			if (ping_counter > 3) {
+			
+			// TODO: put the numbers into the properties file
+			// Send 3 packets to each port
+			// then increment port
+			//if (ping_counter > 6) {
 				synchronized (attackOnRemotePort) {
 					attackOnRemotePort = p;
 				}
 				port_increment_counter++;
-				ping_counter = 5;
-			}
+			//	ping_counter = 0;
+			//}
 		}
+		log.info("UDP Hole Punching Ping Sender Stopped");
+		// if ready, wait for receiver thread to stop
 		try {
 			udpListener.join();
+			log.info("UDP Hole Punching Ping Receive Thread Stopped");
 		} catch (InterruptedException e) {
+			log.warn("Wait for UDP Hole Punching Ping Receive " +
+					"thread to die interrupted",e);
 		}
-		log.debug("Hole Punching Method is STOPPING");
+		log.debug("UDP Hole Punching Method is Stopped");
 		
 		// hole punching succeed if local and remote sides received pings
 		return localSideReceivedPing && remoteSideReceivedPing;
 	}
-
-	private class MessageReceivingThread extends Thread{
-		public MessageReceivingThread() {
+	
+	/*
+	 * UDP Message Receiver Thread
+	 * Listening for console-input
+	 * Filtering UDPMessages
+	 */
+	private class UDPMessageReceiverThread extends Thread{
+		
+		private BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
+		private boolean run = true;
+		
+		UDPMessageReceiverThread() {
 			this.setName(this.getClass().getName());
 		}
 		
+		void stopReceiverThread() throws IOException{
+			log.trace("Closing InputReader ...");
+			setRun(false);
+			br.notify();
+			br.close();
+			log.trace("InputReader Closed");
+		}
+		
+		private synchronized boolean isRunning(){
+			return this.run;
+		}
+		
+		private synchronized void setRun(boolean run){
+			if (this.run != run) this.run = run;
+		}
+		
 		public void run(){
-			while(true){
+			while(isRunning()){
 				try{
-					BufferedReader br = new BufferedReader(new InputStreamReader(System.in));
 					String message = null;
 					while (message == null || "".equals(message)){
 						message = br.readLine();
@@ -843,9 +975,13 @@ public class UDPTester{
 					log.debug("Unable to deserialize message");
 				}
 			}
+			log.trace("Exit UDP Test Message Receiver main loop");
+			br = null;
+			System.gc();
 		}
 	}
 	
+	/*
 	private class BlockingReceiveQueue {
 
 		private boolean isBlocking = false;
@@ -944,6 +1080,7 @@ public class UDPTester{
 			super(cause);
 		}
 	}
+	*/
 }
 
 class UDPTestMessage implements Serializable {
@@ -952,12 +1089,8 @@ class UDPTestMessage implements Serializable {
 	enum Type {
 		INIT, 
 		STUN_INFO,
-		// STUN_INFO_RECEIVED,
 		MAPPED_ADDRESS,
-		// MAPPED_ADDRESS_RECEIVED,
-		// CONNECTION_ID,
 		RECEIVED_PING,
-		//CONFIRM
 	}
 
 	Type type = null;
@@ -974,10 +1107,6 @@ class UDPTestMessage implements Serializable {
 	UUID id = null;
 	InetSocketAddress mappedAddress = null;
 	Integer portMappingRule = null;
-
-	/*
-	 * UDPTestMessage(UUID id){ this.id = id; this.type = Type.CONNECTION_ID; }
-	 */
 
 	UDPTestMessage(InetSocketAddress mAddress, Integer mRule) {
 		this.mappedAddress = mAddress;
@@ -1002,39 +1131,63 @@ class UDPTestMessage implements Serializable {
 }
 
 @SuppressWarnings("serial")
-class PortMappingRuleDiscoveryException extends Exception {
-	PortMappingRuleDiscoveryException() {
+class PortBindingRuleDiscoveryException extends Exception {
+	PortBindingRuleDiscoveryException() {
 		super();
 	}
 
-	PortMappingRuleDiscoveryException(String message) {
+	PortBindingRuleDiscoveryException(String message) {
 		super(message);
 	}
 
-	PortMappingRuleDiscoveryException(String message, Throwable e) {
+	PortBindingRuleDiscoveryException(String message, Throwable e) {
 		super(message, e);
 	}
 
-	PortMappingRuleDiscoveryException(Throwable e) {
+	PortBindingRuleDiscoveryException(Throwable e) {
 		super(e);
 	}
 }
 
 @SuppressWarnings("serial")
-class MappedAddressResolvingException extends Exception {
-	MappedAddressResolvingException() {
+class BoundAddressResolvingException extends Exception {
+	BoundAddressResolvingException() {
 		super();
 	}
 
-	MappedAddressResolvingException(String message) {
+	BoundAddressResolvingException(String message) {
 		super(message);
 	}
 
-	MappedAddressResolvingException(String message, Throwable e) {
+	BoundAddressResolvingException(String message, Throwable e) {
 		super(message, e);
 	}
 
-	MappedAddressResolvingException(Throwable e) {
+	BoundAddressResolvingException(Throwable e) {
 		super(e);
+	}
+}
+
+class UdpHolePunchingException extends Exception {
+	private static final long serialVersionUID = -2345597477755740582L;
+
+	public UdpHolePunchingException() {
+		super();
+		// TODO Auto-generated constructor stub
+	}
+
+	public UdpHolePunchingException(String message, Throwable cause) {
+		super(message, cause);
+		// TODO Auto-generated constructor stub
+	}
+
+	public UdpHolePunchingException(String message) {
+		super(message);
+		// TODO Auto-generated constructor stub
+	}
+
+	public UdpHolePunchingException(Throwable cause) {
+		super(cause);
+		// TODO Auto-generated constructor stub
 	}
 }

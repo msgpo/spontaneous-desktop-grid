@@ -8,18 +8,17 @@ import java.net.SocketException;
 import java.util.concurrent.LinkedBlockingQueue;
 import java.util.concurrent.TimeUnit;
 
-import net.ulno.jpunch.core.CommunicationFailedException;
-import net.ulno.jpunch.util.Util;
-import net.ulno.jpunch.util.logging.Logger;
+import net.ulno.jpunch.comm.Connection;
+import net.ulno.jpunch.exceptions.UdpConnectionException;
 
-public class UDPConnection extends Thread
+import org.apache.log4j.Logger;
+
+public class UDPConnection extends Thread implements Connection
 {
 	private final static Logger log = Logger.getLogger(UDPConnection.class);
 			
 	private DatagramSocket localSocket = null;
 	private InetSocketAddress remoteMappedAddress = null;
-	
-	//F2FPeer remotePeer = null;
 	
 	private Status status = Status.IDLE;
 			
@@ -31,20 +30,12 @@ public class UDPConnection extends Thread
 	}
 
 	UDPConnection(DatagramSocket localSocket,
-				   InetSocketAddress remoteMappedAddress
-				   //F2FPeer remotePeer
+				  InetSocketAddress remoteMappedAddress
 				  )
 	{
 		this.localSocket = localSocket;
 		this.remoteMappedAddress = remoteMappedAddress;
-		//this.remotePeer = remotePeer;
 	}
-	
-//	private String name = null;
-//	private void setName(String n) { name = n; }
-//	private String getName() { return name; }
-	
-	public String getActivityName() { return getName(); }
 	
 	public void run()
     {
@@ -53,29 +44,27 @@ public class UDPConnection extends Thread
 		{
             setName("UDP Connection");
     		startPingThread();
-            startMessageHandlerThread();
+            startPacketHandlerThread();
     		listen();
 		}
 		catch (Exception e)
 		{
 			e.printStackTrace();
-			log.warn(getActivityName() + e.getMessage());
 		}
 	}
 	
     private Boolean synLock = new Boolean(true);
     private Integer localSynTag = null;
     private byte[] bytesToSend = null;
-    private CommunicationFailedException sendException = null;
+    private UdpConnectionException udpConnectionException = null;
 	//Main Send Bytes method
-    private void send(final byte[] bytes) throws CommunicationFailedException
+    private void send(final byte[] bytes) throws UdpConnectionException
     {
         log.debug("aquire synLock send()");
         synchronized (synLock)
         {
     		//first send the SYN packet to initialize data transfer
     		this.status = Status.SENDING;
-//            localSynTag = F2FComputing.getLocalPeerID().hashCode();
     		localSynTag = this.localSocket.getLocalAddress().getHostName().hashCode();
             bytesToSend = bytes;
     		
@@ -90,7 +79,8 @@ public class UDPConnection extends Thread
         		} catch (IOException e){
         			log.debug("Unable to send SYN packet", e);
         			status = Status.CLOSING;
-                    throw new CommunicationFailedException(e);
+                    throw new UdpConnectionException(
+                    		"I/O Exception while sending bytes ",e);
                 }
                 
                 // wait until the data has been transfered
@@ -106,7 +96,7 @@ public class UDPConnection extends Thread
             }
             localSynTag = null;
             bytesToSend = null;
-            if (sendException != null) throw sendException;
+            if (this.udpConnectionException != null) throw this.udpConnectionException;
         }
         log.debug("release synLock send()");
 	}
@@ -138,7 +128,7 @@ public class UDPConnection extends Thread
     	setLocalSocketTimeout(0);
         while (status != Status.CLOSING)
         {
-            byte[] buffer = new byte[UDPPacket.MAX_PACKET_SIZE];
+            byte[] buffer = new byte[UDPPacket.getDefaultPacketSize()];
             DatagramPacket receivePacket = new DatagramPacket(buffer, buffer.length);
             //try to receive
             try
@@ -178,9 +168,9 @@ public class UDPConnection extends Thread
     }
 	
     private Thread collisionSendThread = null;
-	private void startMessageHandlerThread()
+	private void startPacketHandlerThread()
     {
-		new Thread ()
+		Thread thread = new Thread ()
         {
             public void run()
             {
@@ -257,7 +247,9 @@ public class UDPConnection extends Thread
                     }
             	}
             }
-        }.start();
+        };
+        thread.setName("UDP Connection Packet Handler Thread");
+        thread.start();
     }
 	
 	private void startCollisionSendThread()
@@ -269,20 +261,21 @@ public class UDPConnection extends Thread
                 try {
                     send(bytesToSend);
                     collisionSendThread = null;
-                } catch (CommunicationFailedException e) {
+                } catch (UdpConnectionException e) {
                     // notify the original sender thread about the exception
                     UDPConnection.this.status = Status.CLOSING;
-                    UDPConnection.this.sendException = e;
+                    UDPConnection.this.udpConnectionException = e;
                     UDPConnection.this.localSynTag.notifyAll();
                 }
             }
         };
+        collisionSendThread.setName("UDP Connection Collision Thread");
         collisionSendThread.start();
     }
 
     private void startPingThread()
 	{
-		new Thread ()
+		Thread thread = new Thread ()
         {
             public void run()
             {
@@ -304,7 +297,9 @@ public class UDPConnection extends Thread
 	                }
             	}
             }
-        }.start();
+        };
+        thread.setName("UDP Connection Ping Thread");
+        thread.start();
 	}
 
 	private void setLocalSocketTimeout(int sendSoTimeout)
@@ -350,11 +345,15 @@ public class UDPConnection extends Thread
         
         log.debug("Received DATA [" + receivedBytes.length + "]");
         
+        setReceivedBytes(receivedBytes);
+        return true;
+        
         // deserialize the data and 
         // forward received object to the Core
     	// run in separate thread, because messageReceived() might want to 
         // send something out (BlockingReply), but then no thread is handling
         // incoming UDP messages
+        /*
         new Thread()
         {
             public void run()
@@ -367,15 +366,14 @@ public class UDPConnection extends Thread
 //                    messageReceived(message, remotePeer.getID());
                     
                     //log.info("Received Object [" + ((String)message) + "]");
-                    setReceivedObject(message);
+                    setReceivedBytes(message);
                 } catch (Exception e)
                 {
                     e.printStackTrace();
                 }
             }
         }.start();
-		
-        return true;
+		*/
     }
 
     private DatagramPacket createDatagramPacketOut(UDPPacket content)
@@ -391,7 +389,7 @@ public class UDPConnection extends Thread
 	private boolean send(final byte[] bytes, final int offset, final int length, final boolean hasMore)
 	{
 		//If message is larger then MAX size split in two
-		if (length > UDPPacket.MAX_MESSAGE_SIZE) {
+		if (length > UDPPacket.getDefaultPacketSize()) {
 			log.debug("Message too large ("+length+"), split in two");
 			int half_size = (int)(length/2d);
 			return 
@@ -533,39 +531,32 @@ public class UDPConnection extends Thread
 		return returnBytes;
 	}
 
-    public synchronized void sendMessage(Object message)throws CommunicationFailedException
-    {
-        try
-        {
-            // serialize message
-            byte[] raw_msg = Util.serializeObject(message);
-            // compress message
-            raw_msg = Util.zip(raw_msg);
-            this.send(raw_msg);
-        }
-        catch (IOException e)
-        {
-            throw new CommunicationFailedException(e);
-        }
+    public synchronized int sendBytes(byte[] bytes) throws UdpConnectionException{
+            this.send(bytes);
+            return bytes.length;
     }
     
     
-    private Object receivedObject = null;
+    private byte[] receivedBytes = null;
     
-    private synchronized void setReceivedObject(Object object){
-    	if (this.receivedObject == null && object != null){
-    		this.receivedObject = object;
+    private synchronized void setReceivedBytes(byte[] bytes){
+    	if (this.receivedBytes == null && bytes != null){
+    		this.receivedBytes = bytes;
     		notify();
     	}
     }
     
-    public synchronized Object receiveMessage(){
-    	if (this.receivedObject == null){
-    		try{
-    			wait();
+    public synchronized byte[] receiveBytes(long blockingTimeout) throws UdpConnectionException{
+    	if (this.receivedBytes == null){
+    		try {
+    			wait(blockingTimeout);
+    			if (this.receivedBytes == null){
+    				throw new UdpConnectionException("Timeout receiving bytes");
+    			}
     		} catch (InterruptedException e) {}
-    		return receivedObject;
     	}
-    	return receivedObject;
+    	byte[] bytes = receivedBytes;
+    	receivedBytes = null;
+    	return bytes;
     }
 }

@@ -3,7 +3,9 @@ package net.ulno.jpunch.comm.udp;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 
-import net.ulno.jpunch.util.logging.Logger;
+import net.ulno.jpunch.util.JPunchProperties;
+
+import org.apache.log4j.Logger;
 
 class UDPPacket
 {
@@ -21,20 +23,32 @@ class UDPPacket
 	
     final static int HASH_LENGTH = 16;
 	
-    final static int MAX_PACKET_SIZE = 512;//65507;
-    final static int MAX_MESSAGE_SIZE = MAX_PACKET_SIZE - HASH_LENGTH - 1 - 4 - 4;
-	
     private byte[] bytes = null;
 
+    private int maxPacketSize;
+    private int maxMessageSize;
+    
 	private MessageDigest md = null;
 	private final static Logger log = Logger.getLogger(UDPPacket.class);
 	
-	private UDPPacket()
+	private UDPPacket(int maxPacketSize)
 	{
+		this.maxPacketSize = maxPacketSize;
+		this.maxMessageSize = this.maxPacketSize - HASH_LENGTH-1-4-4;
 		try {
 			md = MessageDigest.getInstance("MD5");
 		} catch (NoSuchAlgorithmException e) {}
 	}
+	
+	public UDPPacket() {
+		this(UDPPacket.getDefaultPacketSize());
+	}
+	
+	public static int getDefaultPacketSize(){
+		return JPunchProperties.getIntegerProperty(
+				JPunchProperties.UDP_MAX_PACKET_SIZE);
+	}
+	
     // constructors for outgoing packet
     UDPPacket(byte type)
     {
@@ -98,7 +112,9 @@ class UDPPacket
     	this();
     	//log.debug("forming UDPPacket: "+ Arrays.toString(bytes));
         // check the message size
-		if (bytes.length < (MAX_PACKET_SIZE - MAX_MESSAGE_SIZE)) 
+    	
+    	//
+		if (bytes.length < (maxPacketSize - maxMessageSize)) 
 			throw new UDPPacketParseException("Message too Short");
         // check the TYPE field
 		if (bytes[HASH_LENGTH] < ACK || bytes[HASH_LENGTH] > PING) 
@@ -108,7 +124,7 @@ class UDPPacket
 			throw new UDPPacketParseException("Invalid TYPE Field");
         }
 		int size = UDPConnection.bytesToInt(getSubSequence(bytes, HASH_LENGTH+1+4, 4));
-		if (size > MAX_MESSAGE_SIZE)
+		if (size > maxMessageSize)
 			throw new UDPPacketParseException("Data too long, " + size);
 		this.bytes = getSubSequence(bytes, 0, HASH_LENGTH+1+4+4+size);
 

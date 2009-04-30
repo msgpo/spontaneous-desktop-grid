@@ -85,5 +85,36 @@ public abstract class Util
     {
        	return Base64.decodeBase64(str.getBytes());
     }
-
+	
+	/**
+	 * Returns transfer speed,
+	 * computed using start/stop time stamps in milliseconds and
+	 * transfered amount of data in bytes  
+	 * 
+	 * @param start
+	 * @param stop
+	 * @param size
+	 * @return
+	 */
+	public static double getTransferSpeed(long start, long stop, int size){
+		long time = stop - start;
+		double secs = time*1.0/1000;
+		double kbytes = size*1.0/1024;
+		return kbytes/secs;
+	}
+	
+	public static String getTransferStat(long start, long stop, int size){
+		long time = stop - start;
+		double secs = time*1.0/1000;
+		double kbytes = size*1.0/1024;
+		double speed = kbytes/secs;
+		StringBuffer sb = new StringBuffer();
+		sb.append("\nTransfer Statistics:\n");
+		sb.append(String.format("\tTransfer completed in [%s] sec\n", secs));
+		sb.append(String.format("\tTransfered size is [%s] %s\n",  
+				kbytes >= 1024 ? kbytes/1024 : kbytes,
+						kbytes >= 1024 ? "mbytes" :"kbytes"));
+		sb.append(String.format("\tAverage speed is [%s] kbytes/s\n", speed));
+		return sb.toString();
+	}
 }

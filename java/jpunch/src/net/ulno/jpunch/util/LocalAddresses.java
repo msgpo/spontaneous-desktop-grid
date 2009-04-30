@@ -8,7 +8,7 @@ import java.util.ArrayList;
 import java.util.Collection;
 import java.util.Enumeration;
 
-import net.ulno.jpunch.util.logging.Logger;
+import org.apache.log4j.Logger;
 
 public class LocalAddresses
 {
