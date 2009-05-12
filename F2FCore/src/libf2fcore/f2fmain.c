@@ -29,7 +29,11 @@
 #include <stdlib.h>
 #include <string.h>
 #include <time.h>
-#include <arpa/inet.h>
+#ifdef WIN32
+	#include <winsock.h>
+#else
+	#include <arpa/inet.h>
+#endif
 
 #include "mtwist/mtwist.h"
 #include "b64/b64.h"

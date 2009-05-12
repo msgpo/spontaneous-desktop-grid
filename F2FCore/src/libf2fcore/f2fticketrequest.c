@@ -26,7 +26,11 @@
 
 #include <time.h>
 #include <string.h>
-#include <arpa/inet.h>
+#ifdef WIN32
+	#include <winsock.h>
+#else
+	#include <arpa/inet.h>
+#endif
 
 #include "f2fticketrequest.h"
 #include "f2fconfig.h"
