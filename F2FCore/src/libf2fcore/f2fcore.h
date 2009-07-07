@@ -35,6 +35,7 @@
 #include "f2fmessagetypes.h"
 #include "f2fadapterreceivebuffer.h"
 #include "f2fcore.h"
+#include "f2fjit_wrapper.h"
 
 
 #ifdef __cplusplus
@@ -73,7 +74,7 @@ F2FError f2fGroupRegisterPeer( /*out*/ F2FGroup *group, const F2FWord32 localPee
 		const F2FString identifier, const F2FString inviteMessage,
 		const F2FString otherPeersPublicKey );
 
-/** unregister the peer again, must be in group 
+/** unregister the peer again, must be in group
  * changes group and peer (because of the embedded lists) */
 F2FError f2fGroupUnregisterPeer( F2FGroup *group, F2FPeer *peer );
 
@@ -81,7 +82,7 @@ F2FError f2fGroupUnregisterPeer( F2FGroup *group, F2FPeer *peer );
 F2FSize f2fGroupGetPeerListSize( const F2FGroup *group );
 
 /** Return a pointer to a peer of a group */
-F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group, 
+F2FPeer * f2fGroupGetPeerFromList( const F2FGroup *group,
 		F2FWord32 peerindex );
 
 /** Getter for GroupUID */
@@ -91,7 +92,7 @@ F2FWord32 f2fGroupGetUIDHi(const F2FGroup * group);
 F2FWord32 f2fGroupGetUIDLo(const F2FGroup * group);
 
 /** Forward messages from the IM program to the core.
- * To avoid letting the receivebuffer get too full 
+ * To avoid letting the receivebuffer get too full
  * f2fReceive should be called to be able to clear
  * the receive buffers.
  * The messages have to start with the right header and must be base64 encoded to be detectable.
@@ -130,7 +131,7 @@ int f2fMessageAvailable();
 
 /** Return the next peer id of the buffer where data has to be sent and
  * decrease list
- * return -1 if there is nothing to send */ 
+ * return -1 if there is nothing to send */
 F2FWord32 f2fMessageGetNextLocalPeerID( F2FAdapterReceiveMessage *msg );
 
 /** return 1, if the data in the ReceiveBuffer is to be forwarded */
@@ -190,7 +191,7 @@ F2FSize f2fPeerListGetSize();
 F2FPeer * f2fPeerListGetPeer( F2FWord32 peerindex );
 
 /** Fill send buffer with data for all group members */
-F2FError f2fGroupSendData( F2FGroup *group, 
+F2FError f2fGroupSendData( F2FGroup *group,
 		const char * message, F2FSize len );
 /** Fill send buffer with a text message for all group members */
 F2FError f2fGroupSendText( F2FGroup *group, const F2FString message );
@@ -201,17 +202,17 @@ F2FError f2fGroupSendText( F2FGroup *group, const F2FString message );
 		const char *data, const F2FWord32 dataLen );*/
 
 /** Fill send buffer for a specific peer in a group with raw data */
-F2FError f2fPeerSendRaw( F2FGroup *group, F2FPeer *peer, 
+F2FError f2fPeerSendRaw( F2FGroup *group, F2FPeer *peer,
 		const char *data, const F2FWord32 dataLen );
 
 /** submit a job to a f2f group
- * This will first ask for allowance tickets from 
+ * This will first ask for allowance tickets from
  * every client in the job group. If at a later point
  * (when the job is already started) clients (more slaves)
  * are added to the group, they will be directly asked for a ticket.
  * If tickets are received back, the job will be sent to these clients.
  * The Job must be available as a local file in a special archive format
- */ 
+ */
 F2FError f2fGroupSubmitJob( F2FGroup *group, const char * jobpath );
 
 /** distribute file */
@@ -225,6 +226,7 @@ F2FError f2fGroupDistributeData( const char * publishname,
 /** Try to find the exact peer. If it does not exist, return NULL. Else return the peer */
 F2FPeer * f2fPeerListFindPeer( const F2FWord32 uidhi, const F2FWord32 uidlo );
 
+void f2fJITRun(char *filepath);
 
 #ifdef __cplusplus
     }

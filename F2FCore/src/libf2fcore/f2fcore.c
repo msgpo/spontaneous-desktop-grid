@@ -47,6 +47,7 @@
 #include "f2fmessagetypes.h"
 #include "f2fticketrequest.h"
 #include "f2fadapterreceivebuffer.h"
+#include "f2fjit_wrapper.h"
 
 /** show that the buffer has been read and can be filled again */
 F2FError f2fMessageRelease( F2FAdapterReceiveMessage *msg )
@@ -160,4 +161,15 @@ void f2fMessageGetJob(F2FAdapterReceiveMessage *msg, char *content, int *maxlen 
 	memcpy(content, msg->buffer/* + sizeof(F2FMessageJob)*/, *maxlen);
 	/* TODO: adapt to longer jobs */
 }
+
+void f2fJITRun(char *filepath)
+{
+    Cf2fJIT *t = NULL;
+    t = f2fjit_new();
+    f2fjit_run(t,filepath);
+    f2fjit_delete(t);
+    t = NULL;
+}
+
+
 
