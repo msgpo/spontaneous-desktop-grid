@@ -1,3 +1,28 @@
+/***************************************************************************
+ *   Filename: LocalStunInfo.java
+ *   Author: artjom.lind@ut.ee
+ ***************************************************************************
+ *   Copyright (C) 2009 by Ulrich Norbisrath
+ *   devel@mail.ulno.net
+ *
+ *   This program is free software; you can redistribute it and/or modify
+ *   it under the terms of the GNU Library General Public License as
+ *   published by the Free Software Foundation; either version 2 of the
+ *   License, or (at your option) any later version.
+ *
+ *   This program is distributed in the hope that it will be useful,
+ *   but WITHOUT ANY WARRANTY; without even the implied warranty of
+ *   MERCHANTABILITY or FITNESS FOR A PARTICULAR PURPOSE.  See the
+ *   GNU General Public License for more details.
+ *
+ *   You should have received a copy of the GNU Library General Public
+ *   License along with this program; if not, write to the
+ *   Free Software Foundation, Inc.,
+ *   59 Temple Place - Suite 330, Boston, MA  02111-1307, USA.
+ ***************************************************************************
+ *   Description:
+ *   For discovering and collecting network information
+ ***************************************************************************/
 package net.ulno.jpunch.util.stun;
 
 import java.io.FileNotFoundException;
@@ -20,6 +45,11 @@ import net.ulno.jpunch.util.JPunchProperties;
 import net.ulno.jpunch.util.LocalAddresses;
 import de.javawi.jstun.test.DiscoveryTest;
 
+/**
+ * For discovering and collecting network information
+ * @author artjom.lind@ut.ee
+ *
+ */
 public class LocalStunInfo {
 	final private static Logger log = Logger.getLogger(LocalStunInfo.class);
 

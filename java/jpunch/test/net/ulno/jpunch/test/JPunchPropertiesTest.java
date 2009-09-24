@@ -6,6 +6,11 @@ import org.apache.log4j.Logger;
 
 import net.ulno.jpunch.util.JPunchProperties;
 
+/**
+ * Testing jPunch properties
+ * @author artjom.lind@ut.ee
+ *
+ */
 public class JPunchPropertiesTest extends TestCase{
 	private static final Logger log = Logger.getLogger(JPunchTest.class);
 	

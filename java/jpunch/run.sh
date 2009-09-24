@@ -1,3 +1,4 @@
+#!/bin/bash
 #
 #	Run script for jPunch	(Artjom Lind 02.02.2009)
 #	
@@ -64,9 +65,9 @@ relay()
 	
 	# if no identity file given
 	if [ -z $4 ]; then
-		ssh -42Cc blowfish "$2" ${ACTION};
+		ssh -4 -2 -C -c "blowfish" "$2" ${ACTION};
 	else
-		ssh -42Cc blowfish "-i" "$4" "$2" ${ACTION};
+		ssh -4 -2 -C -c "blowfish" "-i" "$4" "$2" ${ACTION};
 	fi;
 }
 
