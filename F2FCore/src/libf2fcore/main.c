@@ -36,7 +36,7 @@
 	return F2FErrOK;
 }*/
 
-int main()
+/*int main()
 {
 	char *test [2];
 
@@ -61,5 +61,5 @@ int main()
 	printf("Hello\n");
 
 	return 0;
-}
+}*/
 
