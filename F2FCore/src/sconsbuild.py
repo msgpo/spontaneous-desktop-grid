@@ -42,18 +42,33 @@ else:
     ldFlagsList = []
     
 #ldFlagsList = ldFlagsList + ['-flat_namespace','-undefined','suppress']
+#ldFlagsList = ldFlagsList + ['-flat_namespace']
 #ldFlagsList = ldFlagsList + ["../../lib/LLVMXCore.o","../../lib/LLVMSparcCodeGen.o","../../lib/LLVMSparcAsmPrinter.o","../../lib/LLVMPowerPCAsmPrinter.o","../../lib/LLVMPowerPCCodeGen.o","../../lib/LLVMPIC16.o","../../lib/LLVMMSIL.o","../../lib/LLVMMips.o","../../lib/libLLVMLinker.a","../../lib/libLLVMipo.a","../../lib/LLVMInterpreter.o","../../lib/libLLVMInstrumentation.a","../../lib/LLVMIA64.o","../../lib/libLLVMHello.a","../../lib/LLVMExecutionEngine.o","../../lib/LLVMJIT.o","../../lib/libLLVMDebugger.a","../../lib/LLVMCppBackend.o","../../lib/LLVMCellSPUCodeGen.o","../../lib/LLVMCellSPUAsmPrinter.o","../../lib/LLVMCBackend.o","../../lib/libLLVMBitWriter.a","../../lib/LLVMX86AsmPrinter.o","../../lib/LLVMX86CodeGen.o","../../lib/libLLVMAsmParser.a","../../lib/LLVMARMAsmPrinter.o","../../lib/LLVMARMCodeGen.o","../../lib/libLLVMArchive.a","../../lib/libLLVMBitReader.a","../../lib/LLVMAlphaCodeGen.o","../../lib/libLLVMSelectionDAG.a","../../lib/LLVMAlphaAsmPrinter.o","../../lib/libLLVMAsmPrinter.a","../../lib/libLLVMCodeGen.a","../../lib/libLLVMScalarOpts.a","../../lib/libLLVMTransformUtils.a","../../lib/libLLVMipa.a","../../lib/libLLVMAnalysis.a","../../lib/libLLVMTarget.a","../../lib/libLLVMCore.a","../../lib/libLLVMSupport.a","../../lib/libLLVMSystem.a"]
+
+llvm_base = "../../llvm/eclipse/" 
+
+_, out, _ = os.popen3( llvm_base + "bin/llvm-config --libs all" )
+llvm_objects =  out.read().strip() # TODO: make blank proof
+_, out, _ = os.popen3( llvm_base + "bin/llvm-config --ldflags" )
+llvm_flags = out.read().strip()
+llvm_flagsnobjects = llvm_flags + ' ' + llvm_objects
 
 env = Environment(SWIGFLAGS=['-python'],
                   LINKFLAGS=ldFlagsList,
-                  #CPPPATH=[distutils.sysconfig.get_python_inc(), os.path.join(srcpath,f2fcorepath),"/Users/olegknut/Documents/workspace/llvm-jit/llvm/include","/Users/olegknut/Documents/workspace/llvm-jit/llvm-2.5/include"],
-                  CPPPATH=[distutils.sysconfig.get_python_inc(), os.path.join(srcpath,f2fcorepath)],
+                  CPPPATH=[distutils.sysconfig.get_python_inc(),
+                           os.path.join(srcpath,f2fcorepath),
+                           llvm_base + "/include",
+                           llvm_base + "../llvm-2.5/include"],
+                  #CPPPATH=[distutils.sysconfig.get_python_inc(), os.path.join(srcpath,f2fcorepath)],
                   SHLIBPREFIX="",
-                  LIBPATH=["/usr/lib/python2.5"],
+                  LIBPATH=["/usr/lib/python2.5",
+                           llvm_base + "/lib"],
                   LIBS=["python2.5"],
-                  CCFLAGS = ccflags )
-
+                  CCFLAGS = ccflags 
+                         )
+env.Append(LINKCOM=' '+llvm_flagsnobjects)
 
 Repository( srcpath )
  
-env.SharedLibrary( '_f2fcore', sources )
+env.SharedLibrary( '_f2fcore', sources ) 
+#env.Program( 'f2fcore', sources )
