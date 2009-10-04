@@ -24,7 +24,7 @@ sources =  [os.path.join( f2fcorepath, 'f2fcore.i')] \
         + glob.glob( os.path.join( f2fcorepath, 'b64' , '*.c') )
 os.chdir(currentpath) # back to buildpath
 
-print "Using these sources:", sources
+#print "Using these sources:", sources
 
 if ARGUMENTS.get('debug', 0):
     print "Enabling debug information."
@@ -52,6 +52,7 @@ llvm_objects =  out.read().strip() # TODO: make blank proof
 _, out, _ = os.popen3( llvm_base + "bin/llvm-config --ldflags" )
 llvm_flags = out.read().strip()
 llvm_flagsnobjects = llvm_flags + ' ' + llvm_objects
+print "llvm_flagsnobjects:",llvm_flagsnobjects
 
 env = Environment(SWIGFLAGS=['-python'],
                   LINKFLAGS=ldFlagsList,
@@ -67,6 +68,7 @@ env = Environment(SWIGFLAGS=['-python'],
                   CCFLAGS = ccflags 
                          )
 env.Append(LINKCOM=' '+llvm_flagsnobjects)
+env.Append(SHLINKCOM=' '+llvm_flagsnobjects)
 
 Repository( srcpath )
  
