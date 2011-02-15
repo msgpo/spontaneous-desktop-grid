@@ -1,4 +1,3 @@
 #summary Documentation for F2F alias Personal Desktop GRID
 
-A first small documentation of the Framework:
-http://math.ut.ee/~keio/F2F/F2FComputing.pdf
+For documentation and development info, take a look at http://f2f.ulno.net
