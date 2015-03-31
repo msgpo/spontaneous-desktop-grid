@@ -1,0 +1,9 @@
+## Extreme Programming ##
+
+As we will do our course with this paradigm, here are some starting points for the first lecture:
+  * http://www.extremeprogramming.org
+  * http://en.wikipedia.org/wiki/Extreme_programming
+  * http://www.agilealliance.org/system/article/file/1376/file.pdf
+  * http://www.softdevarticles.com/modules/weblinks/viewcat.php?cid=49
+  * http://www.extremeprogramming.org/start.html
+  * http://en.wikipedia.org/wiki/User_story

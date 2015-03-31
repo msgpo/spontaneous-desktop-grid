@@ -1,0 +1,85 @@
+# Configuration #
+
+3 computers:
+  * Vladimir/Inspire
+    * Ethernet connection
+    * using MSN account temp\_777@hotmail.com
+  * Vladimir/ENIAC
+    * WiFi connection
+    * using MSN account voviss@gmail.com
+  * Artjom
+    * WiFi connection
+    * using Jabber account
+
+Ulrich's laptop will be used for showing the slides.
+
+# Presentation #
+
+  * Introducing the team - Ulrich
+  * Introductionary talk - Andres A.
+    * What is P2P and F2F
+    * What is going to be demonstrated, etc
+  * Demos of distributed processes
+    * Chat demonstration
+      * Jaan explains why the new chat functionality was needed, what it does, the difference between the Master and Slave chat windows, etc.
+      * Vladimir will explain what is going to be demonstrated and then he and Artjom will run the test cases listed below.
+        * SIP should already be running on the computers used for the demo (and compiled, debugged, etc before the demo starts).
+        * Excessive logging should be turned off during this demo so the chat-related log messages would stand out more.
+        * The projector will not be used for this, the audience will instead be asked to gather around the computers. The computers should be set up on the whiteboard side of the table.
+        * Demos will be accompanied by explaining slides, graphs, etc.
+          * Madis will introduce the socket communication part (need for NAT traversal, etc) and Artjom will describe it in greater detail.
+        * Between test cases, Artjom will show logs to prove that socket communication is working, etc.
+      * Case 1 (Ethernet -> WiFi x 2)
+        * Vladimir/Inspire initates chat with Artjom
+        * Vladimir/Inspire adds Vladimir/ENIAC to the chat
+        * Message sending is tested by everyone
+        * Vladimir/Inspire kicks Artjom from the chat
+        * Artjom verifies that he's been notified of this and can no longer communicate from that window
+        * Vladimir/ENIAC verifies that Artjom no longer shows up in the participants list
+        * The remaining computers test sending messages and verify that Artjom receives nothing
+      * Case 2 (WiFi -> Ethernet)
+        * Artjom initiates chat with Vladimir/Inspire
+        * Message sending is tested both ways
+        * Vladimir/ENIAC leaves chat
+        * Artjom verifies that he can no longer send messages to Vladimir/ENIAC from that window
+      * Case 3 (WiFi -> WiFi)
+        * Artjom initiates chat with Vladimir/ENIAC
+        * Message sending is tested both ways
+        * Artjom ends the chat
+        * Vladimir/ENIAC verifies that he can no longer send messages to Artjom from that window
+      * Case 4 (WiFi -> WiFi & Ethernet)
+        * Artjom initiates chat with Vladimir/ENIAC
+        * Artjom adds Vladimir/Inspire to the chat
+        * Message sending is tested by everyone
+        * Vladimir/ENIAC leaves the chat
+        * The remaining computers test sending messages and verify that Vladimir/ENIAC receives nothing
+    * After chat demo, one computer is disconnected and reconnected, and the process of acquiring StunInfo is shown and explained.
+    * F2F applications
+      * Computing Pi with the Monte Carlo method, using 10 or 100 billion points
+      * Using Blender to render an animation with ~100 frames
+        * Case 1
+          * Using three computers
+          * Vladimir/Inspire starts an F2F chat with ENIAC and Artjom
+          * Vladimir starts DistributedBlenderer in F2F
+          * Vladimir inserts the .blend file to be rendered
+          * Slave machines (Inspire, ENIAC and Artjom's computer) render the animation bits and send them back to the master, which joins them together
+          * The rendered animation (AVI) is shown in VLC player using the projector
+
+# To-do #
+
+**All presenters**
+  * Practice your part and make sure you understand exactly what you're supposed to do and when.
+**Andres A**
+  * The "What is P2P and F2F" part for the introduction.
+**Artjom**
+  * Use computer names instead of A, B, C on the NAT traversal graph.
+  * Fix the...  something about TCP.
+**Jaan**
+  * Graph about multi-protocol chat
+  * Change words on slides: Server -> Master, Client -> Slave, forward -> relay
+**Jürmo**
+  * Find an appropriate .blend file to be rendered (At least 100 frames)
+**Madis**
+  * Graph about socket communication vs using IM server
+**Ulrich**
+  * Find a mouse

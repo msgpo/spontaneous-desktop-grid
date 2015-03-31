@@ -1,0 +1,13 @@
+a) Simulation Boost
+
+A chemistry (further planned scenarios apply to fields of mathematics, bio-informatics, physics, or biology) student needs to run a simulation - here of a reaction. The student has to do this multiple times with different input parameters. To accelerate getting the results the student asks colleagues and friends to share their computational power.
+
+b) Dynamic Rendering Grid
+
+Some arts students or a small movie studio want to render a part of an animation movie (compare for example Elephant's dream http://www.elephantsdream.org/). To speed up this process they create in their instant messenger a chat group and start the dynamic GRID to carry out the distributed rendering task. Extensions to this scenarios will make use of rendering static scenes with povray http://www.povray.org/ or support video or sound encoding.
+
+c) Language Analysis
+
+Any statistical language processing technique (text classification, machine translation, parsing, etc.) requires testing, and in case there's not enough data to define separate training/testing sets, [N-fold cross-validation](http://en.wikipedia.org/wiki/Cross-validation) is a common choice. The scenario is the following: all the available data is split into N parts, and the experiment is run N independent times -- each time one of the data parts is used for testing and the rest -- for training. A common value for N can be around 10. Thus each experiment has independent train/test data defined and all of the data gets covered. After the N experiments are ready, the general result is comuted based on all of them. With parallel computation the process can be sped up up to N times.
+
+**Example**: phrase-based statistical machine translation. The [training/testing data](http://wt.jrc.it/lt/Acquis/) consists of 24.6 mln words in estonian. The [software](http://www.statmt.org/moses/) is opensource (c++, perl, bash). Average time of training a single translation system for a pair of languages on the given corpus with a [BalticGrid](http://www.balticgrid.org/) single computer: 8 hours.
